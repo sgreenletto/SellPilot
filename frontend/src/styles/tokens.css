@@ -1,0 +1,67 @@
+:root {
+  --sp-color-bg: #e9eff7;
+  --sp-color-bg-deep: #dce6f2;
+  --sp-color-shell: rgba(239, 244, 250, 0.88);
+  --sp-color-sidebar: rgba(231, 238, 247, 0.92);
+  --sp-color-surface: rgba(250, 252, 255, 0.78);
+  --sp-color-surface-strong: #f8fafc;
+  --sp-color-surface-muted: rgba(235, 241, 248, 0.72);
+  --sp-color-surface-hover: rgba(255, 255, 255, 0.54);
+  --sp-color-overlay: rgba(11, 35, 74, 0.22);
+
+  --sp-color-text: #111827;
+  --sp-color-text-secondary: #536174;
+  --sp-color-text-muted: #8a96a7;
+  --sp-color-text-inverse: #ffffff;
+
+  --sp-color-primary: #0b234a;
+  --sp-color-primary-hover: #123466;
+  --sp-color-accent-pink: #e83f7c;
+  --sp-color-accent-pink-soft: #f7c8da;
+  --sp-color-accent-blue: #4b9ef8;
+  --sp-color-accent-blue-soft: #cfe7ff;
+  --sp-color-accent-purple: #8b6fe8;
+  --sp-color-success: #2fa878;
+  --sp-color-warning: #e6a23c;
+  --sp-color-danger: #e65b73;
+  --sp-color-info: #4b9ef8;
+
+  --sp-border-soft: rgba(62, 79, 105, 0.08);
+  --sp-border-strong: rgba(62, 79, 105, 0.14);
+  --sp-border-highlight: rgba(255, 255, 255, 0.76);
+
+  --sp-radius-shell: 32px;
+  --sp-radius-card: 24px;
+  --sp-radius-card-small: 18px;
+  --sp-radius-control: 15px;
+  --sp-radius-pill: 999px;
+
+  --sp-shadow-shell: 0 30px 80px rgba(60, 78, 108, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  --sp-shadow-card: 0 18px 45px rgba(64, 82, 112, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  --sp-shadow-hover: 0 22px 55px rgba(64, 82, 112, 0.14);
+
+  --sp-space-1: 4px;
+  --sp-space-2: 8px;
+  --sp-space-3: 12px;
+  --sp-space-4: 16px;
+  --sp-space-5: 20px;
+  --sp-space-6: 24px;
+  --sp-space-8: 32px;
+  --sp-space-10: 40px;
+  --sp-space-12: 48px;
+
+  --sp-font-family: Inter, Manrope, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --sp-font-xs: 12px;
+  --sp-font-sm: 14px;
+  --sp-font-md: 16px;
+  --sp-font-lg: 20px;
+  --sp-font-xl: 26px;
+  --sp-font-page-title: 34px;
+  --sp-font-metric: 31px;
+
+  --sp-transition-fast: 150ms ease;
+  --sp-transition-normal: 220ms ease;
+  --sp-sidebar-width: 248px;
+  --sp-sidebar-collapsed-width: 92px;
+  --sp-content-max-width: 1600px;
+}

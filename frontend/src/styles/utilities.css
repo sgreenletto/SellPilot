@@ -1,0 +1,16 @@
+.sp-surface-glass {
+  background: var(--sp-color-surface);
+  border: 1px solid var(--sp-border-highlight);
+  box-shadow: var(--sp-shadow-card);
+  backdrop-filter: blur(18px);
+}
+
+.sp-section-title {
+  font-size: var(--sp-font-lg);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.sp-muted {
+  color: var(--sp-color-text-muted);
+}
