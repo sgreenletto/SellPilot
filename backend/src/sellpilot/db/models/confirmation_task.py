@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import DateTime, ForeignKey, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from sellpilot.core.enums import ConfirmationStatus, RiskLevel
+from sellpilot.core.enums import ConfirmationStatus, ToolRiskLevel
 from sellpilot.db.base import JSON_TYPE, Base, UUIDPrimaryKeyMixin, utc_now
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ class ConfirmationTask(UUIDPrimaryKeyMixin, Base):
     operation_type: Mapped[str] = mapped_column(String(100), nullable=False)
     target_type: Mapped[str] = mapped_column(String(100), nullable=False)
     target_id: Mapped[str | None] = mapped_column(String(255))
-    risk_level: Mapped[str] = mapped_column(String(32), default=RiskLevel.WRITE, nullable=False)
+    risk_level: Mapped[str] = mapped_column(String(32), default=ToolRiskLevel.WRITE, nullable=False)
     before_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON_TYPE)
     after_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON_TYPE)
     status: Mapped[str] = mapped_column(

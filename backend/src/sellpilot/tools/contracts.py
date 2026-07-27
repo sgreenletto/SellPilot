@@ -6,7 +6,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from sellpilot.core.enums import RiskLevel
+from sellpilot.core.enums import ToolRiskLevel
 
 SENSITIVE_KEYS = {"password", "token", "authorization", "api_key", "jwt", "secret"}
 
@@ -50,7 +50,7 @@ class ToolDefinition:
     description: str
     input_schema: type[BaseModel]
     output_schema: type[BaseModel]
-    risk_level: RiskLevel
+    risk_level: ToolRiskLevel
     requires_confirmation: bool
     timeout_seconds: float
     handler: ToolHandler

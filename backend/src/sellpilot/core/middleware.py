@@ -7,7 +7,7 @@ request_id_context: ContextVar[str] = ContextVar("request_id", default="")
 
 
 def _valid_request_id(value: str | None) -> str:
-    if value:
+    if value and len(value) == 36:
         try:
             return str(UUID(value))
         except ValueError:

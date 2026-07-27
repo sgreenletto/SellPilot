@@ -8,10 +8,10 @@ from fastapi.responses import JSONResponse
 
 from sellpilot.api.router import build_api_router
 from sellpilot.core.config import Settings, get_settings
-from sellpilot.core.exceptions import AppException
+from sellpilot.core.exceptions import AppException, ErrorCode
 from sellpilot.core.logging import configure_logging
 from sellpilot.core.middleware import RequestIdMiddleware, get_request_id
-from sellpilot.core.response import ApiResponse
+from sellpilot.core.response import ApiResponse, ValidationIssue
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +50,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
         payload = ApiResponse[object](
-            code="PARAMETER_ERROR",
+            code=ErrorCode.PARAMETER_ERROR,
             message="Invalid request parameters",
-            data=jsonable_encoder(exc.errors()),
+            data=[
+                ValidationIssue(
+                    field=".".join(str(part) for part in error["loc"]),
+                    message=error["msg"],
+                    type=error["type"],
+                )
+                for error in exc.errors()
+            ],
             request_id=get_request_id(request),
         )
         return JSONResponse(status_code=422, content=jsonable_encoder(payload))
@@ -65,7 +72,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             type(exc).__name__,
         )
         payload = ApiResponse[object](
-            code="INTERNAL_ERROR",
+            code=ErrorCode.INTERNAL_ERROR,
             message="Internal server error",
             data=None,
             request_id=get_request_id(request),
