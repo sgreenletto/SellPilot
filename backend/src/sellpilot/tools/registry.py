@@ -3,7 +3,7 @@ from time import perf_counter
 
 from pydantic import ValidationError
 
-from sellpilot.core.enums import RiskLevel, ToolCallStatus
+from sellpilot.core.enums import ToolCallStatus, ToolRiskLevel
 from sellpilot.core.exceptions import (
     AppException,
     DuplicateOperationError,
@@ -46,7 +46,7 @@ class ToolRegistry:
         try:
             validated_input = definition.input_schema.model_validate(payload)
             if (
-                definition.risk_level in {RiskLevel.WRITE, RiskLevel.HIGH_RISK}
+                definition.risk_level in {ToolRiskLevel.WRITE, ToolRiskLevel.HIGH_RISK}
                 or definition.requires_confirmation
             ) and not context.confirmation_granted:
                 status = ToolCallStatus.BLOCKED

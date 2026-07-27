@@ -3,6 +3,9 @@ from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from sellpilot.core.enums import CurrencyCode, SiteCode
+from sellpilot.schemas.common import SourceMetadata
+
 
 class SelectionMetric(StrEnum):
     DEMAND = "demand"
@@ -20,10 +23,9 @@ class SelectionCandidate(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     product_id: str = Field(min_length=1, max_length=100)
-    site: str = Field(min_length=1, max_length=64)
-    currency: str = Field(min_length=3, max_length=8)
-    source_type: str = Field(min_length=1, max_length=64)
-    is_mock_data: bool
+    site: SiteCode
+    currency: CurrencyCode
+    source: SourceMetadata
     price: Decimal = Field(gt=0)
     cost: Decimal = Field(ge=0)
     shipping_cost: Decimal = Field(ge=0)
@@ -40,18 +42,13 @@ class SelectionCandidate(BaseModel):
     after_sales_rate: Decimal | None = Field(default=None, ge=0, le=1)
     factory_fit_score: Decimal | None = Field(default=None, ge=0, le=1)
 
-    @field_validator("product_id", "site", "currency", "source_type")
+    @field_validator("product_id")
     @classmethod
     def strip_non_empty_text(cls, value: str) -> str:
         normalized = value.strip()
         if not normalized:
             raise ValueError("must not be blank")
         return normalized
-
-    @field_validator("currency")
-    @classmethod
-    def normalize_currency(cls, value: str) -> str:
-        return value.upper()
 
     @model_validator(mode="after")
     def validate_review_pair(self) -> "SelectionCandidate":
@@ -134,10 +131,9 @@ class CandidateScore(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     product_id: str
-    site: str
-    currency: str
-    source_type: str
-    is_mock_data: bool
+    site: SiteCode
+    currency: CurrencyCode
+    source: SourceMetadata
     rank: int
     cohort_rank: int
     total_score: Decimal
@@ -154,8 +150,8 @@ class CandidateExclusion(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     product_id: str
-    site: str
-    currency: str
+    site: SiteCode
+    currency: CurrencyCode
     reasons: tuple[str, ...]
     profit: ProfitBreakdown
     formula_version: str

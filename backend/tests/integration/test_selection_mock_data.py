@@ -2,9 +2,19 @@ import csv
 from decimal import Decimal
 from pathlib import Path
 
+from sellpilot.core.enums import CurrencyCode, DataSource, SiteCode
 from sellpilot.domain.selection import SelectionCandidate, score_candidates
+from sellpilot.schemas.common import SourceMetadata
 
 MOCK_DATA_ROOT = Path(__file__).resolve().parents[3] / "data" / "demo" / "shopee_mock"
+SITE_CODES = {
+    "Singapore": SiteCode.SG,
+    "Malaysia": SiteCode.MY,
+    "Philippines": SiteCode.PH,
+    "Thailand": SiteCode.TH,
+    "Vietnam": SiteCode.VN,
+    "Indonesia": SiteCode.ID,
+}
 
 
 def test_all_mock_products_match_selection_input_contract():
@@ -14,10 +24,13 @@ def test_all_mock_products_match_selection_input_contract():
     candidates = [
         SelectionCandidate(
             product_id=row["product_id"],
-            site=row["site"],
-            currency=row["currency"],
-            source_type=row["source_type"],
-            is_mock_data=row["is_mock_data"].lower() == "true",
+            site=SITE_CODES[row["site"]],
+            currency=CurrencyCode(row["currency"]),
+            source=SourceMetadata(
+                source_type=DataSource.MOCK,
+                source_name=row["source_type"],
+                is_mock=row["is_mock_data"].lower() == "true",
+            ),
             price=Decimal(row["price"]),
             cost=Decimal(row["cost"]),
             shipping_cost=Decimal(row["shipping_cost"]),
@@ -33,11 +46,11 @@ def test_all_mock_products_match_selection_input_contract():
     assert len(candidates) == 100
     assert len(result.ranked) + len(result.excluded) == 100
     assert result.cohort_keys == (
-        "Indonesia:IDR",
-        "Malaysia:MYR",
-        "Philippines:PHP",
-        "Singapore:SGD",
-        "Thailand:THB",
-        "Vietnam:VND",
+        "id:IDR",
+        "my:MYR",
+        "ph:PHP",
+        "sg:SGD",
+        "th:THB",
+        "vn:VND",
     )
-    assert all(item.is_mock_data for item in result.ranked)
+    assert all(item.source.is_mock for item in result.ranked)

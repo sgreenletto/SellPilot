@@ -13,7 +13,8 @@
 - AI 输出必须使用结构化 Schema 并经过校验。
 - 所有业务写操作必须先形成待确认任务，经确认后才能执行。
 
-公共后端底座详细设计见 `backend-foundation.md`。成员三的分析与内容持久化设计见
-`analysis-persistence.md`；智能选品确定性计算内核见 `selection-scoring.md`。当前已建立
-选品纯计算能力，但尚未接入 Service、API、Tool、工作流或页面，也不表示评论分析、
+公共后端底座详细设计见 `backend-foundation.md`；跨模块实体、枚举、状态和依赖方向见
+`domain-contracts.md`；成员三的分析与内容持久化设计见 `analysis-persistence.md`；
+智能选品确定性计算内核见 `selection-scoring.md`。当前已建立公共契约、成员三持久化结构
+和选品纯计算能力，但尚未接入选品 Service、API、Tool、工作流或页面，也不表示评论分析、
 内容生成等后续业务流程已经可运行。

@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from sellpilot.core.enums import RiskLevel, ToolCallStatus
+from sellpilot.core.enums import ToolCallStatus, ToolRiskLevel
 from sellpilot.db.base import JSON_TYPE, Base, UUIDPrimaryKeyMixin, utc_now
 
 if TYPE_CHECKING:
@@ -18,7 +18,7 @@ class ToolCall(UUIDPrimaryKeyMixin, Base):
 
     task_id: Mapped[UUID | None] = mapped_column(ForeignKey("agent_tasks.id", ondelete="CASCADE"))
     tool_name: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    risk_level: Mapped[str] = mapped_column(String(32), default=RiskLevel.READ, nullable=False)
+    risk_level: Mapped[str] = mapped_column(String(32), default=ToolRiskLevel.READ, nullable=False)
     status: Mapped[str] = mapped_column(
         String(32), default=ToolCallStatus.SUCCEEDED, nullable=False
     )

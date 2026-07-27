@@ -3,6 +3,7 @@ from decimal import Decimal
 import pytest
 from pydantic import ValidationError
 
+from sellpilot.core.enums import CurrencyCode, DataSource, SiteCode
 from sellpilot.domain.selection import (
     DEFAULT_SELECTION_CONFIG,
     SelectionCandidate,
@@ -12,15 +13,19 @@ from sellpilot.domain.selection import (
     score_candidates,
 )
 from sellpilot.domain.selection.models import SelectionMetric
+from sellpilot.schemas.common import SourceMetadata
 
 
 def candidate(product_id: str, **overrides) -> SelectionCandidate:
     values = {
         "product_id": product_id,
-        "site": "Singapore",
-        "currency": "SGD",
-        "source_type": "simulated_experiment",
-        "is_mock_data": True,
+        "site": SiteCode.SG,
+        "currency": CurrencyCode.SGD,
+        "source": SourceMetadata(
+            source_type=DataSource.MOCK,
+            source_name="simulated_experiment",
+            is_mock=True,
+        ),
         "price": Decimal("100.00"),
         "cost": Decimal("50.00"),
         "shipping_cost": Decimal("10.00"),
@@ -203,27 +208,31 @@ def test_currency_and_site_cohorts_are_normalized_independently():
         [
             candidate("sg-low", sales_count=10),
             candidate("sg-high", sales_count=20),
-            candidate("my-low", site="Malaysia", currency="MYR", sales_count=100),
-            candidate("my-high", site="Malaysia", currency="MYR", sales_count=200),
+            candidate("my-low", site=SiteCode.MY, currency=CurrencyCode.MYR, sales_count=100),
+            candidate("my-high", site=SiteCode.MY, currency=CurrencyCode.MYR, sales_count=200),
         ]
     )
     changed = score_candidates(
         [
             candidate("sg-low", sales_count=10),
             candidate("sg-high", sales_count=10**12),
-            candidate("my-low", site="Malaysia", currency="MYR", sales_count=100),
-            candidate("my-high", site="Malaysia", currency="MYR", sales_count=200),
+            candidate("my-low", site=SiteCode.MY, currency=CurrencyCode.MYR, sales_count=100),
+            candidate("my-high", site=SiteCode.MY, currency=CurrencyCode.MYR, sales_count=200),
         ]
     )
 
     baseline_my = {
-        item.product_id: item.total_score for item in baseline.ranked if item.currency == "MYR"
+        item.product_id: item.total_score
+        for item in baseline.ranked
+        if item.currency is CurrencyCode.MYR
     }
     changed_my = {
-        item.product_id: item.total_score for item in changed.ranked if item.currency == "MYR"
+        item.product_id: item.total_score
+        for item in changed.ranked
+        if item.currency is CurrencyCode.MYR
     }
     assert baseline_my == changed_my
-    assert baseline.cohort_keys == ("Malaysia:MYR", "Singapore:SGD")
+    assert baseline.cohort_keys == ("my:MYR", "sg:SGD")
 
 
 def test_ranking_is_stable_for_reordered_input_and_has_unique_global_ranks():

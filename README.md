@@ -130,6 +130,18 @@ npm run test:run
 npm run build
 ```
 
+## Windows 一键启动
+
+首次运行前仍需按后端和前端章节安装依赖。依赖准备完成后，可双击根目录的
+`start-sellpilot.bat`，脚本会分别打开后端和前端开发服务窗口，并打开
+`http://127.0.0.1:5173/dashboard`。
+
+只检查 `uv`、`npm`、项目文件和前端依赖是否就绪而不启动服务：
+
+```powershell
+.\start-sellpilot.bat --check
+```
+
 ## 环境变量
 
 根目录 `.env.example` 提供后端安全占位符，至少包括应用环境、数据库、JWT、日志和平台适配器配置。复制为本地 `.env` 后填写，不得提交 `.env`。

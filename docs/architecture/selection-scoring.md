@@ -24,7 +24,8 @@ sellpilot/domain/selection/
 - `score_candidates(candidates, criteria, config)`
 - `DEFAULT_SELECTION_CONFIG`
 
-输入必须携带 `source_type` 和 `is_mock_data`，确保后续结果可以保留数据来源及模拟数据标识。
+输入和输出复用公共 `SiteCode`、`CurrencyCode` 与 `SourceMetadata` 契约，确保后续结果
+保留规范站点、币种、数据来源及模拟数据标识。
 
 ## 公式版本
 
