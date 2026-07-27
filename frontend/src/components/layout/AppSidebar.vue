@@ -62,10 +62,13 @@ const entries = computed(() =>
 .app-sidebar {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   width: var(--sp-sidebar-width);
   min-width: var(--sp-sidebar-width);
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
   padding: var(--sp-space-6) var(--sp-space-4);
+  overflow-x: hidden;
   overflow: hidden;
   background: var(--sp-color-sidebar);
   border-right: 1px solid var(--sp-border-highlight);
@@ -79,20 +82,32 @@ const entries = computed(() =>
 .app-sidebar--collapsed {
   width: var(--sp-sidebar-collapsed-width);
   min-width: var(--sp-sidebar-collapsed-width);
+  padding-inline: var(--sp-space-3);
+}
+
+.app-sidebar--collapsed .app-sidebar__brand {
+  gap: var(--sp-space-2);
+  padding-inline: 0;
 }
 
 .app-sidebar__brand {
   display: flex;
+  flex: 0 0 auto;
   gap: var(--sp-space-3);
   align-items: center;
+  min-width: 0;
   min-height: 44px;
   padding: 0 var(--sp-space-2);
 }
 
 .app-sidebar__brand strong {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
   font-size: var(--sp-font-lg);
   letter-spacing: -0.03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .app-sidebar__mark {
@@ -111,15 +126,24 @@ const entries = computed(() =>
 
 .app-sidebar__nav {
   display: grid;
+  flex: 1 1 auto;
   gap: var(--sp-space-1);
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
   padding-top: var(--sp-space-8);
+  overflow-x: hidden;
   overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 .app-sidebar__operator {
   display: flex;
+  flex: 0 0 auto;
   gap: var(--sp-space-3);
   align-items: center;
+  min-width: 0;
+  overflow: hidden;
   padding: var(--sp-space-4) var(--sp-space-2) 0;
   margin-top: auto;
   border-top: 1px solid var(--sp-border-soft);
@@ -127,6 +151,7 @@ const entries = computed(() =>
 
 .app-sidebar__operator > div {
   display: grid;
+  flex: 1;
   min-width: 0;
 }
 

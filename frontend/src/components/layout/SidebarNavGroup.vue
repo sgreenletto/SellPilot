@@ -42,7 +42,9 @@ watch(hasActiveChild, (active) => {
       @click="expanded = !expanded"
     >
       <component :is="props.group.icon" :size="18" aria-hidden="true" />
-      <span v-if="!props.collapsed">{{ props.group.label }}</span>
+      <span v-if="!props.collapsed" class="sidebar-nav-group__label">
+        {{ props.group.label }}
+      </span>
       <span v-else class="sp-visually-hidden">{{ props.group.label }}</span>
       <ChevronDown
         v-if="!props.collapsed"
@@ -66,13 +68,17 @@ watch(hasActiveChild, (active) => {
 .sidebar-nav-group {
   display: grid;
   gap: var(--sp-space-1);
+  width: 100%;
+  min-width: 0;
 }
 
 .sidebar-nav-group__trigger {
   display: flex;
+  box-sizing: border-box;
   gap: var(--sp-space-3);
   align-items: center;
   width: 100%;
+  min-width: 0;
   min-height: 42px;
   padding: 0 var(--sp-space-4);
   color: var(--sp-color-text-secondary);
@@ -91,8 +97,16 @@ watch(hasActiveChild, (active) => {
   background: var(--sp-color-surface-hover);
 }
 
-.sidebar-nav-group__trigger > span {
+.sidebar-nav-group__label {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-nav-group__trigger > svg {
+  flex: 0 0 auto;
 }
 
 .sidebar-nav-group__trigger > svg:last-child {
@@ -106,6 +120,8 @@ watch(hasActiveChild, (active) => {
 .sidebar-nav-group__children {
   display: grid;
   gap: var(--sp-space-1);
+  width: 100%;
+  min-width: 0;
   padding-left: var(--sp-space-4);
 }
 </style>

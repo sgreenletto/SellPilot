@@ -43,7 +43,9 @@ watch(isMobile, (mobile) => {
 <style scoped>
 .app-shell {
   display: flex;
-  min-height: calc(100vh - 32px);
+  height: calc(100vh - 32px);
+  height: calc(100dvh - 32px);
+  min-height: 0;
   margin: var(--sp-space-4);
   overflow: hidden;
   background: var(--sp-color-shell);
@@ -57,11 +59,21 @@ watch(isMobile, (mobile) => {
   position: relative;
   z-index: 30;
   display: flex;
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 0;
 }
 
 .app-shell__workspace {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
 }
 
 .app-shell__overlay {
@@ -75,7 +87,9 @@ watch(isMobile, (mobile) => {
 
 @media (max-width: 1023px) {
   .app-shell {
-    min-height: calc(100vh - 16px);
+    height: calc(100vh - 16px);
+    height: calc(100dvh - 16px);
+    min-height: 0;
     margin: var(--sp-space-2);
     border-radius: var(--sp-radius-card);
   }

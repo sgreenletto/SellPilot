@@ -61,6 +61,8 @@ const currency = new Intl.NumberFormat("zh-CN", {
 <style scoped>
 .risk-table-wrap {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
 }
 

@@ -26,7 +26,9 @@ const emit = defineEmits<{
     @click="emit('navigate')"
   >
     <component :is="props.item.icon" :size="18" aria-hidden="true" />
-    <span v-if="!props.collapsed">{{ props.item.label }}</span>
+    <span v-if="!props.collapsed" class="sidebar-nav-item__label">
+      {{ props.item.label }}
+    </span>
     <span v-else class="sp-visually-hidden">{{ props.item.label }}</span>
   </RouterLink>
 </template>
@@ -34,8 +36,12 @@ const emit = defineEmits<{
 <style scoped>
 .sidebar-nav-item {
   display: flex;
+  box-sizing: border-box;
+  flex-shrink: 0;
   gap: var(--sp-space-3);
   align-items: center;
+  width: 100%;
+  min-width: 0;
   min-height: 42px;
   padding: 0 var(--sp-space-4);
   color: var(--sp-color-text-secondary);
@@ -43,14 +49,24 @@ const emit = defineEmits<{
   border-radius: var(--sp-radius-pill);
   transition:
     color var(--sp-transition-fast),
-    background var(--sp-transition-fast),
-    transform var(--sp-transition-fast);
+    background var(--sp-transition-fast);
 }
 
 .sidebar-nav-item:hover {
   color: var(--sp-color-primary);
   background: var(--sp-color-surface-hover);
-  transform: translateX(2px);
+}
+
+.sidebar-nav-item > svg {
+  flex: 0 0 auto;
+}
+
+.sidebar-nav-item__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sidebar-nav-item--active {

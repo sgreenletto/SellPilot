@@ -1,10 +1,12 @@
 # SellPilot Frontend Foundation
 
-SellPilot 前端公共框架采用 Vue 3、TypeScript 与 Vite，当前版本为 `0.1.0.dev0` 基础开发状态，不表示 `v0.1.0` 已发布。
+SellPilot 前端公共框架采用 Vue 3、TypeScript 与 Vite，当前版本为 `0.1.0` Foundation Milestone。该版本表示公共布局、组件与 Dashboard 基线已建立，不代表完整业务已完成或已用于生产。
 
 ## 当前边界
 
 当前仅实现公共布局、设计系统、可复用组件、API 客户端和使用合成 Mock 数据的经营看板。未实现商品、选品、评论、订单、库存、客服、RAG、正式 Agent 调用或真实 Shopee 连接。
+
+v0.1.0 采用普通 Git Tag 标记，不创建 GitHub Release；当前不连接真实 Shopee。
 
 平台标签会请求后端 `/api/v1/platform/status`。请求失败时界面显示“后端未连接”，不会伪装成 Mock Shopee 正常运行。
 

@@ -1,5 +1,5 @@
 body {
-  overflow-x: hidden;
+  overflow: hidden;
   color: var(--sp-color-text);
   font-family: var(--sp-font-family);
   font-size: var(--sp-font-sm);
@@ -12,7 +12,7 @@ body {
 }
 
 #app {
-  min-height: 100vh;
+  height: 100%;
 }
 
 :focus-visible {

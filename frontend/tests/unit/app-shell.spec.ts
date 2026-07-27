@@ -11,6 +11,36 @@ describe("AppShell", () => {
     vi.unstubAllGlobals();
   });
 
+  it("桌面端将侧边栏与主内容滚动区保持为独立同级区域", () => {
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      value: 1440,
+    });
+
+    const wrapper = mount(AppShell, {
+      global: {
+        plugins: [createPinia()],
+        stubs: {
+          AppSidebar: { template: '<aside data-testid="sidebar-stub" />' },
+          AppTopbar: { template: '<header data-testid="topbar-stub" />' },
+        },
+      },
+      slots: {
+        default: '<main data-testid="page-content">页面内容</main>',
+      },
+    });
+
+    const shell = wrapper.get(".app-shell");
+    const sidebarRegion = wrapper.get(".app-shell__sidebar");
+    const workspace = wrapper.get(".app-shell__workspace");
+
+    expect(shell.element.children).toHaveLength(2);
+    expect(shell.element.firstElementChild).toBe(sidebarRegion.element);
+    expect(sidebarRegion.element.nextElementSibling).toBe(workspace.element);
+    expect(workspace.find('[data-testid="topbar-stub"]').exists()).toBe(true);
+    expect(workspace.find('[data-testid="page-content"]').exists()).toBe(true);
+  });
+
   it("移动宽度下通过顶部按钮切换侧边栏", async () => {
     Object.defineProperty(window, "innerWidth", {
       configurable: true,

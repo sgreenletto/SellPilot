@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = Field(default="SellPilot", validation_alias="APP_NAME")
-    app_version: str = Field(default="0.1.0.dev0", validation_alias="APP_VERSION")
+    app_version: str = Field(default="0.1.0", validation_alias="APP_VERSION")
     app_env: Literal["development", "test", "production"] = Field(
         default="development", validation_alias="APP_ENV"
     )

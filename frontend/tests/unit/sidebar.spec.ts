@@ -11,6 +11,7 @@ async function mountSidebar(path = "/dashboard") {
     routes: [
       { path: "/dashboard", component: { template: "<div />" } },
       { path: "/market/data", component: { template: "<div />" } },
+      { path: "/:pathMatch(.*)*", component: { template: "<div />" } },
     ],
   });
   await router.push(path);
@@ -43,5 +44,32 @@ describe("侧边导航", () => {
     await trigger?.trigger("click");
     expect(trigger?.attributes("aria-expanded")).toBe("true");
     expect(wrapper.text()).toContain("智能选品");
+  });
+
+  it("菜单滚动区和底部用户区分离，并为导航文字提供截断容器", async () => {
+    const wrapper = await mountSidebar();
+    const sidebar = wrapper.get(".app-sidebar");
+    const navigation = wrapper.get(".app-sidebar__nav");
+    const operator = wrapper.get(".app-sidebar__operator");
+
+    expect(sidebar.element.children).toHaveLength(3);
+    expect(navigation.element.nextElementSibling).toBe(operator.element);
+    expect(wrapper.findAll(".sidebar-nav-item__label").length).toBeGreaterThan(0);
+    expect(wrapper.findAll(".sidebar-nav-group__label").length).toBeGreaterThan(0);
+  });
+
+  it("折叠状态使用专用侧边栏宽度类且隐藏完整导航文字", async () => {
+    const wrapper = await mountSidebar();
+
+    await wrapper.get('[aria-label="收起侧边栏"]').trigger("click");
+
+    expect(wrapper.get(".app-sidebar").classes()).toContain("app-sidebar--collapsed");
+    expect(
+      wrapper.find(".app-sidebar__nav > .sidebar-nav-item .sidebar-nav-item__label").exists(),
+    ).toBe(false);
+    expect(wrapper.find(".sidebar-nav-group__label").exists()).toBe(false);
+    for (const children of wrapper.findAll(".sidebar-nav-group__children")) {
+      expect(children.isVisible()).toBe(false);
+    }
   });
 });
