@@ -5,3 +5,5 @@
 公共后端底座已建立 pytest、pytest-asyncio、httpx 和 Ruff 配置，详细说明见 `backend-foundation.md`。测试使用隔离 SQLite 与合成数据，不访问真实平台、模型或生产数据库。
 
 成员三分析、评论、改良、内容、Prompt、模型调用和报告持久化测试见 `analysis-persistence.md`。
+
+智能选品利润、评分、缺失数据和稳定排序单元测试见 `selection-scoring.md`。
