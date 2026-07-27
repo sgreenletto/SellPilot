@@ -2,7 +2,7 @@ from uuid import UUID, uuid4
 
 from fastapi import Request
 
-from sellpilot.core.enums import ConfirmationStatus, RiskLevel
+from sellpilot.core.enums import ConfirmationStatus, ToolRiskLevel
 from sellpilot.core.response import ApiResponse
 from sellpilot.core.security import create_access_token, hash_password
 from sellpilot.db.models.user import User
@@ -61,6 +61,13 @@ async def test_invalid_request_id_is_replaced_with_uuid(client_bundle):
     assert response.json()["request_id"] == response.headers["X-Request-ID"]
 
 
+async def test_oversized_request_id_is_replaced_with_uuid(client_bundle):
+    client, _, _, _ = client_bundle
+    response = await client.get("/api/v1/health/live", headers={"X-Request-ID": "a" * 1000})
+    assert UUID(response.headers["X-Request-ID"])
+    assert len(response.headers["X-Request-ID"]) == 36
+
+
 async def test_validation_exception_uses_uniform_response(client_bundle):
     client, _, _, _ = client_bundle
     response = await client.post("/api/v1/auth/login", json={})
@@ -68,6 +75,30 @@ async def test_validation_exception_uses_uniform_response(client_bundle):
     assert response.status_code == 422
     assert body["code"] == "PARAMETER_ERROR"
     assert body["request_id"] == response.headers["X-Request-ID"]
+    assert body["data"] == [
+        {
+            "field": "body.username",
+            "message": "Field required",
+            "type": "missing",
+        },
+        {
+            "field": "body.password",
+            "message": "Field required",
+            "type": "missing",
+        },
+    ]
+
+
+async def test_validation_error_does_not_echo_sensitive_input(client_bundle):
+    client, _, _, _ = client_bundle
+    secret = "super-secret-password-value"
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={"username": "valid-name", "password": secret * 20},
+    )
+    assert response.status_code == 422
+    assert secret not in response.text
+    assert response.json()["request_id"] == response.headers["X-Request-ID"]
 
 
 async def test_login_me_and_change_password(client_bundle):
@@ -155,6 +186,7 @@ async def test_authenticated_task_list_is_paginated(client_bundle):
         "total": 0,
         "page": 1,
         "page_size": 10,
+        "pages": 0,
     }
 
 
@@ -172,7 +204,7 @@ async def test_confirmation_without_executor_returns_error_and_stays_pending(
             operation_type="unregistered.write",
             target_type="test-target",
             target_id="target-1",
-            risk_level=RiskLevel.WRITE,
+            risk_level=ToolRiskLevel.WRITE,
             idempotency_key=str(uuid4()),
             created_by=user.id,
         )

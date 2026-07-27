@@ -3,7 +3,7 @@ import asyncio
 import pytest
 from pydantic import BaseModel
 
-from sellpilot.core.enums import RiskLevel
+from sellpilot.core.enums import ToolRiskLevel
 from sellpilot.core.exceptions import DuplicateOperationError
 from sellpilot.tools.contracts import ToolContext, ToolDefinition
 from sellpilot.tools.registry import ToolRegistry
@@ -26,7 +26,7 @@ async def double_handler(payload: BaseModel, context: ToolContext) -> NumberOutp
 def definition(
     *,
     name: str = "double",
-    risk_level: RiskLevel = RiskLevel.READ,
+    risk_level: ToolRiskLevel = ToolRiskLevel.READ,
     timeout: float = 1,
     handler=double_handler,
 ) -> ToolDefinition:
@@ -36,7 +36,7 @@ def definition(
         input_schema=NumberInput,
         output_schema=NumberOutput,
         risk_level=risk_level,
-        requires_confirmation=risk_level is not RiskLevel.READ,
+        requires_confirmation=risk_level is not ToolRiskLevel.READ,
         timeout_seconds=timeout,
         handler=handler,
     )
@@ -83,7 +83,10 @@ async def test_tool_registry_enforces_timeout():
     assert result.error_code == "TOOL_TIMEOUT"
 
 
-@pytest.mark.parametrize("risk_level", [RiskLevel.WRITE, RiskLevel.HIGH_RISK])
+@pytest.mark.parametrize(
+    "risk_level",
+    [ToolRiskLevel.WRITE, ToolRiskLevel.HIGH_RISK],
+)
 async def test_write_and_high_risk_tools_require_confirmation(risk_level):
     called = False
 
