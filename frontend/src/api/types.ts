@@ -1,9 +1,4 @@
-export interface ApiResponse<T> {
-  code: number | string;
-  message: string;
-  data: T;
-  request_id: string;
-}
+export type { ApiErrorResponse, ApiResponse, ValidationIssue } from "@/types/contracts";
 
 export interface PlatformPingData {
   adapter: "mock" | "real";

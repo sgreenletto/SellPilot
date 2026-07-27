@@ -13,4 +13,4 @@
 - AI 输出必须使用结构化 Schema 并经过校验。
 - 所有业务写操作必须先形成待确认任务，经确认后才能执行。
 
-公共后端底座详细设计见 `backend-foundation.md`。成员三的分析与内容持久化设计见 `analysis-persistence.md`；当前只建立数据模型、Repository 和迁移，不表示选品、评论分析、内容生成或其他业务流程已经可运行。
+公共后端底座详细设计见 `backend-foundation.md`；跨模块实体、枚举、状态和依赖方向见 `domain-contracts.md`；成员三的分析与内容持久化设计见 `analysis-persistence.md`。当前已建立公共契约，以及成员三的数据模型、Repository 和迁移；这不表示选品、评论分析、内容生成或其他业务流程已经可运行。

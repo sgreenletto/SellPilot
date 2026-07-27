@@ -37,7 +37,7 @@ JWT 包含 `sub`、`username`、`role`、`iat`、`exp` 和 `jti`。当前不提�
 - `GET /tasks?page=1&page_size=20`
 - `GET /tasks/{task_id}`
 
-需要 Bearer Token。只提供查询，不提供公共创建接口。
+需要 Bearer Token。只提供查询，不提供公共创建接口。列表响应包含 `items`、`page`、`page_size`、`total` 和 `pages`，其中空结果的 `pages` 为 0。
 
 ## 确认任务
 
@@ -46,4 +46,4 @@ JWT 包含 `sub`、`username`、`role`、`iat`、`exp` 和 `jti`。当前不提�
 - `POST /confirmations/{confirmation_id}/confirm`
 - `POST /confirmations/{confirmation_id}/cancel`
 
-需要 Bearer Token。确认任务只能由内部 Service 创建。未注册执行器时 confirm 返回明确冲突错误并保持 PENDING；重复 confirm 不重复执行；cancel 只允许 PENDING。
+需要 Bearer Token。确认任务只能由内部 Service 创建。未注册执行器时 confirm 返回明确冲突错误并保持 `pending`；重复 confirm 不重复执行；cancel 只允许 `pending`。

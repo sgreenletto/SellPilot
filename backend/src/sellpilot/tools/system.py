@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from sellpilot.core.config import Settings
-from sellpilot.core.enums import RiskLevel
+from sellpilot.core.enums import ToolRiskLevel
 from sellpilot.tools.contracts import ToolContext, ToolDefinition
 
 
@@ -32,7 +32,7 @@ def build_system_health_tool(settings: Settings) -> ToolDefinition:
         description="Return non-sensitive SellPilot foundation service status",
         input_schema=SystemHealthInput,
         output_schema=SystemHealthOutput,
-        risk_level=RiskLevel.READ,
+        risk_level=ToolRiskLevel.READ,
         requires_confirmation=False,
         timeout_seconds=2.0,
         handler=system_health,

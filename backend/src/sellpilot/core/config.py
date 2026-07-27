@@ -56,6 +56,12 @@ class Settings(BaseSettings):
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
         default="INFO", validation_alias="LOG_LEVEL"
     )
+    file_max_size_bytes: int = Field(
+        default=10 * 1024 * 1024,
+        ge=1,
+        le=100 * 1024 * 1024,
+        validation_alias="FILE_MAX_SIZE_BYTES",
+    )
 
     shopee_partner_id: str | None = Field(default=None, validation_alias="SHOPEE_PARTNER_ID")
     shopee_partner_key: SecretStr | None = Field(

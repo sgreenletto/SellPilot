@@ -4,6 +4,7 @@ import re
 from typing import Any
 
 from sellpilot.core.config import Settings
+from sellpilot.core.middleware import request_id_context
 
 SENSITIVE_PATTERN = re.compile(
     r"(?i)(password|token|authorization|api[_-]?key|jwt)\s*[:=]\s*([^\s,;]+)"
@@ -18,6 +19,7 @@ class SensitiveDataFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         record.msg = redact_sensitive(record.getMessage())
         record.args = ()
+        record.request_id = request_id_context.get() or "-"
         return True
 
 
@@ -29,7 +31,9 @@ def configure_logging(settings: Settings) -> None:
             "filters": {"sensitive": {"()": SensitiveDataFilter}},
             "formatters": {
                 "default": {
-                    "format": "%(asctime)s %(levelname)s %(name)s %(message)s",
+                    "format": (
+                        "%(asctime)s %(levelname)s %(name)s request_id=%(request_id)s %(message)s"
+                    ),
                 }
             },
             "handlers": {

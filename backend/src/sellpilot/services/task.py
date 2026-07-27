@@ -4,8 +4,9 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from sellpilot.core.enums import TASK_TRANSITIONS, TaskStatus
+from sellpilot.core.enums import TaskStatus
 from sellpilot.core.exceptions import ResourceNotFoundError, StateConflictError
+from sellpilot.core.transitions import validate_task_transition
 from sellpilot.db.models.agent_task import AgentTask
 from sellpilot.repositories.task import TaskRepository
 
@@ -37,8 +38,7 @@ class TaskService:
 
     def _transition(self, task: AgentTask, target: TaskStatus) -> None:
         current = TaskStatus(task.status)
-        if target not in TASK_TRANSITIONS[current]:
-            raise StateConflictError(f"Task cannot transition from {current} to {target}")
+        validate_task_transition(current, target)
         task.status = target
 
     async def start(self, task_id: UUID) -> AgentTask:

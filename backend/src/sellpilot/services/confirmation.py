@@ -6,16 +6,17 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sellpilot.core.enums import (
-    CONFIRMATION_TRANSITIONS,
     ConfirmationStatus,
-    RiskLevel,
+    ToolRiskLevel,
 )
 from sellpilot.core.exceptions import (
     ConfirmationExecutorNotFoundError,
+    ParameterError,
     ResourceNotFoundError,
     StateConflictError,
 )
 from sellpilot.core.logging import redact_sensitive
+from sellpilot.core.transitions import validate_confirmation_transition
 from sellpilot.db.models.confirmation_task import ConfirmationTask
 from sellpilot.repositories.confirmation import ConfirmationRepository
 
@@ -41,12 +42,20 @@ class ConfirmationService:
         operation_type: str,
         target_type: str,
         target_id: str | None,
-        risk_level: RiskLevel,
+        risk_level: ToolRiskLevel,
         idempotency_key: str,
         created_by: UUID,
         before_snapshot: dict[str, Any] | None = None,
         after_snapshot: dict[str, Any] | None = None,
     ) -> ConfirmationTask:
+        if risk_level is ToolRiskLevel.READ:
+            raise ParameterError("Read operations do not require a confirmation task")
+        if risk_level is ToolRiskLevel.HIGH_RISK and (
+            before_snapshot is None or after_snapshot is None
+        ):
+            raise ParameterError(
+                "High-risk confirmations require complete before and after snapshots"
+            )
         existing = await self.confirmations.get_by_idempotency_key(idempotency_key)
         if existing is not None:
             return existing
@@ -76,8 +85,7 @@ class ConfirmationService:
 
     def _transition(self, confirmation: ConfirmationTask, target: ConfirmationStatus) -> None:
         current = ConfirmationStatus(confirmation.status)
-        if target not in CONFIRMATION_TRANSITIONS[current]:
-            raise StateConflictError(f"Confirmation cannot transition from {current} to {target}")
+        validate_confirmation_transition(current, target)
         confirmation.status = target
 
     async def cancel(self, confirmation_id: UUID) -> ConfirmationTask:

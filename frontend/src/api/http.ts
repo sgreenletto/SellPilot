@@ -57,7 +57,7 @@ export async function request<T>(
       });
     }
 
-    if (!body || body.data === undefined) {
+    if (!body || body.data === undefined || body.data === null) {
       throw new FrontendApiError({
         code: "INVALID_RESPONSE",
         message: "后端返回了无法识别的数据",

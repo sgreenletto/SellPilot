@@ -6,7 +6,7 @@
 >
 > **目标里程碑**：以团队集成计划为准，建议对应 `v0.3.0` 业务能力里程碑
 >
-> **当前基线**：`v0.1.0 Foundation Milestone`，公共前后端底座已建立，成员三业务功能尚未实现
+> **当前基线**：`v0.1.0 Foundation Milestone`，公共领域契约及成员三分析持久化基础已建立，成员三算法和业务流程尚未实现
 >
 > **适用边界**：单用户、单模拟店铺、Mock Shopee；不接入或暗示已接入真实 Shopee
 >
@@ -47,10 +47,11 @@
 - `Sp*` 公共组件、设计变量、统一 HTTP 客户端和错误模型。
 - `/market/selection`、`/market/reviews`、`/products/content` 占位路由。
 - `data/demo/shopee_mock/` 已合入成员二生成并校验通过的完整模拟实验数据。
+- 公共领域枚举、Schema、API 包络、分页、状态流转、`RiskLevel` 与 `ToolRiskLevel` 分离契约。
+- 分析与内容持久化模型、Repository、Alembic `20260727_0002` 迁移及隔离测试。
 
 ### 2.2 当前尚未具备
 
-- 成员三业务数据库表及迁移。
 - 选品指标、利润模型、归一化、权重和机会评分。
 - 评论语言处理、情感/主题/痛点分析及证据引用。
 - 产品改良建议和报告生成。
@@ -249,7 +250,71 @@ docs: add member three implementation plan
 
 ---
 
+### 已冻结的跨成员公共契约与后续确认点
+
+| 项目 | 内容 |
+| --- | --- |
+| 目标 | 在编码前冻结成员三依赖的业务实体、API、错误和确认流程 |
+| 依赖 | 成员一公共架构、成员二数据实体和导入方案 |
+| 输出 | 数据字典映射、接口契约、Schema 草案、错误码、状态和责任矩阵 |
+| MVP | 使用合成对象即可完成选品、评论和内容接口的契约测试 |
+
+### 与成员二确认
+
+- 商品、SKU、评论、趋势、订单和售后实体的字段、类型、主外键。
+- 站点、语言、币种、类目、来源类型和 Mock 标识枚举。
+- 列表分页、筛选、排序及数据更新时间。
+- 评论和趋势数据的 Repository/Service/API 入口。
+- 选品分析层需要的数据是否一次聚合返回，避免 N+1 查询。
+- 数据不足、缺失值、异常值和未支持站点的返回方式。
+
+### 与成员一确认
+
+- 成员三新表的命名和公共字段。
+- Tool 命名、`ToolRiskLevel`、超时、输入/输出 Schema 和注册方式；业务风险单独使用 `RiskLevel`。
+- Workflow 注册名、AgentTask 类型和节点结果格式。
+- 只读分析、保存报告、创建草稿、保存内容版本分别如何进入确认流程。
+- 报告文件存储和导出接口。
+- 模型配置、密钥读取、Token 统计和日志脱敏的公共实现位置。
+
+### 与成员四确认
+
+- 选品、评论、改良和内容页面所需 API。
+- 公共页面组件是否已有或需要扩展。
+- 客服反馈如何向产品改良模块提供结构化输入。
+- 商品改良草稿如何跳转到商品管理或内容工坊。
+
+### 必须形成的 Schema 草案
+
+- `SelectionCriteria`
+- `SelectionMetricBreakdown`
+- `ProductSelectionResult`
+- `ReviewAnalysisRequest`
+- `ReviewEvidence`
+- `ReviewAnalysisResult`
+- `ImprovementSuggestion`
+- `ProductImprovementReport`
+- `ListingGenerationRequest`
+- `LocalizedListingContent`
+- `ListingComplianceResult`
+- `ContentVersionSummary`
+- `ModelInvocationSummary`
+
+### 验收
+
+- OpenAPI 示例与前端类型可以一一对应。
+- 金额使用精确十进制类型，时间带时区。
+- 任何结论结构都包含来源或证据字段。
+- 所有写操作的确认方式已明确。
+- 后续业务 Schema、页面和算法实现不得绕开已冻结的公共契约。
+
+公共契约以 `docs/architecture/domain-contracts.md` 和 `docs/api/common-contracts.md` 为准；成员三业务 Schema 在对应功能 Step 内实现，不在公共模块中重复定义。
+
+---
+
 ## Step 1：成员三数据模型、Repository 与 Alembic 迁移
+
+> **状态**：分析与内容持久化基础已完成，包括模型、Repository、Alembic `20260727_0002` 迁移和隔离测试；本 Step 不代表选品、评论分析、产品改良或内容生成算法已经实现。
 
 | 项目 | 内容 |
 | --- | --- |
@@ -257,9 +322,9 @@ docs: add member three implementation plan
 | 依赖 | 最新 `develop` 的公共架构、成员二数据实体和导入结果 |
 | MVP | `alembic upgrade head → downgrade → upgrade` 完整通过 |
 
-### 计划数据对象
+### 已建立数据对象
 
-最终表名以团队 ER 评审为准，至少覆盖：
+当前持久化基础已经覆盖：
 
 - 选品任务与结果。
 - 评论分析结果及证据关联。
@@ -269,7 +334,7 @@ docs: add member three implementation plan
 - 模型调用记录或与公共 ToolCall/AgentTask 的关联。
 - 生成报告记录。
 
-### 实现要求
+### 已落实的实现要求
 
 - 只通过 Alembic 维护正式结构，不在应用启动时 `create_all`。
 - UUID、时间、JSON/JSONB、索引和命名规则与公共模型一致。
@@ -278,20 +343,20 @@ docs: add member three implementation plan
 - Repository 只负责查询和持久化。
 - 补充 SQLite 隔离测试和 PostgreSQL 兼容性说明。
 
-### 测试
+### 已覆盖测试
 
 - 迁移 upgrade/downgrade/upgrade。
 - 主键、外键、唯一约束和必要索引。
 - Repository 创建、查询、分页和状态过滤。
 - 删除或归档策略不破坏证据链。
 
-### 验收
+### 已完成验收
 
 - 新环境可仅靠 Alembic 建立表结构。
 - 没有本地数据库或生成 SQL 被提交。
 - 模型和迁移文档同步更新。
 
-### 建议提交拆分
+### 实现记录
 
 ```text
 feat: add analysis persistence models
