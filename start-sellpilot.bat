@@ -44,8 +44,7 @@ if defined CHECK_ONLY (
 )
 
 echo Starting SellPilot backend at http://127.0.0.1:8000 ...
-start "SellPilot Backend" /D "%SELLPILOT_ROOT%backend" cmd /k "uv run uvicorn sellpilot.main:app --host 127.0.0.1 --port 8000"
-
+start "SellPilot Backend" /D "%SELLPILOT_ROOT%backend" cmd /k "uv run python -m uvicorn sellpilot.main:app --reload --host 127.0.0.1 --port 8000"
 echo Starting SellPilot frontend at http://127.0.0.1:5173 ...
 start "SellPilot Frontend" /D "%SELLPILOT_ROOT%frontend" cmd /k "npm run dev -- --host 127.0.0.1"
 
