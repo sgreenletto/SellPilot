@@ -46,6 +46,55 @@ class RiskLevel(StrEnum):
     HIGH_RISK = "HIGH_RISK"
 
 
+class AnalysisStatus(StrEnum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    SUCCEEDED = "SUCCEEDED"
+    FAILED = "FAILED"
+    ARCHIVED = "ARCHIVED"
+
+
+class ImprovementReportStatus(StrEnum):
+    DRAFT = "DRAFT"
+    READY = "READY"
+    ARCHIVED = "ARCHIVED"
+
+
+class ImprovementSuggestionStatus(StrEnum):
+    PROPOSED = "PROPOSED"
+    ACCEPTED = "ACCEPTED"
+    IGNORED = "IGNORED"
+    ARCHIVED = "ARCHIVED"
+
+
+class ProductContentStatus(StrEnum):
+    DRAFT = "DRAFT"
+    VALIDATING = "VALIDATING"
+    PASSED = "PASSED"
+    FAILED = "FAILED"
+    ARCHIVED = "ARCHIVED"
+
+
+class PromptStatus(StrEnum):
+    ACTIVE = "ACTIVE"
+    INACTIVE = "INACTIVE"
+    ARCHIVED = "ARCHIVED"
+
+
+class ModelInvocationStatus(StrEnum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    SUCCEEDED = "SUCCEEDED"
+    FAILED = "FAILED"
+    TIMED_OUT = "TIMED_OUT"
+
+
+class GeneratedReportStatus(StrEnum):
+    READY = "READY"
+    FAILED = "FAILED"
+    ARCHIVED = "ARCHIVED"
+
+
 TASK_TRANSITIONS: dict[TaskStatus, frozenset[TaskStatus]] = {
     TaskStatus.PENDING: frozenset({TaskStatus.RUNNING, TaskStatus.FAILED}),
     TaskStatus.RUNNING: frozenset({TaskStatus.SUCCEEDED, TaskStatus.FAILED}),
