@@ -1,8 +1,8 @@
 # SellPilot Backend
 
-SellPilot 公共后端架构底座，当前版本为 **0.1.0**，属于 Foundation Milestone。该版本表示公共工程基线已建立，不代表完整业务已完成或已用于生产。
+SellPilot 公共后端架构底座，当前稳定版本为 **0.1.0**，属于 Foundation Milestone。该版本表示公共工程基线已建立，不代表完整业务已完成或已用于生产。
 
-当前只提供配置、数据库、认证、统一响应、任务与确认状态机、平台适配器契约、工具注册器、MCP 和 diagnostic LangGraph。未实现任何商品、订单、库存、物流、客服、RAG 或其他跨境电商业务。
+本阶段在公共底座上增加成员三分析与内容持久化模型、Repository 和 Alembic 迁移。选品算法、评论分析、产品改良、内容生成、模型网关、业务 API、商品、订单、库存、物流、客服和 RAG 仍未实现。
 
 v0.1.0 采用普通 Git Tag 标记，不创建 GitHub Release；当前不连接真实 Shopee。
 
@@ -42,6 +42,8 @@ uv run alembic downgrade base
 ```
 
 应用启动不会执行 `create_all`。正式结构只通过 Alembic 管理。
+
+成员三持久化结构包括选品运行与结果、评论分析与证据、产品改良报告、商品内容版本、Prompt 版本、模型调用和生成报告。该结构使用稳定来源业务 ID 对接后续商品与评论服务，不直接依赖模拟 CSV；详细设计见 `../docs/architecture/analysis-persistence.md`。
 
 ## 创建管理员
 

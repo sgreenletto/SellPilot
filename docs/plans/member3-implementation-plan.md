@@ -6,7 +6,7 @@
 >
 > **目标里程碑**：以团队集成计划为准，建议对应 `v0.3.0` 业务能力里程碑
 >
-> **当前基线**：`v0.1.0 Foundation Milestone`，公共前后端底座已建立，成员三业务功能尚未实现
+> **当前基线**：`v0.1.0 Foundation Milestone`，公共领域契约及成员三分析持久化基础已建立，成员三算法和业务流程尚未实现
 >
 > **适用边界**：单用户、单模拟店铺、Mock Shopee；不接入或暗示已接入真实 Shopee
 >
@@ -47,10 +47,11 @@
 - `Sp*` 公共组件、设计变量、统一 HTTP 客户端和错误模型。
 - `/market/selection`、`/market/reviews`、`/products/content` 占位路由。
 - `data/demo/shopee_mock/` 已合入成员二生成并校验通过的完整模拟实验数据。
+- 公共领域枚举、Schema、API 包络、分页、状态流转、`RiskLevel` 与 `ToolRiskLevel` 分离契约。
+- 分析与内容持久化模型、Repository、Alembic `20260727_0002` 迁移及隔离测试。
 
 ### 2.2 当前尚未具备
 
-- 成员三业务数据库表及迁移。
 - 选品指标、利润模型、归一化、权重和机会评分。
 - 评论语言处理、情感/主题/痛点分析及证据引用。
 - 产品改良建议和报告生成。
@@ -106,7 +107,7 @@ View
 - 生成分析但不修改业务数据的工具标记为只读。
 - 创建商品草稿、保存内容版本、采纳改良建议等持久化业务操作必须进入待确认流程。
 - AgentTask、ConfirmationTask 只能由内部 Service 创建，不新增公共创建 API。
-- 系统任务、日志等内部记录是否属于免确认基础设施写入，必须在 Step 1 与成员一确认并形成书面契约，不自行假设。
+- 系统任务、日志等内部记录是否属于免确认基础设施写入，必须在对应功能开发前依据最新 `develop` 的公共服务实现核对；无法从代码和现有架构文档确认时，只向成员一确认该冲突点，不自行假设。
 
 ---
 
@@ -141,23 +142,22 @@ View
 | Step | 阶段 | 可验收成果 | 建议短期分支 |
 | ---: | --- | --- | --- |
 | 0 | 计划与基线确认 | 计划评审通过，范围无歧义 | `docs/member3-implementation-plan` |
-| 1 | 跨成员契约冻结 | 数据、API、表、确认流程和 AI 边界冻结 | `docs/member3-contracts` |
-| 2 | 数据模型与迁移 | 成员三表结构可 upgrade/downgrade | `feature/analysis-persistence` |
-| 3 | 选品计算内核 | 利润、指标、归一化和评分可独立测试 | `feature/selection-scoring` |
-| 4 | 选品服务、API 与工具 | 真实接口返回可解释选品结果 | `feature/selection-api-tools` |
-| 5 | 智能选品前端 | 条件配置、结果排序、详情和对比可用 | `feature/selection-pages` |
-| 6 | 评论分析内核 | 多语言、情感、主题、痛点和证据结构可用 | `feature/review-analysis` |
-| 7 | 评论服务、API 与工具 | 评论分析任务可通过正式接口运行 | `feature/review-api-tools` |
-| 8 | 评论分析前端 | 评论、趋势、痛点和证据页面可用 | `feature/review-pages` |
-| 9 | 产品改良与报告 | 建议、优先级、置信度和报告可追溯 | `feature/improvement-reports` |
-| 10 | 产品改良前端 | 建议编辑、采纳流程和报告展示可用 | `feature/improvement-pages` |
-| 11 | Prompt、模型网关与观测 | Prompt 版本和模型调用记录可追踪 | `feature/ai-model-management` |
-| 12 | 内容生成与质量循环 | 多语言内容经过事实和合规检查 | `feature/content-generation` |
-| 13 | 内容 API、工具与版本 | 内容版本、对比和草稿确认流程可用 | `feature/content-api-tools` |
-| 14 | 内容工坊前端 | 生成、编辑、校验、对比和恢复可用 | `feature/content-workshop` |
-| 15 | AI 评估体系 | 固定测试集、指标、失败样例和报告 | `feature/ai-evaluation` |
-| 16 | 全链路联调与加固 | 两条成员三核心闭环端到端通过 | `feature/member3-integration` |
-| 17 | 文档与交付 | 仓库技术文档完整，仓库外软著材料另行整理 | `docs/member3-delivery` |
+| 1 | 数据模型与迁移 | 成员三表结构可 upgrade/downgrade | `feature/analysis-persistence` |
+| 2 | 选品计算内核 | 利润、指标、归一化和评分可独立测试 | `feature/selection-scoring` |
+| 3 | 选品服务、API 与工具 | 真实接口返回可解释选品结果 | `feature/selection-api-tools` |
+| 4 | 智能选品前端 | 条件配置、结果排序、详情和对比可用 | `feature/selection-pages` |
+| 5 | 评论分析内核 | 多语言、情感、主题、痛点和证据结构可用 | `feature/review-analysis` |
+| 6 | 评论服务、API 与工具 | 评论分析任务可通过正式接口运行 | `feature/review-api-tools` |
+| 7 | 评论分析前端 | 评论、趋势、痛点和证据页面可用 | `feature/review-pages` |
+| 8 | 产品改良与报告 | 建议、优先级、置信度和报告可追溯 | `feature/improvement-reports` |
+| 9 | 产品改良前端 | 建议编辑、采纳流程和报告展示可用 | `feature/improvement-pages` |
+| 10 | Prompt、模型网关与观测 | Prompt 版本和模型调用记录可追踪 | `feature/ai-model-management` |
+| 11 | 内容生成与质量循环 | 多语言内容经过事实和合规检查 | `feature/content-generation` |
+| 12 | 内容 API、工具与版本 | 内容版本、对比和草稿确认流程可用 | `feature/content-api-tools` |
+| 13 | 内容工坊前端 | 生成、编辑、校验、对比和恢复可用 | `feature/content-workshop` |
+| 14 | AI 评估体系 | 固定测试集、指标、失败样例和报告 | `feature/ai-evaluation` |
+| 15 | 全链路联调与加固 | 两条成员三核心闭环端到端通过 | `feature/member3-integration` |
+| 16 | 文档与交付 | 仓库技术文档完整，仓库外软著材料另行整理 | `docs/member3-delivery` |
 
 > 分支名称必须在创建前由本人再次运行 `git branch --list` 和 `git branch -r` 检查，避免与团队已存在分支冲突。
 >
@@ -165,19 +165,19 @@ View
 
 ### 5.1 临时分支数量
 
-按当前计划严格执行时，共建立 **18 个短期分支**：
+按当前计划严格执行时，共建立 **17 个短期分支**：
 
 - Step 0 当前计划文档：1 个 `docs/*` 分支。
-- Step 1—17 后续实施：17 个短期分支。
-- 类型分布：3 个 `docs/*` 分支和 15 个 `feature/*` 分支。
+- Step 1—16 后续实施：16 个短期分支。
+- 类型分布：2 个 `docs/*` 分支和 15 个 `feature/*` 分支。
 
-当前文档合入后，成员三还需要依次完成 **17 个后续短期分支**。这些分支不是同时建立，也不长期保留；默认任意时刻只维护一个当前任务分支。
+当前文档合入后，成员三还需要依次完成 **16 个后续短期分支**。这些分支不是同时建立，也不长期保留；默认任意时刻只维护一个当前任务分支。
 
-除非团队评审明确决定合并两个高度耦合、无法独立验收的 Step，否则一个 Step 对应一个短期分支。不得为了减少分支数量而把算法、API、页面、测试和无关修复全部塞进一个长期大分支。
+每个 Step 对应一个短期分支。除非团队评审明确决定合并两个高度耦合、无法独立验收的 Step，否则不得为了减少分支数量而把算法、API、页面、测试和无关修复全部塞进一个长期大分支。
 
 ### 5.2 每个分支何时合入 `develop`
 
-每个 Step 完成后立即独立合入 `develop`，不等成员三所有功能全部做完再一次性合并：
+每个产生仓库变更的 Step 完成后立即独立合入 `develop`，不等成员三所有功能全部做完再一次性合并：
 
 ```text
 最新 develop
@@ -206,8 +206,8 @@ View
 
 ### 5.3 `main` 与 Tag 时机
 
-- Step 0—17 的短期分支都只通过 PR 合入 `develop`，不直接合入 `main`。
-- 成员三 Step 17 完成，只代表成员三范围完成，不自动触发 `main` 合并或 Tag。
+- 所有产生仓库变更的短期分支都只通过 PR 合入 `develop`，不直接合入 `main`。
+- 成员三 Step 16 完成，只代表成员三范围完成，不自动触发 `main` 合并或 Tag。
 - 需要等待团队选定的完整里程碑范围全部进入 `develop`，再执行前后端全量测试、迁移验证、演示验收和文档核对。
 - 只有上述检查通过后，才由团队按发布流程将 `develop` 合入 `main`。
 - Tag 只在 `main` 的稳定里程碑提交上创建；开发中的每个 Step、功能分支和 `develop` 都不打 Tag。
@@ -234,7 +234,7 @@ View
 - [ ] 确认 Prompt 配置页属于 P1，不阻塞 P0 主闭环。
 - [ ] 确认 AI 评估页面是否必须做页面；即使暂缓页面，测试集和评估报告也必须完成。
 - [ ] 确认 `v0.3.0` 是否作为成员三能力里程碑；Tag 按当前 `docs/git-workflow.md` 由组长在稳定 `main` 上创建。
-- [ ] 将评审结论写回本文或独立决策记录。
+- [ ] 将需要保留的评审结论更新到本文对应位置。
 
 ### 验收
 
@@ -250,7 +250,7 @@ docs: add member three implementation plan
 
 ---
 
-## Step 1：跨成员接口与数据契约冻结
+### 已冻结的跨成员公共契约与后续确认点
 
 | 项目 | 内容 |
 | --- | --- |
@@ -271,7 +271,7 @@ docs: add member three implementation plan
 ### 与成员一确认
 
 - 成员三新表的命名和公共字段。
-- Tool 命名、ToolRiskLevel、超时、输入/输出 Schema 和注册方式。
+- Tool 命名、`ToolRiskLevel`、超时、输入/输出 Schema 和注册方式；业务风险单独使用 `RiskLevel`。
 - Workflow 注册名、AgentTask 类型和节点结果格式。
 - 只读分析、保存报告、创建草稿、保存内容版本分别如何进入确认流程。
 - 报告文件存储和导出接口。
@@ -306,27 +306,25 @@ docs: add member three implementation plan
 - 金额使用精确十进制类型，时间带时区。
 - 任何结论结构都包含来源或证据字段。
 - 所有写操作的确认方式已明确。
-- 契约评审通过前不开始大规模页面或数据库开发。
+- 后续业务 Schema、页面和算法实现不得绕开已冻结的公共契约。
 
-### 建议提交
-
-```text
-docs: define member three data and api contracts
-```
+公共契约以 `docs/architecture/domain-contracts.md` 和 `docs/api/common-contracts.md` 为准；成员三业务 Schema 在对应功能 Step 内实现，不在公共模块中重复定义。
 
 ---
 
-## Step 2：成员三数据模型、Repository 与 Alembic 迁移
+## Step 1：成员三数据模型、Repository 与 Alembic 迁移
+
+> **状态**：分析与内容持久化基础已完成，包括模型、Repository、Alembic `20260727_0002` 迁移和隔离测试；本 Step 不代表选品、评论分析、产品改良或内容生成算法已经实现。
 
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 建立可追踪、可版本化、可回滚的分析与内容持久化基础 |
-| 依赖 | Step 1 契约冻结 |
+| 依赖 | 最新 `develop` 的公共架构、成员二数据实体和导入结果 |
 | MVP | `alembic upgrade head → downgrade → upgrade` 完整通过 |
 
-### 计划数据对象
+### 已建立数据对象
 
-最终表名以团队 ER 评审为准，至少覆盖：
+当前持久化基础已经覆盖：
 
 - 选品任务与结果。
 - 评论分析结果及证据关联。
@@ -336,7 +334,7 @@ docs: define member three data and api contracts
 - 模型调用记录或与公共 ToolCall/AgentTask 的关联。
 - 生成报告记录。
 
-### 实现要求
+### 已落实的实现要求
 
 - 只通过 Alembic 维护正式结构，不在应用启动时 `create_all`。
 - UUID、时间、JSON/JSONB、索引和命名规则与公共模型一致。
@@ -345,20 +343,20 @@ docs: define member three data and api contracts
 - Repository 只负责查询和持久化。
 - 补充 SQLite 隔离测试和 PostgreSQL 兼容性说明。
 
-### 测试
+### 已覆盖测试
 
 - 迁移 upgrade/downgrade/upgrade。
 - 主键、外键、唯一约束和必要索引。
 - Repository 创建、查询、分页和状态过滤。
 - 删除或归档策略不破坏证据链。
 
-### 验收
+### 已完成验收
 
 - 新环境可仅靠 Alembic 建立表结构。
 - 没有本地数据库或生成 SQL 被提交。
 - 模型和迁移文档同步更新。
 
-### 建议提交拆分
+### 实现记录
 
 ```text
 feat: add analysis persistence models
@@ -369,12 +367,12 @@ docs: document analysis data model
 
 ---
 
-## Step 3：智能选品确定性计算内核
+## Step 2：智能选品确定性计算内核
 
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 建立不依赖 LLM、可解释、可复现的选品评分算法 |
-| 依赖 | 成员二统一数据实体；Step 1 指标定义 |
+| 依赖 | 成员二统一数据实体和可用指标输入 |
 | MVP | 给定固定候选数据，稳定输出分项分数、总分、排名和依据 |
 
 ### 计算模块
@@ -432,12 +430,12 @@ docs: document selection metrics and formulas
 
 ---
 
-## Step 4：智能选品 Service、API、Tool 与工作流
+## Step 3：智能选品 Service、API、Tool 与工作流
 
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 将选品内核接入正式分层、ToolRegistry 和工作流 |
-| 依赖 | Step 2、Step 3、成员二市场数据查询 |
+| 依赖 | Step 1、Step 2、成员二市场数据查询 |
 | MVP | 认证用户通过 API 提交条件并获得结构化、可解释结果 |
 
 ### 后端实现
@@ -491,12 +489,12 @@ docs: document selection api
 
 ---
 
-## Step 5：智能选品、详情与商品对比前端
+## Step 4：智能选品、详情与商品对比前端
 
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 完成负责人表第 31—36 项 |
-| 依赖 | Step 4 API 稳定；公共组件可用 |
+| 依赖 | Step 3 API 稳定；公共组件可用 |
 | MVP | 用户配置条件后能看到真实后端结果、排序、详情、对比和报告入口 |
 
 ### 页面功能
@@ -550,12 +548,12 @@ docs: document selection page usage
 
 ---
 
-## Step 6：评论分析内核
+## Step 5：评论分析内核
 
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 建立多语言、证据驱动、可评估的评论分析流水线 |
-| 依赖 | 成员二评论查询；Step 1 Schema |
+| 依赖 | 成员二评论查询和公共 Schema 边界 |
 | MVP | 对固定评论集合输出情感、主题、痛点、趋势和代表证据 |
 
 ### 分析流程
@@ -622,12 +620,12 @@ docs: document review taxonomy and evidence rules
 
 ---
 
-## Step 7：评论分析 Service、API、Tool 与工作流
+## Step 6：评论分析 Service、API、Tool 与工作流
 
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 将评论流水线接入持久化、API、工具和 Agent 任务 |
-| 依赖 | Step 2、Step 6 |
+| 依赖 | Step 1、Step 5 |
 | MVP | 可按商品、站点和时间范围运行并查询分析任务 |
 
 ### 实现内容
@@ -669,12 +667,12 @@ docs: document review analysis api
 
 ---
 
-## Step 8：评论分析前端
+## Step 7：评论分析前端
 
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 完成负责人表第 37—40 项，并为第 41—43 项提供入口 |
-| 依赖 | Step 7 |
+| 依赖 | Step 6 |
 | MVP | 可选择商品并查看评论、翻译、情感、主题、痛点、趋势和证据 |
 
 ### 页面功能
@@ -696,7 +694,7 @@ docs: document review analysis api
 - 空数据、失败、超时和后端未连接。
 - 图表组件生命周期。
 - 响应式和键盘操作。
-- 完成后先提醒本人核对负责人表第 37—40 项；第 41—43 项必须等 Step 10 真正完成后再填写名字。
+- 完成后先提醒本人核对负责人表第 37—40 项；第 41—43 项必须等 Step 9 真正完成后再填写名字。
 
 ### 建议提交拆分
 
@@ -709,12 +707,12 @@ test: cover review analysis view
 
 ---
 
-## Step 9：产品改良建议与报告服务
+## Step 8：产品改良建议与报告服务
 
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 将评论证据转成面向运营和工厂的结构化改良方案 |
-| 依赖 | Step 7 评论分析结果 |
+| 依赖 | Step 6 评论分析结果 |
 | MVP | 生成带频率、严重度、优先级、置信度和证据的改良报告 |
 
 ### 建议结构
@@ -770,12 +768,12 @@ docs: add product improvement report specification
 
 ---
 
-## Step 10：产品改良报告前端与草稿确认入口
+## Step 9：产品改良报告前端与草稿确认入口
 
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 完成负责人表第 41—43 项 |
-| 依赖 | Step 9、成员一确认服务、成员二商品草稿服务 |
+| 依赖 | Step 8、成员一确认服务、成员二商品草稿服务 |
 | MVP | 用户可查看、编辑、采纳/忽略建议，导出报告并发起草稿待确认任务 |
 
 ### 页面功能
@@ -817,7 +815,7 @@ test: cover improvement confirmation states
 
 ---
 
-## Step 11：Prompt、模型网关与调用观测
+## Step 10：Prompt、模型网关与调用观测
 
 | 项目 | 内容 |
 | --- | --- |
@@ -865,12 +863,12 @@ docs: document prompt and model configuration
 
 ---
 
-## Step 12：商品内容生成与质量检查循环
+## Step 11：商品内容生成与质量检查循环
 
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 真实实现多语言商品内容生成、事实检查和合规检查 |
-| 依赖 | Step 11；成员二商品/SKU事实接口 |
+| 依赖 | Step 10；成员二商品/SKU事实接口 |
 | MVP | 输入商品事实和目标语言，输出通过校验的结构化内容或明确失败 |
 
 ### 输出内容
@@ -935,12 +933,12 @@ test: cover content generation quality loop
 
 ---
 
-## Step 13：内容 Service、API、Tool、版本和确认流程
+## Step 12：内容 Service、API、Tool、版本和确认流程
 
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 对外提供完整内容生成、编辑、版本比较和草稿保存能力 |
-| 依赖 | Step 2、Step 12 |
+| 依赖 | Step 1、Step 11 |
 | MVP | 可生成候选内容、人工编辑、比较版本并通过确认保存草稿 |
 
 ### API 与 Tool
@@ -957,7 +955,7 @@ test: cover content generation quality loop
 - Tool：
   - `generate_localized_listing`
   - `check_listing_compliance`
-  - `create_product_draft` 或团队冻结后的统一名称
+  - `create_product_draft` 或对应功能实现时确认的统一名称
 
 ### 状态和幂等
 
@@ -991,12 +989,12 @@ docs: document content generation api
 
 ---
 
-## Step 14：内容工坊与多语言版本对比前端
+## Step 13：内容工坊与多语言版本对比前端
 
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 完成负责人表第 50—57 项 |
-| 依赖 | Step 13 |
+| 依赖 | Step 12 |
 | MVP | 用户可以完整完成“选择商品 → 生成 → 检查 → 编辑 → 对比 → 保存草稿” |
 
 ### 页面功能
@@ -1041,12 +1039,12 @@ test: cover content workshop workflows
 
 ---
 
-## Step 15：AI 评估体系与失败案例库
+## Step 14：AI 评估体系与失败案例库
 
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 用可复现数据证明 AI 能力质量，不只展示几个成功截图 |
-| 依赖 | Step 3、Step 6、Step 9、Step 12 |
+| 依赖 | Step 2、Step 5、Step 8、Step 11 |
 | MVP | 一条命令运行固定评估集并生成可审查报告 |
 
 ### 评估数据集
@@ -1097,12 +1095,12 @@ docs: add ai evaluation report
 
 ---
 
-## Step 16：成员三全链路联调与质量加固
+## Step 15：成员三全链路联调与质量加固
 
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 验证成员三模块不是孤立功能，而是完整进入 SellPilot 业务闭环 |
-| 依赖 | Step 5、8、10、14、15；成员一、二相关模块可用 |
+| 依赖 | Step 4、7、9、13、14；成员一、二相关模块可用 |
 | MVP | 两条核心闭环在全新环境可重复运行 |
 
 ### 必须打通的闭环
@@ -1195,12 +1193,12 @@ docs: add member three integration verification
 
 ---
 
-## Step 17：技术文档、仓库外软著整理与最终交付
+## Step 16：技术文档、仓库外软著整理与最终交付
 
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 完善仓库技术文档，并在仓库外单独整理与代码版本一致的软著材料 |
-| 依赖 | Step 16 全链路验收通过 |
+| 依赖 | Step 15 全链路验收通过 |
 | MVP | 仓库内技术文档可审查；仓库外软著材料包可单独交付且未进入 Git |
 
 ### 技术文档
@@ -1476,7 +1474,7 @@ compare: docs/member3-implementation-plan
 
 | 风险 | 预防措施 |
 | --- | --- |
-| 成员二接口未稳定导致返工 | Step 1 先冻结实体和 API；成员三不直接绑定 CSV |
+| 成员二接口未稳定导致返工 | 每个功能 Step 开始前检查最新 `develop`；成员三依赖稳定抽象且不直接绑定 CSV |
 | 多人修改公共文件冲突 | 公共枚举、路由、依赖和组件接口先评审；小步 PR |
 | LLM 直接决定评分 | 评分完全由确定性算法完成，LLM 只解释 |
 | AI 编造评论证据 | 输出仅允许引用输入 review ID，校验不存在的 ID |
@@ -1554,11 +1552,11 @@ compare: docs/member3-implementation-plan
 2. 拉取最新 `develop` 并由本人创建当前任务短期分支。
 3. 复核本 Step 的依赖是否已合入，而不是只存在于队友本地。
 4. 明确本 Step 的输入、输出、文件、测试和验收标准。
-5. 先完成后端契约或算法，再接页面；必要时使用契约 Fake，不写临时假接口。
+5. 先完成后端 Schema、Service/API 或算法，再接页面；测试可使用明确的测试替身，不写会伪装成正式能力的临时假接口。
 6. 开发中保持小而清晰的主题提交。
 7. 完成后运行适用的全套检查。
 8. 更新相关文档和 PR 说明。
 9. PR 合入 `develop` 后再开始下一 Step。
 10. 前端任务完成后提醒本人更新负责人 Excel，不能遗漏，也不能提前填写。
 
-如果发现需求、接口或团队分工发生变化，应先更新计划和契约，再继续编码，避免以临时硬编码掩盖问题。
+如果发现需求、接口或团队分工发生变化，应先更新实施计划及受影响的正式架构/API文档，再继续编码，避免以临时硬编码掩盖问题。
