@@ -15,6 +15,9 @@ venv/
 env/
 ENV/
 .pytest_cache/
+.pytest-cache/
+.pytest-tmp/
+pytest-cache-files-*/
 .mypy_cache/
 .ruff_cache/
 .tox/
@@ -49,6 +52,8 @@ logs/
 tmp/
 temp/
 .cache/
+.uv-cache/
+.tmp/
 
 # Local databases
 *.db
