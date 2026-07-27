@@ -34,6 +34,7 @@ build/
 # Node, Vue, and Vite
 node_modules/
 .npm/
+.npm-cache/
 .pnpm-store/
 .yarn/
 .vite/

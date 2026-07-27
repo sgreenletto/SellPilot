@@ -1,0 +1,16 @@
+:root {
+  --el-color-primary: var(--sp-color-primary);
+  --el-color-success: var(--sp-color-success);
+  --el-color-warning: var(--sp-color-warning);
+  --el-color-danger: var(--sp-color-danger);
+  --el-color-info: var(--sp-color-info);
+  --el-border-radius-base: var(--sp-radius-control);
+  --el-font-family: var(--sp-font-family);
+}
+
+.el-message {
+  border: 1px solid var(--sp-border-highlight);
+  border-radius: var(--sp-radius-control);
+  box-shadow: var(--sp-shadow-card);
+  backdrop-filter: blur(16px);
+}

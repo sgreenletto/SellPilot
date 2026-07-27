@@ -4,9 +4,9 @@ SellPilot 是面向跨境电商卖家的 AI 运营辅助平台，首版以 Shope
 
 ## 当前状态
 
-**Public Backend Foundation / 0.1.0.dev0**
+**Backend & Frontend Foundation / 0.1.0.dev0**
 
-当前已完成公共后端架构底座。这是开发版本，不表示 `v0.1.0` 已发布；具体跨境电商业务和前端仍未实现。
+当前已完成公共后端架构底座，以及 Vue 前端公共框架、设计系统和使用模拟看板数据的经营看板。这是开发版本，不表示 `v0.1.0` 已发布；具体跨境电商业务仍未实现。
 
 ## 核心业务闭环
 
@@ -29,7 +29,7 @@ SellPilot 是面向跨境电商卖家的 AI 运营辅助平台，首版以 Shope
 
 | 范围 | 选型与状态 |
 | --- | --- |
-| 前端 | 计划采用 Vue 3、TypeScript、Vite；尚未初始化 |
+| 前端 | Vue 3、TypeScript、Vite、Vue Router、Pinia、Element Plus、ECharts |
 | 后端 | Python 3.12、FastAPI、Pydantic v2 |
 | 数据库 | SQLAlchemy 2 异步模式、Alembic；目标 PostgreSQL |
 | 认证 | PyJWT、pwdlib Argon2 |
@@ -43,7 +43,7 @@ SellPilot 是面向跨境电商卖家的 AI 运营辅助平台，首版以 Shope
 | --- | --- |
 | `.github/` | Issue 与 Pull Request 模板 |
 | `backend/` | 公共后端底座、迁移与测试 |
-| `frontend/` | 前端工程占位，尚未初始化 |
+| `frontend/` | 前端公共框架、组件库、经营看板与测试 |
 | `data/` | 原始、处理、演示数据及模板目录约定 |
 | `docs/` | 需求、架构、API、测试、部署和 Git 工作流文档 |
 | `scripts/` | 后续开发、检查和运维脚本占位 |
@@ -60,12 +60,15 @@ SellPilot 是面向跨境电商卖家的 AI 运营辅助平台，首版以 Shope
 - 只读 MCP `system_health`。
 - 无 LLM 的 diagnostic LangGraph 与公共工作流注册器。
 - 隔离 SQLite 测试和 Ruff 配置。
+- Vue 3 + TypeScript + Vite 前端工程、路由、Pinia 公共状态和统一 API 客户端。
+- 低饱和蓝灰玻璃拟态设计变量、响应式应用布局与 `Sp` 前缀公共组件。
+- 使用明确模拟数据的经营看板、原创 CSS/SVG AI Orb 和 ECharts 图表。
+- 开发环境设计系统展示页，以及尚未实现业务模块的统一占位页。
 
-安装、迁移、启动、管理员创建及验证命令见 `backend/README.md`。
+后端安装、迁移、启动、管理员创建及验证命令见 `backend/README.md`；前端命令与边界见 `frontend/README.md`。
 
 ## 当前尚未实现
 
-- Vue 3 / Vite 前端项目及页面。
 - 商品、SKU、库存、订单、物流、消息或客服业务模型。
 - 市场数据、智能选品、评论分析和产品改良。
 - 多语言内容生成、商品草稿和模拟上下架。
@@ -73,6 +76,7 @@ SellPilot 是面向跨境电商卖家的 AI 运营辅助平台，首版以 Shope
 - Mock Shopee 完整业务数据和业务方法。
 - 真实 Shopee 认证、网络请求或平台连接。
 - Docker Compose、生产部署配置和 CI/CD。
+- 正式登录交互、真实业务 API 页面、全局搜索和正式 AI 报告生成。
 
 ## 分支
 
