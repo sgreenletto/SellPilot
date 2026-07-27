@@ -175,9 +175,11 @@ Task 和 Confirmation 只能由内部 Service 创建，不提供公共创建 API
 
 - `main`：稳定发布分支。
 - `develop`：日常集成分支。
-- 日常开发使用 `feature/*`、`fix/*`、`docs/*`，发布准备可使用 `release/v*`。
-- 功能分支通过 Pull Request 合并到 `develop`，发布版本由 `develop` 合并到 `main`。
-- v0.1.0 使用普通 Git Tag，不创建 GitHub Release。
+- 一个可验收任务创建一个短期 `feature/*`、`fix/*` 或 `docs/*` 分支，不建立成员个人永久分支。
+- 所有分支合并必须通过 Pull Request；普通任务 PR 合并到 `develop`，合并后删除短期分支。
+- 只有达到明确发布里程碑时，才通过 PR 将 `develop` 合并到 `main`。
+- Tag 只能由组长在 `main` 的已测试提交上创建；已推送 Tag 不得移动，出现问题时增加 Patch 版本。
+- v0.1.0 只使用普通 Git Tag，不创建 GitHub Release；最终完整版本目标为 v1.0.0。
 
 完整规范见 `docs/git-workflow.md`。
 
