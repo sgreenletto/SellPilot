@@ -271,7 +271,7 @@ docs: add member three implementation plan
 ### 与成员一确认
 
 - 成员三新表的命名和公共字段。
-- Tool 命名、RiskLevel、超时、输入/输出 Schema 和注册方式。
+- Tool 命名、ToolRiskLevel、超时、输入/输出 Schema 和注册方式。
 - Workflow 注册名、AgentTask 类型和节点结果格式。
 - 只读分析、保存报告、创建草稿、保存内容版本分别如何进入确认流程。
 - 报告文件存储和导出接口。
