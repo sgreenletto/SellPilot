@@ -1,7 +1,85 @@
-# Backend
+# SellPilot Backend
 
-后端计划采用 FastAPI、Pydantic、SQLAlchemy、PostgreSQL 和 LangGraph。
+SellPilot 公共后端架构底座，当前版本为 **0.1.0.dev0**。这是开发版本，不表示 `v0.1.0` 已发布。
 
-当前处于 **Phase 1 / Project Initialization**，本目录仅作为后端工程占位。尚未初始化 FastAPI 项目、安装依赖、配置数据库或实现任何业务/API。
+当前只提供配置、数据库、认证、统一响应、任务与确认状态机、平台适配器契约、工具注册器、MCP 和 diagnostic LangGraph。未实现任何商品、订单、库存、物流、客服、RAG 或其他跨境电商业务。
 
-后续实现应保持业务层、应用层、基础设施层和 API 路由的职责边界，并通过平台适配器抽象访问 Shopee 相关能力。
+## 技术栈
+
+- Python 3.12 与 uv
+- FastAPI、Pydantic v2、pydantic-settings
+- SQLAlchemy 2 异步模式、Alembic
+- PostgreSQL 目标数据库
+- PyJWT、pwdlib Argon2
+- LangGraph 1.2.9
+- 官方 Python MCP SDK 1.28.1
+- pytest、pytest-asyncio、httpx、ruff
+
+## 安装
+
+在 `backend` 目录执行：
+
+```powershell
+uv sync
+```
+
+将根目录 `.env.example` 复制为根目录 `.env` 并只在本地填写安全配置。不得提交 `.env`。
+
+## 数据库迁移
+
+确保 `DATABASE_URL` 指向获准使用的 PostgreSQL 数据库，然后执行：
+
+```powershell
+uv run alembic upgrade head
+```
+
+回退全部基础迁移：
+
+```powershell
+uv run alembic downgrade base
+```
+
+应用启动不会执行 `create_all`。正式结构只通过 Alembic 管理。
+
+## 创建管理员
+
+完成迁移后，通过交互式密码输入创建单用户管理员：
+
+```powershell
+uv run sellpilot-create-admin --username admin
+```
+
+密码由 `getpass` 读取，不作为命令行参数，也不会写入日志。重复用户名会明确失败。
+
+## 启动 API
+
+```powershell
+uv run uvicorn sellpilot.main:app --host 127.0.0.1 --port 8000
+```
+
+基础地址为 `http://127.0.0.1:8000/api/v1`。
+
+## MCP
+
+MCP 服务使用官方 SDK 的 `FastMCP`，默认以 stdio 运行：
+
+```powershell
+uv run sellpilot-mcp
+```
+
+当前只暴露只读 `system_health`，不包含商品、订单、客服或外部 MCP 客户端。
+
+## 测试与代码质量
+
+```powershell
+uv run pytest -q
+uv run ruff format --check .
+uv run ruff check .
+```
+
+测试使用逐测试隔离的 SQLite 异步数据库，不访问本机 PostgreSQL、外网、真实 Shopee 或真实 LLM。SQLite 用于快速验证公共逻辑和迁移可逆性；PostgreSQL 仍是目标运行数据库，上线前必须在受控 PostgreSQL 环境补充兼容性验证。
+
+## 平台边界
+
+- `MockShopeeAdapter` 的 ping 与公共契约状态可用；所有业务方法明确抛出未实现异常。
+- `RealShopeeAdapterStub` 不发起网络请求、不读取真实密钥、不静默回退至 mock，且所有业务方法明确返回未配置错误。

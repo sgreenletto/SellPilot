@@ -1,0 +1,29 @@
+from uuid import UUID
+
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from sellpilot.db.models.agent_task import AgentTask
+
+
+class TaskRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def add(self, task: AgentTask) -> AgentTask:
+        self.session.add(task)
+        await self.session.flush()
+        return task
+
+    async def get(self, task_id: UUID) -> AgentTask | None:
+        return await self.session.get(AgentTask, task_id)
+
+    async def list(self, page: int, page_size: int) -> tuple[list[AgentTask], int]:
+        total = await self.session.scalar(select(func.count()).select_from(AgentTask))
+        result = await self.session.execute(
+            select(AgentTask)
+            .order_by(AgentTask.created_at.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        return list(result.scalars()), int(total or 0)
