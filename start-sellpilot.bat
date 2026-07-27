@@ -50,7 +50,7 @@ echo Starting SellPilot frontend at http://127.0.0.1:5173 ...
 start "SellPilot Frontend" /D "%SELLPILOT_ROOT%frontend" cmd /k "npm run dev -- --host 127.0.0.1"
 
 timeout /t 4 /nobreak >nul
-start "" "http://127.0.0.1:5173"
+start "" "http://127.0.0.1:5173/dashboard"
 
 echo SellPilot startup commands were launched in two terminal windows.
 echo Close those windows to stop the development servers.
