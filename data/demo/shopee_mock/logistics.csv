@@ -1,0 +1,444 @@
+﻿logistics_id,order_id,tracking_number,carrier,logistics_status,origin,destination,estimated_delivery_at,latest_location,updated_at,is_mock_data
+LOG000001,ORD000001,TRK000000001,LabShip,delivered,Shenzhen Demo Warehouse,Singapore,2026-06-12T00:48:00+08:00,Singapore,2026-06-09T15:48:00+08:00,true
+LOG000002,ORD000002,TRK000000002,DemoExpress,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-05-31T10:17:00+08:00,Ho Chi Minh City,2026-05-30T20:17:00+08:00,true
+LOG000003,ORD000004,TRK000000004,DemoExpress,delivered,Shenzhen Demo Warehouse,Jakarta,2026-05-03T20:47:00+08:00,Jakarta,2026-04-27T02:47:00+08:00,true
+LOG000004,ORD000005,TRK000000005,MockParcel,delivered,Shenzhen Demo Warehouse,Singapore,2026-01-29T17:57:00+08:00,Singapore,2026-01-26T02:57:00+08:00,true
+LOG000005,ORD000006,TRK000000006,LabShip,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-05-13T03:34:00+08:00,Ho Chi Minh City,2026-05-05T22:34:00+08:00,true
+LOG000006,ORD000007,TRK000000007,SampleLogistics,customs_clearance,Shenzhen Demo Warehouse,Jakarta,2026-05-04T01:41:00+08:00,Jakarta Customs,2026-04-30T18:41:00+08:00,true
+LOG000007,ORD000008,TRK000000008,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-04-08T02:12:00+08:00,Ho Chi Minh City,2026-04-07T21:12:00+08:00,true
+LOG000008,ORD000009,TRK000000009,DemoExpress,delivered,Shenzhen Demo Warehouse,Bangkok,2026-04-23T06:33:00+08:00,Bangkok,2026-04-21T14:33:00+08:00,true
+LOG000009,ORD000010,TRK000000010,DemoExpress,delivered,Shenzhen Demo Warehouse,Manila,2026-02-07T17:38:00+08:00,Manila,2026-02-04T09:38:00+08:00,true
+LOG000010,ORD000011,TRK000000011,MockParcel,delivered,Shenzhen Demo Warehouse,Jakarta,2026-01-26T18:26:00+08:00,Jakarta,2026-01-24T18:26:00+08:00,true
+LOG000011,ORD000012,TRK000000012,DemoExpress,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-05-08T08:11:00+08:00,Kuala Lumpur,2026-05-02T14:11:00+08:00,true
+LOG000012,ORD000013,TRK000000013,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-06-22T15:19:00+08:00,Shenzhen Demo Warehouse,2026-06-19T13:19:00+08:00,true
+LOG000013,ORD000014,TRK000000014,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Manila,2026-04-06T11:23:00+08:00,Shenzhen Demo Warehouse,2026-04-03T19:23:00+08:00,true
+LOG000014,ORD000015,TRK000000015,SampleLogistics,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-02-02T06:53:00+08:00,Kuala Lumpur,2026-01-31T09:53:00+08:00,true
+LOG000015,ORD000016,TRK000000016,LabShip,delivered,Shenzhen Demo Warehouse,Jakarta,2026-02-08T19:41:00+08:00,Jakarta,2026-02-02T16:41:00+08:00,true
+LOG000016,ORD000017,TRK000000017,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Bangkok,2026-05-24T12:25:00+08:00,Shenzhen Demo Warehouse,2026-05-16T16:25:00+08:00,true
+LOG000017,ORD000018,TRK000000018,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Jakarta,2026-05-22T00:06:00+08:00,Shenzhen Demo Warehouse,2026-05-13T16:06:00+08:00,true
+LOG000018,ORD000019,TRK000000019,DemoExpress,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-04-20T15:46:00+08:00,Kuala Lumpur,2026-04-15T07:46:00+08:00,true
+LOG000019,ORD000020,TRK000000020,DemoExpress,delivered,Shenzhen Demo Warehouse,Jakarta,2026-06-05T14:01:00+08:00,Jakarta,2026-06-02T01:01:00+08:00,true
+LOG000020,ORD000021,TRK000000021,MockParcel,in_transit,Shenzhen Demo Warehouse,Manila,2026-04-23T06:04:00+08:00,Regional Transit Hub,2026-04-21T14:04:00+08:00,true
+LOG000021,ORD000022,TRK000000022,MockParcel,delivered,Shenzhen Demo Warehouse,Singapore,2026-02-11T01:44:00+08:00,Singapore,2026-02-08T16:44:00+08:00,true
+LOG000022,ORD000024,TRK000000024,DemoExpress,in_transit,Shenzhen Demo Warehouse,Bangkok,2026-04-08T15:37:00+08:00,Regional Transit Hub,2026-04-02T15:37:00+08:00,true
+LOG000023,ORD000025,TRK000000025,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-06-03T08:53:00+08:00,Shenzhen Demo Warehouse,2026-05-28T10:53:00+08:00,true
+LOG000024,ORD000026,TRK000000026,DemoExpress,delivered,Shenzhen Demo Warehouse,Bangkok,2026-02-10T23:39:00+08:00,Bangkok,2026-02-06T14:39:00+08:00,true
+LOG000025,ORD000027,TRK000000027,MockParcel,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-05-16T23:39:00+08:00,Ho Chi Minh City,2026-05-11T07:39:00+08:00,true
+LOG000026,ORD000028,TRK000000028,MockParcel,delivered,Shenzhen Demo Warehouse,Jakarta,2026-06-21T21:13:00+08:00,Jakarta,2026-06-15T17:13:00+08:00,true
+LOG000027,ORD000029,TRK000000029,LabShip,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-05-17T14:05:00+08:00,Kuala Lumpur,2026-05-14T15:05:00+08:00,true
+LOG000028,ORD000030,TRK000000030,MockParcel,in_transit,Shenzhen Demo Warehouse,Singapore,2026-06-06T11:03:00+08:00,Regional Transit Hub,2026-05-30T16:03:00+08:00,true
+LOG000029,ORD000031,TRK000000031,SampleLogistics,delivered,Shenzhen Demo Warehouse,Singapore,2026-05-23T12:47:00+08:00,Singapore,2026-05-18T08:47:00+08:00,true
+LOG000030,ORD000033,TRK000000033,SampleLogistics,picked_up,Shenzhen Demo Warehouse,Jakarta,2026-04-03T05:46:00+08:00,Shenzhen Sorting Center,2026-03-28T19:46:00+08:00,true
+LOG000031,ORD000034,TRK000000034,MockParcel,delivered,Shenzhen Demo Warehouse,Manila,2026-06-13T10:48:00+08:00,Manila,2026-06-06T14:48:00+08:00,true
+LOG000032,ORD000035,TRK000000035,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Bangkok,2026-04-30T03:43:00+08:00,Shenzhen Demo Warehouse,2026-04-22T12:43:00+08:00,true
+LOG000033,ORD000036,TRK000000036,SampleLogistics,delivered,Shenzhen Demo Warehouse,Manila,2026-05-14T09:33:00+08:00,Manila,2026-05-10T04:33:00+08:00,true
+LOG000034,ORD000037,TRK000000037,SampleLogistics,delivered,Shenzhen Demo Warehouse,Manila,2026-06-25T00:36:00+08:00,Manila,2026-06-19T13:36:00+08:00,true
+LOG000035,ORD000038,TRK000000038,SampleLogistics,delivered,Shenzhen Demo Warehouse,Singapore,2026-03-31T02:58:00+08:00,Singapore,2026-03-25T09:58:00+08:00,true
+LOG000036,ORD000039,TRK000000039,MockParcel,delivered,Shenzhen Demo Warehouse,Jakarta,2026-06-05T10:43:00+08:00,Jakarta,2026-06-03T23:43:00+08:00,true
+LOG000037,ORD000040,TRK000000040,LabShip,delivered,Shenzhen Demo Warehouse,Singapore,2026-02-28T10:57:00+08:00,Singapore,2026-02-24T07:57:00+08:00,true
+LOG000038,ORD000043,TRK000000043,MockParcel,delivered,Shenzhen Demo Warehouse,Singapore,2026-05-19T07:19:00+08:00,Singapore,2026-05-14T01:19:00+08:00,true
+LOG000039,ORD000044,TRK000000044,MockParcel,customs_clearance,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-05-25T03:37:00+08:00,Ho Chi Minh City Customs,2026-05-22T08:37:00+08:00,true
+LOG000040,ORD000045,TRK000000045,LabShip,delivered,Shenzhen Demo Warehouse,Singapore,2026-05-31T23:31:00+08:00,Singapore,2026-05-30T13:31:00+08:00,true
+LOG000041,ORD000046,TRK000000046,MockParcel,delivered,Shenzhen Demo Warehouse,Manila,2026-04-25T12:08:00+08:00,Manila,2026-04-24T02:08:00+08:00,true
+LOG000042,ORD000047,TRK000000047,MockParcel,delivered,Shenzhen Demo Warehouse,Bangkok,2026-04-20T00:22:00+08:00,Bangkok,2026-04-14T02:22:00+08:00,true
+LOG000043,ORD000048,TRK000000048,LabShip,delivered,Shenzhen Demo Warehouse,Manila,2026-04-20T17:51:00+08:00,Manila,2026-04-15T17:51:00+08:00,true
+LOG000044,ORD000049,TRK000000049,SampleLogistics,delivered,Shenzhen Demo Warehouse,Manila,2026-01-29T15:39:00+08:00,Manila,2026-01-24T22:39:00+08:00,true
+LOG000045,ORD000050,TRK000000050,SampleLogistics,picked_up,Shenzhen Demo Warehouse,Bangkok,2026-06-15T07:27:00+08:00,Shenzhen Sorting Center,2026-06-12T12:27:00+08:00,true
+LOG000046,ORD000052,TRK000000052,LabShip,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-02-12T10:21:00+08:00,Ho Chi Minh City,2026-02-12T02:21:00+08:00,true
+LOG000047,ORD000053,TRK000000053,LabShip,pending_pickup,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-04-02T01:03:00+08:00,Shenzhen Demo Warehouse,2026-03-26T21:03:00+08:00,true
+LOG000048,ORD000054,TRK000000054,LabShip,delivered,Shenzhen Demo Warehouse,Jakarta,2026-05-08T15:29:00+08:00,Jakarta,2026-05-08T00:29:00+08:00,true
+LOG000049,ORD000055,TRK000000055,LabShip,delivered,Shenzhen Demo Warehouse,Bangkok,2026-02-06T10:37:00+08:00,Bangkok,2026-02-04T01:37:00+08:00,true
+LOG000050,ORD000056,TRK000000056,DemoExpress,in_transit,Shenzhen Demo Warehouse,Singapore,2026-05-28T20:37:00+08:00,Regional Transit Hub,2026-05-26T04:37:00+08:00,true
+LOG000051,ORD000057,TRK000000057,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Jakarta,2026-01-15T18:53:00+08:00,Shenzhen Demo Warehouse,2026-01-09T18:53:00+08:00,true
+LOG000052,ORD000058,TRK000000058,LabShip,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-05-21T15:30:00+08:00,Shenzhen Demo Warehouse,2026-05-18T13:30:00+08:00,true
+LOG000053,ORD000059,TRK000000059,MockParcel,delivered,Shenzhen Demo Warehouse,Bangkok,2026-01-25T05:14:00+08:00,Bangkok,2026-01-23T19:14:00+08:00,true
+LOG000054,ORD000060,TRK000000060,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-02-20T22:40:00+08:00,Shenzhen Demo Warehouse,2026-02-16T19:40:00+08:00,true
+LOG000055,ORD000061,TRK000000061,SampleLogistics,delivered,Shenzhen Demo Warehouse,Bangkok,2026-05-02T07:48:00+08:00,Bangkok,2026-04-29T11:48:00+08:00,true
+LOG000056,ORD000062,TRK000000062,MockParcel,delivered,Shenzhen Demo Warehouse,Bangkok,2026-05-11T02:48:00+08:00,Bangkok,2026-05-06T11:48:00+08:00,true
+LOG000057,ORD000063,TRK000000063,SampleLogistics,delivered,Shenzhen Demo Warehouse,Manila,2026-04-13T19:52:00+08:00,Manila,2026-04-11T00:52:00+08:00,true
+LOG000058,ORD000064,TRK000000064,LabShip,delivered,Shenzhen Demo Warehouse,Bangkok,2026-02-19T11:08:00+08:00,Bangkok,2026-02-16T03:08:00+08:00,true
+LOG000059,ORD000065,TRK000000065,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Jakarta,2026-05-02T19:06:00+08:00,Shenzhen Demo Warehouse,2026-04-29T12:06:00+08:00,true
+LOG000060,ORD000066,TRK000000066,MockParcel,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-03-16T00:48:00+08:00,Kuala Lumpur,2026-03-14T08:48:00+08:00,true
+LOG000061,ORD000067,TRK000000067,LabShip,delivered,Shenzhen Demo Warehouse,Jakarta,2026-01-19T03:00:00+08:00,Jakarta,2026-01-18T06:00:00+08:00,true
+LOG000062,ORD000068,TRK000000068,MockParcel,delivered,Shenzhen Demo Warehouse,Manila,2026-06-07T08:20:00+08:00,Manila,2026-06-04T06:20:00+08:00,true
+LOG000063,ORD000069,TRK000000069,SampleLogistics,in_transit,Shenzhen Demo Warehouse,Jakarta,2026-05-07T19:04:00+08:00,Regional Transit Hub,2026-05-05T11:04:00+08:00,true
+LOG000064,ORD000070,TRK000000070,LabShip,pending_pickup,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-07-01T19:43:00+08:00,Shenzhen Demo Warehouse,2026-06-28T04:43:00+08:00,true
+LOG000065,ORD000071,TRK000000071,MockParcel,delivered,Shenzhen Demo Warehouse,Bangkok,2026-03-11T00:21:00+08:00,Bangkok,2026-03-09T23:21:00+08:00,true
+LOG000066,ORD000072,TRK000000072,MockParcel,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-04-05T16:20:00+08:00,Ho Chi Minh City,2026-04-04T06:20:00+08:00,true
+LOG000067,ORD000073,TRK000000073,SampleLogistics,delivered,Shenzhen Demo Warehouse,Bangkok,2026-02-28T09:01:00+08:00,Bangkok,2026-02-27T17:01:00+08:00,true
+LOG000068,ORD000074,TRK000000074,MockParcel,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-03-22T17:04:00+08:00,Ho Chi Minh City,2026-03-18T10:04:00+08:00,true
+LOG000069,ORD000075,TRK000000075,SampleLogistics,delivered,Shenzhen Demo Warehouse,Singapore,2026-01-25T02:07:00+08:00,Singapore,2026-01-20T17:07:00+08:00,true
+LOG000070,ORD000076,TRK000000076,LabShip,picked_up,Shenzhen Demo Warehouse,Bangkok,2026-04-03T04:34:00+08:00,Shenzhen Sorting Center,2026-03-31T10:34:00+08:00,true
+LOG000071,ORD000077,TRK000000077,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-03-26T08:39:00+08:00,Ho Chi Minh City,2026-03-24T03:39:00+08:00,true
+LOG000072,ORD000078,TRK000000078,DemoExpress,delivered,Shenzhen Demo Warehouse,Singapore,2026-03-06T12:47:00+08:00,Singapore,2026-02-28T15:47:00+08:00,true
+LOG000073,ORD000079,TRK000000079,SampleLogistics,in_transit,Shenzhen Demo Warehouse,Manila,2026-06-23T03:08:00+08:00,Regional Transit Hub,2026-06-18T21:08:00+08:00,true
+LOG000074,ORD000082,TRK000000082,LabShip,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-03-24T21:56:00+08:00,Kuala Lumpur,2026-03-22T06:56:00+08:00,true
+LOG000075,ORD000083,TRK000000083,MockParcel,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-03-18T23:34:00+08:00,Kuala Lumpur,2026-03-13T12:34:00+08:00,true
+LOG000076,ORD000084,TRK000000084,DemoExpress,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-04-05T22:05:00+08:00,Ho Chi Minh City,2026-04-04T00:05:00+08:00,true
+LOG000077,ORD000085,TRK000000085,LabShip,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-07-02T12:14:00+08:00,Kuala Lumpur,2026-07-01T07:14:00+08:00,true
+LOG000078,ORD000086,TRK000000086,LabShip,delivered,Shenzhen Demo Warehouse,Bangkok,2026-06-25T09:15:00+08:00,Bangkok,2026-06-22T15:15:00+08:00,true
+LOG000079,ORD000087,TRK000000087,SampleLogistics,in_transit,Shenzhen Demo Warehouse,Singapore,2026-06-07T19:33:00+08:00,Regional Transit Hub,2026-06-04T19:33:00+08:00,true
+LOG000080,ORD000088,TRK000000088,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-03-17T12:06:00+08:00,Shenzhen Demo Warehouse,2026-03-10T03:06:00+08:00,true
+LOG000081,ORD000089,TRK000000089,LabShip,delivered,Shenzhen Demo Warehouse,Bangkok,2026-03-24T11:08:00+08:00,Bangkok,2026-03-21T03:08:00+08:00,true
+LOG000082,ORD000090,TRK000000090,LabShip,delivered,Shenzhen Demo Warehouse,Jakarta,2026-01-15T20:56:00+08:00,Jakarta,2026-01-13T11:56:00+08:00,true
+LOG000083,ORD000091,TRK000000091,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-01-24T10:24:00+08:00,Shenzhen Demo Warehouse,2026-01-18T15:24:00+08:00,true
+LOG000084,ORD000092,TRK000000092,DemoExpress,delivered,Shenzhen Demo Warehouse,Jakarta,2026-06-08T01:30:00+08:00,Jakarta,2026-06-07T08:30:00+08:00,true
+LOG000085,ORD000093,TRK000000093,DemoExpress,delivered,Shenzhen Demo Warehouse,Singapore,2026-01-24T00:14:00+08:00,Singapore,2026-01-21T18:14:00+08:00,true
+LOG000086,ORD000094,TRK000000094,LabShip,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-05-04T15:21:00+08:00,Kuala Lumpur,2026-04-28T15:21:00+08:00,true
+LOG000087,ORD000095,TRK000000095,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-06-18T21:07:00+08:00,Shenzhen Demo Warehouse,2026-06-13T03:07:00+08:00,true
+LOG000088,ORD000096,TRK000000096,LabShip,delivered,Shenzhen Demo Warehouse,Manila,2026-03-18T12:31:00+08:00,Manila,2026-03-15T11:31:00+08:00,true
+LOG000089,ORD000097,TRK000000097,MockParcel,delivered,Shenzhen Demo Warehouse,Singapore,2026-05-30T08:20:00+08:00,Singapore,2026-05-28T00:20:00+08:00,true
+LOG000090,ORD000098,TRK000000098,DemoExpress,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-01-25T12:29:00+08:00,Kuala Lumpur,2026-01-21T22:29:00+08:00,true
+LOG000091,ORD000099,TRK000000099,SampleLogistics,delivered,Shenzhen Demo Warehouse,Jakarta,2026-04-14T11:22:00+08:00,Jakarta,2026-04-10T07:22:00+08:00,true
+LOG000092,ORD000100,TRK000000100,DemoExpress,customs_clearance,Shenzhen Demo Warehouse,Bangkok,2026-05-20T21:21:00+08:00,Bangkok Customs,2026-05-18T05:21:00+08:00,true
+LOG000093,ORD000101,TRK000000101,MockParcel,delivered,Shenzhen Demo Warehouse,Bangkok,2026-04-27T13:29:00+08:00,Bangkok,2026-04-21T02:29:00+08:00,true
+LOG000094,ORD000102,TRK000000102,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-05-16T08:21:00+08:00,Ho Chi Minh City,2026-05-14T15:21:00+08:00,true
+LOG000095,ORD000103,TRK000000103,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-02-26T04:01:00+08:00,Ho Chi Minh City,2026-02-22T04:01:00+08:00,true
+LOG000096,ORD000104,TRK000000104,DemoExpress,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-02-16T15:15:00+08:00,Kuala Lumpur,2026-02-10T05:15:00+08:00,true
+LOG000097,ORD000105,TRK000000105,DemoExpress,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-05-08T07:54:00+08:00,Kuala Lumpur,2026-05-08T04:54:00+08:00,true
+LOG000098,ORD000106,TRK000000106,MockParcel,delivered,Shenzhen Demo Warehouse,Manila,2026-04-10T21:33:00+08:00,Manila,2026-04-10T18:33:00+08:00,true
+LOG000099,ORD000107,TRK000000107,SampleLogistics,delivered,Shenzhen Demo Warehouse,Bangkok,2026-01-26T04:31:00+08:00,Bangkok,2026-01-23T06:31:00+08:00,true
+LOG000100,ORD000109,TRK000000109,SampleLogistics,exception,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-07-02T16:05:00+08:00,Regional Transit Hub,2026-06-30T17:05:00+08:00,true
+LOG000101,ORD000110,TRK000000110,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-07-06T19:05:00+08:00,Shenzhen Demo Warehouse,2026-06-30T14:05:00+08:00,true
+LOG000102,ORD000111,TRK000000111,DemoExpress,customs_clearance,Shenzhen Demo Warehouse,Kuala Lumpur,2026-02-10T06:07:00+08:00,Kuala Lumpur Customs,2026-02-06T16:07:00+08:00,true
+LOG000103,ORD000112,TRK000000112,LabShip,delivered,Shenzhen Demo Warehouse,Bangkok,2026-04-20T23:33:00+08:00,Bangkok,2026-04-18T08:33:00+08:00,true
+LOG000104,ORD000113,TRK000000113,DemoExpress,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-04-02T11:44:00+08:00,Kuala Lumpur,2026-04-01T02:44:00+08:00,true
+LOG000105,ORD000114,TRK000000114,SampleLogistics,delivered,Shenzhen Demo Warehouse,Manila,2026-04-10T16:17:00+08:00,Manila,2026-04-08T06:17:00+08:00,true
+LOG000106,ORD000115,TRK000000115,DemoExpress,in_transit,Shenzhen Demo Warehouse,Singapore,2026-05-06T11:38:00+08:00,Regional Transit Hub,2026-04-29T02:38:00+08:00,true
+LOG000107,ORD000116,TRK000000116,MockParcel,delivered,Shenzhen Demo Warehouse,Jakarta,2026-05-10T10:24:00+08:00,Jakarta,2026-05-09T22:24:00+08:00,true
+LOG000108,ORD000117,TRK000000117,LabShip,pending_pickup,Shenzhen Demo Warehouse,Jakarta,2026-02-26T05:37:00+08:00,Shenzhen Demo Warehouse,2026-02-23T10:37:00+08:00,true
+LOG000109,ORD000118,TRK000000118,DemoExpress,delivered,Shenzhen Demo Warehouse,Manila,2026-03-01T09:02:00+08:00,Manila,2026-02-28T13:02:00+08:00,true
+LOG000110,ORD000119,TRK000000119,LabShip,delivered,Shenzhen Demo Warehouse,Jakarta,2026-06-02T05:03:00+08:00,Jakarta,2026-05-28T22:03:00+08:00,true
+LOG000111,ORD000120,TRK000000120,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-03-19T16:39:00+08:00,Shenzhen Demo Warehouse,2026-03-16T19:39:00+08:00,true
+LOG000112,ORD000121,TRK000000121,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Jakarta,2026-05-19T06:39:00+08:00,Shenzhen Demo Warehouse,2026-05-11T04:39:00+08:00,true
+LOG000113,ORD000122,TRK000000122,LabShip,delivered,Shenzhen Demo Warehouse,Bangkok,2026-03-19T11:19:00+08:00,Bangkok,2026-03-14T15:19:00+08:00,true
+LOG000114,ORD000123,TRK000000123,LabShip,in_transit,Shenzhen Demo Warehouse,Jakarta,2026-05-24T09:49:00+08:00,Regional Transit Hub,2026-05-20T10:49:00+08:00,true
+LOG000115,ORD000124,TRK000000124,SampleLogistics,picked_up,Shenzhen Demo Warehouse,Singapore,2026-02-17T11:58:00+08:00,Shenzhen Sorting Center,2026-02-11T18:58:00+08:00,true
+LOG000116,ORD000125,TRK000000125,SampleLogistics,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-06-10T16:59:00+08:00,Kuala Lumpur,2026-06-10T05:59:00+08:00,true
+LOG000117,ORD000126,TRK000000126,SampleLogistics,delivered,Shenzhen Demo Warehouse,Singapore,2026-02-08T12:59:00+08:00,Singapore,2026-02-08T00:59:00+08:00,true
+LOG000118,ORD000128,TRK000000128,SampleLogistics,delivered,Shenzhen Demo Warehouse,Manila,2026-01-29T16:51:00+08:00,Manila,2026-01-28T17:51:00+08:00,true
+LOG000119,ORD000129,TRK000000129,LabShip,delivered,Shenzhen Demo Warehouse,Manila,2026-05-14T19:15:00+08:00,Manila,2026-05-11T09:15:00+08:00,true
+LOG000120,ORD000130,TRK000000130,SampleLogistics,delivered,Shenzhen Demo Warehouse,Bangkok,2026-06-08T19:35:00+08:00,Bangkok,2026-06-06T11:35:00+08:00,true
+LOG000121,ORD000131,TRK000000131,MockParcel,in_transit,Shenzhen Demo Warehouse,Bangkok,2026-06-13T00:48:00+08:00,Regional Transit Hub,2026-06-10T23:48:00+08:00,true
+LOG000122,ORD000132,TRK000000132,DemoExpress,delivered,Shenzhen Demo Warehouse,Manila,2026-01-30T01:27:00+08:00,Manila,2026-01-27T22:27:00+08:00,true
+LOG000123,ORD000133,TRK000000133,DemoExpress,delivered,Shenzhen Demo Warehouse,Bangkok,2026-04-15T21:26:00+08:00,Bangkok,2026-04-13T22:26:00+08:00,true
+LOG000124,ORD000134,TRK000000134,SampleLogistics,delivered,Shenzhen Demo Warehouse,Singapore,2026-05-23T02:11:00+08:00,Singapore,2026-05-21T22:11:00+08:00,true
+LOG000125,ORD000135,TRK000000135,SampleLogistics,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-05-12T06:29:00+08:00,Kuala Lumpur,2026-05-07T06:29:00+08:00,true
+LOG000126,ORD000136,TRK000000136,DemoExpress,delivered,Shenzhen Demo Warehouse,Singapore,2026-03-19T07:35:00+08:00,Singapore,2026-03-18T03:35:00+08:00,true
+LOG000127,ORD000137,TRK000000137,DemoExpress,delivered,Shenzhen Demo Warehouse,Manila,2026-03-13T16:11:00+08:00,Manila,2026-03-11T11:11:00+08:00,true
+LOG000128,ORD000138,TRK000000138,LabShip,delivered,Shenzhen Demo Warehouse,Jakarta,2026-06-04T00:31:00+08:00,Jakarta,2026-06-02T08:31:00+08:00,true
+LOG000129,ORD000139,TRK000000139,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-03-19T13:24:00+08:00,Shenzhen Demo Warehouse,2026-03-13T20:24:00+08:00,true
+LOG000130,ORD000140,TRK000000140,MockParcel,delivered,Shenzhen Demo Warehouse,Jakarta,2026-01-31T16:13:00+08:00,Jakarta,2026-01-29T10:13:00+08:00,true
+LOG000131,ORD000141,TRK000000141,LabShip,delivered,Shenzhen Demo Warehouse,Singapore,2026-01-16T09:42:00+08:00,Singapore,2026-01-12T17:42:00+08:00,true
+LOG000132,ORD000142,TRK000000142,DemoExpress,exception,Shenzhen Demo Warehouse,Singapore,2026-03-22T15:18:00+08:00,Regional Transit Hub,2026-03-18T19:18:00+08:00,true
+LOG000133,ORD000143,TRK000000143,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Bangkok,2026-04-23T17:32:00+08:00,Shenzhen Demo Warehouse,2026-04-20T18:32:00+08:00,true
+LOG000134,ORD000144,TRK000000144,LabShip,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-04-05T09:32:00+08:00,Shenzhen Demo Warehouse,2026-03-31T05:32:00+08:00,true
+LOG000135,ORD000145,TRK000000145,MockParcel,customs_clearance,Shenzhen Demo Warehouse,Jakarta,2026-06-05T00:47:00+08:00,Jakarta Customs,2026-06-03T13:47:00+08:00,true
+LOG000136,ORD000146,TRK000000146,DemoExpress,delivered,Shenzhen Demo Warehouse,Singapore,2026-02-17T20:21:00+08:00,Singapore,2026-02-12T14:21:00+08:00,true
+LOG000137,ORD000148,TRK000000148,MockParcel,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-03-08T20:40:00+08:00,Kuala Lumpur,2026-03-04T14:40:00+08:00,true
+LOG000138,ORD000150,TRK000000150,LabShip,delivered,Shenzhen Demo Warehouse,Manila,2026-01-17T19:18:00+08:00,Manila,2026-01-16T06:18:00+08:00,true
+LOG000139,ORD000151,TRK000000151,DemoExpress,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-02-19T16:42:00+08:00,Kuala Lumpur,2026-02-16T07:42:00+08:00,true
+LOG000140,ORD000152,TRK000000152,DemoExpress,delivered,Shenzhen Demo Warehouse,Singapore,2026-02-09T03:41:00+08:00,Singapore,2026-02-05T18:41:00+08:00,true
+LOG000141,ORD000153,TRK000000153,LabShip,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-03-23T14:41:00+08:00,Shenzhen Demo Warehouse,2026-03-19T22:41:00+08:00,true
+LOG000142,ORD000154,TRK000000154,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-06-01T13:10:00+08:00,Ho Chi Minh City,2026-05-30T21:10:00+08:00,true
+LOG000143,ORD000155,TRK000000155,LabShip,delivered,Shenzhen Demo Warehouse,Jakarta,2026-07-04T14:58:00+08:00,Jakarta,2026-07-02T12:58:00+08:00,true
+LOG000144,ORD000156,TRK000000156,MockParcel,delivered,Shenzhen Demo Warehouse,Singapore,2026-05-21T07:55:00+08:00,Singapore,2026-05-18T18:55:00+08:00,true
+LOG000145,ORD000157,TRK000000157,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-04-22T03:30:00+08:00,Ho Chi Minh City,2026-04-22T08:30:00+08:00,true
+LOG000146,ORD000158,TRK000000158,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-07-01T04:06:00+08:00,Ho Chi Minh City,2026-06-29T05:06:00+08:00,true
+LOG000147,ORD000159,TRK000000159,MockParcel,delivered,Shenzhen Demo Warehouse,Jakarta,2026-05-15T00:13:00+08:00,Jakarta,2026-05-10T16:13:00+08:00,true
+LOG000148,ORD000160,TRK000000160,MockParcel,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-03-17T05:45:00+08:00,Ho Chi Minh City,2026-03-15T10:45:00+08:00,true
+LOG000149,ORD000161,TRK000000161,LabShip,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-01-17T08:10:00+08:00,Kuala Lumpur,2026-01-15T20:10:00+08:00,true
+LOG000150,ORD000162,TRK000000162,DemoExpress,in_transit,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-03-23T23:41:00+08:00,Regional Transit Hub,2026-03-20T15:41:00+08:00,true
+LOG000151,ORD000163,TRK000000163,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-07-03T01:16:00+08:00,Ho Chi Minh City,2026-06-28T07:16:00+08:00,true
+LOG000152,ORD000164,TRK000000164,SampleLogistics,in_transit,Shenzhen Demo Warehouse,Singapore,2026-01-10T01:00:00+08:00,Regional Transit Hub,2026-01-08T11:00:00+08:00,true
+LOG000153,ORD000165,TRK000000165,DemoExpress,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-04-17T07:42:00+08:00,Ho Chi Minh City,2026-04-14T16:42:00+08:00,true
+LOG000154,ORD000166,TRK000000166,LabShip,delivered,Shenzhen Demo Warehouse,Singapore,2026-01-19T08:19:00+08:00,Singapore,2026-01-17T20:19:00+08:00,true
+LOG000155,ORD000167,TRK000000167,LabShip,in_transit,Shenzhen Demo Warehouse,Bangkok,2026-04-30T23:06:00+08:00,Regional Transit Hub,2026-04-24T03:06:00+08:00,true
+LOG000156,ORD000168,TRK000000168,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-07-02T08:05:00+08:00,Shenzhen Demo Warehouse,2026-06-28T01:05:00+08:00,true
+LOG000157,ORD000169,TRK000000169,LabShip,delivered,Shenzhen Demo Warehouse,Singapore,2026-04-30T08:52:00+08:00,Singapore,2026-04-26T20:52:00+08:00,true
+LOG000158,ORD000170,TRK000000170,LabShip,delivered,Shenzhen Demo Warehouse,Singapore,2026-03-21T12:04:00+08:00,Singapore,2026-03-19T03:04:00+08:00,true
+LOG000159,ORD000171,TRK000000171,DemoExpress,delivered,Shenzhen Demo Warehouse,Manila,2026-04-06T21:45:00+08:00,Manila,2026-04-02T04:45:00+08:00,true
+LOG000160,ORD000172,TRK000000172,LabShip,delivered,Shenzhen Demo Warehouse,Jakarta,2026-02-01T13:20:00+08:00,Jakarta,2026-01-28T16:20:00+08:00,true
+LOG000161,ORD000173,TRK000000173,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-02-08T21:22:00+08:00,Shenzhen Demo Warehouse,2026-02-04T22:22:00+08:00,true
+LOG000162,ORD000174,TRK000000174,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Manila,2026-05-15T23:27:00+08:00,Shenzhen Demo Warehouse,2026-05-13T16:27:00+08:00,true
+LOG000163,ORD000175,TRK000000175,SampleLogistics,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-04-25T06:43:00+08:00,Kuala Lumpur,2026-04-20T13:43:00+08:00,true
+LOG000164,ORD000176,TRK000000176,DemoExpress,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-05-19T23:06:00+08:00,Ho Chi Minh City,2026-05-19T03:06:00+08:00,true
+LOG000165,ORD000177,TRK000000177,LabShip,delivered,Shenzhen Demo Warehouse,Singapore,2026-05-07T19:48:00+08:00,Singapore,2026-05-01T07:48:00+08:00,true
+LOG000166,ORD000178,TRK000000178,LabShip,delivered,Shenzhen Demo Warehouse,Manila,2026-03-06T14:29:00+08:00,Manila,2026-02-26T19:29:00+08:00,true
+LOG000167,ORD000179,TRK000000179,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Bangkok,2026-04-05T07:11:00+08:00,Shenzhen Demo Warehouse,2026-04-01T17:11:00+08:00,true
+LOG000168,ORD000181,TRK000000181,MockParcel,delivered,Shenzhen Demo Warehouse,Manila,2026-01-30T07:27:00+08:00,Manila,2026-01-25T02:27:00+08:00,true
+LOG000169,ORD000182,TRK000000182,MockParcel,delivered,Shenzhen Demo Warehouse,Singapore,2026-03-06T04:03:00+08:00,Singapore,2026-03-02T15:03:00+08:00,true
+LOG000170,ORD000183,TRK000000183,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Bangkok,2026-05-26T11:18:00+08:00,Shenzhen Demo Warehouse,2026-05-19T12:18:00+08:00,true
+LOG000171,ORD000184,TRK000000184,MockParcel,in_transit,Shenzhen Demo Warehouse,Manila,2026-06-19T22:37:00+08:00,Regional Transit Hub,2026-06-14T14:37:00+08:00,true
+LOG000172,ORD000185,TRK000000185,LabShip,customs_clearance,Shenzhen Demo Warehouse,Singapore,2026-02-15T02:01:00+08:00,Singapore Customs,2026-02-08T03:01:00+08:00,true
+LOG000173,ORD000187,TRK000000187,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-05-10T14:26:00+08:00,Shenzhen Demo Warehouse,2026-05-07T05:26:00+08:00,true
+LOG000174,ORD000189,TRK000000189,SampleLogistics,in_transit,Shenzhen Demo Warehouse,Singapore,2026-01-26T16:36:00+08:00,Regional Transit Hub,2026-01-23T15:36:00+08:00,true
+LOG000175,ORD000190,TRK000000190,LabShip,exception,Shenzhen Demo Warehouse,Singapore,2026-01-13T18:32:00+08:00,Regional Transit Hub,2026-01-13T05:32:00+08:00,true
+LOG000176,ORD000191,TRK000000191,LabShip,delivered,Shenzhen Demo Warehouse,Manila,2026-06-29T04:32:00+08:00,Manila,2026-06-27T14:32:00+08:00,true
+LOG000177,ORD000192,TRK000000192,LabShip,in_transit,Shenzhen Demo Warehouse,Singapore,2026-02-05T10:26:00+08:00,Regional Transit Hub,2026-02-03T15:26:00+08:00,true
+LOG000178,ORD000193,TRK000000193,SampleLogistics,delivered,Shenzhen Demo Warehouse,Manila,2026-05-23T00:00:00+08:00,Manila,2026-05-15T16:00:00+08:00,true
+LOG000179,ORD000194,TRK000000194,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Bangkok,2026-04-09T00:17:00+08:00,Shenzhen Demo Warehouse,2026-04-01T22:17:00+08:00,true
+LOG000180,ORD000196,TRK000000196,SampleLogistics,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-05-07T19:37:00+08:00,Kuala Lumpur,2026-05-02T15:37:00+08:00,true
+LOG000181,ORD000197,TRK000000197,DemoExpress,in_transit,Shenzhen Demo Warehouse,Jakarta,2026-06-10T16:09:00+08:00,Regional Transit Hub,2026-06-07T22:09:00+08:00,true
+LOG000182,ORD000199,TRK000000199,LabShip,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-01-14T18:58:00+08:00,Ho Chi Minh City,2026-01-08T22:58:00+08:00,true
+LOG000183,ORD000200,TRK000000200,DemoExpress,delivered,Shenzhen Demo Warehouse,Jakarta,2026-05-19T23:19:00+08:00,Jakarta,2026-05-16T10:19:00+08:00,true
+LOG000184,ORD000202,TRK000000202,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Manila,2026-04-11T17:33:00+08:00,Shenzhen Demo Warehouse,2026-04-05T05:33:00+08:00,true
+LOG000185,ORD000205,TRK000000205,LabShip,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-02-06T09:09:00+08:00,Kuala Lumpur,2026-02-01T04:09:00+08:00,true
+LOG000186,ORD000206,TRK000000206,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-05-26T18:17:00+08:00,Shenzhen Demo Warehouse,2026-05-23T05:17:00+08:00,true
+LOG000187,ORD000207,TRK000000207,LabShip,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-05-18T01:26:00+08:00,Ho Chi Minh City,2026-05-17T18:26:00+08:00,true
+LOG000188,ORD000208,TRK000000208,MockParcel,delivered,Shenzhen Demo Warehouse,Jakarta,2026-05-05T13:20:00+08:00,Jakarta,2026-05-04T09:20:00+08:00,true
+LOG000189,ORD000209,TRK000000209,LabShip,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-04-22T23:59:00+08:00,Shenzhen Demo Warehouse,2026-04-18T20:59:00+08:00,true
+LOG000190,ORD000210,TRK000000210,LabShip,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-02-02T04:42:00+08:00,Kuala Lumpur,2026-01-30T07:42:00+08:00,true
+LOG000191,ORD000211,TRK000000211,LabShip,delivered,Shenzhen Demo Warehouse,Manila,2026-05-24T20:40:00+08:00,Manila,2026-05-17T21:40:00+08:00,true
+LOG000192,ORD000212,TRK000000212,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Bangkok,2026-05-11T10:24:00+08:00,Shenzhen Demo Warehouse,2026-05-05T14:24:00+08:00,true
+LOG000193,ORD000213,TRK000000213,LabShip,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-03-17T10:36:00+08:00,Shenzhen Demo Warehouse,2026-03-11T02:36:00+08:00,true
+LOG000194,ORD000214,TRK000000214,SampleLogistics,delivered,Shenzhen Demo Warehouse,Jakarta,2026-04-24T15:35:00+08:00,Jakarta,2026-04-21T16:35:00+08:00,true
+LOG000195,ORD000215,TRK000000215,SampleLogistics,delivered,Shenzhen Demo Warehouse,Jakarta,2026-06-10T15:54:00+08:00,Jakarta,2026-06-04T00:54:00+08:00,true
+LOG000196,ORD000216,TRK000000216,LabShip,delivered,Shenzhen Demo Warehouse,Manila,2026-02-18T23:38:00+08:00,Manila,2026-02-12T09:38:00+08:00,true
+LOG000197,ORD000217,TRK000000217,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-05-18T13:55:00+08:00,Ho Chi Minh City,2026-05-14T01:55:00+08:00,true
+LOG000198,ORD000218,TRK000000218,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-04-16T17:07:00+08:00,Shenzhen Demo Warehouse,2026-04-09T17:07:00+08:00,true
+LOG000199,ORD000220,TRK000000220,LabShip,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-02-16T02:12:00+08:00,Kuala Lumpur,2026-02-14T14:12:00+08:00,true
+LOG000200,ORD000221,TRK000000221,MockParcel,delivered,Shenzhen Demo Warehouse,Singapore,2026-06-26T01:23:00+08:00,Singapore,2026-06-23T14:23:00+08:00,true
+LOG000201,ORD000222,TRK000000222,MockParcel,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-02-01T03:22:00+08:00,Ho Chi Minh City,2026-01-29T05:22:00+08:00,true
+LOG000202,ORD000223,TRK000000223,DemoExpress,delivered,Shenzhen Demo Warehouse,Manila,2026-04-05T17:48:00+08:00,Manila,2026-04-03T06:48:00+08:00,true
+LOG000203,ORD000224,TRK000000224,SampleLogistics,in_transit,Shenzhen Demo Warehouse,Jakarta,2026-05-31T22:59:00+08:00,Regional Transit Hub,2026-05-27T10:59:00+08:00,true
+LOG000204,ORD000225,TRK000000225,DemoExpress,in_transit,Shenzhen Demo Warehouse,Kuala Lumpur,2026-06-23T19:48:00+08:00,Regional Transit Hub,2026-06-21T13:48:00+08:00,true
+LOG000205,ORD000226,TRK000000226,MockParcel,picked_up,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-02-04T13:36:00+08:00,Shenzhen Sorting Center,2026-01-31T05:36:00+08:00,true
+LOG000206,ORD000227,TRK000000227,DemoExpress,in_transit,Shenzhen Demo Warehouse,Bangkok,2026-04-26T09:13:00+08:00,Regional Transit Hub,2026-04-24T19:13:00+08:00,true
+LOG000207,ORD000228,TRK000000228,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-05-29T06:20:00+08:00,Shenzhen Demo Warehouse,2026-05-27T06:20:00+08:00,true
+LOG000208,ORD000229,TRK000000229,DemoExpress,exception,Shenzhen Demo Warehouse,Jakarta,2026-03-30T00:31:00+08:00,Regional Transit Hub,2026-03-23T16:31:00+08:00,true
+LOG000209,ORD000231,TRK000000231,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-02-16T03:48:00+08:00,Shenzhen Demo Warehouse,2026-02-09T02:48:00+08:00,true
+LOG000210,ORD000233,TRK000000233,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-04-12T02:15:00+08:00,Ho Chi Minh City,2026-04-07T19:15:00+08:00,true
+LOG000211,ORD000234,TRK000000234,MockParcel,delivered,Shenzhen Demo Warehouse,Bangkok,2026-06-07T21:25:00+08:00,Bangkok,2026-06-05T10:25:00+08:00,true
+LOG000212,ORD000235,TRK000000235,MockParcel,customs_clearance,Shenzhen Demo Warehouse,Jakarta,2026-02-03T06:24:00+08:00,Jakarta Customs,2026-01-30T03:24:00+08:00,true
+LOG000213,ORD000236,TRK000000236,LabShip,picked_up,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-02-26T13:01:00+08:00,Shenzhen Sorting Center,2026-02-20T04:01:00+08:00,true
+LOG000214,ORD000237,TRK000000237,MockParcel,delivered,Shenzhen Demo Warehouse,Singapore,2026-05-20T21:58:00+08:00,Singapore,2026-05-17T09:58:00+08:00,true
+LOG000215,ORD000238,TRK000000238,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-03-03T17:18:00+08:00,Ho Chi Minh City,2026-02-28T23:18:00+08:00,true
+LOG000216,ORD000240,TRK000000240,LabShip,delivered,Shenzhen Demo Warehouse,Jakarta,2026-04-24T22:34:00+08:00,Jakarta,2026-04-18T17:34:00+08:00,true
+LOG000217,ORD000241,TRK000000241,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Jakarta,2026-03-13T23:56:00+08:00,Shenzhen Demo Warehouse,2026-03-09T16:56:00+08:00,true
+LOG000218,ORD000243,TRK000000243,SampleLogistics,delivered,Shenzhen Demo Warehouse,Singapore,2026-01-31T19:02:00+08:00,Singapore,2026-01-27T23:02:00+08:00,true
+LOG000219,ORD000244,TRK000000244,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-04-14T11:17:00+08:00,Shenzhen Demo Warehouse,2026-04-08T18:17:00+08:00,true
+LOG000220,ORD000245,TRK000000245,DemoExpress,delivered,Shenzhen Demo Warehouse,Jakarta,2026-03-03T10:27:00+08:00,Jakarta,2026-03-01T23:27:00+08:00,true
+LOG000221,ORD000246,TRK000000246,LabShip,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-06-08T17:48:00+08:00,Ho Chi Minh City,2026-06-03T21:48:00+08:00,true
+LOG000222,ORD000247,TRK000000247,SampleLogistics,delivered,Shenzhen Demo Warehouse,Bangkok,2026-03-20T17:26:00+08:00,Bangkok,2026-03-17T07:26:00+08:00,true
+LOG000223,ORD000248,TRK000000248,SampleLogistics,delivered,Shenzhen Demo Warehouse,Singapore,2026-04-01T09:07:00+08:00,Singapore,2026-03-29T02:07:00+08:00,true
+LOG000224,ORD000249,TRK000000249,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-04-07T10:46:00+08:00,Ho Chi Minh City,2026-04-04T02:46:00+08:00,true
+LOG000225,ORD000250,TRK000000250,MockParcel,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-02-15T10:41:00+08:00,Ho Chi Minh City,2026-02-08T04:41:00+08:00,true
+LOG000226,ORD000251,TRK000000251,LabShip,delivered,Shenzhen Demo Warehouse,Manila,2026-05-08T20:46:00+08:00,Manila,2026-05-07T15:46:00+08:00,true
+LOG000227,ORD000252,TRK000000252,LabShip,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-06-07T09:31:00+08:00,Kuala Lumpur,2026-06-07T01:31:00+08:00,true
+LOG000228,ORD000253,TRK000000253,SampleLogistics,picked_up,Shenzhen Demo Warehouse,Manila,2026-06-26T06:53:00+08:00,Shenzhen Sorting Center,2026-06-21T23:53:00+08:00,true
+LOG000229,ORD000254,TRK000000254,LabShip,in_transit,Shenzhen Demo Warehouse,Jakarta,2026-02-10T03:19:00+08:00,Regional Transit Hub,2026-02-06T20:19:00+08:00,true
+LOG000230,ORD000255,TRK000000255,MockParcel,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-04-30T19:16:00+08:00,Kuala Lumpur,2026-04-23T12:16:00+08:00,true
+LOG000231,ORD000256,TRK000000256,DemoExpress,in_transit,Shenzhen Demo Warehouse,Kuala Lumpur,2026-06-10T07:50:00+08:00,Regional Transit Hub,2026-06-07T06:50:00+08:00,true
+LOG000232,ORD000257,TRK000000257,SampleLogistics,delivered,Shenzhen Demo Warehouse,Bangkok,2026-06-28T02:45:00+08:00,Bangkok,2026-06-27T08:45:00+08:00,true
+LOG000233,ORD000258,TRK000000258,SampleLogistics,delivered,Shenzhen Demo Warehouse,Bangkok,2026-06-25T21:13:00+08:00,Bangkok,2026-06-26T11:13:00+08:00,true
+LOG000234,ORD000259,TRK000000259,LabShip,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-05-04T08:56:00+08:00,Kuala Lumpur,2026-05-02T16:56:00+08:00,true
+LOG000235,ORD000260,TRK000000260,MockParcel,delivered,Shenzhen Demo Warehouse,Singapore,2026-05-19T23:36:00+08:00,Singapore,2026-05-15T03:36:00+08:00,true
+LOG000236,ORD000261,TRK000000261,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-03-25T15:01:00+08:00,Shenzhen Demo Warehouse,2026-03-23T05:01:00+08:00,true
+LOG000237,ORD000262,TRK000000262,SampleLogistics,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-02-07T22:16:00+08:00,Kuala Lumpur,2026-02-05T03:16:00+08:00,true
+LOG000238,ORD000263,TRK000000263,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Manila,2026-05-27T15:54:00+08:00,Shenzhen Demo Warehouse,2026-05-24T02:54:00+08:00,true
+LOG000239,ORD000265,TRK000000265,SampleLogistics,in_transit,Shenzhen Demo Warehouse,Jakarta,2026-05-24T08:46:00+08:00,Regional Transit Hub,2026-05-19T03:46:00+08:00,true
+LOG000240,ORD000266,TRK000000266,DemoExpress,delivered,Shenzhen Demo Warehouse,Manila,2026-02-21T21:09:00+08:00,Manila,2026-02-19T05:09:00+08:00,true
+LOG000241,ORD000267,TRK000000267,DemoExpress,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-04-23T01:11:00+08:00,Kuala Lumpur,2026-04-20T02:11:00+08:00,true
+LOG000242,ORD000268,TRK000000268,SampleLogistics,delivered,Shenzhen Demo Warehouse,Bangkok,2026-06-14T22:47:00+08:00,Bangkok,2026-06-12T12:47:00+08:00,true
+LOG000243,ORD000269,TRK000000269,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Bangkok,2026-04-01T09:07:00+08:00,Shenzhen Demo Warehouse,2026-03-27T16:07:00+08:00,true
+LOG000244,ORD000270,TRK000000270,DemoExpress,delivered,Shenzhen Demo Warehouse,Singapore,2026-04-12T14:06:00+08:00,Singapore,2026-04-09T22:06:00+08:00,true
+LOG000245,ORD000271,TRK000000271,DemoExpress,delivered,Shenzhen Demo Warehouse,Singapore,2026-05-30T21:09:00+08:00,Singapore,2026-05-24T13:09:00+08:00,true
+LOG000246,ORD000272,TRK000000272,SampleLogistics,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-03-31T10:51:00+08:00,Kuala Lumpur,2026-03-28T22:51:00+08:00,true
+LOG000247,ORD000274,TRK000000274,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-05-27T14:49:00+08:00,Ho Chi Minh City,2026-05-25T06:49:00+08:00,true
+LOG000248,ORD000275,TRK000000275,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-03-28T12:37:00+08:00,Shenzhen Demo Warehouse,2026-03-21T13:37:00+08:00,true
+LOG000249,ORD000276,TRK000000276,SampleLogistics,picked_up,Shenzhen Demo Warehouse,Manila,2026-05-25T02:14:00+08:00,Shenzhen Sorting Center,2026-05-22T16:14:00+08:00,true
+LOG000250,ORD000278,TRK000000278,LabShip,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-02-03T05:13:00+08:00,Shenzhen Demo Warehouse,2026-01-29T06:13:00+08:00,true
+LOG000251,ORD000279,TRK000000279,SampleLogistics,in_transit,Shenzhen Demo Warehouse,Singapore,2026-04-15T19:11:00+08:00,Regional Transit Hub,2026-04-14T15:11:00+08:00,true
+LOG000252,ORD000280,TRK000000280,DemoExpress,delivered,Shenzhen Demo Warehouse,Singapore,2026-06-05T10:37:00+08:00,Singapore,2026-06-03T19:37:00+08:00,true
+LOG000253,ORD000281,TRK000000281,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-01-14T18:36:00+08:00,Shenzhen Demo Warehouse,2026-01-12T11:36:00+08:00,true
+LOG000254,ORD000282,TRK000000282,LabShip,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-06-20T20:44:00+08:00,Ho Chi Minh City,2026-06-19T16:44:00+08:00,true
+LOG000255,ORD000283,TRK000000283,MockParcel,delivered,Shenzhen Demo Warehouse,Singapore,2026-05-13T12:57:00+08:00,Singapore,2026-05-10T19:57:00+08:00,true
+LOG000256,ORD000284,TRK000000284,LabShip,delivered,Shenzhen Demo Warehouse,Singapore,2026-01-29T01:55:00+08:00,Singapore,2026-01-27T23:55:00+08:00,true
+LOG000257,ORD000285,TRK000000285,SampleLogistics,delivered,Shenzhen Demo Warehouse,Jakarta,2026-07-05T19:10:00+08:00,Jakarta,2026-06-28T19:10:00+08:00,true
+LOG000258,ORD000286,TRK000000286,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Manila,2026-04-13T21:32:00+08:00,Shenzhen Demo Warehouse,2026-04-07T10:32:00+08:00,true
+LOG000259,ORD000287,TRK000000287,DemoExpress,in_transit,Shenzhen Demo Warehouse,Singapore,2026-06-11T19:41:00+08:00,Regional Transit Hub,2026-06-06T00:41:00+08:00,true
+LOG000260,ORD000288,TRK000000288,MockParcel,picked_up,Shenzhen Demo Warehouse,Kuala Lumpur,2026-02-06T23:44:00+08:00,Shenzhen Sorting Center,2026-01-30T21:44:00+08:00,true
+LOG000261,ORD000290,TRK000000290,DemoExpress,picked_up,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-03-10T20:06:00+08:00,Shenzhen Sorting Center,2026-03-02T20:06:00+08:00,true
+LOG000262,ORD000291,TRK000000291,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-02-27T04:17:00+08:00,Shenzhen Demo Warehouse,2026-02-24T05:17:00+08:00,true
+LOG000263,ORD000292,TRK000000292,MockParcel,delivered,Shenzhen Demo Warehouse,Singapore,2026-03-07T15:07:00+08:00,Singapore,2026-03-01T06:07:00+08:00,true
+LOG000264,ORD000293,TRK000000293,DemoExpress,delivered,Shenzhen Demo Warehouse,Manila,2026-04-27T23:46:00+08:00,Manila,2026-04-25T08:46:00+08:00,true
+LOG000265,ORD000294,TRK000000294,MockParcel,delivered,Shenzhen Demo Warehouse,Jakarta,2026-05-08T14:34:00+08:00,Jakarta,2026-05-06T10:34:00+08:00,true
+LOG000266,ORD000295,TRK000000295,LabShip,delivered,Shenzhen Demo Warehouse,Bangkok,2026-07-03T22:40:00+08:00,Bangkok,2026-06-28T12:40:00+08:00,true
+LOG000267,ORD000296,TRK000000296,MockParcel,delivered,Shenzhen Demo Warehouse,Singapore,2026-01-28T02:03:00+08:00,Singapore,2026-01-24T14:03:00+08:00,true
+LOG000268,ORD000297,TRK000000297,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-05-19T04:52:00+08:00,Shenzhen Demo Warehouse,2026-05-11T22:52:00+08:00,true
+LOG000269,ORD000298,TRK000000298,MockParcel,delivered,Shenzhen Demo Warehouse,Bangkok,2026-06-01T10:40:00+08:00,Bangkok,2026-05-27T22:40:00+08:00,true
+LOG000270,ORD000299,TRK000000299,DemoExpress,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-06-18T20:41:00+08:00,Kuala Lumpur,2026-06-16T00:41:00+08:00,true
+LOG000271,ORD000300,TRK000000300,MockParcel,delivered,Shenzhen Demo Warehouse,Bangkok,2026-03-24T09:55:00+08:00,Bangkok,2026-03-23T21:55:00+08:00,true
+LOG000272,ORD000301,TRK000000301,MockParcel,delivered,Shenzhen Demo Warehouse,Bangkok,2026-04-03T10:09:00+08:00,Bangkok,2026-03-28T05:09:00+08:00,true
+LOG000273,ORD000302,TRK000000302,LabShip,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-04-20T23:44:00+08:00,Kuala Lumpur,2026-04-16T12:44:00+08:00,true
+LOG000274,ORD000304,TRK000000304,LabShip,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-03-19T09:54:00+08:00,Shenzhen Demo Warehouse,2026-03-16T11:54:00+08:00,true
+LOG000275,ORD000305,TRK000000305,MockParcel,picked_up,Shenzhen Demo Warehouse,Bangkok,2026-04-05T04:52:00+08:00,Shenzhen Sorting Center,2026-03-29T18:52:00+08:00,true
+LOG000276,ORD000306,TRK000000306,LabShip,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-04-14T14:32:00+08:00,Ho Chi Minh City,2026-04-14T03:32:00+08:00,true
+LOG000277,ORD000308,TRK000000308,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Manila,2026-03-18T18:16:00+08:00,Shenzhen Demo Warehouse,2026-03-16T00:16:00+08:00,true
+LOG000278,ORD000309,TRK000000309,LabShip,picked_up,Shenzhen Demo Warehouse,Kuala Lumpur,2026-06-26T14:17:00+08:00,Shenzhen Sorting Center,2026-06-18T19:17:00+08:00,true
+LOG000279,ORD000310,TRK000000310,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-05-15T09:58:00+08:00,Shenzhen Demo Warehouse,2026-05-11T00:58:00+08:00,true
+LOG000280,ORD000311,TRK000000311,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-03-25T12:28:00+08:00,Shenzhen Demo Warehouse,2026-03-19T04:28:00+08:00,true
+LOG000281,ORD000313,TRK000000313,LabShip,delivered,Shenzhen Demo Warehouse,Singapore,2026-07-06T12:37:00+08:00,Singapore,2026-07-03T00:37:00+08:00,true
+LOG000282,ORD000314,TRK000000314,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-06-06T09:10:00+08:00,Shenzhen Demo Warehouse,2026-06-01T02:10:00+08:00,true
+LOG000283,ORD000315,TRK000000315,DemoExpress,delivered,Shenzhen Demo Warehouse,Jakarta,2026-05-07T11:07:00+08:00,Jakarta,2026-05-03T09:07:00+08:00,true
+LOG000284,ORD000316,TRK000000316,LabShip,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-04-26T07:22:00+08:00,Shenzhen Demo Warehouse,2026-04-18T09:22:00+08:00,true
+LOG000285,ORD000317,TRK000000317,LabShip,delivered,Shenzhen Demo Warehouse,Jakarta,2026-01-19T06:11:00+08:00,Jakarta,2026-01-16T09:11:00+08:00,true
+LOG000286,ORD000318,TRK000000318,MockParcel,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-05-22T12:55:00+08:00,Kuala Lumpur,2026-05-16T17:55:00+08:00,true
+LOG000287,ORD000319,TRK000000319,DemoExpress,picked_up,Shenzhen Demo Warehouse,Bangkok,2026-06-28T22:07:00+08:00,Shenzhen Sorting Center,2026-06-21T01:07:00+08:00,true
+LOG000288,ORD000320,TRK000000320,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-02-14T11:17:00+08:00,Shenzhen Demo Warehouse,2026-02-06T08:17:00+08:00,true
+LOG000289,ORD000321,TRK000000321,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-04-10T00:08:00+08:00,Ho Chi Minh City,2026-04-06T17:08:00+08:00,true
+LOG000290,ORD000322,TRK000000322,MockParcel,delivered,Shenzhen Demo Warehouse,Singapore,2026-02-27T13:55:00+08:00,Singapore,2026-02-22T02:55:00+08:00,true
+LOG000291,ORD000323,TRK000000323,SampleLogistics,in_transit,Shenzhen Demo Warehouse,Kuala Lumpur,2026-01-22T00:47:00+08:00,Regional Transit Hub,2026-01-19T16:47:00+08:00,true
+LOG000292,ORD000324,TRK000000324,DemoExpress,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-04-04T07:17:00+08:00,Kuala Lumpur,2026-03-27T18:17:00+08:00,true
+LOG000293,ORD000325,TRK000000325,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Bangkok,2026-06-13T01:02:00+08:00,Shenzhen Demo Warehouse,2026-06-08T01:02:00+08:00,true
+LOG000294,ORD000326,TRK000000326,LabShip,delivered,Shenzhen Demo Warehouse,Singapore,2026-03-29T20:38:00+08:00,Singapore,2026-03-27T21:38:00+08:00,true
+LOG000295,ORD000327,TRK000000327,DemoExpress,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-03-03T05:53:00+08:00,Ho Chi Minh City,2026-02-28T17:53:00+08:00,true
+LOG000296,ORD000328,TRK000000328,LabShip,delivered,Shenzhen Demo Warehouse,Bangkok,2026-03-15T11:07:00+08:00,Bangkok,2026-03-14T12:07:00+08:00,true
+LOG000297,ORD000329,TRK000000329,DemoExpress,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-06-01T17:39:00+08:00,Kuala Lumpur,2026-05-29T09:39:00+08:00,true
+LOG000298,ORD000330,TRK000000330,LabShip,delivered,Shenzhen Demo Warehouse,Jakarta,2026-01-25T04:17:00+08:00,Jakarta,2026-01-22T05:17:00+08:00,true
+LOG000299,ORD000331,TRK000000331,MockParcel,delivered,Shenzhen Demo Warehouse,Jakarta,2026-05-24T13:57:00+08:00,Jakarta,2026-05-19T05:57:00+08:00,true
+LOG000300,ORD000332,TRK000000332,DemoExpress,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-03-10T00:49:00+08:00,Kuala Lumpur,2026-03-08T17:49:00+08:00,true
+LOG000301,ORD000333,TRK000000333,DemoExpress,in_transit,Shenzhen Demo Warehouse,Kuala Lumpur,2026-01-26T06:06:00+08:00,Regional Transit Hub,2026-01-23T09:06:00+08:00,true
+LOG000302,ORD000336,TRK000000336,SampleLogistics,delivered,Shenzhen Demo Warehouse,Jakarta,2026-04-02T06:57:00+08:00,Jakarta,2026-03-28T21:57:00+08:00,true
+LOG000303,ORD000337,TRK000000337,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-06-04T12:38:00+08:00,Shenzhen Demo Warehouse,2026-05-31T06:38:00+08:00,true
+LOG000304,ORD000338,TRK000000338,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-03-17T20:33:00+08:00,Shenzhen Demo Warehouse,2026-03-15T12:33:00+08:00,true
+LOG000305,ORD000340,TRK000000340,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Bangkok,2026-05-08T06:56:00+08:00,Shenzhen Demo Warehouse,2026-05-03T10:56:00+08:00,true
+LOG000306,ORD000342,TRK000000342,LabShip,delivered,Shenzhen Demo Warehouse,Singapore,2026-06-27T01:52:00+08:00,Singapore,2026-06-20T05:52:00+08:00,true
+LOG000307,ORD000343,TRK000000343,DemoExpress,delivered,Shenzhen Demo Warehouse,Bangkok,2026-05-17T01:26:00+08:00,Bangkok,2026-05-11T12:26:00+08:00,true
+LOG000308,ORD000344,TRK000000344,LabShip,delivered,Shenzhen Demo Warehouse,Bangkok,2026-02-01T21:40:00+08:00,Bangkok,2026-01-28T21:40:00+08:00,true
+LOG000309,ORD000345,TRK000000345,DemoExpress,delivered,Shenzhen Demo Warehouse,Manila,2026-03-24T11:46:00+08:00,Manila,2026-03-23T01:46:00+08:00,true
+LOG000310,ORD000346,TRK000000346,LabShip,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-04-12T14:45:00+08:00,Kuala Lumpur,2026-04-08T01:45:00+08:00,true
+LOG000311,ORD000347,TRK000000347,LabShip,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-02-25T01:25:00+08:00,Shenzhen Demo Warehouse,2026-02-19T13:25:00+08:00,true
+LOG000312,ORD000348,TRK000000348,LabShip,delivered,Shenzhen Demo Warehouse,Bangkok,2026-05-10T14:32:00+08:00,Bangkok,2026-05-08T13:32:00+08:00,true
+LOG000313,ORD000349,TRK000000349,MockParcel,delivered,Shenzhen Demo Warehouse,Jakarta,2026-03-24T18:52:00+08:00,Jakarta,2026-03-18T01:52:00+08:00,true
+LOG000314,ORD000350,TRK000000350,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-05-27T10:53:00+08:00,Shenzhen Demo Warehouse,2026-05-21T05:53:00+08:00,true
+LOG000315,ORD000351,TRK000000351,LabShip,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-05-23T17:59:00+08:00,Ho Chi Minh City,2026-05-22T04:59:00+08:00,true
+LOG000316,ORD000352,TRK000000352,DemoExpress,picked_up,Shenzhen Demo Warehouse,Bangkok,2026-03-05T23:00:00+08:00,Shenzhen Sorting Center,2026-03-03T12:00:00+08:00,true
+LOG000317,ORD000353,TRK000000353,LabShip,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-01-20T17:47:00+08:00,Kuala Lumpur,2026-01-14T13:47:00+08:00,true
+LOG000318,ORD000354,TRK000000354,SampleLogistics,delivered,Shenzhen Demo Warehouse,Jakarta,2026-03-22T14:38:00+08:00,Jakarta,2026-03-18T11:38:00+08:00,true
+LOG000319,ORD000356,TRK000000356,SampleLogistics,delivered,Shenzhen Demo Warehouse,Bangkok,2026-02-01T21:07:00+08:00,Bangkok,2026-01-31T17:07:00+08:00,true
+LOG000320,ORD000357,TRK000000357,DemoExpress,customs_clearance,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-06-04T16:45:00+08:00,Ho Chi Minh City Customs,2026-05-31T17:45:00+08:00,true
+LOG000321,ORD000358,TRK000000358,DemoExpress,delivered,Shenzhen Demo Warehouse,Singapore,2026-02-26T04:48:00+08:00,Singapore,2026-02-21T00:48:00+08:00,true
+LOG000322,ORD000359,TRK000000359,MockParcel,delivered,Shenzhen Demo Warehouse,Manila,2026-04-03T18:29:00+08:00,Manila,2026-04-02T12:29:00+08:00,true
+LOG000323,ORD000361,TRK000000361,DemoExpress,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-04-29T19:51:00+08:00,Kuala Lumpur,2026-04-27T23:51:00+08:00,true
+LOG000324,ORD000362,TRK000000362,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Manila,2026-03-23T14:23:00+08:00,Shenzhen Demo Warehouse,2026-03-15T16:23:00+08:00,true
+LOG000325,ORD000363,TRK000000363,LabShip,delivered,Shenzhen Demo Warehouse,Bangkok,2026-04-15T10:00:00+08:00,Bangkok,2026-04-12T07:00:00+08:00,true
+LOG000326,ORD000364,TRK000000364,LabShip,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-02-04T08:57:00+08:00,Shenzhen Demo Warehouse,2026-02-01T18:57:00+08:00,true
+LOG000327,ORD000366,TRK000000366,MockParcel,delivered,Shenzhen Demo Warehouse,Manila,2026-02-18T21:09:00+08:00,Manila,2026-02-18T10:09:00+08:00,true
+LOG000328,ORD000367,TRK000000367,LabShip,delivered,Shenzhen Demo Warehouse,Manila,2026-03-22T15:21:00+08:00,Manila,2026-03-18T08:21:00+08:00,true
+LOG000329,ORD000368,TRK000000368,LabShip,in_transit,Shenzhen Demo Warehouse,Jakarta,2026-02-25T19:25:00+08:00,Regional Transit Hub,2026-02-19T14:25:00+08:00,true
+LOG000330,ORD000369,TRK000000369,MockParcel,delivered,Shenzhen Demo Warehouse,Bangkok,2026-02-15T19:03:00+08:00,Bangkok,2026-02-13T17:03:00+08:00,true
+LOG000331,ORD000370,TRK000000370,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-03-06T03:22:00+08:00,Ho Chi Minh City,2026-03-06T09:22:00+08:00,true
+LOG000332,ORD000371,TRK000000371,LabShip,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-03-15T23:08:00+08:00,Ho Chi Minh City,2026-03-11T13:08:00+08:00,true
+LOG000333,ORD000372,TRK000000372,MockParcel,delivered,Shenzhen Demo Warehouse,Manila,2026-04-23T03:52:00+08:00,Manila,2026-04-24T01:52:00+08:00,true
+LOG000334,ORD000373,TRK000000373,LabShip,delivered,Shenzhen Demo Warehouse,Singapore,2026-03-05T18:31:00+08:00,Singapore,2026-03-02T18:31:00+08:00,true
+LOG000335,ORD000375,TRK000000375,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Jakarta,2026-02-21T08:39:00+08:00,Shenzhen Demo Warehouse,2026-02-13T22:39:00+08:00,true
+LOG000336,ORD000376,TRK000000376,LabShip,delivered,Shenzhen Demo Warehouse,Jakarta,2026-04-23T15:48:00+08:00,Jakarta,2026-04-18T19:48:00+08:00,true
+LOG000337,ORD000377,TRK000000377,DemoExpress,delivered,Shenzhen Demo Warehouse,Bangkok,2026-05-06T14:59:00+08:00,Bangkok,2026-05-02T12:59:00+08:00,true
+LOG000338,ORD000378,TRK000000378,DemoExpress,delivered,Shenzhen Demo Warehouse,Manila,2026-04-11T02:10:00+08:00,Manila,2026-04-04T21:10:00+08:00,true
+LOG000339,ORD000379,TRK000000379,SampleLogistics,delivered,Shenzhen Demo Warehouse,Singapore,2026-02-07T20:44:00+08:00,Singapore,2026-02-04T20:44:00+08:00,true
+LOG000340,ORD000380,TRK000000380,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-06-22T08:36:00+08:00,Ho Chi Minh City,2026-06-18T22:36:00+08:00,true
+LOG000341,ORD000381,TRK000000381,DemoExpress,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-02-25T13:26:00+08:00,Kuala Lumpur,2026-02-23T01:26:00+08:00,true
+LOG000342,ORD000382,TRK000000382,DemoExpress,delivered,Shenzhen Demo Warehouse,Manila,2026-05-01T00:46:00+08:00,Manila,2026-05-01T06:46:00+08:00,true
+LOG000343,ORD000383,TRK000000383,SampleLogistics,picked_up,Shenzhen Demo Warehouse,Bangkok,2026-05-10T09:47:00+08:00,Shenzhen Sorting Center,2026-05-04T09:47:00+08:00,true
+LOG000344,ORD000384,TRK000000384,SampleLogistics,in_transit,Shenzhen Demo Warehouse,Bangkok,2026-04-22T08:03:00+08:00,Regional Transit Hub,2026-04-18T00:03:00+08:00,true
+LOG000345,ORD000385,TRK000000385,DemoExpress,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-02-06T04:47:00+08:00,Ho Chi Minh City,2026-02-04T14:47:00+08:00,true
+LOG000346,ORD000386,TRK000000386,LabShip,delivered,Shenzhen Demo Warehouse,Manila,2026-06-29T11:45:00+08:00,Manila,2026-06-27T06:45:00+08:00,true
+LOG000347,ORD000387,TRK000000387,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-04-26T07:12:00+08:00,Shenzhen Demo Warehouse,2026-04-19T19:12:00+08:00,true
+LOG000348,ORD000388,TRK000000388,LabShip,delivered,Shenzhen Demo Warehouse,Bangkok,2026-01-13T21:38:00+08:00,Bangkok,2026-01-10T01:38:00+08:00,true
+LOG000349,ORD000389,TRK000000389,DemoExpress,customs_clearance,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-01-16T21:15:00+08:00,Ho Chi Minh City Customs,2026-01-13T10:15:00+08:00,true
+LOG000350,ORD000390,TRK000000390,SampleLogistics,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-05-29T07:11:00+08:00,Kuala Lumpur,2026-05-28T02:11:00+08:00,true
+LOG000351,ORD000391,TRK000000391,SampleLogistics,delivered,Shenzhen Demo Warehouse,Bangkok,2026-06-19T14:54:00+08:00,Bangkok,2026-06-15T18:54:00+08:00,true
+LOG000352,ORD000392,TRK000000392,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-04-23T16:37:00+08:00,Ho Chi Minh City,2026-04-19T23:37:00+08:00,true
+LOG000353,ORD000393,TRK000000393,SampleLogistics,in_transit,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-02-13T14:00:00+08:00,Regional Transit Hub,2026-02-08T13:00:00+08:00,true
+LOG000354,ORD000394,TRK000000394,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Manila,2026-04-05T16:24:00+08:00,Shenzhen Demo Warehouse,2026-03-30T08:24:00+08:00,true
+LOG000355,ORD000395,TRK000000395,LabShip,in_transit,Shenzhen Demo Warehouse,Manila,2026-01-26T10:59:00+08:00,Regional Transit Hub,2026-01-22T18:59:00+08:00,true
+LOG000356,ORD000396,TRK000000396,DemoExpress,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-04-08T02:02:00+08:00,Kuala Lumpur,2026-04-07T02:02:00+08:00,true
+LOG000357,ORD000397,TRK000000397,DemoExpress,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-02-23T21:35:00+08:00,Ho Chi Minh City,2026-02-22T18:35:00+08:00,true
+LOG000358,ORD000398,TRK000000398,LabShip,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-03-27T03:13:00+08:00,Ho Chi Minh City,2026-03-22T21:13:00+08:00,true
+LOG000359,ORD000399,TRK000000399,MockParcel,delivered,Shenzhen Demo Warehouse,Bangkok,2026-05-21T20:46:00+08:00,Bangkok,2026-05-17T19:46:00+08:00,true
+LOG000360,ORD000400,TRK000000400,MockParcel,delivered,Shenzhen Demo Warehouse,Singapore,2026-01-23T08:30:00+08:00,Singapore,2026-01-19T22:30:00+08:00,true
+LOG000361,ORD000401,TRK000000401,SampleLogistics,delivered,Shenzhen Demo Warehouse,Bangkok,2026-05-27T18:02:00+08:00,Bangkok,2026-05-22T04:02:00+08:00,true
+LOG000362,ORD000403,TRK000000403,DemoExpress,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-03-04T07:09:00+08:00,Ho Chi Minh City,2026-02-27T11:09:00+08:00,true
+LOG000363,ORD000404,TRK000000404,LabShip,delivered,Shenzhen Demo Warehouse,Singapore,2026-02-14T14:41:00+08:00,Singapore,2026-02-11T04:41:00+08:00,true
+LOG000364,ORD000406,TRK000000406,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-04-01T04:36:00+08:00,Shenzhen Demo Warehouse,2026-03-29T07:36:00+08:00,true
+LOG000365,ORD000407,TRK000000407,LabShip,delivered,Shenzhen Demo Warehouse,Jakarta,2026-05-02T18:25:00+08:00,Jakarta,2026-04-29T05:25:00+08:00,true
+LOG000366,ORD000408,TRK000000408,SampleLogistics,delivered,Shenzhen Demo Warehouse,Manila,2026-01-22T22:01:00+08:00,Manila,2026-01-16T22:01:00+08:00,true
+LOG000367,ORD000409,TRK000000409,MockParcel,delivered,Shenzhen Demo Warehouse,Jakarta,2026-05-10T19:44:00+08:00,Jakarta,2026-05-08T23:44:00+08:00,true
+LOG000368,ORD000410,TRK000000410,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-05-17T21:06:00+08:00,Shenzhen Demo Warehouse,2026-05-12T11:06:00+08:00,true
+LOG000369,ORD000411,TRK000000411,SampleLogistics,delivered,Shenzhen Demo Warehouse,Jakarta,2026-01-18T07:49:00+08:00,Jakarta,2026-01-13T03:49:00+08:00,true
+LOG000370,ORD000412,TRK000000412,SampleLogistics,delivered,Shenzhen Demo Warehouse,Jakarta,2026-04-02T23:39:00+08:00,Jakarta,2026-03-27T20:39:00+08:00,true
+LOG000371,ORD000413,TRK000000413,LabShip,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-07-03T22:23:00+08:00,Shenzhen Demo Warehouse,2026-06-29T00:23:00+08:00,true
+LOG000372,ORD000414,TRK000000414,LabShip,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-05-09T06:12:00+08:00,Kuala Lumpur,2026-05-03T08:12:00+08:00,true
+LOG000373,ORD000415,TRK000000415,DemoExpress,delivered,Shenzhen Demo Warehouse,Singapore,2026-05-26T18:16:00+08:00,Singapore,2026-05-25T01:16:00+08:00,true
+LOG000374,ORD000416,TRK000000416,SampleLogistics,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-06-07T11:02:00+08:00,Kuala Lumpur,2026-06-02T18:02:00+08:00,true
+LOG000375,ORD000418,TRK000000418,MockParcel,delivered,Shenzhen Demo Warehouse,Jakarta,2026-02-15T21:44:00+08:00,Jakarta,2026-02-15T10:44:00+08:00,true
+LOG000376,ORD000419,TRK000000419,DemoExpress,delivered,Shenzhen Demo Warehouse,Jakarta,2026-06-14T22:05:00+08:00,Jakarta,2026-06-08T12:05:00+08:00,true
+LOG000377,ORD000420,TRK000000420,MockParcel,picked_up,Shenzhen Demo Warehouse,Jakarta,2026-04-22T13:17:00+08:00,Shenzhen Sorting Center,2026-04-17T01:17:00+08:00,true
+LOG000378,ORD000421,TRK000000421,DemoExpress,delivered,Shenzhen Demo Warehouse,Manila,2026-05-14T10:09:00+08:00,Manila,2026-05-10T05:09:00+08:00,true
+LOG000379,ORD000422,TRK000000422,LabShip,delivered,Shenzhen Demo Warehouse,Singapore,2026-03-14T05:31:00+08:00,Singapore,2026-03-12T13:31:00+08:00,true
+LOG000380,ORD000423,TRK000000423,LabShip,delivered,Shenzhen Demo Warehouse,Jakarta,2026-06-12T08:33:00+08:00,Jakarta,2026-06-09T12:33:00+08:00,true
+LOG000381,ORD000424,TRK000000424,LabShip,delivered,Shenzhen Demo Warehouse,Manila,2026-03-26T13:03:00+08:00,Manila,2026-03-22T01:03:00+08:00,true
+LOG000382,ORD000425,TRK000000425,LabShip,pending_pickup,Shenzhen Demo Warehouse,Manila,2026-04-15T09:47:00+08:00,Shenzhen Demo Warehouse,2026-04-09T22:47:00+08:00,true
+LOG000383,ORD000426,TRK000000426,LabShip,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-06-30T00:13:00+08:00,Ho Chi Minh City,2026-06-28T16:13:00+08:00,true
+LOG000384,ORD000427,TRK000000427,LabShip,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-06-08T14:51:00+08:00,Shenzhen Demo Warehouse,2026-06-01T12:51:00+08:00,true
+LOG000385,ORD000429,TRK000000429,LabShip,delivered,Shenzhen Demo Warehouse,Bangkok,2026-02-06T14:10:00+08:00,Bangkok,2026-02-06T12:10:00+08:00,true
+LOG000386,ORD000430,TRK000000430,LabShip,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-03-31T00:26:00+08:00,Ho Chi Minh City,2026-03-27T15:26:00+08:00,true
+LOG000387,ORD000431,TRK000000431,LabShip,delivered,Shenzhen Demo Warehouse,Manila,2026-06-07T08:56:00+08:00,Manila,2026-06-05T04:56:00+08:00,true
+LOG000388,ORD000433,TRK000000433,MockParcel,delivered,Shenzhen Demo Warehouse,Bangkok,2026-02-10T03:54:00+08:00,Bangkok,2026-02-04T19:54:00+08:00,true
+LOG000389,ORD000434,TRK000000434,DemoExpress,in_transit,Shenzhen Demo Warehouse,Kuala Lumpur,2026-05-03T02:37:00+08:00,Regional Transit Hub,2026-04-28T02:37:00+08:00,true
+LOG000390,ORD000435,TRK000000435,DemoExpress,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-02-26T13:12:00+08:00,Ho Chi Minh City,2026-02-18T20:12:00+08:00,true
+LOG000391,ORD000436,TRK000000436,MockParcel,customs_clearance,Shenzhen Demo Warehouse,Singapore,2026-01-21T05:24:00+08:00,Singapore Customs,2026-01-19T17:24:00+08:00,true
+LOG000392,ORD000437,TRK000000437,MockParcel,delivered,Shenzhen Demo Warehouse,Singapore,2026-06-14T10:17:00+08:00,Singapore,2026-06-11T11:17:00+08:00,true
+LOG000393,ORD000438,TRK000000438,DemoExpress,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-05-10T00:30:00+08:00,Ho Chi Minh City,2026-05-09T01:30:00+08:00,true
+LOG000394,ORD000439,TRK000000439,DemoExpress,delivered,Shenzhen Demo Warehouse,Jakarta,2026-01-27T16:22:00+08:00,Jakarta,2026-01-22T08:22:00+08:00,true
+LOG000395,ORD000441,TRK000000441,MockParcel,delivered,Shenzhen Demo Warehouse,Singapore,2026-04-18T10:38:00+08:00,Singapore,2026-04-17T05:38:00+08:00,true
+LOG000396,ORD000442,TRK000000442,DemoExpress,exception,Shenzhen Demo Warehouse,Jakarta,2026-04-29T16:22:00+08:00,Regional Transit Hub,2026-04-23T10:22:00+08:00,true
+LOG000397,ORD000443,TRK000000443,LabShip,delivered,Shenzhen Demo Warehouse,Jakarta,2026-05-26T17:50:00+08:00,Jakarta,2026-05-24T09:50:00+08:00,true
+LOG000398,ORD000444,TRK000000444,SampleLogistics,picked_up,Shenzhen Demo Warehouse,Kuala Lumpur,2026-02-15T06:35:00+08:00,Shenzhen Sorting Center,2026-02-07T15:35:00+08:00,true
+LOG000399,ORD000445,TRK000000445,LabShip,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-05-18T17:12:00+08:00,Kuala Lumpur,2026-05-13T02:12:00+08:00,true
+LOG000400,ORD000446,TRK000000446,DemoExpress,delivered,Shenzhen Demo Warehouse,Bangkok,2026-02-20T22:25:00+08:00,Bangkok,2026-02-18T14:25:00+08:00,true
+LOG000401,ORD000447,TRK000000447,MockParcel,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-05-28T21:01:00+08:00,Ho Chi Minh City,2026-05-24T07:01:00+08:00,true
+LOG000402,ORD000448,TRK000000448,LabShip,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-02-17T00:08:00+08:00,Kuala Lumpur,2026-02-13T11:08:00+08:00,true
+LOG000403,ORD000450,TRK000000450,DemoExpress,delivered,Shenzhen Demo Warehouse,Manila,2026-03-10T05:10:00+08:00,Manila,2026-03-09T19:10:00+08:00,true
+LOG000404,ORD000451,TRK000000451,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Bangkok,2026-05-18T08:07:00+08:00,Shenzhen Demo Warehouse,2026-05-11T03:07:00+08:00,true
+LOG000405,ORD000453,TRK000000453,SampleLogistics,delivered,Shenzhen Demo Warehouse,Singapore,2026-02-01T23:17:00+08:00,Singapore,2026-01-28T17:17:00+08:00,true
+LOG000406,ORD000455,TRK000000455,MockParcel,delivered,Shenzhen Demo Warehouse,Manila,2026-01-28T12:16:00+08:00,Manila,2026-01-26T21:16:00+08:00,true
+LOG000407,ORD000456,TRK000000456,LabShip,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-06-05T17:01:00+08:00,Kuala Lumpur,2026-06-01T03:01:00+08:00,true
+LOG000408,ORD000459,TRK000000459,MockParcel,pending_pickup,Shenzhen Demo Warehouse,Singapore,2026-04-30T15:24:00+08:00,Shenzhen Demo Warehouse,2026-04-28T00:24:00+08:00,true
+LOG000409,ORD000460,TRK000000460,LabShip,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-01-10T01:37:00+08:00,Ho Chi Minh City,2026-01-09T19:37:00+08:00,true
+LOG000410,ORD000461,TRK000000461,MockParcel,delivered,Shenzhen Demo Warehouse,Manila,2026-05-17T08:12:00+08:00,Manila,2026-05-12T20:12:00+08:00,true
+LOG000411,ORD000462,TRK000000462,MockParcel,in_transit,Shenzhen Demo Warehouse,Manila,2026-02-14T22:19:00+08:00,Regional Transit Hub,2026-02-11T14:19:00+08:00,true
+LOG000412,ORD000463,TRK000000463,LabShip,in_transit,Shenzhen Demo Warehouse,Jakarta,2026-01-23T11:05:00+08:00,Regional Transit Hub,2026-01-18T00:05:00+08:00,true
+LOG000413,ORD000464,TRK000000464,SampleLogistics,delivered,Shenzhen Demo Warehouse,Jakarta,2026-03-26T20:15:00+08:00,Jakarta,2026-03-25T19:15:00+08:00,true
+LOG000414,ORD000465,TRK000000465,MockParcel,in_transit,Shenzhen Demo Warehouse,Singapore,2026-04-09T23:42:00+08:00,Regional Transit Hub,2026-04-06T09:42:00+08:00,true
+LOG000415,ORD000466,TRK000000466,LabShip,exception,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-04-23T08:48:00+08:00,Regional Transit Hub,2026-04-16T19:48:00+08:00,true
+LOG000416,ORD000468,TRK000000468,LabShip,delivered,Shenzhen Demo Warehouse,Singapore,2026-03-21T16:39:00+08:00,Singapore,2026-03-16T00:39:00+08:00,true
+LOG000417,ORD000469,TRK000000469,MockParcel,exception,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-03-31T06:13:00+08:00,Regional Transit Hub,2026-03-27T10:13:00+08:00,true
+LOG000418,ORD000470,TRK000000470,MockParcel,delivered,Shenzhen Demo Warehouse,Bangkok,2026-03-10T23:10:00+08:00,Bangkok,2026-03-07T00:10:00+08:00,true
+LOG000419,ORD000471,TRK000000471,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-05-04T01:55:00+08:00,Shenzhen Demo Warehouse,2026-04-26T15:55:00+08:00,true
+LOG000420,ORD000472,TRK000000472,MockParcel,delivered,Shenzhen Demo Warehouse,Manila,2026-04-09T16:33:00+08:00,Manila,2026-04-03T06:33:00+08:00,true
+LOG000421,ORD000473,TRK000000473,LabShip,delivered,Shenzhen Demo Warehouse,Singapore,2026-04-24T07:43:00+08:00,Singapore,2026-04-23T15:43:00+08:00,true
+LOG000422,ORD000474,TRK000000474,MockParcel,in_transit,Shenzhen Demo Warehouse,Kuala Lumpur,2026-04-21T08:21:00+08:00,Regional Transit Hub,2026-04-18T21:21:00+08:00,true
+LOG000423,ORD000475,TRK000000475,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Jakarta,2026-03-21T14:44:00+08:00,Shenzhen Demo Warehouse,2026-03-15T05:44:00+08:00,true
+LOG000424,ORD000476,TRK000000476,MockParcel,in_transit,Shenzhen Demo Warehouse,Manila,2026-03-07T16:06:00+08:00,Regional Transit Hub,2026-03-04T10:06:00+08:00,true
+LOG000425,ORD000477,TRK000000477,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-03-10T07:14:00+08:00,Shenzhen Demo Warehouse,2026-03-03T22:14:00+08:00,true
+LOG000426,ORD000478,TRK000000478,LabShip,in_transit,Shenzhen Demo Warehouse,Jakarta,2026-02-23T06:40:00+08:00,Regional Transit Hub,2026-02-19T06:40:00+08:00,true
+LOG000427,ORD000479,TRK000000479,MockParcel,delivered,Shenzhen Demo Warehouse,Kuala Lumpur,2026-06-03T06:54:00+08:00,Kuala Lumpur,2026-05-28T05:54:00+08:00,true
+LOG000428,ORD000481,TRK000000481,LabShip,delivered,Shenzhen Demo Warehouse,Bangkok,2026-06-02T12:00:00+08:00,Bangkok,2026-05-31T05:00:00+08:00,true
+LOG000429,ORD000482,TRK000000482,DemoExpress,pending_pickup,Shenzhen Demo Warehouse,Bangkok,2026-05-01T21:37:00+08:00,Shenzhen Demo Warehouse,2026-04-26T05:37:00+08:00,true
+LOG000430,ORD000483,TRK000000483,LabShip,in_transit,Shenzhen Demo Warehouse,Jakarta,2026-05-24T06:39:00+08:00,Regional Transit Hub,2026-05-20T16:39:00+08:00,true
+LOG000431,ORD000485,TRK000000485,DemoExpress,delivered,Shenzhen Demo Warehouse,Jakarta,2026-05-04T22:14:00+08:00,Jakarta,2026-04-28T18:14:00+08:00,true
+LOG000432,ORD000486,TRK000000486,SampleLogistics,delivered,Shenzhen Demo Warehouse,Manila,2026-07-02T04:11:00+08:00,Manila,2026-06-27T12:11:00+08:00,true
+LOG000433,ORD000487,TRK000000487,DemoExpress,delivered,Shenzhen Demo Warehouse,Jakarta,2026-02-10T10:43:00+08:00,Jakarta,2026-02-05T14:43:00+08:00,true
+LOG000434,ORD000488,TRK000000488,DemoExpress,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-06-21T14:19:00+08:00,Ho Chi Minh City,2026-06-19T09:19:00+08:00,true
+LOG000435,ORD000489,TRK000000489,SampleLogistics,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-03-07T20:34:00+08:00,Ho Chi Minh City,2026-03-04T07:34:00+08:00,true
+LOG000436,ORD000491,TRK000000491,DemoExpress,delivered,Shenzhen Demo Warehouse,Singapore,2026-06-05T23:58:00+08:00,Singapore,2026-06-04T08:58:00+08:00,true
+LOG000437,ORD000493,TRK000000493,MockParcel,delivered,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-03-17T10:00:00+08:00,Ho Chi Minh City,2026-03-14T09:00:00+08:00,true
+LOG000438,ORD000495,TRK000000495,MockParcel,delivered,Shenzhen Demo Warehouse,Jakarta,2026-01-31T22:11:00+08:00,Jakarta,2026-01-26T15:11:00+08:00,true
+LOG000439,ORD000496,TRK000000496,LabShip,delivered,Shenzhen Demo Warehouse,Manila,2026-05-10T06:03:00+08:00,Manila,2026-05-06T22:03:00+08:00,true
+LOG000440,ORD000497,TRK000000497,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Bangkok,2026-04-23T02:37:00+08:00,Shenzhen Demo Warehouse,2026-04-17T06:37:00+08:00,true
+LOG000441,ORD000498,TRK000000498,MockParcel,delivered,Shenzhen Demo Warehouse,Bangkok,2026-02-23T08:39:00+08:00,Bangkok,2026-02-17T09:39:00+08:00,true
+LOG000442,ORD000499,TRK000000499,LabShip,in_transit,Shenzhen Demo Warehouse,Ho Chi Minh City,2026-02-16T11:14:00+08:00,Regional Transit Hub,2026-02-08T17:14:00+08:00,true
+LOG000443,ORD000500,TRK000000500,SampleLogistics,pending_pickup,Shenzhen Demo Warehouse,Kuala Lumpur,2026-03-24T02:05:00+08:00,Shenzhen Demo Warehouse,2026-03-18T05:05:00+08:00,true
