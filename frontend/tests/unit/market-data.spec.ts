@@ -42,7 +42,8 @@ describe("市场数据页面", () => {
 
     expect(wrapper.text()).toContain("USB-C Hub");
     expect(wrapper.text()).toContain("simulated_experiment");
-    expect(wrapper.text()).toContain("已在本地解析 1 条记录");
+    expect(wrapper.text()).toContain("products.csv（1 条）");
+    expect(wrapper.text()).toContain("商品与评论分别保留");
 
     await wrapper.get(".actions .sp-button--ghost").trigger("click");
     await wrapper.vm.$nextTick();
@@ -50,6 +51,41 @@ describe("市场数据页面", () => {
 
     await wrapper.get(".actions .sp-button--secondary").trigger("click");
     expect(wrapper.text()).toContain("移出候选");
+    wrapper.unmount();
+  });
+
+  it("同时保留商品与评论并在商品详情中展示关联评论", async () => {
+    const wrapper = mount(MarketDataView);
+    const products = [
+      "product_id,title,price,rating,review_count,is_mock_data",
+      "PROD1001,USB-C Hub,19.9,4.8,1,true",
+    ].join("\n");
+    const reviews = [
+      "review_id,product_id,rating,content,content_zh,language,created_at,is_mock_data",
+      "REV1001,PROD1001,5,Very useful,非常实用,English,2026-07-01T10:00:00+08:00,true",
+    ].join("\n");
+    const input = wrapper.get('input[type="file"]');
+
+    Object.defineProperty(input.element, "files", {
+      configurable: true,
+      value: [
+        new File([products], "products.csv", { type: "text/csv" }),
+        new File([reviews], "reviews.csv", { type: "text/csv" }),
+      ],
+    });
+    await input.trigger("change");
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
+
+    expect(wrapper.text()).toContain("1关联评论");
+    expect(wrapper.text()).toContain("USB-C Hub");
+    expect(wrapper.findAll("tbody tr")).toHaveLength(1);
+
+    await wrapper.get(".actions .sp-button--ghost").trigger("click");
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.get(".detail-drawer").text()).toContain("关联评论（1）");
+    expect(wrapper.get(".detail-drawer").text()).toContain("Very useful");
+    expect(wrapper.get(".detail-drawer").text()).toContain("中文：非常实用");
     wrapper.unmount();
   });
 
