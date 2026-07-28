@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Filter, ListTodo, Menu, Search } from "@lucide/vue";
 import { storeToRefs } from "pinia";
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 
 import SpIconButton from "@/components/base/SpIconButton.vue";
@@ -18,10 +18,18 @@ const appStore = useAppStore();
 const { platformStatus, platformStatusLoading, platformStatusError } = storeToRefs(appStore);
 const { toggleMobileSidebar } = useSidebar();
 const searchQuery = ref("");
-const scope = ref("mock-shop");
+const scope = computed({
+  get: () => appStore.selectedShopId,
+  set: (value: string) => appStore.setSelectedShopId(value),
+});
 const scopeOptions = [
-  { label: "Shopee 模拟店铺", value: "mock-shop" },
-  { label: "全部模拟数据", value: "all-mock" },
+  { label: "全部模拟店铺", value: "all" },
+  { label: "SHOP001 · 新加坡店铺", value: "SHOP001" },
+  { label: "SHOP002 · 马来西亚店铺", value: "SHOP002" },
+  { label: "SHOP003 · 菲律宾店铺", value: "SHOP003" },
+  { label: "SHOP004 · 泰国店铺", value: "SHOP004" },
+  { label: "SHOP005 · 越南店铺", value: "SHOP005" },
+  { label: "SHOP006 · 印度尼西亚店铺", value: "SHOP006" },
 ];
 
 usePlatformStatus();

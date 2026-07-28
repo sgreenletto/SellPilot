@@ -57,6 +57,8 @@ class MockShopeeAdapter(PlatformAdapter):
             statement = statement.where(Product.status == status)
         if site := filters.get("site"):
             statement = statement.where(Product.site == site)
+        if shop_id := filters.get("shop_id"):
+            statement = statement.where(Product.source_shop_external_id == shop_id)
         statement = statement.offset(int(filters.get("offset", 0))).limit(
             min(int(filters.get("limit", 20)), 100)
         )
@@ -146,6 +148,8 @@ class MockShopeeAdapter(PlatformAdapter):
         statement = select(Order).order_by(Order.source_created_at.desc())
         if status := filters.get("status"):
             statement = statement.where(Order.order_status == status)
+        if shop_id := filters.get("shop_id"):
+            statement = statement.where(Order.source_shop_external_id == shop_id)
         statement = statement.offset(int(filters.get("offset", 0))).limit(
             min(int(filters.get("limit", 20)), 100)
         )

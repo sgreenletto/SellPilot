@@ -45,6 +45,7 @@ const languageOptions = [
 interface LocalizedVersion {
   title?: string;
   description?: string;
+  category_name?: string;
 }
 const localizedByProduct = ref<Record<string, Record<string, LocalizedVersion>>>({});
 const notice = ref("");
@@ -83,6 +84,11 @@ function defaultLocalizedDescription(language: string): string {
   return language === "en" ? description : "";
 }
 
+function defaultLocalizedCategory(language: string): string {
+  const category = String(selected.value?.category_name ?? "未分类");
+  return language === "en" ? category : "";
+}
+
 function localizedField(field: keyof LocalizedVersion, fallback: () => string) {
   return computed({
     get: () => {
@@ -108,14 +114,89 @@ const localizedTitle = localizedField("title", () => defaultLocalizedTitle(activ
 const localizedDescription = localizedField("description", () =>
   defaultLocalizedDescription(activeLanguage.value),
 );
+const localizedCategory = localizedField("category_name", () =>
+  defaultLocalizedCategory(activeLanguage.value),
+);
 const activeLanguageLabel = computed(
   () =>
     languageOptions.find((language) => language.code === activeLanguage.value)?.label ??
     activeLanguage.value,
 );
 const hasLocalizedContent = computed(
-  () => Boolean(localizedTitle.value.trim()) && Boolean(localizedDescription.value.trim()),
+  () =>
+    Boolean(localizedTitle.value.trim()) &&
+    Boolean(localizedDescription.value.trim()) &&
+    Boolean(localizedCategory.value.trim()),
 );
+const statusLabels: Record<string, Record<string, string>> = {
+  en: {
+    active: "Active",
+    draft: "Draft",
+    inactive: "Inactive",
+    pending: "Pending",
+    failed: "Failed",
+  },
+  "zh-CN": {
+    active: "在售",
+    draft: "草稿",
+    inactive: "已下架",
+    pending: "待处理",
+    failed: "失败",
+  },
+  "zh-TW": {
+    active: "上架中",
+    draft: "草稿",
+    inactive: "已下架",
+    pending: "待處理",
+    failed: "失敗",
+  },
+  ms: {
+    active: "Aktif",
+    draft: "Draf",
+    inactive: "Tidak aktif",
+    pending: "Menunggu",
+    failed: "Gagal",
+  },
+  id: {
+    active: "Aktif",
+    draft: "Draf",
+    inactive: "Tidak aktif",
+    pending: "Menunggu",
+    failed: "Gagal",
+  },
+  th: {
+    active: "เปิดใช้งาน",
+    draft: "ฉบับร่าง",
+    inactive: "ปิดใช้งาน",
+    pending: "รอดำเนินการ",
+    failed: "ล้มเหลว",
+  },
+  vi: {
+    active: "Đang hoạt động",
+    draft: "Bản nháp",
+    inactive: "Ngừng hoạt động",
+    pending: "Đang chờ",
+    failed: "Thất bại",
+  },
+  tl: {
+    active: "Aktibo",
+    draft: "Draft",
+    inactive: "Hindi aktibo",
+    pending: "Nakabinbin",
+    failed: "Nabigo",
+  },
+  "pt-BR": {
+    active: "Ativo",
+    draft: "Rascunho",
+    inactive: "Inativo",
+    pending: "Pendente",
+    failed: "Falhou",
+  },
+};
+const localizedStatus = computed(() => {
+  const statusCode = String(selected.value?.status ?? "");
+  return (statusLabels[activeLanguage.value]?.[statusCode] ?? statusCode) || "—";
+});
 
 async function importProducts(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement;
@@ -314,9 +395,25 @@ watch([query, status, pageSize], () => (currentPage.value = 1));
                 activeLanguage === 'en' ? '商品名称' : `待补充${activeLanguageLabel}名称`
               "
           /></label>
-          <label>类目<input v-model="selected.category_name" :disabled="!editing" /></label>
-          <label>价格<input v-model="selected.price" :disabled="!editing" type="number" /></label>
-          <label>状态<input v-model="selected.status" disabled /></label>
+          <label
+            >类目<input
+              v-model="localizedCategory"
+              :disabled="!editing"
+              :placeholder="
+                activeLanguage === 'en' ? '商品类目' : `待补充${activeLanguageLabel}类目`
+              "
+          /></label>
+          <label
+            >价格（{{ selected.currency }}）<input
+              v-model="selected.price"
+              :disabled="!editing"
+              type="number"
+          /></label>
+          <label
+            >状态<input :value="localizedStatus" disabled /><small
+              >系统状态代码：{{ selected.status }}</small
+            ></label
+          >
           <label class="wide"
             >商品描述<textarea
               v-model="localizedDescription"
@@ -355,7 +452,7 @@ watch([query, status, pageSize], () => (currentPage.value = 1));
         <div class="mock-gallery" aria-label="Mock 商品图片预览">
           <div v-for="index in 3" :key="index" class="mock-image">
             <ImageIcon :size="28" />
-            <strong>{{ selected.category_name }}</strong>
+            <strong>{{ localizedCategory || "待翻译类目" }}</strong>
             <span>Mock 视图 {{ index }}</span>
           </div>
         </div>

@@ -14,6 +14,8 @@ describe("成员二业务工作台", () => {
     expect(wrapper.get(".commerce-pagination").text()).toContain("共 100 条 · 第 1 / 10 页");
     expect(wrapper.findAll("tbody tr")).toHaveLength(10);
     expect(wrapper.get(".form-grid select").findAll("option")).toHaveLength(9);
+    expect(wrapper.text()).toContain("系统状态代码：active");
+    expect(wrapper.get('input[value="Active"]').exists()).toBe(true);
 
     await wrapper
       .findAll("button")
@@ -24,6 +26,13 @@ describe("成员二业务工作台", () => {
     expect(wrapper.text()).toContain("待翻译");
     expect(wrapper.text()).toContain("机器翻译服务未配置");
     expect(wrapper.get(".form-grid textarea").element).toHaveProperty("value", "");
+    expect(wrapper.get('input[placeholder="待补充简体中文类目"]').element).toHaveProperty(
+      "value",
+      "",
+    );
+    expect(wrapper.text()).toContain("系统状态代码：draft");
+    expect(wrapper.text()).toContain("草稿");
+    expect(wrapper.text()).toContain("价格（SGD）");
     await wrapper.get(".form-grid textarea").setValue("本地中文商品描述");
     expect(wrapper.get(".form-grid textarea").element).toHaveProperty("value", "本地中文商品描述");
     await wrapper

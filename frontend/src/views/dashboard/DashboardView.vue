@@ -11,27 +11,46 @@ import {
   Minus,
   PackageCheck,
   TrendingUp,
-} from "@lucide/vue"
-import { computed, ref } from "vue"
-import { useRouter } from "vue-router"
+} from "@lucide/vue";
+import { storeToRefs } from "pinia";
+import { computed, onMounted, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 
-import SpButton from "@/components/base/SpButton.vue"
-import DashboardTrendChart from "@/components/charts/DashboardTrendChart.vue"
-import StatusBadge from "@/components/data-display/StatusBadge.vue"
-import PageContainer from "@/components/layout/PageContainer.vue"
+import { loadCommerceDashboardSnapshot } from "@/api/dashboard";
+import SpButton from "@/components/base/SpButton.vue";
+import DashboardTrendChart from "@/components/charts/DashboardTrendChart.vue";
+import StatusBadge from "@/components/data-display/StatusBadge.vue";
+import PageContainer from "@/components/layout/PageContainer.vue";
 import {
   alertItems,
   recentActivities,
-  topMetrics,
+  topMetrics as mockTopMetrics,
   trendDatasets,
-} from "@/mocks/dashboard"
-import type { TrendType } from "@/types/dashboard"
+} from "@/mocks/dashboard";
+import type { MetricCardData, TrendDataset, TrendType } from "@/types/dashboard";
+import { useAppStore } from "@/stores/app";
 
-const router = useRouter()
+const router = useRouter();
+const appStore = useAppStore();
+const { selectedShopId } = storeToRefs(appStore);
 
 // ---- 趋势切换 ----
 
-const trendType = ref<TrendType>("funnel")
+const trendType = ref<TrendType>("funnel");
+const metrics = ref<MetricCardData[]>(mockTopMetrics.map((metric) => ({ ...metric })));
+const datasets = ref<Record<string, TrendDataset>>(
+  Object.fromEntries(
+    Object.entries(trendDatasets).map(([key, dataset]) => [
+      key,
+      {
+        categories: [...dataset.categories],
+        series: dataset.series.map((series) => ({ ...series, data: [...series.data] })),
+      },
+    ]),
+  ),
+);
+const dataStatus = ref<"loading" | "backend" | "fallback">("loading");
+const dataMessage = ref("正在读取后端经营数据…");
 
 const trendTabs: { key: TrendType; label: string }[] = [
   { key: "funnel", label: "商品运营漏斗" },
@@ -39,9 +58,131 @@ const trendTabs: { key: TrendType; label: string }[] = [
   { key: "popularity", label: "商品热度" },
   { key: "sentiment", label: "评论情绪分布" },
   { key: "service", label: "客服问题趋势" },
-]
+];
 
-const currentDataset = computed(() => trendDatasets[trendType.value])
+const currentDataset = computed(
+  () => datasets.value[trendType.value] ?? { categories: [], series: [] },
+);
+
+function orderTrend(orders: Awaited<ReturnType<typeof loadCommerceDashboardSnapshot>>["orders"]) {
+  const counts = new Map<string, number>();
+  for (const order of orders) {
+    const date = order.created_at.slice(0, 10);
+    counts.set(date, (counts.get(date) ?? 0) + 1);
+  }
+  const dates = [...counts.keys()].sort().slice(-7);
+  return {
+    categories: dates.map((date) => date.slice(5)),
+    series: [{ name: "模拟订单", data: dates.map((date) => counts.get(date) ?? 0), color: "blue" }],
+  };
+}
+
+function storedCandidateIds(): Set<string> {
+  try {
+    const value = JSON.parse(
+      window.localStorage.getItem("sellpilot_market_candidate_product_ids") ?? "[]",
+    );
+    return new Set(
+      Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [],
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+async function loadBackendDashboard(): Promise<void> {
+  try {
+    const snapshot = await loadCommerceDashboardSnapshot(selectedShopId.value);
+    const lowStock = snapshot.inventory.filter(
+      (item) => item.stock_status === "low_stock" || item.available_stock <= item.safety_stock,
+    ).length;
+    const candidateIds = storedCandidateIds();
+    const candidateCount = snapshot.products.filter((product) =>
+      candidateIds.has(product.product_id),
+    ).length;
+    const draftCount = snapshot.products.filter((product) => product.status === "draft").length;
+    const activeCount = snapshot.products.filter((product) => product.status === "active").length;
+    const popular = [...snapshot.products]
+      .sort((left, right) => right.sales_count - left.sales_count)
+      .slice(0, 6);
+
+    metrics.value = [
+      {
+        id: "total-products",
+        label: "商品总数",
+        value: snapshot.products.length,
+        suffix: "件",
+        icon: "package",
+        tone: "navy",
+        linkTo: "/products",
+      },
+      {
+        id: "low-stock",
+        label: "低库存 SKU",
+        value: lowStock,
+        suffix: "项",
+        icon: "alert",
+        tone: "pink",
+        linkTo: "/products/listing-inventory",
+      },
+      {
+        id: "mock-orders",
+        label: "模拟订单数",
+        value: snapshot.orders.length,
+        suffix: "单",
+        icon: "trend",
+        tone: "blue",
+        linkTo: "/orders",
+      },
+      {
+        id: "pending-sessions",
+        label: "待处理客服会话",
+        value: 0,
+        suffix: "未接入",
+        icon: "message",
+        tone: "purple",
+        linkTo: "/customer-service/conversations",
+      },
+      {
+        id: "pending-tasks",
+        label: "待确认任务",
+        value: 0,
+        suffix: "未接入",
+        icon: "check",
+        tone: "green",
+        linkTo: "/tasks",
+      },
+    ];
+    datasets.value.funnel = {
+      categories: ["市场商品", "选品候选", "上架草稿", "模拟上架"],
+      series: [
+        {
+          name: "商品数量",
+          data: [snapshot.products.length, candidateCount, draftCount, activeCount],
+          color: "blue",
+        },
+      ],
+    };
+    datasets.value.orders = orderTrend(snapshot.orders);
+    datasets.value.popularity = {
+      categories: popular.map((product) => product.title),
+      series: [
+        {
+          name: "模拟销量",
+          data: popular.map((product) => product.sales_count),
+          color: "blue",
+        },
+      ],
+    };
+    dataStatus.value = "backend";
+    const scopeLabel =
+      selectedShopId.value === "all" ? "全部模拟店铺" : `来源店铺 ${selectedShopId.value}`;
+    dataMessage.value = `已连接后端：当前展示${scopeLabel}的商品、库存和订单数据；客服、任务及提醒尚未接入。`;
+  } catch {
+    dataStatus.value = "fallback";
+    dataMessage.value = "后端未连接，当前展示明确标识的合成 Mock 演示数据。";
+  }
+}
 
 // ---- 指标卡图标 ----
 
@@ -51,39 +192,46 @@ const iconMap: Record<string, typeof TrendingUp> = {
   package: PackageCheck,
   alert: AlertTriangle,
   check: CheckCircle2,
-}
+};
 
 // ---- 快捷跳转 ----
 
 function goTo(path: string) {
-  void router.push(path)
+  void router.push(path);
 }
 
 // ---- 格式化趋势数字 ----
 
 function formatTrend(v: number | undefined): string {
-  if (v == null || v === 0) return ""
-  return `${v > 0 ? "+" : ""}${v.toFixed(1)}%`
+  if (v == null || v === 0) return "";
+  return `${v > 0 ? "+" : ""}${v.toFixed(1)}%`;
 }
 
 // ---- 分区活动列表（避免模板中重复 filter） ----
 
-const taskActivities = computed(() =>
-  recentActivities.filter((a) => a.type === "task"),
-)
+const taskActivities = computed(() => recentActivities.filter((a) => a.type === "task"));
 
-const systemActivities = computed(() =>
-  recentActivities.filter((a) => a.type === "system"),
-)
+const systemActivities = computed(() => recentActivities.filter((a) => a.type === "system"));
+
+onMounted(() => void loadBackendDashboard());
+
+watch(selectedShopId, () => {
+  dataStatus.value = "loading";
+  dataMessage.value = "正在按店铺范围读取后端经营数据…";
+  void loadBackendDashboard();
+});
 </script>
 
 <template>
   <PageContainer>
     <div class="dashboard">
+      <p :class="['data-status', `data-status--${dataStatus}`]" role="status">
+        {{ dataMessage }}
+      </p>
       <!-- ==================== 1. 顶部指标卡 ==================== -->
       <section class="metrics-row" aria-label="核心指标">
         <button
-          v-for="metric in topMetrics"
+          v-for="metric in metrics"
           :key="metric.id"
           type="button"
           :class="['metric-card', `metric-card--${metric.tone}`]"
@@ -98,7 +246,16 @@ const systemActivities = computed(() =>
               <strong>{{ metric.value.toLocaleString("zh-CN") }}</strong>
               <span v-if="metric.suffix" class="metric-card__suffix">{{ metric.suffix }}</span>
             </div>
-            <span v-if="metric.trend != null" :class="['metric-card__trend', { 'metric-card__trend--up': metric.trend > 0, 'metric-card__trend--down': metric.trend < 0 }]">
+            <span
+              v-if="metric.trend != null"
+              :class="[
+                'metric-card__trend',
+                {
+                  'metric-card__trend--up': metric.trend > 0,
+                  'metric-card__trend--down': metric.trend < 0,
+                },
+              ]"
+            >
               <ArrowUp v-if="metric.trend > 0" :size="12" />
               <ArrowDown v-else-if="metric.trend < 0" :size="12" />
               <Minus v-else :size="12" />
@@ -131,8 +288,14 @@ const systemActivities = computed(() =>
 
           <!-- 漏斗阶段数值（仅在漏斗视图展示） -->
           <div v-if="trendType === 'funnel'" class="funnel-stats">
-            <div v-for="(val, idx) in currentDataset.categories" :key="idx" class="funnel-stat-item">
-              <strong>{{ (currentDataset.series[0]?.data[idx] ?? 0).toLocaleString("zh-CN") }}</strong>
+            <div
+              v-for="(val, idx) in currentDataset.categories"
+              :key="idx"
+              class="funnel-stat-item"
+            >
+              <strong>{{
+                (currentDataset.series[0]?.data[idx] ?? 0).toLocaleString("zh-CN")
+              }}</strong>
               <span>{{ val }}</span>
             </div>
           </div>
@@ -144,7 +307,11 @@ const systemActivities = computed(() =>
             <h3 class="dash-card__title">异常提醒 &amp; 今日待办</h3>
           </header>
           <ul class="alerts-list">
-            <li v-for="item in alertItems" :key="item.id" :class="['alert-item', `alert-item--${item.type}`]">
+            <li
+              v-for="item in alertItems"
+              :key="item.id"
+              :class="['alert-item', `alert-item--${item.type}`]"
+            >
               <span class="alert-item__dot" aria-hidden="true"></span>
               <div class="alert-item__body">
                 <p class="alert-item__title">{{ item.title }}</p>
@@ -183,8 +350,22 @@ const systemActivities = computed(() =>
                   <span class="activity-item__target">{{ act.target }}</span>
                 </div>
                 <StatusBadge
-                  :status="act.status === 'completed' ? 'active' : act.status === 'pending' ? 'pending' : 'failed'"
-                  :label="act.status === 'completed' ? '已完成' : act.status === 'pending' ? '待处理' : act.status === 'processing' ? '处理中' : '失败'"
+                  :status="
+                    act.status === 'completed'
+                      ? 'active'
+                      : act.status === 'pending'
+                        ? 'pending'
+                        : 'failed'
+                  "
+                  :label="
+                    act.status === 'completed'
+                      ? '已完成'
+                      : act.status === 'pending'
+                        ? '待处理'
+                        : act.status === 'processing'
+                          ? '处理中'
+                          : '失败'
+                  "
                 />
                 <span class="activity-item__time">{{ act.timestamp }}</span>
               </li>
@@ -224,6 +405,25 @@ const systemActivities = computed(() =>
   display: grid;
   gap: var(--sp-space-6);
   min-width: 0;
+}
+
+.data-status {
+  padding: var(--sp-space-3) var(--sp-space-4);
+  margin: 0;
+  color: var(--sp-color-text-secondary);
+  background: var(--sp-color-surface);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-control);
+}
+
+.data-status--backend {
+  color: var(--sp-color-success);
+  background: var(--sp-color-success-soft);
+}
+
+.data-status--fallback {
+  color: var(--sp-color-danger);
+  background: var(--sp-color-danger-soft);
 }
 
 /* ==================== Shared Card ==================== */
@@ -274,7 +474,9 @@ const systemActivities = computed(() =>
   border: 1px solid rgba(62, 79, 105, 0.06);
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(64, 82, 112, 0.06);
-  transition: box-shadow var(--sp-transition-fast), transform var(--sp-transition-fast);
+  transition:
+    box-shadow var(--sp-transition-fast),
+    transform var(--sp-transition-fast);
 }
 
 .metric-card:hover {
@@ -401,7 +603,9 @@ const systemActivities = computed(() =>
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--sp-radius-pill);
-  transition: color var(--sp-transition-fast), background var(--sp-transition-fast);
+  transition:
+    color var(--sp-transition-fast),
+    background var(--sp-transition-fast);
   white-space: nowrap;
 }
 

@@ -36,11 +36,12 @@ async def list_products(
     settings: SettingsDependency,
     status: str | None = None,
     site: str | None = None,
+    shop_id: str | None = None,
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
 ) -> ApiResponse[list[ProductResponse]]:
     data = await CommerceQueryService(session, settings).list_products(
-        status=status, site=site, offset=offset, limit=limit
+        status=status, site=site, shop_id=shop_id, offset=offset, limit=limit
     )
     return success_response(
         [ProductResponse.model_validate(item) for item in data], get_request_id(request)
@@ -68,11 +69,12 @@ async def list_orders(
     session: SessionDependency,
     settings: SettingsDependency,
     status: str | None = None,
+    shop_id: str | None = None,
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
 ) -> ApiResponse[list[OrderResponse]]:
     data = await CommerceQueryService(session, settings).list_orders(
-        status=status, offset=offset, limit=limit
+        status=status, shop_id=shop_id, offset=offset, limit=limit
     )
     return success_response(
         [OrderResponse.model_validate(item) for item in data], get_request_id(request)
@@ -134,11 +136,12 @@ async def list_inventory(
     session: SessionDependency,
     settings: SettingsDependency,
     status: str | None = None,
+    shop_id: str | None = None,
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
 ) -> ApiResponse[list[InventoryResponse]]:
     data = await CommerceQueryService(session, settings).list_inventory(
-        status=status, offset=offset, limit=limit
+        status=status, shop_id=shop_id, offset=offset, limit=limit
     )
     return success_response(
         [InventoryResponse.model_validate(item) for item in data], get_request_id(request)

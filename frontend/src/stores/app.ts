@@ -10,6 +10,7 @@ export const useAppStore = defineStore("app", {
     platformStatus: null as PlatformPingData | null,
     platformStatusLoading: false,
     platformStatusError: null as string | null,
+    selectedShopId: localStorage.getItem("sellpilot_selected_shop_id") ?? "all",
   }),
   actions: {
     toggleSidebar() {
@@ -23,6 +24,10 @@ export const useAppStore = defineStore("app", {
     },
     setPageTitle(title: string) {
       this.currentPageTitle = title;
+    },
+    setSelectedShopId(shopId: string) {
+      this.selectedShopId = shopId;
+      localStorage.setItem("sellpilot_selected_shop_id", shopId);
     },
   },
 });
