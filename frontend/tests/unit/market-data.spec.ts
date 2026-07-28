@@ -5,6 +5,27 @@ import * as XLSX from "xlsx";
 import MarketDataView from "@/views/commerce/MarketDataView.vue";
 
 describe("市场数据页面", () => {
+  it("对项目商品执行筛选和分页", async () => {
+    const wrapper = mount(MarketDataView);
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.findAll("tbody tr")).toHaveLength(10);
+    expect(wrapper.text()).toContain("共 100 条 · 第 1 / 10 页");
+
+    await wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("下一页"))!
+      .trigger("click");
+    expect(wrapper.text()).toContain("第 2 / 10 页");
+
+    await wrapper.get('select[aria-label="站点筛选"]').setValue("Singapore");
+    expect(wrapper.text()).toContain("第 1 /");
+    expect(wrapper.findAll("tbody tr").length).toBeLessThanOrEqual(10);
+
+    await wrapper.get('select[aria-label="每页条数"]').setValue("20");
+    expect(wrapper.findAll("tbody tr").length).toBeLessThanOrEqual(20);
+  });
+
   it("导入 CSV 后展示指标、来源和候选操作", async () => {
     const wrapper = mount(MarketDataView);
     const csv = [

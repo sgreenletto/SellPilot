@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { FileSpreadsheet, Search, Star } from "@lucide/vue";
 import * as XLSX from "xlsx";
 
@@ -14,18 +14,42 @@ type MarketRow = Record<string, string | number | boolean>;
 
 const rows = ref<MarketRow[]>([]);
 const query = ref("");
+const sourceFilter = ref("");
+const siteFilter = ref("");
+const categoryFilter = ref("");
+const statusFilter = ref("");
+const currentPage = ref(1);
+const pageSize = ref(10);
 const source = ref("尚未导入");
 const selected = ref<MarketRow | null>(null);
-const candidates = ref(new Set<number>());
+const candidates = ref(new Set<string>());
 const importMessage = ref("");
 
 const filteredRows = computed(() => {
   const keyword = query.value.trim().toLowerCase();
-  if (!keyword) return rows.value;
-  return rows.value.filter((row) =>
-    Object.values(row).some((value) => String(value).toLowerCase().includes(keyword)),
+  return rows.value.filter(
+    (row) =>
+      (!keyword ||
+        Object.values(row).some((value) => String(value).toLowerCase().includes(keyword))) &&
+      (!sourceFilter.value || String(row.source_type) === sourceFilter.value) &&
+      (!siteFilter.value || String(row.site) === siteFilter.value) &&
+      (!categoryFilter.value || String(row.category_name) === categoryFilter.value) &&
+      (!statusFilter.value || String(row.status) === statusFilter.value),
   );
 });
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filteredRows.value.length / pageSize.value)),
+);
+const paginatedRows = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  return filteredRows.value.slice(start, start + pageSize.value);
+});
+const optionValues = (key: string): string[] =>
+  [...new Set(rows.value.map((row) => String(row[key] ?? "")).filter(Boolean))].sort();
+const sourceOptions = computed(() => optionValues("source_type"));
+const siteOptions = computed(() => optionValues("site"));
+const categoryOptions = computed(() => optionValues("category_name"));
+const statusOptions = computed(() => optionValues("status"));
 
 function normalizedRow(row: MarketRow): MarketRow {
   return {
@@ -42,6 +66,7 @@ function loadWorkbook(workbook: XLSX.WorkBook, sourceName: string): void {
   source.value = sourceName;
   selected.value = null;
   candidates.value.clear();
+  currentPage.value = 1;
 }
 
 async function importFile(event: Event): Promise<void> {
@@ -66,10 +91,20 @@ function loadProjectDemo(): void {
   importMessage.value = `已加载项目内置的 ${rows.value.length} 条 Mock 商品记录。`;
 }
 
-function toggleCandidate(index: number): void {
+function rowKey(row: MarketRow): string {
+  return String(
+    row.product_id ??
+      row.review_id ??
+      row.trend_id ??
+      JSON.stringify(Object.values(row).slice(0, 3)),
+  );
+}
+
+function toggleCandidate(row: MarketRow): void {
+  const key = rowKey(row);
   const next = new Set(candidates.value);
-  if (next.has(index)) next.delete(index);
-  else next.add(index);
+  if (next.has(key)) next.delete(key);
+  else next.add(key);
   candidates.value = next;
 }
 
@@ -79,6 +114,13 @@ function value(row: MarketRow, ...keys: string[]): string {
 }
 
 onMounted(loadProjectDemo);
+watch(
+  [query, sourceFilter, siteFilter, categoryFilter, statusFilter, pageSize],
+  () => (currentPage.value = 1),
+);
+watch(totalPages, (pages) => {
+  if (currentPage.value > pages) currentPage.value = pages;
+});
 </script>
 
 <template>
@@ -128,6 +170,24 @@ onMounted(loadProjectDemo);
           </SpInput>
           <span>价格、评分、评论数、热度和更新时间均取自导入文件</span>
         </div>
+        <div class="filters" aria-label="市场商品筛选">
+          <select v-model="sourceFilter" aria-label="来源筛选">
+            <option value="">全部来源</option>
+            <option v-for="item in sourceOptions" :key="item" :value="item">{{ item }}</option>
+          </select>
+          <select v-model="siteFilter" aria-label="站点筛选">
+            <option value="">全部站点</option>
+            <option v-for="item in siteOptions" :key="item" :value="item">{{ item }}</option>
+          </select>
+          <select v-model="categoryFilter" aria-label="类目筛选">
+            <option value="">全部类目</option>
+            <option v-for="item in categoryOptions" :key="item" :value="item">{{ item }}</option>
+          </select>
+          <select v-model="statusFilter" aria-label="状态筛选">
+            <option value="">全部状态</option>
+            <option v-for="item in statusOptions" :key="item" :value="item">{{ item }}</option>
+          </select>
+        </div>
       </template>
 
       <SpEmptyState
@@ -152,7 +212,7 @@ onMounted(loadProjectDemo);
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(row, index) in filteredRows" :key="index">
+            <tr v-for="row in paginatedRows" :key="rowKey(row)">
               <td>{{ value(row, "title", "category_name", "content") }}</td>
               <td>{{ value(row, "source_type") }}</td>
               <td>{{ value(row, "price", "average_price") }}</td>
@@ -162,15 +222,46 @@ onMounted(loadProjectDemo);
               <td>{{ value(row, "updated_at", "date", "collected_at") }}</td>
               <td class="actions">
                 <SpButton size="sm" variant="ghost" @click="selected = row">详情</SpButton>
-                <SpButton size="sm" variant="secondary" @click="toggleCandidate(index)">
+                <SpButton size="sm" variant="secondary" @click="toggleCandidate(row)">
                   <template #icon><Star :size="14" /></template>
-                  {{ candidates.has(index) ? "移出候选" : "加入候选" }}
+                  {{ candidates.has(rowKey(row)) ? "移出候选" : "加入候选" }}
                 </SpButton>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+      <template #footer>
+        <div class="pagination">
+          <span>共 {{ filteredRows.length }} 条 · 第 {{ currentPage }} / {{ totalPages }} 页</span>
+          <div class="pagination-actions">
+            <label>
+              每页
+              <select v-model.number="pageSize" aria-label="每页条数">
+                <option :value="10">10 条</option>
+                <option :value="20">20 条</option>
+                <option :value="50">50 条</option>
+              </select>
+            </label>
+            <SpButton
+              size="sm"
+              variant="ghost"
+              :disabled="currentPage === 1"
+              @click="currentPage -= 1"
+            >
+              上一页
+            </SpButton>
+            <SpButton
+              size="sm"
+              variant="secondary"
+              :disabled="currentPage === totalPages"
+              @click="currentPage += 1"
+            >
+              下一页
+            </SpButton>
+          </div>
+        </div>
+      </template>
     </SpCard>
 
     <SpCard v-if="selected" class="detail" padding="lg">
@@ -194,11 +285,38 @@ onMounted(loadProjectDemo);
 .heading,
 .heading-actions,
 .toolbar,
-.actions {
+.actions,
+.pagination,
+.pagination-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-space-3);
+}
+.filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: var(--sp-space-3);
+  margin-top: var(--sp-space-4);
+}
+.filters select,
+.pagination select {
+  min-height: 38px;
+  padding: 0 var(--sp-space-3);
+  color: var(--sp-color-text);
+  background: var(--sp-color-surface);
+  border: 1px solid var(--sp-border-strong);
+  border-radius: var(--sp-radius-control);
+}
+.pagination {
+  width: 100%;
+  color: var(--sp-color-text-secondary);
+  font-size: var(--sp-font-sm);
+}
+.pagination-actions label {
+  display: flex;
+  gap: var(--sp-space-2);
+  align-items: center;
 }
 .heading {
   margin-bottom: var(--sp-space-6);
@@ -300,6 +418,9 @@ dt {
   .metrics {
     grid-template-columns: repeat(2, 1fr);
   }
+  .filters {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 @media (max-width: 767px) {
   .heading,
@@ -309,6 +430,13 @@ dt {
   }
   .metrics {
     grid-template-columns: 1fr;
+  }
+  .filters {
+    grid-template-columns: 1fr;
+  }
+  .pagination {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 </style>
