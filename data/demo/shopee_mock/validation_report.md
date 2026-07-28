@@ -1,7 +1,7 @@
 # 模拟数据校验报告
 
 - 校验状态：**通过**
-- 通过项：96
+- 通过项：101
 - 警告项：0
 - 失败项：0
 - 数据性质：全部为模拟实验数据，不代表真实 Shopee 生产数据。
@@ -15,11 +15,11 @@
 | inventory.csv | 260 |
 | reviews.csv | 1000 |
 | orders.csv | 500 |
-| order_items.csv | 1229 |
-| logistics.csv | 443 |
-| logistics_tracks.csv | 1711 |
+| order_items.csv | 1239 |
+| logistics.csv | 451 |
+| logistics_tracks.csv | 1821 |
 | customer_sessions.csv | 100 |
-| customer_messages.csv | 596 |
+| customer_messages.csv | 584 |
 | returns_refunds.csv | 50 |
 | category_trends.csv | 2880 |
 
@@ -36,15 +36,15 @@
 - orders.csv contains required columns
 - orders.csv loaded: 500 data rows
 - order_items.csv contains required columns
-- order_items.csv loaded: 1229 data rows
+- order_items.csv loaded: 1239 data rows
 - logistics.csv contains required columns
-- logistics.csv loaded: 443 data rows
+- logistics.csv loaded: 451 data rows
 - logistics_tracks.csv contains required columns
-- logistics_tracks.csv loaded: 1711 data rows
+- logistics_tracks.csv loaded: 1821 data rows
 - customer_sessions.csv contains required columns
 - customer_sessions.csv loaded: 100 data rows
 - customer_messages.csv contains required columns
-- customer_messages.csv loaded: 596 data rows
+- customer_messages.csv loaded: 584 data rows
 - returns_refunds.csv contains required columns
 - returns_refunds.csv loaded: 50 data rows
 - category_trends.csv contains required columns
@@ -113,6 +113,11 @@
 - Pending-payment orders have not entered logistics
 - Review ratings align with sentiment hints
 - Review text has meaningful multilingual diversity
+- Chinese review translations have meaningful per-item diversity
+- Identical source reviews map to one consistent Chinese translation
+- Every product has linked review evidence
+- Every product includes both positive and negative review evidence
+- Per-product review counts follow a non-uniform long-tail distribution
 - Reviews match the buyer and item in their linked order
 - Product review counts and average ratings reconcile to reviews
 - Logistics track timestamps increase within each tracking number

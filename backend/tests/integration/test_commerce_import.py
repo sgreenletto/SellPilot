@@ -25,21 +25,29 @@ from sellpilot.services.commerce_import import CommerceImportError, CommerceImpo
 
 DATA_DIR = Path(__file__).resolve().parents[3] / "data" / "demo" / "shopee_mock"
 
+
+def csv_row_count(filename: str) -> int:
+    with (DATA_DIR / filename).open("r", encoding="utf-8-sig", newline="") as handle:
+        return sum(1 for _ in csv.DictReader(handle))
+
+
 EXPECTED_COUNTS = {
     Shop: 1,
-    Product: 100,
-    Sku: 260,
-    InventoryRecord: 260,
-    Order: 500,
-    OrderItem: 1229,
-    Review: 1000,
-    LogisticsRecord: 443,
-    LogisticsTrack: 1711,
-    CustomerSession: 100,
-    CustomerMessage: 596,
-    ReturnRefund: 50,
-    CategoryTrend: 2880,
+    Product: csv_row_count("products.csv"),
+    Sku: csv_row_count("skus.csv"),
+    InventoryRecord: csv_row_count("inventory.csv"),
+    Order: csv_row_count("orders.csv"),
+    OrderItem: csv_row_count("order_items.csv"),
+    Review: csv_row_count("reviews.csv"),
+    LogisticsRecord: csv_row_count("logistics.csv"),
+    LogisticsTrack: csv_row_count("logistics_tracks.csv"),
+    CustomerSession: csv_row_count("customer_sessions.csv"),
+    CustomerMessage: csv_row_count("customer_messages.csv"),
+    ReturnRefund: csv_row_count("returns_refunds.csv"),
+    CategoryTrend: csv_row_count("category_trends.csv"),
 }
+EXPECTED_VALIDATED_ROWS = sum(csv_row_count(path.name) for path in DATA_DIR.glob("*.csv"))
+EXPECTED_INSERTED_ROWS = sum(EXPECTED_COUNTS.values())
 
 
 async def count_rows(session, model) -> int:
@@ -55,8 +63,8 @@ async def test_imports_full_package_and_is_idempotent(
         await session.commit()
 
         assert first.files == 12
-        assert first.rows_validated == 9129
-        assert first.inserted_total == 9130
+        assert first.rows_validated == EXPECTED_VALIDATED_ROWS
+        assert first.inserted_total == EXPECTED_INSERTED_ROWS
         assert first.skipped_total == 0
         for model, expected in EXPECTED_COUNTS.items():
             assert await count_rows(session, model) == expected
@@ -73,7 +81,7 @@ async def test_imports_full_package_and_is_idempotent(
         await session.commit()
 
         assert second.inserted_total == 0
-        assert second.skipped_total == 9130
+        assert second.skipped_total == EXPECTED_INSERTED_ROWS
         for model, expected in EXPECTED_COUNTS.items():
             assert await count_rows(session, model) == expected
 

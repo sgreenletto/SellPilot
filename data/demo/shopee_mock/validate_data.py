@@ -18,7 +18,14 @@ FILES = {
     "products.csv": ("product_id", ["product_id", "title", "site", "currency", "price", "cost", "is_mock_data"]),
     "skus.csv": ("sku_id", ["sku_id", "product_id", "seller_sku", "price", "cost", "is_mock_data"]),
     "inventory.csv": ("inventory_id", ["inventory_id", "sku_id", "available_stock", "stock_status", "is_mock_data"]),
-    "reviews.csv": ("review_id", ["review_id", "product_id", "sku_id", "order_id", "buyer_id", "rating", "content", "is_mock_data"]),
+    "reviews.csv": (
+        "review_id",
+        [
+            "review_id", "product_id", "sku_id", "order_id", "buyer_id",
+            "rating", "content", "content_zh", "language",
+            "sentiment_hint", "issue_type", "is_mock_data",
+        ],
+    ),
     "orders.csv": ("order_id", ["order_id", "buyer_id", "site", "order_status", "subtotal", "total_amount", "is_mock_data"]),
     "order_items.csv": ("order_item_id", ["order_item_id", "order_id", "product_id", "sku_id", "quantity", "subtotal", "is_mock_data"]),
     "logistics.csv": ("logistics_id", ["logistics_id", "order_id", "tracking_number", "logistics_status", "is_mock_data"]),
@@ -182,6 +189,53 @@ class Validator:
                 review_conflicts.append(r["review_id"])
         self.check(not review_conflicts, "Review ratings align with sentiment hints", f"{len(review_conflicts)} reviews have severe rating/sentiment conflicts")
         self.check(len({r["content"] for r in reviews}) >= 50, "Review text has meaningful multilingual diversity", "Review text diversity is too low")
+        unique_translations = {r["content_zh"] for r in reviews}
+        self.check(
+            len(unique_translations) >= max(100, len(reviews) // 2),
+            "Chinese review translations have meaningful per-item diversity",
+            f"Chinese review translation diversity is too low: {len(unique_translations)} unique values for {len(reviews)} reviews",
+        )
+        source_translation_pairs: dict[str, set[str]] = defaultdict(set)
+        for review in reviews:
+            source_translation_pairs[review["content"]].add(review["content_zh"])
+        translation_conflicts = [
+            source for source, translations in source_translation_pairs.items()
+            if len(translations) > 1
+        ]
+        self.check(
+            not translation_conflicts,
+            "Identical source reviews map to one consistent Chinese translation",
+            f"{len(translation_conflicts)} source reviews map to conflicting Chinese translations",
+        )
+
+        reviews_by_product: dict[str, list[dict[str, str]]] = defaultdict(list)
+        for review in reviews:
+            reviews_by_product[review["product_id"]].append(review)
+        missing_product_reviews = [
+            product["product_id"] for product in products
+            if product["product_id"] not in reviews_by_product
+        ]
+        self.check(
+            not missing_product_reviews,
+            "Every product has linked review evidence",
+            f"{len(missing_product_reviews)} products have no reviews",
+        )
+        one_sided_products = [
+            product_id for product_id, product_reviews in reviews_by_product.items()
+            if not any(int(review["rating"]) >= 4 for review in product_reviews)
+            or not any(int(review["rating"]) <= 2 for review in product_reviews)
+        ]
+        self.check(
+            not one_sided_products,
+            "Every product includes both positive and negative review evidence",
+            f"{len(one_sided_products)} products have one-sided review sentiment",
+        )
+        review_count_values = [len(product_reviews) for product_reviews in reviews_by_product.values()]
+        self.check(
+            len(set(review_count_values)) >= 8 and max(review_count_values) > min(review_count_values) * 2,
+            "Per-product review counts follow a non-uniform long-tail distribution",
+            "Per-product review counts are too evenly distributed",
+        )
 
         order_map = {r["order_id"]: r for r in orders}
         item_pairs = {(r["order_id"], r["product_id"], r["sku_id"]) for r in items}
