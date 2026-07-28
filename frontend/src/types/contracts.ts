@@ -98,6 +98,9 @@ export const TASK_STATUSES = [
 ] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
+export const TASK_ACTIONS = ["run", "resume", "retry", "rerun", "cancel"] as const;
+export type TaskAction = (typeof TASK_ACTIONS)[number];
+
 export const TASK_STEP_STATUSES = [
   "pending",
   "running",
@@ -363,6 +366,12 @@ export interface TaskDetail {
   created_at: string;
   started_at: string | null;
   finished_at: string | null;
+  updated_at: string;
+  completed_at: string | null;
+  waiting_confirmation: boolean;
+  waiting_reason: string | null;
+  safe_error_summary: string | null;
+  available_actions: TaskAction[];
 }
 
 export interface TaskStepDetail {

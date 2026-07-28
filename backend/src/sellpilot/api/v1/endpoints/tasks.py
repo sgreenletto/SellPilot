@@ -11,9 +11,12 @@ from sellpilot.api.dependencies import (
     SessionDependency,
     SettingsDependency,
 )
-from sellpilot.core.enums import TaskStatus
+from sellpilot.core.enums import OperationStatus, TaskStatus
+from sellpilot.core.exceptions import ParameterError
 from sellpilot.core.middleware import get_request_id
 from sellpilot.core.response import ApiResponse, PageResult, success_response
+from sellpilot.repositories.operation_log import OperationLogRepository
+from sellpilot.schemas.operation_log import OperationLogResponse
 from sellpilot.schemas.task import (
     AgentTaskResponse,
     TaskCreateRequest,
@@ -22,6 +25,7 @@ from sellpilot.schemas.task import (
     WorkflowMetadata,
 )
 from sellpilot.services.task import TaskService
+from sellpilot.services.task_center import TaskCenterService
 from sellpilot.workflows.registry import WorkflowRegistry
 from sellpilot.workflows.runner import TaskRunner
 
@@ -75,7 +79,7 @@ async def create_task(
         created_by=current_user.id,
         request_id=get_request_id(request),
     )
-    return success_response(AgentTaskResponse.model_validate(task), get_request_id(request))
+    return success_response(AgentTaskResponse.from_task(task), get_request_id(request))
 
 
 @router.get("", response_model=ApiResponse[PageResult[AgentTaskResponse]])
@@ -91,6 +95,8 @@ async def list_tasks(
     created_from: Annotated[datetime | None, Query()] = None,
     created_to: Annotated[datetime | None, Query()] = None,
 ) -> ApiResponse[PageResult[AgentTaskResponse]]:
+    if created_from is not None and created_to is not None and created_from > created_to:
+        raise ParameterError("created_from must not be later than created_to")
     tasks, total = await TaskService(session).list(
         page,
         page_size,
@@ -102,7 +108,7 @@ async def list_tasks(
         created_to=created_to,
     )
     result = PageResult[AgentTaskResponse](
-        items=[AgentTaskResponse.model_validate(task) for task in tasks],
+        items=[AgentTaskResponse.from_task(task) for task in tasks],
         total=total,
         page=page,
         page_size=page_size,
@@ -118,7 +124,14 @@ async def get_task(
     current_user: CurrentUserDependency,
 ) -> ApiResponse[AgentTaskResponse]:
     task = await TaskService(session).get(task_id, user_id=current_user.id)
-    return success_response(AgentTaskResponse.model_validate(task), get_request_id(request))
+    actions = await TaskCenterService(
+        session,
+        _workflow_registry(request),
+    ).available_actions(task)
+    return success_response(
+        AgentTaskResponse.from_task(task, available_actions=actions),
+        get_request_id(request),
+    )
 
 
 @router.get(
@@ -136,6 +149,49 @@ async def list_task_steps(
     steps = await service.tasks.list_steps(task_id)
     return success_response(
         [TaskStepResponse.model_validate(step) for step in steps],
+        get_request_id(request),
+    )
+
+
+@router.get(
+    "/{task_id}/operation-logs",
+    response_model=ApiResponse[PageResult[OperationLogResponse]],
+)
+async def list_task_operation_logs(
+    task_id: UUID,
+    request: Request,
+    session: SessionDependency,
+    settings: SettingsDependency,
+    current_user: CurrentUserDependency,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    event_type: str | None = Query(default=None, min_length=1, max_length=100),
+    operation_status: Annotated[
+        OperationStatus | None,
+        Query(alias="status"),
+    ] = None,
+) -> ApiResponse[PageResult[OperationLogResponse]]:
+    await TaskService(session).get(task_id, user_id=current_user.id)
+    items, total = await OperationLogRepository(session).list_by_task(
+        task_id,
+        page=page,
+        page_size=page_size,
+        event_type=event_type,
+        status=operation_status,
+    )
+    return success_response(
+        PageResult[OperationLogResponse](
+            items=[
+                OperationLogResponse.from_operation_log(
+                    item,
+                    max_bytes=settings.tool_audit_payload_max_bytes,
+                )
+                for item in items
+            ],
+            total=total,
+            page=page,
+            page_size=page_size,
+        ),
         get_request_id(request),
     )
 
@@ -227,7 +283,7 @@ async def rerun_task(
         user_id=current_user.id,
         request_id=get_request_id(request),
     )
-    return success_response(AgentTaskResponse.model_validate(task), get_request_id(request))
+    return success_response(AgentTaskResponse.from_task(task), get_request_id(request))
 
 
 @router.post(
@@ -246,4 +302,4 @@ async def cancel_task(
         user_id=current_user.id,
         request_id=get_request_id(request),
     )
-    return success_response(AgentTaskResponse.model_validate(task), get_request_id(request))
+    return success_response(AgentTaskResponse.from_task(task), get_request_id(request))

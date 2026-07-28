@@ -13,6 +13,7 @@ by the existing middleware and matches the body.
 | GET | `/tasks` | 200 | Current user's paginated tasks |
 | GET | `/tasks/{task_id}` | 200 | Safe task detail |
 | GET | `/tasks/{task_id}/steps` | 200 | Ordered safe step history |
+| GET | `/tasks/{task_id}/operation-logs` | 200 | Paginated safe audit timeline |
 | POST | `/tasks/{task_id}/run` | 200/202 | Run a pending task |
 | POST | `/tasks/{task_id}/resume` | 200/202 | Resume after confirmation |
 | POST | `/tasks/{task_id}/retry` | 200/202 | Retry the failed current step |
@@ -22,6 +23,15 @@ by the existing middleware and matches the body.
 `GET /tasks` supports `page`, `page_size`, `status`, `workflow_name`, `task_type`,
 `created_from`, and `created_to`. Pagination retains `items/page/page_size/total/pages`.
 Only the authenticated user's tasks are visible.
+
+Task detail includes `available_actions`, whose values are limited to `run`, `resume`,
+`retry`, `rerun`, and `cancel`. The application service computes these actions from
+TaskRunner rules, the registered workflow, the latest Step, and linked Confirmation
+and ToolCall state. Clients must not reproduce the state machine.
+
+`GET /tasks/{task_id}/operation-logs` supports `page`, `page_size`, optional
+`event_type`, and `status`. It is ordered by `created_at ASC, id ASC` and returns only
+safe descriptions, actor IDs, association IDs, request IDs, and redacted metadata.
 
 ## Create and run
 
@@ -61,6 +71,11 @@ The handler has not executed at this point. The client confirms through the exis
 `POST /confirmations/{confirmation_id}/confirm`, then explicitly calls
 `POST /tasks/{task_id}/resume`. Resume reads the successful linked ToolCall; it does
 not execute the tool again.
+
+A successful Confirmation leaves its Task in `waiting_confirmation` until explicit
+resume. Cancelling a pending linked Confirmation moves a waiting Task to `cancelled`.
+An execution failure moves a waiting Task to `failed` with a safe error summary.
+Terminal Task states are never overwritten by late Confirmation results.
 
 ## Workflow examples
 
@@ -106,3 +121,11 @@ Stable workflow/task codes include `WORKFLOW_NOT_FOUND`, `WORKFLOW_DISABLED`,
 
 Task detail never returns trusted workflow input, serialized state, execution token,
 runner identity, stack traces, or unredacted payloads.
+
+Confirmation and ToolCall list/detail/operation endpoints enforce current-user
+ownership. When a resource exists for another user, the response is 404 rather than
+403. Public Confirmation, ToolCall, Step, Task, and OperationLog payloads use the
+shared recursive redaction and truncation path.
+
+Task creation has no request idempotency contract, and rerun does not yet persist a
+request idempotency key. This integration adds no ORM entity or Alembic migration.
