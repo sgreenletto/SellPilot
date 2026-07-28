@@ -24,8 +24,8 @@ const view = computed(() => {
   }
   if (props.status.adapter === "mock") {
     return {
-      label: props.status.reachable ? "Mock 模拟模式 · 后端已连接" : "Mock 不可用",
-      tone: props.status.reachable ? ("info" as const) : ("danger" as const),
+      label: props.status.reachable ? "后端已连接" : "Mock 不可用",
+      tone: props.status.reachable ? ("success" as const) : ("danger" as const),
     };
   }
   return {

@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     debug: bool = Field(default=False, validation_alias="DEBUG")
     api_v1_prefix: str = Field(default="/api/v1", validation_alias="API_V1_PREFIX")
     database_url: str = Field(
-        default="postgresql+asyncpg://sellpilot:replace_me@localhost:5432/sellpilot",
+        default="sqlite+aiosqlite:///./sellpilot.db",
         validation_alias="DATABASE_URL",
     )
     jwt_secret_key: SecretStr = Field(
