@@ -184,9 +184,20 @@ class TaskStatus(_LegacyLowerStrEnum):
 class TaskStepStatus(_LegacyLowerStrEnum):
     PENDING = "pending"
     RUNNING = "running"
+    WAITING_CONFIRMATION = "waiting_confirmation"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
+    SKIPPED = "skipped"
     CANCELLED = "cancelled"
+
+
+class WorkflowNodeType(StrEnum):
+    ACTION = "action"
+    TOOL = "tool"
+    BRANCH = "branch"
+    LOOP = "loop"
+    WAIT = "wait"
+    FINISH = "finish"
 
 
 class ToolCallStatus(_LegacyLowerStrEnum):

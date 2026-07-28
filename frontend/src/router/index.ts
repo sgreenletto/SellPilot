@@ -174,21 +174,32 @@ export const router = createRouter({
       path: "/login",
       name: "login",
       component: LoginView,
-      meta: { title: "登录", requiresAuth: false },
+      meta: {
+        title: "登录",
+        module: "认证",
+        description: "登录 SellPilot 单用户模拟店铺。",
+        requiresAuth: false,
+      },
     },
     {
       path: "/",
       component: DefaultLayout,
       children: childRoutes,
-      meta: { requiresAuth: true },
+      meta: {
+        title: "SellPilot",
+        module: "应用",
+        description: "SellPilot 已认证应用布局。",
+        requiresAuth: true,
+      },
     },
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" },
   ],
   scrollBehavior: () => ({ top: 0 }),
 });
 
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore();
+  await authStore.restoreSession();
 
   if (to.meta.requiresAuth === false) {
     // 已登录用户访问登录页 → 直接进入看板

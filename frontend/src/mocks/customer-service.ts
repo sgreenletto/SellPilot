@@ -1,8 +1,4 @@
-import type {
-  ChatMessage,
-  Conversation,
-  ConversationContext,
-} from "@/types/customer-service"
+import type { ChatMessage, Conversation, ConversationContext } from "@/types/customer-service";
 
 // ==================== 会话列表 ====================
 
@@ -115,7 +111,7 @@ export const conversations: Conversation[] = [
     productId: "prod-stand",
     orderId: "SP-20260714-0078",
   },
-]
+];
 
 // ==================== 聊天消息 ====================
 
@@ -145,13 +141,16 @@ export const chatMessages: Record<string, ChatMessage[]> = {
       id: "msg-1c",
       conversationId: "conv-001",
       sender: "ai",
-      content: "您好，很抱歉给您带来不便。关于电池续航问题，建议您先尝试以下操作：1) 充满电后使用至自动关机以校准电池；2) 关闭不必要的蓝牙连接。",
+      content:
+        "您好，很抱歉给您带来不便。关于电池续航问题，建议您先尝试以下操作：1) 充满电后使用至自动关机以校准电池；2) 关闭不必要的蓝牙连接。",
       timestamp: "10:33",
       aiSuggestion: {
         confidence: 87,
-        reply: "您好，很抱歉给您带来不便。关于电池续航问题，建议您先尝试以下操作：1) 将耳机充满电后使用至自动关机以校准电池电量显示；2) 检查是否开启了降噪模式（降噪会加快耗电）；3) 关闭不必要的蓝牙多点连接。如仍无法解决，我们可以为您安排退换货。",
+        reply:
+          "您好，很抱歉给您带来不便。关于电池续航问题，建议您先尝试以下操作：1) 将耳机充满电后使用至自动关机以校准电池电量显示；2) 检查是否开启了降噪模式（降噪会加快耗电）；3) 关闭不必要的蓝牙多点连接。如仍无法解决，我们可以为您安排退换货。",
         knowledgeSource: "无线耳机电池续航 FAQ",
-        knowledgeExcerpt: "电池寿命受使用环境影响，ANC 降噪模式下续航约 6 小时，标准模式约 8 小时。若续航显著低于标称值，建议先进行电池校准。",
+        knowledgeExcerpt:
+          "电池寿命受使用环境影响，ANC 降噪模式下续航约 6 小时，标准模式约 8 小时。若续航显著低于标称值，建议先进行电池校准。",
       },
     },
   ],
@@ -180,13 +179,16 @@ export const chatMessages: Record<string, ChatMessage[]> = {
       id: "msg-2c",
       conversationId: "conv-002",
       sender: "ai",
-      content: "尊敬的客户您好，我已查询您的订单物流信息。包裹目前处于跨境运输段，通常在清关过程中会有 2-4 天的静默期，这是正常的。预计最近 24 小时内物流状态将会更新。",
+      content:
+        "尊敬的客户您好，我已查询您的订单物流信息。包裹目前处于跨境运输段，通常在清关过程中会有 2-4 天的静默期，这是正常的。预计最近 24 小时内物流状态将会更新。",
       timestamp: "14:16",
       aiSuggestion: {
         confidence: 92,
-        reply: "尊敬的客户您好，我已查询您的订单 #SP-20260718-0089 的物流信息。包裹目前处于跨境运输段（广州→曼谷），清关过程中通常会有 2-4 天的静默期无物流更新，属于正常情况。预计未来 24 小时内泰国境内物流状态将会刷新。如明天仍未更新，请随时联系我们。",
+        reply:
+          "尊敬的客户您好，我已查询您的订单 #SP-20260718-0089 的物流信息。包裹目前处于跨境运输段（广州→曼谷），清关过程中通常会有 2-4 天的静默期无物流更新，属于正常情况。预计未来 24 小时内泰国境内物流状态将会刷新。如明天仍未更新，请随时联系我们。",
         knowledgeSource: "跨境物流时效说明文档",
-        knowledgeExcerpt: "中国→东南亚跨境包裹：揽收后 1-2 天出关，跨境运输 2-4 天（静默期），目的国清关 1-2 天，末端派送 1-3 天。静默期无物流更新属正常流程。",
+        knowledgeExcerpt:
+          "中国→东南亚跨境包裹：揽收后 1-2 天出关，跨境运输 2-4 天（静默期），目的国清关 1-2 天，末端派送 1-3 天。静默期无物流更新属正常流程。",
       },
     },
   ],
@@ -219,9 +221,11 @@ export const chatMessages: Record<string, ChatMessage[]> = {
       timestamp: "15:49",
       aiSuggestion: {
         confidence: 65,
-        reply: "非常抱歉给您带来不愉快的体验。关于商品划痕的退换货申请，由于涉及实物审核，建议转人工客服处理。人工客服将协助您：1) 提交商品照片审核；2) 确认是否符合退换条件；3) 安排上门取件或自行寄回。",
+        reply:
+          "非常抱歉给您带来不愉快的体验。关于商品划痕的退换货申请，由于涉及实物审核，建议转人工客服处理。人工客服将协助您：1) 提交商品照片审核；2) 确认是否符合退换条件；3) 安排上门取件或自行寄回。",
         knowledgeSource: "售后退换货政策",
-        knowledgeExcerpt: "商品存在外观瑕疵需提供开箱照片/视频。符合条件：签收 7 天内，商品未使用，包装完整。退货运费由平台承担。人工客服需审核实物证据后发起流程。",
+        knowledgeExcerpt:
+          "商品存在外观瑕疵需提供开箱照片/视频。符合条件：签收 7 天内，商品未使用，包装完整。退货运费由平台承担。人工客服需审核实物证据后发起流程。",
       },
     },
   ],
@@ -240,13 +244,16 @@ export const chatMessages: Record<string, ChatMessage[]> = {
       id: "msg-4b",
       conversationId: "conv-004",
       sender: "ai",
-      content: "您好，这款充电器支持最高 65W PD 快充，兼容市面上大多数手机和笔记本。请确保使用支持 65W 的充电线以获得最佳效果。",
+      content:
+        "您好，这款充电器支持最高 65W PD 快充，兼容市面上大多数手机和笔记本。请确保使用支持 65W 的充电线以获得最佳效果。",
       timestamp: "11:05",
       aiSuggestion: {
         confidence: 96,
-        reply: "您好，这款充电器支持最高 65W USB PD 3.0 快充协议，兼容 iPhone、Samsung、小米等主流手机品牌，也可为支持 USB-C 充电的轻薄笔记本充电。注意：须搭配支持 65W 的 USB-C to USB-C 数据线使用。",
+        reply:
+          "您好，这款充电器支持最高 65W USB PD 3.0 快充协议，兼容 iPhone、Samsung、小米等主流手机品牌，也可为支持 USB-C 充电的轻薄笔记本充电。注意：须搭配支持 65W 的 USB-C to USB-C 数据线使用。",
         knowledgeSource: "充电器产品规格表",
-        knowledgeExcerpt: "输出功率：5V/3A, 9V/3A, 12V/3A, 15V/3A, 20V/3.25A (Max 65W)。协议支持：PD 3.0, QC 4+, PPS。",
+        knowledgeExcerpt:
+          "输出功率：5V/3A, 9V/3A, 12V/3A, 15V/3A, 20V/3.25A (Max 65W)。协议支持：PD 3.0, QC 4+, PPS。",
       },
     },
     {
@@ -297,17 +304,20 @@ export const chatMessages: Record<string, ChatMessage[]> = {
       id: "msg-6b",
       conversationId: "conv-006",
       sender: "ai",
-      content: "您好，电子发票已生成并发送至您注册邮箱，请注意查收。如需纸质发票，请在订单详情中申请邮寄。",
+      content:
+        "您好，电子发票已生成并发送至您注册邮箱，请注意查收。如需纸质发票，请在订单详情中申请邮寄。",
       timestamp: "15:30",
       aiSuggestion: {
         confidence: 98,
-        reply: "您好，订单 #SP-20260714-0078 的电子收据（PDF格式）已发送至您注册时填写的邮箱 pranee.w@email.com，请注意查收（含垃圾邮件箱）。如需要纸质发票，可在订单详情页点击「申请纸质发票」，我们将通过快递寄送（约 5-7 个工作日）。",
+        reply:
+          "您好，订单 #SP-20260714-0078 的电子收据（PDF格式）已发送至您注册时填写的邮箱 pranee.w@email.com，请注意查收（含垃圾邮件箱）。如需要纸质发票，可在订单详情页点击「申请纸质发票」，我们将通过快递寄送（约 5-7 个工作日）。",
         knowledgeSource: "发票与收据政策",
-        knowledgeExcerpt: "订单完成后系统自动生成电子收据并发送至买家注册邮箱。纸质发票：买家可于订单详情页申请，5-7 个工作日寄达。",
+        knowledgeExcerpt:
+          "订单完成后系统自动生成电子收据并发送至买家注册邮箱。纸质发票：买家可于订单详情页申请，5-7 个工作日寄达。",
       },
     },
   ],
-}
+};
 
 // ==================== 上下文面板数据 ====================
 
@@ -403,7 +413,13 @@ export const conversationContexts: Record<string, ConversationContext> = {
       shopName: "Shopee 模拟店铺",
     },
     skus: [
-      { sku: "SC-IP14-BK", variant: "iPhone 14 黑色", stock: 45, reserved: 2, status: "sufficient" },
+      {
+        sku: "SC-IP14-BK",
+        variant: "iPhone 14 黑色",
+        stock: 45,
+        reserved: 2,
+        status: "sufficient",
+      },
       { sku: "SC-IP14-CL", variant: "iPhone 14 透明", stock: 3, reserved: 1, status: "low" },
       { sku: "SC-IP14-NV", variant: "iPhone 14 深蓝", stock: 0, reserved: 0, status: "out" },
     ],
@@ -497,9 +513,7 @@ export const conversationContexts: Record<string, ConversationContext> = {
       status: "active",
       shopName: "Shopee 模拟店铺",
     },
-    skus: [
-      { sku: "AS-001-SL", variant: "银色", stock: 78, reserved: 3, status: "sufficient" },
-    ],
+    skus: [{ sku: "AS-001-SL", variant: "银色", stock: 78, reserved: 3, status: "sufficient" }],
     order: {
       id: "SP-20260714-0078",
       status: "delivered",
@@ -512,4 +526,4 @@ export const conversationContexts: Record<string, ConversationContext> = {
     },
     logistics: null,
   },
-}
+};

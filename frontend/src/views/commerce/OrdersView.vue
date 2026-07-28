@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { FileSpreadsheet, Search, Sparkles, Truck } from "@lucide/vue";
+import { storeToRefs } from "pinia";
 import * as XLSX from "xlsx";
 
 import logisticsCsv from "../../../../data/demo/shopee_mock/logistics.csv?raw";
@@ -12,18 +13,23 @@ import ordersCsv from "../../../../data/demo/shopee_mock/orders.csv?raw";
 import productsCsv from "../../../../data/demo/shopee_mock/products.csv?raw";
 import returnsCsv from "../../../../data/demo/shopee_mock/returns_refunds.csv?raw";
 import skusCsv from "../../../../data/demo/shopee_mock/skus.csv?raw";
+import { loadCommerceDashboardSnapshot } from "@/api/dashboard";
 import SpCard from "@/components/base/SpCard.vue";
 import SpInput from "@/components/base/SpInput.vue";
 import CommercePagination from "@/components/commerce/CommercePagination.vue";
 import StatusBadge from "@/components/data-display/StatusBadge.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
+import { useAppStore } from "@/stores/app";
 import { csvRows, sheetRows } from "@/utils/spreadsheet";
 
-type Row = Record<string, string | number>;
+type Row = Record<string, string | number | boolean | null>;
 const parse = (csv: string): Row[] => {
   return csvRows(csv) as Row[];
 };
-const orders = ref(parse(ordersCsv));
+const appStore = useAppStore();
+const { selectedShopId } = storeToRefs(appStore);
+const orderReference = parse(ordersCsv);
+const orders = ref<Row[]>([]);
 const items = parse(itemsCsv);
 const products = parse(productsCsv);
 const skus = parse(skusCsv);
@@ -36,8 +42,36 @@ const query = ref("");
 const status = ref("");
 const currentPage = ref(1);
 const pageSize = ref(10);
-const selected = ref<Row | null>(orders.value[0] ?? null);
+const selected = ref<Row | null>(null);
 const notice = ref("");
+const dataStatus = ref<"loading" | "backend" | "error">("loading");
+const dataMessage = ref("正在读取当前店铺后端订单…");
+
+async function loadCurrentShop(): Promise<void> {
+  dataStatus.value = "loading";
+  dataMessage.value = "正在读取当前店铺后端订单…";
+  try {
+    const snapshot = await loadCommerceDashboardSnapshot(selectedShopId.value);
+    orders.value = snapshot.orders.map((order) => {
+      const reference = orderReference.find((candidate) => candidate.order_id === order.order_id);
+      return { ...reference, ...order };
+    });
+    selected.value =
+      orders.value.find((order) => order.order_id === selected.value?.order_id) ??
+      orders.value[0] ??
+      null;
+    currentPage.value = 1;
+    const scope =
+      selectedShopId.value === "all" ? "全部模拟店铺" : `来源店铺 ${selectedShopId.value}`;
+    dataStatus.value = "backend";
+    dataMessage.value = `已连接后端：当前展示${scope}的 ${orders.value.length} 笔订单；商品明细、物流、售后和客服关联来自同一 Mock 数据包。`;
+  } catch {
+    orders.value = [];
+    selected.value = null;
+    dataStatus.value = "error";
+    dataMessage.value = "后端订单读取失败，未使用本地全量 CSV 冒充当前店铺数据。";
+  }
+}
 
 const filtered = computed(() => {
   const keyword = query.value.toLowerCase();
@@ -123,6 +157,8 @@ async function importOrders(event: Event): Promise<void> {
 }
 
 watch([query, status, pageSize], () => (currentPage.value = 1));
+watch(selectedShopId, () => void loadCurrentShop());
+onMounted(() => void loadCurrentShop());
 </script>
 
 <template>
@@ -140,6 +176,9 @@ watch([query, status, pageSize], () => (currentPage.value = 1));
           @change="importOrders"
       /></label>
     </header>
+    <p :class="['data-status', `data-status--${dataStatus}`]" role="status">
+      {{ dataMessage }}
+    </p>
     <p v-if="notice" class="notice">{{ notice }}</p>
     <div class="workspace">
       <SpCard padding="lg"
@@ -336,6 +375,22 @@ small,
   color: var(--sp-color-primary);
   background: var(--sp-color-accent-blue-soft);
   border-radius: var(--sp-radius-control);
+}
+.data-status {
+  padding: var(--sp-space-3) var(--sp-space-4);
+  margin: 0 0 var(--sp-space-4);
+  color: var(--sp-color-text-secondary);
+  background: var(--sp-color-surface);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-control);
+}
+.data-status--backend {
+  color: var(--sp-color-success);
+  background: var(--sp-color-success-soft);
+}
+.data-status--error {
+  color: var(--sp-color-danger);
+  background: var(--sp-color-danger-soft);
 }
 select {
   min-height: 40px;

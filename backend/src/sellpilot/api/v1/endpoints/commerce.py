@@ -17,15 +17,126 @@ from sellpilot.schemas.commerce import (
     ReturnRefundResponse,
 )
 from sellpilot.schemas.commerce_operations import (
+    CandidateRequest,
+    CandidateResponse,
     InventoryUpdateRequest,
     OperationRequest,
     PriceUpdateRequest,
+    ProductDraftRequest,
+    ProductImportRequest,
 )
 from sellpilot.schemas.confirmation import ConfirmationTaskResponse
 from sellpilot.services.commerce_operations import CommerceOperationService
 from sellpilot.services.commerce_query import CommerceQueryService
 
 router = APIRouter()
+
+
+@router.get("/selection-candidates", response_model=ApiResponse[list[CandidateResponse]])
+async def list_selection_candidates(
+    request: Request,
+    user: CurrentUserDependency,
+    session: SessionDependency,
+    settings: SettingsDependency,
+) -> ApiResponse[list[CandidateResponse]]:
+    data = await CommerceOperationService(session, settings).list_candidates(user.id)
+    return success_response(
+        [CandidateResponse.model_validate(item) for item in data], get_request_id(request)
+    )
+
+
+@router.post(
+    "/selection-candidates/{product_id}/add-request",
+    response_model=ApiResponse[ConfirmationTaskResponse],
+)
+async def request_add_selection_candidate(
+    product_id: str,
+    payload: CandidateRequest,
+    request: Request,
+    user: CurrentUserDependency,
+    session: SessionDependency,
+    settings: SettingsDependency,
+) -> ApiResponse[ConfirmationTaskResponse]:
+    confirmation = await CommerceOperationService(session, settings).request_candidate_change(
+        product_id=product_id,
+        add=True,
+        title=payload.title,
+        source_type=payload.source_type,
+        is_mock_data=payload.is_mock_data,
+        idempotency_key=payload.idempotency_key,
+        created_by=user.id,
+    )
+    return success_response(
+        ConfirmationTaskResponse.model_validate(confirmation), get_request_id(request)
+    )
+
+
+@router.post(
+    "/selection-candidates/{product_id}/remove-request",
+    response_model=ApiResponse[ConfirmationTaskResponse],
+)
+async def request_remove_selection_candidate(
+    product_id: str,
+    payload: CandidateRequest,
+    request: Request,
+    user: CurrentUserDependency,
+    session: SessionDependency,
+    settings: SettingsDependency,
+) -> ApiResponse[ConfirmationTaskResponse]:
+    confirmation = await CommerceOperationService(session, settings).request_candidate_change(
+        product_id=product_id,
+        add=False,
+        title=payload.title,
+        source_type=payload.source_type,
+        is_mock_data=payload.is_mock_data,
+        idempotency_key=payload.idempotency_key,
+        created_by=user.id,
+    )
+    return success_response(
+        ConfirmationTaskResponse.model_validate(confirmation), get_request_id(request)
+    )
+
+
+@router.post(
+    "/products/draft-request",
+    response_model=ApiResponse[ConfirmationTaskResponse],
+)
+async def request_save_product_draft(
+    payload: ProductDraftRequest,
+    request: Request,
+    user: CurrentUserDependency,
+    session: SessionDependency,
+    settings: SettingsDependency,
+) -> ApiResponse[ConfirmationTaskResponse]:
+    confirmation = await CommerceOperationService(session, settings).request_product_draft(
+        product=payload.product.model_dump(mode="json"),
+        idempotency_key=payload.idempotency_key,
+        created_by=user.id,
+    )
+    return success_response(
+        ConfirmationTaskResponse.model_validate(confirmation), get_request_id(request)
+    )
+
+
+@router.post(
+    "/products/import-request",
+    response_model=ApiResponse[ConfirmationTaskResponse],
+)
+async def request_import_products(
+    payload: ProductImportRequest,
+    request: Request,
+    user: CurrentUserDependency,
+    session: SessionDependency,
+    settings: SettingsDependency,
+) -> ApiResponse[ConfirmationTaskResponse]:
+    confirmation = await CommerceOperationService(session, settings).request_product_import(
+        products=[item.model_dump(mode="json") for item in payload.products],
+        idempotency_key=payload.idempotency_key,
+        created_by=user.id,
+    )
+    return success_response(
+        ConfirmationTaskResponse.model_validate(confirmation), get_request_id(request)
+    )
 
 
 @router.get("/products", response_model=ApiResponse[list[ProductResponse]])
@@ -36,11 +147,12 @@ async def list_products(
     settings: SettingsDependency,
     status: str | None = None,
     site: str | None = None,
+    shop_id: str | None = None,
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
 ) -> ApiResponse[list[ProductResponse]]:
     data = await CommerceQueryService(session, settings).list_products(
-        status=status, site=site, offset=offset, limit=limit
+        status=status, site=site, shop_id=shop_id, offset=offset, limit=limit
     )
     return success_response(
         [ProductResponse.model_validate(item) for item in data], get_request_id(request)
@@ -68,11 +180,12 @@ async def list_orders(
     session: SessionDependency,
     settings: SettingsDependency,
     status: str | None = None,
+    shop_id: str | None = None,
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
 ) -> ApiResponse[list[OrderResponse]]:
     data = await CommerceQueryService(session, settings).list_orders(
-        status=status, offset=offset, limit=limit
+        status=status, shop_id=shop_id, offset=offset, limit=limit
     )
     return success_response(
         [OrderResponse.model_validate(item) for item in data], get_request_id(request)
@@ -134,11 +247,12 @@ async def list_inventory(
     session: SessionDependency,
     settings: SettingsDependency,
     status: str | None = None,
+    shop_id: str | None = None,
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=20, ge=1, le=100),
 ) -> ApiResponse[list[InventoryResponse]]:
     data = await CommerceQueryService(session, settings).list_inventory(
-        status=status, offset=offset, limit=limit
+        status=status, shop_id=shop_id, offset=offset, limit=limit
     )
     return success_response(
         [InventoryResponse.model_validate(item) for item in data], get_request_id(request)

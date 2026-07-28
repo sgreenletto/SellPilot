@@ -8,6 +8,7 @@ import {
   PRODUCT_STATUSES,
   SITE_CODES,
   TASK_STATUSES,
+  TASK_STEP_STATUSES,
   TOOL_CALLER_TYPES,
   TOOL_CALL_STATUSES,
   TOOL_RISK_LEVELS,
@@ -29,6 +30,15 @@ describe("公共领域契约", () => {
       "waiting_confirmation",
       "succeeded",
       "failed",
+      "cancelled",
+    ]);
+    expect(TASK_STEP_STATUSES).toEqual([
+      "pending",
+      "running",
+      "waiting_confirmation",
+      "succeeded",
+      "failed",
+      "skipped",
       "cancelled",
     ]);
     expect(CONFIRMATION_STATUSES).toEqual([
