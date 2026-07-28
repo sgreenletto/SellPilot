@@ -12,6 +12,7 @@ from sellpilot.db.models.commerce import (
     LogisticsTrack,
     Order,
     Product,
+    Review,
     Sku,
 )
 from sellpilot.schemas.platform import PlatformPingResult
@@ -41,6 +42,7 @@ class MockShopeeAdapter(PlatformAdapter):
             "products.read",
             "orders.read",
             "logistics.read",
+            "reviews.read",
             "messages.read",
         ]
 
@@ -213,6 +215,49 @@ class MockShopeeAdapter(PlatformAdapter):
                 "is_mock_data": record.is_mock_data,
             }
             for record in records
+        ]
+
+    async def list_reviews(self, **filters: Any) -> list[dict[str, Any]]:
+        statement = (
+            select(Review, Product.external_id, Product.site)
+            .join(Product, Review.product_id == Product.id)
+            .order_by(Review.source_created_at.desc(), Review.external_id.asc())
+        )
+        if product_id := filters.get("product_id"):
+            statement = statement.where(Product.external_id == product_id)
+        if site := filters.get("site"):
+            statement = statement.where(Product.site == site)
+        if language := filters.get("language"):
+            statement = statement.where(Review.language == language)
+        if languages := filters.get("languages"):
+            statement = statement.where(Review.language.in_(languages))
+        if min_rating := filters.get("min_rating"):
+            statement = statement.where(Review.rating >= int(min_rating))
+        if max_rating := filters.get("max_rating"):
+            statement = statement.where(Review.rating <= int(max_rating))
+        if created_from := filters.get("created_from"):
+            statement = statement.where(Review.source_created_at >= created_from)
+        if created_to := filters.get("created_to"):
+            statement = statement.where(Review.source_created_at <= created_to)
+        offset = max(int(filters.get("offset", 0)), 0)
+        limit = min(max(int(filters.get("limit", 20)), 1), 100)
+        rows = (await self._session().execute(statement.offset(offset).limit(limit))).all()
+        return [
+            {
+                "review_id": record.external_id,
+                "product_id": product_id,
+                "site": site,
+                "rating": record.rating,
+                "content": record.content,
+                "translated_content": record.content_zh,
+                "language": record.language,
+                "sentiment_hint": record.sentiment_hint,
+                "issue_type": record.issue_type,
+                "created_at": record.source_created_at,
+                "source_type": record.source_type,
+                "is_mock_data": record.is_mock_data,
+            }
+            for record, product_id, site in rows
         ]
 
     async def send_message(self, payload: dict[str, Any]) -> dict[str, Any]:

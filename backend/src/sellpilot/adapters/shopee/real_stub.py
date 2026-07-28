@@ -55,6 +55,9 @@ class RealShopeeAdapterStub(PlatformAdapter):
     async def get_logistics(self, order_id: str) -> dict[str, Any]:
         self._not_configured()
 
+    async def list_reviews(self, **filters: Any) -> list[dict[str, Any]]:
+        self._not_configured()
+
     async def list_messages(self, **filters: Any) -> list[dict[str, Any]]:
         self._not_configured()
 

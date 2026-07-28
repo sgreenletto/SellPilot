@@ -183,6 +183,7 @@ async def test_platform_status_reports_mock_boundary(client_bundle):
             "products.read",
             "orders.read",
             "logistics.read",
+            "reviews.read",
             "messages.read",
         ],
     }

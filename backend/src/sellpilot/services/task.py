@@ -1,13 +1,16 @@
+from __future__ import annotations
+
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from sellpilot.core.enums import TaskStatus
+from sellpilot.core.enums import TaskStatus, TaskStepStatus
 from sellpilot.core.exceptions import ResourceNotFoundError, StateConflictError
 from sellpilot.core.transitions import validate_task_transition
 from sellpilot.db.models.agent_task import AgentTask
+from sellpilot.db.models.agent_task_step import AgentTaskStep
 from sellpilot.repositories.task import TaskRepository
 
 
@@ -75,3 +78,69 @@ class TaskService:
         task.error_message = error_message
         task.finished_at = datetime.now(UTC)
         return task
+
+    async def create_steps(
+        self,
+        task_id: UUID,
+        step_names: list[str],
+    ) -> list[AgentTaskStep]:
+        if len(step_names) != len(set(step_names)):
+            raise StateConflictError("Task step names must be unique")
+        return await self.tasks.add_steps(
+            [
+                AgentTaskStep(
+                    task_id=task_id,
+                    step_name=step_name,
+                    status=TaskStepStatus.PENDING,
+                )
+                for step_name in step_names
+            ]
+        )
+
+    async def start_step(
+        self,
+        step_id: UUID,
+        *,
+        input_summary: dict[str, Any] | None = None,
+    ) -> AgentTaskStep:
+        step = await self.tasks.get_step(step_id)
+        if step is None:
+            raise ResourceNotFoundError("Agent task step not found")
+        if TaskStepStatus(step.status) is not TaskStepStatus.PENDING:
+            raise StateConflictError("Only pending task steps can start")
+        step.status = TaskStepStatus.RUNNING
+        step.input_summary = input_summary
+        step.started_at = datetime.now(UTC)
+        await self.update_current_step(step.task_id, step.step_name)
+        return step
+
+    async def complete_step(
+        self,
+        step_id: UUID,
+        *,
+        output_summary: dict[str, Any] | None = None,
+    ) -> AgentTaskStep:
+        step = await self.tasks.get_step(step_id)
+        if step is None:
+            raise ResourceNotFoundError("Agent task step not found")
+        if TaskStepStatus(step.status) is not TaskStepStatus.RUNNING:
+            raise StateConflictError("Only running task steps can complete")
+        step.status = TaskStepStatus.SUCCEEDED
+        step.output_summary = output_summary
+        step.finished_at = datetime.now(UTC)
+        return step
+
+    async def fail_step(self, step_id: UUID, error_message: str) -> AgentTaskStep:
+        step = await self.tasks.get_step(step_id)
+        if step is None:
+            raise ResourceNotFoundError("Agent task step not found")
+        if TaskStepStatus(step.status) not in {
+            TaskStepStatus.PENDING,
+            TaskStepStatus.RUNNING,
+        }:
+            raise StateConflictError("Only pending or running task steps can fail")
+        step.status = TaskStepStatus.FAILED
+        step.error_message = error_message
+        step.started_at = step.started_at or datetime.now(UTC)
+        step.finished_at = datetime.now(UTC)
+        return step

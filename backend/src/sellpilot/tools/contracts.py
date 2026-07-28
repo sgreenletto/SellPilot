@@ -14,6 +14,7 @@ from pydantic import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sellpilot.core.config import Settings
 from sellpilot.core.enums import ToolCallerType, ToolCallStatus, ToolRiskLevel
 from sellpilot.tools.sanitization import contains_sensitive_values
 
@@ -65,6 +66,7 @@ class ToolExecutionContext(BaseModel):
     caller_name: str = Field(min_length=1, max_length=100)
     metadata: dict[str, str | int | bool | None] = Field(default_factory=dict)
     session: AsyncSession | None = Field(default=None, exclude=True)
+    settings: Settings | None = Field(default=None, exclude=True)
 
     @field_validator("request_id")
     @classmethod

@@ -23,4 +23,6 @@
 `selection-api-tools.md`；选品前端页面见 `selection-workbench.md`；评论分析领域内核见
 `review-analysis-core.md`。当前已建立公共契约、
 成员二/成员三持久化结构、模拟数据导入、选品确定性计算、后端应用层和选品工作台，
-评论分析纯领域内核，但尚未实现评论 Service、API、页面或内容生成。
+评论分析领域内核及 Service、分阶段 API、统一 Tool 与 AgentTask 工作流已经实现，
+详见 `review-analysis-core.md` 和 `review-analysis-service.md`；评论分析页面和内容生成
+仍属于后续阶段。

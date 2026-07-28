@@ -1,9 +1,12 @@
+from __future__ import annotations
+
 from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sellpilot.db.models.agent_task import AgentTask
+from sellpilot.db.models.agent_task_step import AgentTaskStep
 
 
 class TaskRepository:
@@ -27,3 +30,19 @@ class TaskRepository:
             .limit(page_size)
         )
         return list(result.scalars()), int(total or 0)
+
+    async def add_steps(self, steps: list[AgentTaskStep]) -> list[AgentTaskStep]:
+        self.session.add_all(steps)
+        await self.session.flush()
+        return steps
+
+    async def get_step(self, step_id: UUID) -> AgentTaskStep | None:
+        return await self.session.get(AgentTaskStep, step_id)
+
+    async def list_steps(self, task_id: UUID) -> list[AgentTaskStep]:
+        result = await self.session.execute(
+            select(AgentTaskStep)
+            .where(AgentTaskStep.task_id == task_id)
+            .order_by(AgentTaskStep.started_at.asc(), AgentTaskStep.step_name.asc())
+        )
+        return list(result.scalars())

@@ -50,6 +50,8 @@ uv run alembic downgrade base
 
 评论分析纯领域内核位于 `sellpilot.domain.review_analysis`，提供多语言质量检查、确定性情感与主题分类、证据聚合及站点/月度趋势。内核不读取数据库或 CSV，不调用真实模型；Service、API、Tool、Workflow 和页面仍属于后续阶段。
 
+评论分析应用层现提供有界评论查询、分阶段分析任务、证据分页、幂等控制、AgentTaskStep 工作流以及统一 ToolExecutor 工具。当前仍使用规则内核，Prompt 和模型版本明确为空；前端页面与真实 Model Gateway 尚未实现。
+
 成员二迁移 `20260728_0003` 创建 13 张业务表，详细设计见 `../docs/architecture/commerce-data-foundation.md`。
 
 ## 导入模拟业务数据

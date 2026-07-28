@@ -17,3 +17,6 @@
 智能选品前端 API、工作台状态、表单边界和错误状态测试见 `selection-workbench.md`。
 
 评论分析多语言预处理、结构化模型失败边界、证据与趋势测试见 `review-analysis-core.md`。
+
+评论分析 Service、API、Tool、工作流、幂等、批处理和失败状态测试见
+`review-analysis-service.md`。
