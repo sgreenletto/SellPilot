@@ -28,6 +28,7 @@ class ConfirmationTaskResponse(BaseModel):
     executed_at: ApiDateTime | None
     execution_result: dict[str, Any] | None
     error_message: str | None
+    risk_warning: str | None
 
 
 class ConfirmationSummary(BaseModel):

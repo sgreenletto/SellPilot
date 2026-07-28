@@ -716,6 +716,8 @@ test: cover review analysis view
 
 ## Step 8：产品改良建议与报告服务
 
+> **实现状态**：已与 Step 9 合并实现确定性改良报告、证据追踪、JSON 导出和草稿确认服务。
+
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 将评论证据转成面向运营和工厂的结构化改良方案 |
@@ -776,6 +778,8 @@ docs: add product improvement report specification
 ---
 
 ## Step 9：产品改良报告前端与草稿确认入口
+
+> **实现状态**：已与 Step 8 合并实现报告查看、编辑、采纳/忽略、导出和确认后创建 Mock 内容草稿。
 
 | 项目 | 内容 |
 | --- | --- |

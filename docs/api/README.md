@@ -12,3 +12,5 @@ Mock 商业数据和智能选品分析。
 成员三智能选品候选、分析、详情、对比和导出接口见 `selection-api.md`。
 
 评论查询、分阶段分析、结果和证据分页接口见 `review-analysis-api.md`。
+
+产品改良报告、建议编辑、导出和草稿待确认接口见 `product-improvement-api.md`。

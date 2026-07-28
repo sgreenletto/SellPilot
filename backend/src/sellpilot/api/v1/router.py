@@ -6,6 +6,7 @@ from sellpilot.api.v1.endpoints import (
     confirmations,
     health,
     platform,
+    product_improvement,
     review_analysis,
     selection,
     tasks,
@@ -19,6 +20,11 @@ router.include_router(auth.router, prefix="/auth", tags=["auth"])
 router.include_router(platform.router, prefix="/platform", tags=["platform"])
 router.include_router(commerce.router, prefix="/commerce", tags=["commerce"])
 router.include_router(selection.router, prefix="/selection", tags=["selection"])
+router.include_router(
+    product_improvement.router,
+    prefix="/product-improvement",
+    tags=["product-improvement"],
+)
 router.include_router(
     review_analysis.router,
     prefix="/review-analysis",
