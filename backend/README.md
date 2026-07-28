@@ -106,6 +106,6 @@ uv run ruff check .
 
 ## 平台边界
 
-- `MockShopeeAdapter` 的 ping 与公共契约状态可用；所有业务方法明确抛出未实现异常。
+- `MockShopeeAdapter` 已提供数据库驱动的商品、订单、物流和消息只读能力；商品上下架、SKU 改价和库存调整只可通过内部待确认任务执行。
 - `RealShopeeAdapterStub` 不发起网络请求、不读取真实密钥、不静默回退至 mock，且所有业务方法明确返回未配置错误。
 - 业务表和导入数据不等同于适配器业务方法已经实现；上层代码仍不得直接依赖 CSV 或 `MockShopeeAdapter` 具体类。
