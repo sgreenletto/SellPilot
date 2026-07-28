@@ -154,6 +154,9 @@ describe("成员二业务工作台", () => {
     expect(wrapper.get(".form-grid select").findAll("option")).toHaveLength(9);
     expect(wrapper.text()).toContain("系统状态代码：active");
     expect(wrapper.find('input[value="Active"]').exists()).toBe(true);
+    expect(wrapper.get('a[href^="/products/content"]').attributes("href")).toContain(
+      "product_id=PROD0001",
+    );
 
     await wrapper
       .findAll("button")

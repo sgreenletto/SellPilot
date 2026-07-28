@@ -177,6 +177,7 @@ describe("经营看板 v2", () => {
     await vi.waitFor(() => {
       expect(wrapper.text()).toContain("已连接后端");
     });
+    expect(wrapper.text()).toContain("当前店铺后端数据");
 
     expect(wrapper.findAll(".metric-card")[0]?.text()).toContain("商品总数");
     expect(wrapper.findAll(".metric-card")[0]?.text()).toContain("2");
@@ -196,6 +197,11 @@ describe("经营看板 v2", () => {
     expect(wrapper.text()).toContain("前往补货");
     expect(wrapper.text()).toContain("Mock 操作确认");
     expect(wrapper.text()).toContain("后端数据加载");
+    await wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("评论情绪分布"))!
+      .trigger("click");
+    expect(wrapper.text()).toContain("合成 Mock 演示数据");
     expect(wrapper.text()).not.toContain("折叠支架");
     expect(wrapper.text()).toContain("未接入");
   });

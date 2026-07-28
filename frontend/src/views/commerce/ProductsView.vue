@@ -63,6 +63,14 @@ const notice = ref("");
 const history = ref<string[]>([]);
 const dataStatus = ref<"loading" | "backend" | "error">("loading");
 const dataMessage = ref("正在读取当前店铺后端商品…");
+const contentWorkshopHref = computed(() => {
+  const params = new URLSearchParams();
+  if (selected.value?.product_id) params.set("product_id", String(selected.value.product_id));
+  if (selected.value?.site) params.set("site", String(selected.value.site).toLowerCase());
+  params.set("language", activeLanguage.value);
+  const queryString = params.toString();
+  return `/products/content${queryString ? `?${queryString}` : ""}`;
+});
 
 const filtered = computed(() => {
   const keyword = query.value.trim().toLowerCase();
@@ -352,6 +360,7 @@ onMounted(() => void loadCurrentShop());
   <PageContainer>
     <header class="heading">
       <div class="actions">
+        <a class="handoff-link" :href="contentWorkshopHref">打开内容工坊</a>
         <label class="file-button"
           ><FileSpreadsheet :size="16" />导入 CSV / Excel<input
             type="file"
@@ -597,6 +606,20 @@ small {
   cursor: pointer;
   border: 1px solid var(--sp-border-strong);
   border-radius: var(--sp-radius-control);
+}
+.handoff-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 var(--sp-space-4);
+  color: var(--sp-color-primary);
+  font-weight: 650;
+  text-decoration: none;
+  border: 1px solid var(--sp-border-strong);
+  border-radius: var(--sp-radius-control);
+}
+.handoff-link:hover {
+  background: var(--sp-color-accent-blue-soft);
 }
 .file-button input {
   position: absolute;

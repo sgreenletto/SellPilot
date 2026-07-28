@@ -79,6 +79,8 @@ describe("市场数据页面", () => {
 
     await wrapper.get(".actions .sp-button--secondary").trigger("click");
     await vi.waitFor(() => expect(wrapper.text()).toContain("移出候选"));
+    await wrapper.get(".candidate-metric").trigger("click");
+    expect(wrapper.get('a[href^="/market/selection"]').text()).toContain("打开智能选品");
     wrapper.unmount();
   });
 

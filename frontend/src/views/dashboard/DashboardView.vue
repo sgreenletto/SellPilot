@@ -18,6 +18,7 @@ import { useRouter } from "vue-router";
 
 import { listConfirmations } from "@/api/commerce";
 import { loadCommerceDashboardSnapshot } from "@/api/dashboard";
+import SpBadge from "@/components/base/SpBadge.vue";
 import SpButton from "@/components/base/SpButton.vue";
 import SpEmptyState from "@/components/base/SpEmptyState.vue";
 import DashboardTrendChart from "@/components/charts/DashboardTrendChart.vue";
@@ -52,8 +53,6 @@ const datasets = ref<Record<string, TrendDataset>>(
     ]),
   ),
 );
-datasets.value.sentiment = { categories: [], series: [] };
-datasets.value.service = { categories: [], series: [] };
 const dataStatus = ref<"loading" | "backend" | "fallback">("loading");
 const dataMessage = ref("正在读取后端经营数据…");
 const dashboardAlerts = ref<AlertItem[]>([]);
@@ -70,6 +69,13 @@ const trendTabs: { key: TrendType; label: string }[] = [
 const currentDataset = computed(
   () => datasets.value[trendType.value] ?? { categories: [], series: [] },
 );
+const currentTrendSource = computed(() => {
+  const usesBackend =
+    dataStatus.value === "backend" && ["funnel", "orders", "popularity"].includes(trendType.value);
+  return usesBackend
+    ? { label: "当前店铺后端数据", tone: "success" as const }
+    : { label: "合成 Mock 演示数据", tone: "info" as const };
+});
 
 function orderTrend(orders: Awaited<ReturnType<typeof loadCommerceDashboardSnapshot>>["orders"]) {
   const counts = new Map<string, number>();
@@ -296,17 +302,13 @@ async function loadBackendDashboard(): Promise<void> {
         },
       ],
     };
-    datasets.value.sentiment = { categories: [], series: [] };
-    datasets.value.service = { categories: [], series: [] };
     dataStatus.value = "backend";
     const scopeLabel =
       selectedShopId.value === "all" ? "全部模拟店铺" : `来源店铺 ${selectedShopId.value}`;
-    dataMessage.value = `已连接后端：当前展示${scopeLabel}的商品、库存、订单和待确认操作；客服仍未接入店铺关联。`;
+    dataMessage.value = `已连接后端：当前展示${scopeLabel}的商品、库存、订单和待确认操作；评论情绪与客服趋势为合成 Mock 演示数据。`;
   } catch {
     dashboardAlerts.value = [];
     dashboardActivities.value = [];
-    datasets.value.sentiment = { categories: [], series: [] };
-    datasets.value.service = { categories: [], series: [] };
     dataStatus.value = "fallback";
     dataMessage.value = "后端未连接，当前展示明确标识的合成 Mock 演示数据。";
   }
@@ -413,6 +415,7 @@ watch(selectedShopId, () => {
                 {{ tab.label }}
               </button>
             </div>
+            <SpBadge :tone="currentTrendSource.tone" dot>{{ currentTrendSource.label }}</SpBadge>
           </header>
           <DashboardTrendChart :dataset="currentDataset" :trend-type="trendType" />
 
