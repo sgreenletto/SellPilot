@@ -56,6 +56,19 @@ def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
         "prompt_versions",
         "model_invocations",
         "generated_reports",
+        "shops",
+        "products",
+        "skus",
+        "inventory_records",
+        "orders",
+        "order_items",
+        "reviews",
+        "logistics_records",
+        "logistics_tracks",
+        "customer_sessions",
+        "customer_messages",
+        "returns_refunds",
+        "category_trends",
     }.issubset(table_names(database_path))
     assert {
         "recommendation_reason",
@@ -113,6 +126,21 @@ def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
         "is_mock_data",
         "result_version",
     }.issubset(column_names(database_path, "generated_reports"))
+    assert {
+        "external_id",
+        "source_shop_external_id",
+        "source_type",
+        "is_mock_data",
+        "source_created_at",
+        "source_updated_at",
+    }.issubset(column_names(database_path, "products"))
+    assert {
+        "external_id",
+        "source_shop_external_id",
+        "buyer_external_id",
+        "order_status",
+        "payment_status",
+    }.issubset(column_names(database_path, "orders"))
     assert foreign_key_actions(
         database_path,
         {
@@ -138,5 +166,7 @@ def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
     assert "operation_logs" in table_names(database_path)
     assert "product_selection_results" in table_names(database_path)
     assert "product_content_versions" in table_names(database_path)
+    assert "products" in table_names(database_path)
+    assert "category_trends" in table_names(database_path)
     command.check(config)
     clear_settings_cache()

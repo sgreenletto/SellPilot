@@ -5,6 +5,7 @@ from sellpilot.repositories.analysis import (
     ReviewAnalysisRepository,
     SelectionRepository,
 )
+from sellpilot.repositories.commerce_import import CommerceImportRepository
 from sellpilot.repositories.content import (
     GeneratedReportRepository,
     ProductContentRepository,
@@ -16,6 +17,7 @@ from sellpilot.repositories.model_management import (
 
 __all__ = [
     "GeneratedReportRepository",
+    "CommerceImportRepository",
     "ImprovementRepository",
     "ModelInvocationRepository",
     "ProductContentRepository",
