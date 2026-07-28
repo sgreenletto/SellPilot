@@ -108,11 +108,22 @@ export const CONFIRMATION_STATUSES = [
 ] as const;
 export type ConfirmationStatus = (typeof CONFIRMATION_STATUSES)[number];
 
-export const TOOL_CALL_STATUSES = ["succeeded", "failed", "blocked", "timed_out"] as const;
+export const TOOL_CALL_STATUSES = [
+  "pending",
+  "running",
+  "waiting_confirmation",
+  "succeeded",
+  "failed",
+  "blocked",
+  "timed_out",
+] as const;
 export type ToolCallStatus = (typeof TOOL_CALL_STATUSES)[number];
 
 export const TOOL_RISK_LEVELS = ["read", "write", "high_risk"] as const;
 export type ToolRiskLevel = (typeof TOOL_RISK_LEVELS)[number];
+
+export const TOOL_CALLER_TYPES = ["api", "agent", "workflow", "mcp", "system", "test"] as const;
+export type ToolCallerType = (typeof TOOL_CALLER_TYPES)[number];
 
 export const TASK_TYPES = [
   "diagnostic",
@@ -167,7 +178,19 @@ export const ERROR_CODES = [
   "DATA_IMPORT_FAILED",
   "MODEL_CALL_FAILED",
   "TOOL_FAILED",
+  "TOOL_NOT_FOUND",
+  "TOOL_DISABLED",
+  "TOOL_ALREADY_REGISTERED",
+  "TOOL_INPUT_INVALID",
+  "TOOL_OUTPUT_INVALID",
+  "TOOL_TIMEOUT",
+  "TOOL_EXECUTION_FAILED",
   "TOOL_CONFIRMATION_REQUIRED",
+  "TOOL_CONFIRMATION_INVALID",
+  "TOOL_IDEMPOTENCY_CONFLICT",
+  "TOOL_VERSION_CONFLICT",
+  "TOOL_NOT_EXPOSED",
+  "TOOL_RETRY_EXHAUSTED",
   "WORKFLOW_FAILED",
   "MOCK_PLATFORM_FAILED",
   "EXTERNAL_SERVICE_UNAVAILABLE",

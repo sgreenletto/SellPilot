@@ -10,8 +10,9 @@ from sellpilot.api.dependencies import (
 from sellpilot.core.middleware import get_request_id
 from sellpilot.core.response import ApiResponse, PageResult, success_response
 from sellpilot.schemas.confirmation import ConfirmationTaskResponse
-from sellpilot.services.commerce_operations import build_commerce_confirmation_service
+from sellpilot.services.commerce_operations import CommerceOperationService
 from sellpilot.services.confirmation import ConfirmationService
+from sellpilot.tools.runtime import build_confirmation_service
 
 router = APIRouter()
 
@@ -58,12 +59,16 @@ async def confirm_confirmation(
     confirmation_id: UUID,
     request: Request,
     session: SessionDependency,
-    current_user: CurrentUserDependency,
     settings: SettingsDependency,
+    current_user: CurrentUserDependency,
 ) -> ApiResponse[ConfirmationTaskResponse]:
-    confirmation = await build_commerce_confirmation_service(session, settings).confirm(
-        confirmation_id, current_user.id
+    confirmations = build_confirmation_service(
+        request.app.state.tool_registry,
+        session,
+        settings,
     )
+    CommerceOperationService(session, settings).register_executors(confirmations)
+    confirmation = await confirmations.confirm(confirmation_id, current_user.id)
     return success_response(
         ConfirmationTaskResponse.model_validate(confirmation),
         get_request_id(request),

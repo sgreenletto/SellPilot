@@ -1,8 +1,10 @@
 from pathlib import Path
 
+import pytest
 from sqlalchemy import func, select
 
 from sellpilot.core.enums import ConfirmationStatus, TaskStatus
+from sellpilot.core.exceptions import IdempotencyConflictError
 from sellpilot.db.models.agent_task import AgentTask
 from sellpilot.db.models.commerce import InventoryRecord, Product, Sku
 from sellpilot.db.models.operation_log import OperationLog
@@ -49,6 +51,14 @@ async def test_inventory_write_waits_for_confirmation_and_executes_once(
             idempotency_key="inventory-test-0001",
             created_by=admin_user.id,
         )
+        with pytest.raises(IdempotencyConflictError):
+            await operations.request_inventory_update(
+                product_id=product_id,
+                sku_id=sku_id,
+                available_stock=original_stock + 1,
+                idempotency_key="inventory-test-0001",
+                created_by=admin_user.id,
+            )
         await session.commit()
 
         assert duplicate.id == confirmation.id

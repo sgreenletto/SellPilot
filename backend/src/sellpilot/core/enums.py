@@ -190,6 +190,9 @@ class TaskStepStatus(_LegacyLowerStrEnum):
 
 
 class ToolCallStatus(_LegacyLowerStrEnum):
+    PENDING = "pending"
+    RUNNING = "running"
+    WAITING_CONFIRMATION = "waiting_confirmation"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
     BLOCKED = "blocked"
@@ -208,12 +211,23 @@ class ConfirmationStatus(_LegacyLowerStrEnum):
 class OperationStatus(_LegacyLowerStrEnum):
     SUCCEEDED = "succeeded"
     FAILED = "failed"
+    BLOCKED = "blocked"
+    TIMED_OUT = "timed_out"
 
 
 class ToolRiskLevel(_LegacyLowerStrEnum):
     READ = "read"
     WRITE = "write"
     HIGH_RISK = "high_risk"
+
+
+class ToolCallerType(StrEnum):
+    API = "api"
+    AGENT = "agent"
+    WORKFLOW = "workflow"
+    MCP = "mcp"
+    SYSTEM = "system"
+    TEST = "test"
 
 
 class TaskType(StrEnum):

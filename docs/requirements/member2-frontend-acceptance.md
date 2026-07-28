@@ -1,7 +1,7 @@
 # 成员二前端验收说明
 
-> 对应分支：`feature/commerce-management-ui`  
-> 数据边界：本地业务系统、公开/手工导入数据和 Mock Shopee 实验数据。  
+> 对应分支：`feature/commerce-management-ui`
+> 数据边界：本地业务系统、公开/手工导入数据和 Mock Shopee 实验数据。
 > 真实 Shopee 注册、授权及生产接口不属于本轮验收目标。
 
 状态含义：

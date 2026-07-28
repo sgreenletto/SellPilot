@@ -14,6 +14,7 @@ from sellpilot.repositories.model_management import (
     ModelInvocationRepository,
     PromptRepository,
 )
+from sellpilot.repositories.tool_call import ToolCallRepository
 
 __all__ = [
     "GeneratedReportRepository",
@@ -24,4 +25,5 @@ __all__ = [
     "PromptRepository",
     "ReviewAnalysisRepository",
     "SelectionRepository",
+    "ToolCallRepository",
 ]

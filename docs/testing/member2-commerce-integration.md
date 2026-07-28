@@ -1,6 +1,6 @@
 # 成员二 Commerce 集成验收
 
-> 验收分支：`test/member2-commerce-integration`  
+> 验收分支：`test/member2-commerce-integration`
 > 验收基线：`develop` commit `807812d`
 
 ## 覆盖范围

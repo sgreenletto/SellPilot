@@ -8,6 +8,8 @@ from sellpilot.api.v1.endpoints import (
     platform,
     selection,
     tasks,
+    tool_calls,
+    tools,
 )
 
 router = APIRouter()
@@ -18,3 +20,5 @@ router.include_router(commerce.router, prefix="/commerce", tags=["commerce"])
 router.include_router(selection.router, prefix="/selection", tags=["selection"])
 router.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
 router.include_router(confirmations.router, prefix="/confirmations", tags=["confirmations"])
+router.include_router(tools.router, prefix="/tools", tags=["tools"])
+router.include_router(tool_calls.router, prefix="/tool-calls", tags=["tool-calls"])

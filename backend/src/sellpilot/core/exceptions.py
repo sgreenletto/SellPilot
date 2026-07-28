@@ -14,7 +14,19 @@ class ErrorCode(StrEnum):
     DATA_IMPORT_FAILED = "DATA_IMPORT_FAILED"
     MODEL_CALL_FAILED = "MODEL_CALL_FAILED"
     TOOL_FAILED = "TOOL_FAILED"
+    TOOL_NOT_FOUND = "TOOL_NOT_FOUND"
+    TOOL_DISABLED = "TOOL_DISABLED"
+    TOOL_ALREADY_REGISTERED = "TOOL_ALREADY_REGISTERED"
+    TOOL_INPUT_INVALID = "TOOL_INPUT_INVALID"
+    TOOL_OUTPUT_INVALID = "TOOL_OUTPUT_INVALID"
+    TOOL_TIMEOUT = "TOOL_TIMEOUT"
+    TOOL_EXECUTION_FAILED = "TOOL_EXECUTION_FAILED"
     TOOL_CONFIRMATION_REQUIRED = "TOOL_CONFIRMATION_REQUIRED"
+    TOOL_CONFIRMATION_INVALID = "TOOL_CONFIRMATION_INVALID"
+    TOOL_IDEMPOTENCY_CONFLICT = "TOOL_IDEMPOTENCY_CONFLICT"
+    TOOL_VERSION_CONFLICT = "TOOL_VERSION_CONFLICT"
+    TOOL_NOT_EXPOSED = "TOOL_NOT_EXPOSED"
+    TOOL_RETRY_EXHAUSTED = "TOOL_RETRY_EXHAUSTED"
     WORKFLOW_FAILED = "WORKFLOW_FAILED"
     MOCK_PLATFORM_FAILED = "MOCK_PLATFORM_FAILED"
     EXTERNAL_SERVICE_UNAVAILABLE = "EXTERNAL_SERVICE_UNAVAILABLE"
@@ -122,6 +134,70 @@ class ExternalServiceUnavailableError(AppException):
 class ToolFailureError(AppException):
     def __init__(self, message: str = "Tool execution failed") -> None:
         super().__init__(message, code=ErrorCode.TOOL_FAILED, status_code=500)
+
+
+class ToolNotFoundError(AppException):
+    def __init__(self, name: str) -> None:
+        super().__init__(
+            f"Tool '{name}' is not registered",
+            code=ErrorCode.TOOL_NOT_FOUND,
+            status_code=404,
+        )
+
+
+class ToolDisabledError(AppException):
+    def __init__(self, name: str) -> None:
+        super().__init__(
+            f"Tool '{name}' is disabled",
+            code=ErrorCode.TOOL_DISABLED,
+            status_code=409,
+        )
+
+
+class ToolAlreadyRegisteredError(AppException):
+    def __init__(self, name: str) -> None:
+        super().__init__(
+            f"Tool '{name}' is already registered",
+            code=ErrorCode.TOOL_ALREADY_REGISTERED,
+            status_code=409,
+        )
+
+
+class ToolVersionConflictError(AppException):
+    def __init__(self, name: str, required: str, registered: str) -> None:
+        super().__init__(
+            f"Tool '{name}' version {required} is not compatible with registered version "
+            f"{registered}",
+            code=ErrorCode.TOOL_VERSION_CONFLICT,
+            status_code=409,
+        )
+
+
+class ToolNotExposedError(AppException):
+    def __init__(self, name: str) -> None:
+        super().__init__(
+            f"Tool '{name}' is not exposed to MCP",
+            code=ErrorCode.TOOL_NOT_EXPOSED,
+            status_code=403,
+        )
+
+
+class ToolConfirmationInvalidError(AppException):
+    def __init__(self, message: str = "Tool confirmation is invalid") -> None:
+        super().__init__(
+            message,
+            code=ErrorCode.TOOL_CONFIRMATION_INVALID,
+            status_code=409,
+        )
+
+
+class ToolIdempotencyConflictError(AppException):
+    def __init__(self, message: str = "Tool idempotency key conflicts with another invocation"):
+        super().__init__(
+            message,
+            code=ErrorCode.TOOL_IDEMPOTENCY_CONFLICT,
+            status_code=409,
+        )
 
 
 class ToolConfirmationRequiredError(AppException):
