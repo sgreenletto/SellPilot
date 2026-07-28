@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import {
   CheckCircle2,
   FileText,
@@ -13,8 +13,10 @@ import { FrontendApiError } from "@/api/http";
 import {
   cancelContentDraft,
   confirmContentDraft,
+  exportContentVersion,
   generateContent,
   listContentVersions,
+  regenerateContentField,
   requestContentDraft,
   requestVersionRestore,
 } from "@/api/content-generation";
@@ -73,6 +75,28 @@ const sectionLabels: Record<ContentSection, string> = {
   marketing_copy: "营销短文案",
   faq: "常见问题",
 };
+const generationRequest = () => ({
+  product_id: productId.value.trim(),
+  site: site.value,
+  target_language: language.value,
+  audience: audience.value,
+  selling_points: sellingPoints.value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean),
+  keywords: keywords.value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean),
+  max_attempts: 3,
+});
+const warnUnsaved = (event: BeforeUnloadEvent) => {
+  if (!dirty.value) return;
+  event.preventDefault();
+  event.returnValue = "";
+};
+onMounted(() => window.addEventListener("beforeunload", warnUnsaved));
+onBeforeUnmount(() => window.removeEventListener("beforeunload", warnUnsaved));
 
 async function runGeneration(): Promise<void> {
   const isRegeneration = generation.value !== null;
@@ -80,21 +104,7 @@ async function runGeneration(): Promise<void> {
   error.value = "";
   notice.value = generation.value ? "正在重新生成全部内容，请稍候…" : "正在生成并检查内容，请稍候…";
   try {
-    generation.value = await generateContent({
-      product_id: productId.value.trim(),
-      site: site.value,
-      target_language: language.value,
-      audience: audience.value,
-      selling_points: sellingPoints.value
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      keywords: keywords.value
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      max_attempts: 3,
-    });
+    generation.value = await generateContent(generationRequest());
     dirty.value = false;
     confirmation.value = null;
     const actionLabel = isRegeneration ? "全部内容已重新生成" : "内容已生成";
@@ -120,30 +130,13 @@ async function regenerateSection(section: ContentSection): Promise<void> {
   error.value = "";
   notice.value = `正在重新生成${sectionLabels[section]}，其他字段会保留…`;
   try {
-    const refreshed = await generateContent({
-      product_id: productId.value.trim(),
-      site: site.value,
-      target_language: language.value,
-      audience: audience.value,
-      selling_points: sellingPoints.value
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      keywords: keywords.value
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean),
-      max_attempts: 3,
-    });
+    const refreshed = await regenerateContentField(generationRequest(), section);
     generation.value.task_id = refreshed.task_id;
     generation.value.invocation_id = refreshed.invocation_id;
     generation.value.provider = refreshed.provider;
     generation.value.model_name = refreshed.model_name;
-    generation.value.audience = refreshed.audience;
-    generation.value.selling_points = refreshed.selling_points;
-    generation.value.keywords = refreshed.keywords;
-    generation.value.result.content[section] = refreshed.result.content[section] as never;
-    generation.value.result.quality = refreshed.result.quality;
+    generation.value.result.content[section] = refreshed.value as never;
+    generation.value.result.quality = refreshed.quality;
     dirty.value = true;
     confirmation.value = null;
     notice.value = `${sectionLabels[section]}已重新生成，保存前将复核全部内容`;
@@ -189,6 +182,22 @@ async function restore(version: ContentVersion): Promise<void> {
     version.id,
     `restore-${version.id}-${Date.now()}`,
   );
+}
+async function exportVersion(version: ContentVersion): Promise<void> {
+  try {
+    const exported = await exportContentVersion(version.content_id, version.id);
+    const blob = new Blob([exported.content], {
+      type: `${exported.media_type};charset=utf-8`,
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = exported.filename;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  } catch (reason) {
+    error.value = reason instanceof FrontendApiError ? reason.message : "内容版本导出失败";
+  }
 }
 
 function formatQualityIssue(issue: string): string {
@@ -517,8 +526,11 @@ function formatQualityIssue(issue: string): string {
               :value="version.id"
               :disabled="compareIds.length >= 2 && !compareIds.includes(version.id)"
             />v{{ version.version }}</label
-          ><span>{{ version.title }}</span
-          ><SpButton size="sm" variant="ghost" @click="restore(version)">恢复为新版本</SpButton>
+          ><span>{{ version.title }}</span>
+          <div class="version-actions">
+            <SpButton size="sm" variant="ghost" @click="exportVersion(version)">导出</SpButton>
+            <SpButton size="sm" variant="ghost" @click="restore(version)">恢复为新版本</SpButton>
+          </div>
         </article>
         <div v-if="compared.length === 2" class="comparison">
           <article v-for="version in compared" :key="version.id">
@@ -564,6 +576,11 @@ function formatQualityIssue(issue: string): string {
   align-items: center;
   gap: var(--sp-space-4);
   flex-wrap: wrap;
+}
+.version-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 .configuration-shell {
   margin-bottom: var(--sp-space-5);

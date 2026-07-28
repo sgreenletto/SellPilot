@@ -15,6 +15,7 @@ from sellpilot.core.response import ApiResponse, success_response
 from sellpilot.schemas.review_analysis import (
     ReviewAnalysisCreatedResponse,
     ReviewAnalysisCreateRequest,
+    ReviewAnalysisExportResponse,
     ReviewAnalysisResultResponse,
     ReviewEvidencePage,
     ReviewQuery,
@@ -100,6 +101,21 @@ async def get_analysis(
     settings: SettingsDependency,
 ) -> ApiResponse[ReviewAnalysisResultResponse]:
     data = await ReviewAnalysisService(session, settings).get(analysis_id, user.id)
+    return success_response(data, get_request_id(request))
+
+
+@router.get(
+    "/analyses/{analysis_id}/export",
+    response_model=ApiResponse[ReviewAnalysisExportResponse],
+)
+async def export_analysis(
+    analysis_id: UUID,
+    request: Request,
+    user: CurrentUserDependency,
+    session: SessionDependency,
+    settings: SettingsDependency,
+) -> ApiResponse[ReviewAnalysisExportResponse]:
+    data = await ReviewAnalysisService(session, settings).export(analysis_id, user.id)
     return success_response(data, get_request_id(request))
 
 

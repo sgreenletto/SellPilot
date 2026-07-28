@@ -1,5 +1,8 @@
 import re
 import unicodedata
+from typing import Any, Literal, TypedDict
+
+from langgraph.graph import END, START, StateGraph
 
 from sellpilot.domain.content_generation.models import (
     GeneratedListing,
@@ -124,18 +127,38 @@ def check_listing(content: LocalizedListing, facts: ListingFacts, attempts: int)
 async def generate_with_quality_loop(
     gateway: ModelGateway, facts: ListingFacts, max_attempts: int = 3
 ) -> GeneratedListing:
-    issues: list[str] = []
-    last: LocalizedListing | None = None
-    quality: QualityResult | None = None
-    for attempt in range(1, max_attempts + 1):
-        last = await gateway.generate(facts, issues)
-        quality = check_listing(last, facts, attempt)
-        if quality.passed:
-            return GeneratedListing(content=last, quality=quality)
-        issues = [
-            *quality.fact_issues,
-            *quality.compliance_issues,
-            *quality.completeness_issues,
-        ]
-    assert last is not None and quality is not None
-    return GeneratedListing(content=last, quality=quality)
+    class ContentQualityState(TypedDict):
+        attempt: int
+        issues: list[str]
+        content: Any
+        quality: Any
+
+    async def generate(state: ContentQualityState) -> dict[str, Any]:
+        content = await gateway.generate(facts, state["issues"])
+        return {"attempt": state["attempt"] + 1, "content": content}
+
+    async def validate(state: ContentQualityState) -> dict[str, Any]:
+        quality = check_listing(state["content"], facts, state["attempt"])
+        return {
+            "quality": quality,
+            "issues": [
+                *quality.fact_issues,
+                *quality.compliance_issues,
+                *quality.completeness_issues,
+            ],
+        }
+
+    def route(state: ContentQualityState) -> Literal["generate", "__end__"]:
+        if state["quality"].passed or state["attempt"] >= max_attempts:
+            return END
+        return "generate"
+
+    graph = StateGraph(ContentQualityState)
+    graph.add_node("generate", generate)
+    graph.add_node("validate", validate)
+    graph.add_edge(START, "generate")
+    graph.add_edge("generate", "validate")
+    graph.add_conditional_edges("validate", route, {"generate": "generate", END: END})
+    workflow = graph.compile(name="sellpilot_content_quality_loop")
+    final = await workflow.ainvoke({"attempt": 0, "issues": [], "content": None, "quality": None})
+    return GeneratedListing(content=final["content"], quality=final["quality"])

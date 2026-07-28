@@ -15,6 +15,20 @@ const auth = (method = "GET", body?: unknown): RequestInit => {
 };
 export const generateContent = (payload: Record<string, unknown>) =>
   request<ContentGeneration>("/v1/content-generation/generate", auth("POST", payload), 30_000);
+export const regenerateContentField = (requestPayload: Record<string, unknown>, field: string) =>
+  request<{
+    task_id: string;
+    invocation_id: string;
+    field: string;
+    value: unknown;
+    quality: ContentGeneration["result"]["quality"];
+    provider: string;
+    model_name: string;
+  }>(
+    "/v1/content-generation/regenerate-field",
+    auth("POST", { request: requestPayload, field }),
+    30_000,
+  );
 export const requestContentDraft = (generation: ContentGeneration, idempotencyKey: string) =>
   request<ContentConfirmation>(
     "/v1/content-generation/draft-confirmations",
@@ -33,4 +47,9 @@ export const requestVersionRestore = (contentId: string, versionId: string, key:
   request<ContentConfirmation>(
     `/v1/content-generation/contents/${encodeURIComponent(contentId)}/restore-confirmations`,
     auth("POST", { idempotency_key: key, version_id: versionId }),
+  );
+export const exportContentVersion = (contentId: string, versionId: string) =>
+  request<{ filename: string; media_type: string; content: string }>(
+    `/v1/content-generation/contents/${encodeURIComponent(contentId)}/versions/${encodeURIComponent(versionId)}/export`,
+    auth(),
   );

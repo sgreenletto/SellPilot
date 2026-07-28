@@ -6,8 +6,10 @@ import * as contentApi from "@/api/content-generation";
 vi.mock("@/api/content-generation", () => ({
   cancelContentDraft: vi.fn(),
   confirmContentDraft: vi.fn(),
+  exportContentVersion: vi.fn(),
   generateContent: vi.fn(),
   listContentVersions: vi.fn(),
+  regenerateContentField: vi.fn(),
   requestContentDraft: vi.fn(),
   requestVersionRestore: vi.fn(),
 }));
@@ -51,6 +53,15 @@ describe("ContentWorkshopView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(contentApi.generateContent).mockResolvedValue(structuredClone(generation));
+    vi.mocked(contentApi.regenerateContentField).mockResolvedValue({
+      task_id: generation.task_id,
+      invocation_id: generation.invocation_id,
+      field: "title",
+      value: generation.result.content.title,
+      quality: generation.result.quality,
+      provider: generation.provider,
+      model_name: generation.model_name,
+    });
   });
 
   it("keeps the form focused without a duplicate hero", () => {
@@ -79,7 +90,7 @@ describe("ContentWorkshopView", () => {
       .filter((button) => button.text().includes("重新生成"));
     await buttons[0]?.trigger("click");
     await flushPromises();
-    expect(contentApi.generateContent).toHaveBeenCalledTimes(2);
+    expect(contentApi.regenerateContentField).toHaveBeenCalledTimes(1);
     expect(wrapper.text()).toContain("商品标题已重新生成");
 
     const regenerateAll = wrapper
@@ -87,7 +98,7 @@ describe("ContentWorkshopView", () => {
       .find((button) => button.text().includes("重新生成全部内容"));
     await regenerateAll?.trigger("click");
     await flushPromises();
-    expect(contentApi.generateContent).toHaveBeenCalledTimes(3);
+    expect(contentApi.generateContent).toHaveBeenCalledTimes(2);
     expect(wrapper.text()).toContain("全部内容已重新生成");
   });
 });

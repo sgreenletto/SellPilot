@@ -42,6 +42,34 @@ class ContentRestoreRequest(BaseModel):
     version_id: UUID
 
 
+class ContentComplianceRequest(BaseModel):
+    request: ContentGenerateRequest
+    content: Any
+
+
+class ContentRegenerateFieldRequest(BaseModel):
+    request: ContentGenerateRequest
+    field: Literal[
+        "title",
+        "bullet_points",
+        "description",
+        "marketing_copy",
+        "faq",
+        "sku_content",
+        "keywords",
+    ]
+
+
+class ContentRegenerateFieldResponse(BaseModel):
+    task_id: UUID
+    invocation_id: UUID
+    field: str
+    value: Any
+    quality: dict[str, Any]
+    provider: str
+    model_name: str
+
+
 class ContentVersionResponse(BaseModel):
     id: UUID
     content_id: UUID
@@ -64,6 +92,19 @@ class ContentVersionsResponse(BaseModel):
     content_id: UUID
     items: list[ContentVersionResponse]
     total: int
+
+
+class ContentVersionComparisonResponse(BaseModel):
+    content_id: UUID
+    left: ContentVersionResponse
+    right: ContentVersionResponse
+    changed_fields: list[str]
+
+
+class ContentExportResponse(BaseModel):
+    filename: str
+    media_type: str
+    content: str
 
 
 class ContentDraftConfirmationResponse(ConfirmationTaskResponse):
