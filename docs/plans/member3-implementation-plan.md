@@ -624,6 +624,8 @@ docs: document review taxonomy and evidence rules
 
 ## Step 6：评论分析 Service、API、Tool 与工作流
 
+> **实现状态**：已在 `feature/review-analysis-service` 完成应用层、分阶段 API、Tool、AgentTaskStep 工作流、幂等和批处理，待审核合并；评论分析前端仍按 Step 7 实施。
+
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 将评论流水线接入持久化、API、工具和 Agent 任务 |

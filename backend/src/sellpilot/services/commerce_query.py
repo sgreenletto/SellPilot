@@ -34,6 +34,9 @@ class CommerceQueryService:
     async def get_logistics(self, order_id: str) -> dict[str, Any]:
         return await self.adapter.get_logistics(order_id)
 
+    async def list_reviews(self, **filters: Any) -> list[dict[str, Any]]:
+        return await self.adapter.list_reviews(**filters)
+
     async def list_messages(self, **filters: Any) -> list[dict[str, Any]]:
         return await self.adapter.list_messages(**filters)
 

@@ -87,6 +87,25 @@ class ReviewAnalysisRepository:
     async def get_result(self, result_id: UUID) -> ReviewAnalysisResult | None:
         return await self.session.get(ReviewAnalysisResult, result_id)
 
+    async def find_by_idempotency_key(
+        self,
+        *,
+        created_by: UUID,
+        source_product_id: str,
+        idempotency_key: str,
+    ) -> ReviewAnalysisResult | None:
+        return await self.session.scalar(
+            select(ReviewAnalysisResult)
+            .where(
+                ReviewAnalysisResult.created_by == created_by,
+                ReviewAnalysisResult.source_product_id == source_product_id,
+                ReviewAnalysisResult.input_conditions["idempotency_key"].as_string()
+                == idempotency_key,
+            )
+            .order_by(ReviewAnalysisResult.created_at.desc())
+            .limit(1)
+        )
+
     async def list_results(
         self,
         page: int,
