@@ -303,6 +303,7 @@ class TaskRunner:
                 code=ErrorCode.TASK_CANCEL_NOT_ALLOWED,
             )
         step = await self.tasks.latest_step(current.id)
+        pending_confirmation_id: UUID | None = None
         if (
             step is not None
             and TaskStepStatus(step.status) is TaskStepStatus.WAITING_CONFIRMATION
@@ -313,7 +314,7 @@ class TaskRunner:
                 confirmation is not None
                 and ConfirmationStatus(confirmation.status) is ConfirmationStatus.PENDING
             ):
-                await ConfirmationService(self.session).cancel(confirmation.id)
+                pending_confirmation_id = confirmation.id
         task = await self.tasks.cancel_owned(
             task_id,
             user_id=user_id,
@@ -323,6 +324,11 @@ class TaskRunner:
             raise TaskRuntimeError(
                 "Task cancellation lost the execution race",
                 code=ErrorCode.TASK_EXECUTION_CONFLICT,
+            )
+        if pending_confirmation_id is not None:
+            await ConfirmationService(self.session).cancel(
+                pending_confirmation_id,
+                user_id=user_id,
             )
         task.request_id = request_id or task.request_id
         if step is not None and TaskStepStatus(step.status) in {

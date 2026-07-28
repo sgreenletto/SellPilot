@@ -1,7 +1,7 @@
 import type { ApiResponse, FrontendApiErrorShape } from "@/api/types";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
-const DEFAULT_TIMEOUT_MS = 8_000;
+const DEFAULT_TIMEOUT_MS = 30_000;
 
 export class FrontendApiError extends Error implements FrontendApiErrorShape {
   readonly code: string;

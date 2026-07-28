@@ -170,7 +170,7 @@ JWT、日志、平台适配器和模型配置。复制为仓库根目录的本�
 - `/products`、`/products/content`、`/products/listing-inventory`：商品、内容工坊和库存。
 - `/customer-service/conversations`、`/customer-service/knowledge`：智能客服占位页。
 - `/orders`：订单与履约占位页。
-- `/tasks`：任务中心占位页。
+- `/tasks`：真实任务中心；支持筛选、分页、按需详情、确认处理、任务操作和安全审计时间线。
 - `/dev/design-system`：仅开发环境注册的设计系统展示页。
 
 ## 当前基础 API
@@ -188,6 +188,7 @@ JWT、日志、平台适配器和模型配置。复制为仓库根目录的本�
 - `GET /api/v1/tasks/workflows`
 - `GET /api/v1/tasks/{task_id}`
 - `GET /api/v1/tasks/{task_id}/steps`
+- `GET /api/v1/tasks/{task_id}/operation-logs`
 - `POST /api/v1/tasks/{task_id}/run`
 - `POST /api/v1/tasks/{task_id}/resume`
 - `POST /api/v1/tasks/{task_id}/retry`
@@ -204,7 +205,10 @@ JWT、日志、平台适配器和模型配置。复制为仓库根目录的本�
 - `GET /api/v1/tool-calls/{tool_call_id}`
 
 Task 创建 API 只接受已注册工作流和结构化输入，实际创建仍由内部
-`TaskService` 完成；Confirmation 仍只能由内部 Service 创建。
+`TaskService` 完成；Confirmation 仍只能由内部 Service 创建。Task、Confirmation、
+ToolCall 和 OperationLog 查询均限制为当前用户，跨用户资源统一返回 404。Task 详情中的
+`available_actions` 由后端状态机计算；公开响应递归脱敏和限长，不包含内部运行状态、密钥或
+堆栈。本轮 Task Center Integration 未新增数据库迁移，create/rerun 请求级幂等持久化仍未实现。
 
 ## Git 工作流
 

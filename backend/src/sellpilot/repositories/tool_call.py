@@ -1,10 +1,11 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Select, func, select
+from sqlalchemy import Select, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sellpilot.core.enums import ToolCallStatus, ToolRiskLevel
+from sellpilot.db.models.agent_task import AgentTask
 from sellpilot.db.models.tool_call import ToolCall
 
 
@@ -19,6 +20,20 @@ class ToolCallRepository:
 
     async def get(self, tool_call_id: UUID) -> ToolCall | None:
         return await self.session.get(ToolCall, tool_call_id)
+
+    async def get_owned(self, tool_call_id: UUID, user_id: UUID) -> ToolCall | None:
+        result = await self.session.execute(
+            select(ToolCall)
+            .outerjoin(AgentTask, AgentTask.id == ToolCall.task_id)
+            .where(
+                ToolCall.id == tool_call_id,
+                or_(
+                    ToolCall.user_id == user_id,
+                    AgentTask.created_by == user_id,
+                ),
+            )
+        )
+        return result.scalar_one_or_none()
 
     async def get_for_update(self, tool_call_id: UUID) -> ToolCall | None:
         result = await self.session.execute(
@@ -54,9 +69,18 @@ class ToolCallRepository:
         status: ToolCallStatus | None,
         risk_level: ToolRiskLevel | None,
         task_id: UUID | None,
+        task_step_id: UUID | None,
+        user_id: UUID | None,
         created_from: datetime | None,
         created_to: datetime | None,
     ) -> Select[tuple[ToolCall]]:
+        if user_id is not None:
+            statement = statement.outerjoin(AgentTask, AgentTask.id == ToolCall.task_id).where(
+                or_(
+                    ToolCall.user_id == user_id,
+                    AgentTask.created_by == user_id,
+                )
+            )
         if tool_name is not None:
             statement = statement.where(ToolCall.tool_name == tool_name)
         if status is not None:
@@ -65,6 +89,8 @@ class ToolCallRepository:
             statement = statement.where(ToolCall.risk_level == risk_level)
         if task_id is not None:
             statement = statement.where(ToolCall.task_id == task_id)
+        if task_step_id is not None:
+            statement = statement.where(ToolCall.task_step_id == task_step_id)
         if created_from is not None:
             statement = statement.where(ToolCall.created_at >= created_from)
         if created_to is not None:
@@ -80,6 +106,8 @@ class ToolCallRepository:
         status: ToolCallStatus | None = None,
         risk_level: ToolRiskLevel | None = None,
         task_id: UUID | None = None,
+        task_step_id: UUID | None = None,
+        user_id: UUID | None = None,
         created_from: datetime | None = None,
         created_to: datetime | None = None,
     ) -> tuple[list[ToolCall], int]:
@@ -89,6 +117,8 @@ class ToolCallRepository:
             status=status,
             risk_level=risk_level,
             task_id=task_id,
+            task_step_id=task_step_id,
+            user_id=user_id,
             created_from=created_from,
             created_to=created_to,
         )
@@ -98,6 +128,8 @@ class ToolCallRepository:
             status=status,
             risk_level=risk_level,
             task_id=task_id,
+            task_step_id=task_step_id,
+            user_id=user_id,
             created_from=created_from,
             created_to=created_to,
         ).with_only_columns(func.count())

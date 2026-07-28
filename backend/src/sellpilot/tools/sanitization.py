@@ -44,26 +44,45 @@ def redact_nested(
     value: object,
     *,
     extra_sensitive_fields: frozenset[str] | set[str] = frozenset(),
+    max_depth: int | None = None,
+    max_items: int | None = None,
+    max_string_chars: int | None = None,
 ) -> JsonValue:
     """Return a JSON-safe redacted copy without mutating the business object."""
 
     sensitive_names = _sensitive_names(extra_sensitive_fields)
 
-    def visit(item: object) -> JsonValue:
+    def visit(item: object, depth: int = 0) -> JsonValue:
+        if max_depth is not None and depth >= max_depth:
+            return "[TRUNCATED:MAX_DEPTH]"
         if isinstance(item, BaseModel):
-            return visit(item.model_dump(mode="json"))
+            return visit(item.model_dump(mode="json"), depth)
         if isinstance(item, Mapping):
-            return {
+            entries = list(item.items())
+            limited = entries[:max_items] if max_items is not None else entries
+            result: dict[str, JsonValue] = {
                 str(key): (
                     REDACTED
                     if child is not None and _is_sensitive(key, sensitive_names)
-                    else visit(child)
+                    else visit(child, depth + 1)
                 )
-                for key, child in item.items()
+                for key, child in limited
             }
+            if max_items is not None and len(entries) > max_items:
+                result["_truncated_items"] = len(entries) - max_items
+            return result
         if isinstance(item, (list, tuple)):
-            return [visit(child) for child in item]
-        if item is None or isinstance(item, (str, int, float, bool)):
+            values = list(item)
+            limited = values[:max_items] if max_items is not None else values
+            result = [visit(child, depth + 1) for child in limited]
+            if max_items is not None and len(values) > max_items:
+                result.append({"_truncated_items": len(values) - max_items})
+            return result
+        if isinstance(item, str):
+            if max_string_chars is not None and len(item) > max_string_chars:
+                return f"{item[:max_string_chars]}…[TRUNCATED:{len(item) - max_string_chars}]"
+            return item
+        if item is None or isinstance(item, (int, float, bool)):
             return item
         return str(item)
 
@@ -76,7 +95,13 @@ def audit_summary(
     extra_sensitive_fields: frozenset[str] | set[str] = frozenset(),
     max_bytes: int,
 ) -> dict[str, JsonValue]:
-    redacted = redact_nested(value, extra_sensitive_fields=extra_sensitive_fields)
+    redacted = redact_nested(
+        value,
+        extra_sensitive_fields=extra_sensitive_fields,
+        max_depth=12,
+        max_items=100,
+        max_string_chars=4_000,
+    )
     if isinstance(redacted, dict):
         structured: dict[str, JsonValue] = redacted
     else:

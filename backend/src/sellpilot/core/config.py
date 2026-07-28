@@ -164,6 +164,11 @@ class Settings(BaseSettings):
         validation_alias="BAILIAN_OUTPUT_COST_PER_MILLION",
     )
 
+    # ---- RAG LLM ----
+    llm_api_key: SecretStr = Field(default=SecretStr(""), validation_alias="LLM_API_KEY")
+    llm_base_url: str = Field(default="https://api.openai.com/v1", validation_alias="LLM_BASE_URL")
+    llm_model: str = Field(default="qwen-plus", validation_alias="LLM_MODEL")
+
     @field_validator("api_v1_prefix")
     @classmethod
     def validate_api_prefix(cls, value: str) -> str:

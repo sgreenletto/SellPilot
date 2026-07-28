@@ -10,6 +10,13 @@ Analysis/Product Improvement adapter compatibility. The Product Improvement test
 proves report generation uses the shared TaskRunner and ToolExecutor; draft creation
 remains behind the shared HIGH_RISK Confirmation boundary.
 
+Task Center coverage additionally verifies ownership isolation for Task,
+Confirmation, ToolCall, and OperationLog; Task/Step ToolExecutor association checks;
+recursive redaction and truncation; stable filters and audit ordering; every
+`available_actions` state including retry limits; explicit resume after success;
+cancel/failure Task synchronization; repeat terminal requests; and rerun parent
+linkage. No migration was added by the integration.
+
 Concurrency tests use separate SQLAlchemy sessions. A blocked test node lets one
 request commit the execution claim before a second run/retry request attempts to
 claim the same task. Only one request invokes the node. Existing Tool Runtime tests
@@ -34,6 +41,7 @@ uv run ruff format --check .
 uv run ruff check .
 uv run python -m pytest -q
 uv run python -m pytest tests/unit/test_task_workflow.py -q
+uv run python -m pytest tests/unit/test_task_center.py -q
 uv run python -m pytest tests/integration/test_task_api.py -q
 uv run python -m pytest tests/integration/test_task_concurrency.py -q
 uv run python -m pytest tests/integration/test_tool_api.py -q

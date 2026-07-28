@@ -114,6 +114,20 @@ confirmation waiting/resume, retry, rerun, cancellation, and task success/failur
 Task events reference task, step, ToolCall, and Confirmation where applicable.
 ToolCall remains the technical tool trace; OperationLog is the business task history.
 
+Task Center reads those records through the existing repositories and runtimes. It
+does not add a second Task, Step, Runner, registry, executor, Confirmation, log, or API
+envelope. `TaskCenterService` is the application-layer policy for
+`available_actions`; routes only validate protocol inputs and delegate. List queries
+remain constant-query and detail collections are separate, on-demand endpoints.
+
+Confirmation and ToolCall reads are scoped to the authenticated owner. ToolExecutor
+validates Task existence, Task ownership, Step existence, and Task/Step consistency
+before it creates ToolCall, Confirmation, or OperationLog records. Confirmation
+cancel/failure synchronizes a still-waiting Task in the service transaction, while
+success deliberately requires an explicit TaskRunner resume. Public runtime schemas
+redact sensitive keys recursively, limit depth/list/string/byte size, and never expose
+serialized state, execution ownership fields, raw tool payloads, or tracebacks.
+
 Workflow input and state reject secret-bearing fields. Step summaries and audit details
 reuse the tool runtime's recursive redact-then-truncate logic. State has a hard byte
 limit and is never returned by the API. Stack traces and raw internal exceptions are

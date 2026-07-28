@@ -17,6 +17,7 @@ const SelectionWorkbenchView = () => import("@/views/selection/SelectionWorkbenc
 const ReviewAnalysisView = () => import("@/views/reviews/ReviewAnalysisView.vue");
 const ProductImprovementView = () => import("@/views/reviews/ProductImprovementView.vue");
 const ContentWorkshopView = () => import("@/views/content/ContentWorkshopView.vue");
+const TaskCenterView = () => import("@/views/tasks/TaskCenterView.vue");
 
 const placeholderRoutes: RouteRecordRaw[] = [
   {
@@ -132,7 +133,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
   {
     path: "/tasks",
     name: "tasks",
-    component: ModulePlaceholderView,
+    component: TaskCenterView,
     meta: {
       title: "任务中心",
       module: "公共任务",

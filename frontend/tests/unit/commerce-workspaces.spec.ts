@@ -41,6 +41,42 @@ vi.mock("@/api/product-translation", () => ({
   getProductTranslationTask: vi.fn(),
 }));
 
+const dashboardOrders: Order[] = [
+  {
+    order_id: "ORD000001",
+    buyer_id: "BUYER0001",
+    site: "Singapore",
+    currency: "SGD",
+    order_status: "delivered",
+    payment_status: "paid",
+    total_amount: "158.85",
+    created_at: "2026-06-06T10:48:00+08:00",
+    is_mock_data: true,
+  },
+  {
+    order_id: "ORD000252",
+    buyer_id: "BUYER0252",
+    site: "Singapore",
+    currency: "SGD",
+    order_status: "processing",
+    payment_status: "paid",
+    total_amount: "88.00",
+    created_at: "2026-05-05T10:00:00+08:00",
+    is_mock_data: true,
+  },
+  {
+    order_id: "ORD000109",
+    buyer_id: "BUYER0109",
+    site: "Singapore",
+    currency: "SGD",
+    order_status: "shipped",
+    payment_status: "paid",
+    total_amount: "66.00",
+    created_at: "2026-04-04T10:00:00+08:00",
+    is_mock_data: true,
+  },
+];
+
 const fixtureOrders = csvRows(ordersCsv);
 const fixtureLogistics = csvRows(logisticsCsv);
 const fixtureTracks = csvRows(logisticsTracksCsv);
@@ -48,8 +84,9 @@ const fixtureSessions = csvRows(customerSessionsCsv);
 const fixtureMessages = csvRows(customerMessagesCsv);
 
 function requiredFixture<T>(value: T | undefined, description: string): T {
-  if (value === undefined)
+  if (value === undefined) {
     throw new Error(`Missing deterministic Commerce fixture: ${description}`);
+  }
   return value;
 }
 
@@ -67,35 +104,45 @@ function apiOrder(row: SpreadsheetRow): Order {
   };
 }
 
+const dashboardOrderIds = new Set(dashboardOrders.map((order) => order.order_id));
 const linkedSession = requiredFixture(
   fixtureSessions.find(
     (session) =>
-      ["ORD000001", "ORD000252", "ORD000109"].includes(String(session.order_id)) &&
+      dashboardOrderIds.has(String(session.order_id)) &&
       fixtureMessages.some((message) => message.session_id === session.session_id),
   ),
-  "dashboard order with a linked customer session",
+  "dashboard order with a linked customer session and messages",
 );
 const linkedMessage = requiredFixture(
   fixtureMessages.filter((message) => message.session_id === linkedSession.session_id).at(-1),
-  "message linked to the selected session",
+  "message linked to the selected customer session",
 );
 const exceptionShipment = requiredFixture(
   fixtureLogistics.find((shipment) => {
     const order = fixtureOrders.find((item) => item.order_id === shipment.order_id);
-    return shipment.logistics_status === "exception" && order?.shop_id === "SHOP001";
+    return (
+      shipment.logistics_status === "exception" &&
+      order?.shop_id === "SHOP001" &&
+      fixtureTracks.some(
+        (track) =>
+          track.tracking_number === shipment.tracking_number &&
+          track.status === "exception" &&
+          track.description === "Temporary routing exception; manual review required",
+      )
+    );
   }),
-  "SHOP001 order with exception logistics",
+  "SHOP001 order with exception logistics and an exception track",
 );
 const exceptionOrder = requiredFixture(
   fixtureOrders.find((order) => order.order_id === exceptionShipment.order_id),
-  "order linked to exception logistics",
+  "order linked to the exception shipment",
 );
 const exceptionTrack = requiredFixture(
   fixtureTracks.find(
     (track) =>
       track.tracking_number === exceptionShipment.tracking_number && track.status === "exception",
   ),
-  "exception logistics track",
+  "exception track linked by tracking number",
 );
 
 describe("成员二业务工作台", () => {
@@ -181,38 +228,7 @@ describe("成员二业务工作台", () => {
           stock_status: "sufficient",
         },
       ],
-      orders: [
-        {
-          order_id: "ORD000001",
-          buyer_id: "BUYER0001",
-          site: "Singapore",
-          currency: "SGD",
-          order_status: "delivered",
-          payment_status: "paid",
-          total_amount: "158.85",
-          created_at: "2026-06-06T10:48:00+08:00",
-        },
-        {
-          order_id: "ORD000252",
-          buyer_id: "BUYER0252",
-          site: "Singapore",
-          currency: "SGD",
-          order_status: "processing",
-          payment_status: "paid",
-          total_amount: "88.00",
-          created_at: "2026-05-05T10:00:00+08:00",
-        },
-        {
-          order_id: "ORD000109",
-          buyer_id: "BUYER0109",
-          site: "Singapore",
-          currency: "SGD",
-          order_status: "shipped",
-          payment_status: "paid",
-          total_amount: "66.00",
-          created_at: "2026-04-04T10:00:00+08:00",
-        },
-      ],
+      orders: dashboardOrders,
     });
   });
 
@@ -357,16 +373,18 @@ describe("成员二业务工作台", () => {
     expect(linkedOrderRow).toBeDefined();
     await linkedOrderRow!.trigger("click");
 
+    expect(dashboardOrderIds.has(linkedOrderId)).toBe(true);
     expect(wrapper.text()).toContain(String(linkedSession.session_id));
     expect(wrapper.text()).toContain(String(linkedSession.intent));
     expect(wrapper.text()).toContain(String(linkedMessage.content));
+    expect(wrapper.text()).toContain(`已关联 ${String(linkedSession.intent)} 会话`);
   });
 
   it("订单页根据真实物流状态展示异常", async () => {
     loadCommerceDashboardSnapshot.mockResolvedValueOnce({
       products: [],
       inventory: [],
-      orders: [apiOrder(exceptionOrder)],
+      orders: [dashboardOrders[0], apiOrder(exceptionOrder)],
     });
     const wrapper = mount(OrdersView, {
       global: { plugins: [createPinia()] },
@@ -376,8 +394,14 @@ describe("成员二业务工作台", () => {
     });
     const exceptionOrderId = String(exceptionOrder.order_id);
     await wrapper.get('input[placeholder="搜索订单号或买家"]').setValue(exceptionOrderId);
-    await wrapper.get("tbody tr").trigger("click");
+    const exceptionOrderRow = wrapper
+      .findAll("tbody tr")
+      .find((row) => row.text().includes(exceptionOrderId));
+    expect(exceptionOrderRow).toBeDefined();
+    await exceptionOrderRow!.trigger("click");
 
+    expect(exceptionShipment.order_id).toBe(exceptionOrder.order_id);
+    expect(exceptionTrack.tracking_number).toBe(exceptionShipment.tracking_number);
     expect(wrapper.text()).toContain("物流状态exception");
     expect(wrapper.text()).toContain("异常 ·");
     expect(wrapper.text()).toContain(String(exceptionTrack.description));
