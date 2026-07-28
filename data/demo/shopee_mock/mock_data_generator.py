@@ -150,6 +150,14 @@ POSITIVE = {
     ],
 }
 
+POSITIVE_ZH = [
+    "使用顺畅，做工比预期更结实。",
+    "包装整洁，颜色与图片一致，而且容易使用。",
+    "日常使用很方便，配送也比预期更快。",
+    "做工整洁，尺寸对我来说正合适。",
+    "设计很实用，我愿意推荐给朋友。",
+]
+
 NEUTRAL = {
     "English": ["It works as described, though the finish is fairly basic.", "Acceptable for the price; delivery took the usual time."],
     "Malay": ["Produk berfungsi seperti diterangkan, tetapi kemasannya biasa sahaja.", "Sesuai dengan harga; masa penghantaran adalah sederhana."],
@@ -158,6 +166,11 @@ NEUTRAL = {
     "Vietnamese": ["Sản phẩm đúng mô tả nhưng phần hoàn thiện khá cơ bản.", "Chất lượng phù hợp với giá, thời gian giao hàng bình thường."],
     "Filipino": ["Gumagana ayon sa description pero simple lang ang finish.", "Katanggap-tanggap sa presyo at normal ang tagal ng delivery."],
 }
+
+NEUTRAL_ZH = [
+    "功能符合描述，不过做工比较基础。",
+    "以这个价格来说可以接受，配送时效也属正常。",
+]
 
 NEGATIVE = {
     "product_quality": {
@@ -226,10 +239,100 @@ NEGATIVE = {
     },
 }
 
-ZH = {
-    "positive": ["使用顺畅，做工比预期更结实。", "包装整洁，颜色与图片一致，性价比不错。", "日常使用很方便，配送也较快。"],
-    "neutral": ["功能符合描述，但做工比较普通。", "与价格基本相符，配送速度一般。"],
-    "negative": ["商品存在质量或使用体验问题。", "收到的商品或配送服务未达到预期。", "问题处理速度较慢，希望改进。"],
+NEGATIVE_ZH = {
+    "product_quality": "商品刚开始可以使用，但整体做工显得不够牢固。",
+    "packaging": "商品仍能使用，但收到时外包装已经被压坏。",
+    "logistics": "商品本身尚可，但实际送达时间比承诺时间晚了很多。",
+    "wrong_item": "收到的款式与下单时选择的款式不一致。",
+    "size": "实际尺寸比商品页面标注的尺寸更小。",
+    "battery": "电池续航时间明显短于预期。",
+    "material": "实物材质比商品页面展示的看起来更薄。",
+    "customer_service": "问题并不复杂，但等待明确回复所花的时间太长。",
+}
+
+REVIEW_CONTEXT = {
+    "English": 'I bought "{title}", {variation_name}: {variation_value}.',
+    "Malay": 'Saya membeli "{title}", {variation_name}: {variation_value}.',
+    "Indonesian": 'Saya membeli "{title}", {variation_name}: {variation_value}.',
+    "Thai": 'ฉันซื้อ "{title}" รุ่น {variation_name}: {variation_value}',
+    "Vietnamese": 'Tôi đã mua "{title}", {variation_name}: {variation_value}.',
+    "Filipino": 'Binili ko ang "{title}", {variation_name}: {variation_value}.',
+}
+
+REVIEW_USAGE_CONTEXTS = {
+    "English": [
+        "",
+        " I tested it for several days before writing this review.",
+        " This is based on regular daily use.",
+        " I checked the received item against the product listing.",
+    ],
+    "Malay": [
+        "",
+        " Saya mengujinya selama beberapa hari sebelum menulis ulasan ini.",
+        " Ulasan ini berdasarkan penggunaan harian biasa.",
+        " Saya membandingkan barang yang diterima dengan halaman produk.",
+    ],
+    "Indonesian": [
+        "",
+        " Saya mencobanya selama beberapa hari sebelum menulis ulasan ini.",
+        " Ulasan ini berdasarkan pemakaian sehari-hari.",
+        " Saya membandingkan barang yang diterima dengan halaman produk.",
+    ],
+    "Thai": [
+        "",
+        " ฉันทดลองใช้หลายวันก่อนเขียนรีวิวนี้",
+        " รีวิวนี้มาจากการใช้งานประจำวัน",
+        " ฉันตรวจสอบสินค้าที่ได้รับเทียบกับหน้ารายการสินค้า",
+    ],
+    "Vietnamese": [
+        "",
+        " Tôi đã dùng thử vài ngày trước khi viết đánh giá này.",
+        " Đánh giá này dựa trên quá trình sử dụng hằng ngày.",
+        " Tôi đã đối chiếu sản phẩm nhận được với trang sản phẩm.",
+    ],
+    "Filipino": [
+        "",
+        " Sinubukan ko ito nang ilang araw bago isinulat ang review na ito.",
+        " Batay ang review na ito sa regular na araw-araw na paggamit.",
+        " Inihambing ko ang natanggap na item sa product listing.",
+    ],
+}
+
+REVIEW_USAGE_CONTEXTS_ZH = [
+    "",
+    "我试用了几天后才写下这条评价。",
+    "这条评价基于日常实际使用体验。",
+    "我将收到的商品与商品页面进行了核对。",
+]
+
+VARIATION_NAME_ZH = {
+    "Battery": "电池容量",
+    "Capacity": "容量",
+    "Color": "颜色",
+    "Length": "长度",
+    "Pack": "包装数量",
+    "Plug": "插头规格",
+    "Ports": "接口",
+    "Size": "尺寸",
+    "Style": "款式",
+}
+
+CATEGORY_NEGATIVE_ISSUES = {
+    "Consumer Electronics": ["product_quality", "battery", "material", "packaging", "logistics", "wrong_item"],
+    "Home & Living": ["product_quality", "material", "size", "packaging", "logistics", "wrong_item"],
+    "Beauty & Personal Care": ["product_quality", "material", "packaging", "logistics", "wrong_item", "customer_service"],
+    "Fashion Accessories": ["size", "material", "product_quality", "wrong_item", "packaging", "logistics"],
+    "Sports & Outdoors": ["size", "material", "product_quality", "packaging", "logistics", "wrong_item"],
+    "Pet Supplies": ["size", "material", "product_quality", "packaging", "logistics", "wrong_item"],
+    "Kitchen Appliances": ["product_quality", "material", "size", "packaging", "logistics", "wrong_item"],
+    "Baby Products": ["material", "product_quality", "size", "packaging", "logistics", "wrong_item"],
+}
+
+RATING_PROFILES = {
+    "excellent": [(5, 66), (4, 22), (3, 6), (2, 4), (1, 2)],
+    "strong": [(5, 46), (4, 31), (3, 12), (2, 7), (1, 4)],
+    "mixed": [(5, 27), (4, 27), (3, 19), (2, 16), (1, 11)],
+    "weak": [(5, 13), (4, 19), (3, 21), (2, 27), (1, 20)],
 }
 
 
@@ -390,14 +493,24 @@ def generate_orders(
         ("refund_requested", 4),
         ("refunded", 5),
     ]
+    skus_by_product: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for sku in skus:
+        skus_by_product[sku["product_id"]].append(sku)
+
     for index in range(1, 501):
         order_id = f"ORD{index:06d}"
-        site = RNG.choice(list(SITES))
+        coverage_product = products[index - 1] if index <= len(products) else None
+        site = coverage_product["site"] if coverage_product else RNG.choice(list(SITES))
         currency = SITES[site]["currency"]
         created = BASE_TIME - timedelta(days=RNG.randint(2, 180), minutes=RNG.randint(0, 1439))
-        status = choose_weighted(statuses)
+        status = RNG.choice(["delivered", "completed"]) if coverage_product else choose_weighted(statuses)
         item_count = RNG.randint(1, 4)
-        selected = RNG.sample(skus_by_site[site], k=item_count)
+        if coverage_product:
+            required_sku = RNG.choice(skus_by_product[coverage_product["product_id"]])
+            optional_skus = [sku for sku in skus_by_site[site] if sku["sku_id"] != required_sku["sku_id"]]
+            selected = [required_sku, *RNG.sample(optional_skus, k=item_count - 1)]
+        else:
+            selected = RNG.sample(skus_by_site[site], k=item_count)
         subtotal_value = Decimal("0.00")
         for sku in selected:
             quantity = choose_weighted([(1, 74), (2, 20), (3, 6)])
@@ -464,54 +577,115 @@ def generate_reviews(
     order_items: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     product_map = {row["product_id"]: row for row in products}
+    sku_map = {row["sku_id"]: row for row in skus}
     order_map = {row["order_id"]: row for row in orders}
-    eligible = [
-        item
-        for item in order_items
-        if order_map[item["order_id"]]["order_status"] in {"delivered", "completed", "refund_requested", "refunded"}
-    ]
+    eligible_by_product: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for item in order_items:
+        if order_map[item["order_id"]]["order_status"] in {"delivered", "completed", "refund_requested", "refunded"}:
+            eligible_by_product[item["product_id"]].append(item)
+
+    missing_products = [product_id for product_id in product_map if not eligible_by_product[product_id]]
+    if missing_products:
+        raise ValueError(f"Products lack completed-order review sources: {missing_products}")
+
+    # Every product gets a small review baseline. Remaining reviews follow a
+    # long-tail popularity profile so counts are intentionally non-uniform.
+    review_counts = {product_id: 4 for product_id in product_map}
+    popularity = {product_id: RNG.lognormvariate(0.0, 0.85) for product_id in product_map}
+    product_ids = list(product_map)
+    for product_id in RNG.choices(
+        product_ids,
+        weights=[popularity[product_id] for product_id in product_ids],
+        k=1000 - sum(review_counts.values()),
+    ):
+        review_counts[product_id] += 1
+
+    # A stable product-level quality profile creates realistic differences
+    # between products instead of applying one global average distribution.
+    profile_names = list(RATING_PROFILES)
+    profile_weights = [14, 38, 32, 16]
+    product_profiles = {
+        product_id: choose_weighted(list(zip(profile_names, profile_weights)))
+        for product_id in product_ids
+    }
+
     reviews: list[dict[str, Any]] = []
-    issues = list(NEGATIVE)
-    for index in range(1, 1001):
-        item = RNG.choice(eligible)
-        order = order_map[item["order_id"]]
-        product = product_map[item["product_id"]]
+    for product_id in product_ids:
+        product = product_map[product_id]
         language = SITES[product["site"]]["language"]
-        rating = choose_weighted([(5, 55), (4, 24), (3, 10), (2, 7), (1, 4)])
-        if rating >= 4:
-            sentiment = "positive"
-            issue = "none"
-            content = RNG.choice(POSITIVE[language])
-        elif rating == 3:
-            sentiment = "neutral"
-            issue = choose_weighted([("none", 65), ("packaging", 15), ("logistics", 20)])
-            content = RNG.choice(NEUTRAL[language])
-        else:
-            sentiment = "negative"
-            issue = RNG.choice(issues)
-            content = NEGATIVE[issue][language]
-        # Add light, meaningful variation without turning text into opaque noise.
-        suffix = RNG.choice(["", " Overall experience noted.", " This was after several days of use.", " I hope the next batch improves."])
-        if language == "English":
-            content += suffix
-        created = datetime.fromisoformat(order["completed_at"]) + timedelta(days=RNG.randint(0, 21), hours=RNG.randint(0, 23))
-        reviews.append(
-            {
-                "review_id": f"REV{index:06d}",
-                "product_id": item["product_id"],
-                "sku_id": item["sku_id"],
-                "order_id": item["order_id"],
-                "buyer_id": order["buyer_id"],
-                "rating": rating,
-                "content": content,
-                "content_zh": RNG.choice(ZH[sentiment]),
-                "language": language,
-                "sentiment_hint": sentiment,
-                "issue_type": issue,
-                "created_at": iso(created),
-                "is_mock_data": MOCK,
-            }
-        )
+        count = review_counts[product_id]
+        profile = product_profiles[product_id]
+
+        # Explicitly include both positive and negative experience for every
+        # product, then sample the remaining ratings from its own profile.
+        ratings = [
+            RNG.choice([4, 5]),
+            RNG.choice([1, 2]),
+            3,
+            *[choose_weighted(RATING_PROFILES[profile]) for _ in range(count - 3)],
+        ]
+        RNG.shuffle(ratings)
+
+        for rating in ratings:
+            item = RNG.choice(eligible_by_product[product_id])
+            order = order_map[item["order_id"]]
+            sku = sku_map[item["sku_id"]]
+            context = REVIEW_CONTEXT[language].format(
+                title=product["title"],
+                variation_name=sku["variation_name"],
+                variation_value=sku["variation_value"],
+            )
+            context_zh = (
+                f'我购买的是“{product["title"]}”，'
+                f'{VARIATION_NAME_ZH.get(sku["variation_name"], sku["variation_name"])}'
+                f'为“{sku["variation_value"]}”。'
+            )
+            usage_index = RNG.randrange(len(REVIEW_USAGE_CONTEXTS_ZH))
+            usage = REVIEW_USAGE_CONTEXTS[language][usage_index]
+            usage_zh = REVIEW_USAGE_CONTEXTS_ZH[usage_index]
+
+            if rating >= 4:
+                sentiment = "positive"
+                issue = "none"
+                template_index = RNG.randrange(len(POSITIVE[language]))
+                experience = POSITIVE[language][template_index]
+                experience_zh = POSITIVE_ZH[template_index]
+            elif rating == 3:
+                sentiment = "neutral"
+                issue = "none"
+                template_index = RNG.randrange(len(NEUTRAL[language]))
+                experience = NEUTRAL[language][template_index]
+                experience_zh = NEUTRAL_ZH[template_index]
+            else:
+                sentiment = "negative"
+                issue = RNG.choice(CATEGORY_NEGATIVE_ISSUES[product["category_name"]])
+                experience = NEGATIVE[issue][language]
+                experience_zh = NEGATIVE_ZH[issue]
+
+            created = datetime.fromisoformat(order["completed_at"]) + timedelta(
+                days=RNG.randint(0, 21),
+                hours=RNG.randint(0, 23),
+            )
+            reviews.append(
+                {
+                    "review_id": f"REV{len(reviews) + 1:06d}",
+                    "product_id": product_id,
+                    "sku_id": item["sku_id"],
+                    "order_id": item["order_id"],
+                    "buyer_id": order["buyer_id"],
+                    "rating": rating,
+                    "content": f"{context} {experience}{usage}",
+                    "content_zh": f"{context_zh}{experience_zh}{usage_zh}",
+                    "language": language,
+                    "sentiment_hint": sentiment,
+                    "issue_type": issue,
+                    "created_at": iso(created),
+                    "is_mock_data": MOCK,
+                }
+            )
+    RNG.shuffle(reviews)
+    for index, review in enumerate(reviews, 1):
+        review["review_id"] = f"REV{index:06d}"
     return reviews
 
 

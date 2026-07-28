@@ -1,51 +1,51 @@
 ﻿return_id,order_id,order_item_id,buyer_id,request_type,reason_type,reason_description,amount,status,requested_at,completed_at,is_mock_data
-RET00001,ORD000022,OI0000050,BUY00173,return_and_refund,wrong_item,Simulated after-sales case: wrong item.,142.78,requested,2026-02-18T21:44:00+08:00,,true
-RET00002,ORD000027,OI0000063,BUY00085,refund_only,quality_issue,Simulated after-sales case: quality issue.,710440.75,requested,2026-05-15T10:39:00+08:00,,true
-RET00003,ORD000028,OI0000065,BUY00152,refund_only,size_issue,Simulated after-sales case: size issue.,286105.43,approved,2026-06-25T20:13:00+08:00,,true
-RET00004,ORD000034,OI0000082,BUY00228,return_and_refund,wrong_item,Simulated after-sales case: wrong item.,1577.56,requested,2026-06-17T20:48:00+08:00,,true
-RET00005,ORD000036,OI0000085,BUY00047,refund_only,quality_issue,Simulated after-sales case: quality issue.,2431.85,requested,2026-05-23T18:33:00+08:00,,true
-RET00006,ORD000067,OI0000158,BUY00110,return_and_refund,not_as_described,Simulated after-sales case: not as described.,602350.34,approved,2026-01-28T07:00:00+08:00,,true
-RET00007,ORD000077,OI0000183,BUY00039,refund_only,quality_issue,Simulated after-sales case: quality issue.,977316.40,requested,2026-04-01T22:39:00+08:00,,true
-RET00008,ORD000083,OI0000199,BUY00292,return_and_refund,late_delivery,Simulated after-sales case: late delivery.,223.70,completed,2026-03-17T19:34:00+08:00,2026-03-20T19:34:00+08:00,true
-RET00009,ORD000106,OI0000255,BUY00104,return_and_refund,wrong_item,Simulated after-sales case: wrong item.,2198.83,approved,2026-04-20T15:33:00+08:00,,true
-RET00010,ORD000113,OI0000267,BUY00176,return_and_refund,wrong_item,Simulated after-sales case: wrong item.,30.26,completed,2026-04-13T12:44:00+08:00,2026-04-14T12:44:00+08:00,true
-RET00011,ORD000132,OI0000317,BUY00262,refund_only,damaged,Simulated after-sales case: damaged.,1319.30,completed,2026-02-09T01:27:00+08:00,2026-02-14T01:27:00+08:00,true
-RET00012,ORD000146,OI0000345,BUY00043,return_and_refund,not_as_described,Simulated after-sales case: not as described.,157.02,requested,2026-02-21T14:21:00+08:00,,true
-RET00013,ORD000193,OI0000452,BUY00201,refund_only,damaged,Simulated after-sales case: damaged.,1334.41,completed,2026-05-23T09:00:00+08:00,2026-05-27T09:00:00+08:00,true
-RET00014,ORD000205,OI0000482,BUY00202,refund_only,not_as_described,Simulated after-sales case: not as described.,171.24,completed,2026-02-20T05:09:00+08:00,2026-02-25T05:09:00+08:00,true
-RET00015,ORD000210,OI0000493,BUY00149,refund_only,late_delivery,Simulated after-sales case: late delivery.,144.86,rejected,2026-02-12T13:42:00+08:00,,true
-RET00016,ORD000222,OI0000522,BUY00293,return_and_refund,wrong_item,Simulated after-sales case: wrong item.,1297161.78,requested,2026-01-30T00:22:00+08:00,,true
-RET00017,ORD000255,OI0000617,BUY00141,refund_only,quality_issue,Simulated after-sales case: quality issue.,77.38,approved,2026-05-01T11:16:00+08:00,,true
-RET00018,ORD000270,OI0000656,BUY00287,refund_only,late_delivery,Simulated after-sales case: late delivery.,23.77,requested,2026-04-13T04:06:00+08:00,,true
-RET00019,ORD000271,OI0000659,BUY00224,return_and_refund,size_issue,Simulated after-sales case: size issue.,12.19,approved,2026-06-12T16:09:00+08:00,,true
-RET00020,ORD000284,OI0000696,BUY00091,return_and_refund,damaged,Simulated after-sales case: damaged.,152.52,completed,2026-01-28T10:55:00+08:00,2026-01-30T10:55:00+08:00,true
-RET00021,ORD000299,OI0000721,BUY00103,refund_only,not_as_described,Simulated after-sales case: not as described.,28.06,rejected,2026-06-27T15:41:00+08:00,,true
-RET00022,ORD000322,OI0000788,BUY00098,return_and_refund,size_issue,Simulated after-sales case: size issue.,57.51,requested,2026-03-03T09:55:00+08:00,,true
-RET00023,ORD000327,OI0000799,BUY00159,return_and_refund,damaged,Simulated after-sales case: damaged.,1297161.78,approved,2026-03-11T22:53:00+08:00,,true
-RET00024,ORD000328,OI0000803,BUY00283,return_and_refund,wrong_item,Simulated after-sales case: wrong item.,2980.82,requested,2026-03-22T07:07:00+08:00,,true
-RET00025,ORD000331,OI0000810,BUY00145,return_and_refund,changed_mind,Simulated after-sales case: changed mind.,394415.03,completed,2026-05-21T07:57:00+08:00,2026-05-24T07:57:00+08:00,true
-RET00026,ORD000346,OI0000845,BUY00234,return_and_refund,size_issue,Simulated after-sales case: size issue.,285.40,requested,2026-04-23T13:45:00+08:00,,true
-RET00027,ORD000372,OI0000911,BUY00210,return_and_refund,damaged,Simulated after-sales case: damaged.,3491.76,requested,2026-05-09T01:52:00+08:00,,true
-RET00028,ORD000373,OI0000913,BUY00037,refund_only,late_delivery,Simulated after-sales case: late delivery.,17.69,completed,2026-03-13T01:31:00+08:00,2026-03-18T01:31:00+08:00,true
-RET00029,ORD000397,OI0000971,BUY00046,return_and_refund,size_issue,Simulated after-sales case: size issue.,1418084.03,completed,2026-03-02T07:35:00+08:00,2026-03-07T07:35:00+08:00,true
-RET00030,ORD000400,OI0000978,BUY00123,return_and_refund,late_delivery,Simulated after-sales case: late delivery.,81.42,requested,2026-02-01T21:30:00+08:00,,true
-RET00031,ORD000408,OI0000998,BUY00260,refund_only,changed_mind,Simulated after-sales case: changed mind.,800.56,requested,2026-01-29T15:01:00+08:00,,true
-RET00032,ORD000409,OI0001001,BUY00178,return_and_refund,size_issue,Simulated after-sales case: size issue.,538964.89,completed,2026-05-20T00:44:00+08:00,2026-05-24T00:44:00+08:00,true
-RET00033,ORD000424,OI0001039,BUY00178,return_and_refund,not_as_described,Simulated after-sales case: not as described.,3491.76,completed,2026-03-30T23:03:00+08:00,2026-03-31T23:03:00+08:00,true
-RET00034,ORD000443,OI0001094,BUY00113,return_and_refund,size_issue,Simulated after-sales case: size issue.,449713.81,rejected,2026-06-08T00:50:00+08:00,,true
-RET00035,ORD000460,OI0001133,BUY00205,refund_only,damaged,Simulated after-sales case: damaged.,403241.11,approved,2026-01-24T09:37:00+08:00,,true
-RET00036,ORD000485,OI0001192,BUY00247,return_and_refund,not_as_described,Simulated after-sales case: not as described.,200447.96,approved,2026-05-07T13:14:00+08:00,,true
-RET00037,ORD000006,OI0000017,BUY00020,return_and_refund,quality_issue,Simulated after-sales case: quality issue.,3733237.26,rejected,2026-05-10T16:34:00+08:00,,true
-RET00038,ORD000282,OI0000688,BUY00161,return_and_refund,damaged,Simulated after-sales case: damaged.,3952168.68,completed,2026-06-23T13:44:00+08:00,2026-06-24T13:44:00+08:00,true
-RET00039,ORD000119,OI0000287,BUY00100,return_and_refund,damaged,Simulated after-sales case: damaged.,100074.70,completed,2026-06-18T21:03:00+08:00,2026-06-21T21:03:00+08:00,true
-RET00040,ORD000082,OI0000196,BUY00209,refund_only,damaged,Simulated after-sales case: damaged.,171.79,completed,2026-04-05T13:56:00+08:00,2026-04-10T13:56:00+08:00,true
-RET00041,ORD000171,OI0000402,BUY00187,refund_only,not_as_described,Simulated after-sales case: not as described.,371.65,approved,2026-04-15T21:45:00+08:00,,true
-RET00042,ORD000005,OI0000016,BUY00110,refund_only,not_as_described,Simulated after-sales case: not as described.,79.54,completed,2026-02-02T06:57:00+08:00,2026-02-08T06:57:00+08:00,true
-RET00043,ORD000191,OI0000446,BUY00234,refund_only,damaged,Simulated after-sales case: damaged.,962.00,completed,2026-07-05T14:32:00+08:00,2026-07-09T14:32:00+08:00,true
-RET00044,ORD000329,OI0000804,BUY00288,refund_only,quality_issue,Simulated after-sales case: quality issue.,41.72,approved,2026-06-01T13:39:00+08:00,,true
-RET00045,ORD000160,OI0000377,BUY00055,return_and_refund,damaged,Simulated after-sales case: damaged.,3468113.56,approved,2026-03-25T20:45:00+08:00,,true
-RET00046,ORD000102,OI0000248,BUY00135,refund_only,size_issue,Simulated after-sales case: size issue.,1420881.50,approved,2026-05-25T11:21:00+08:00,,true
-RET00047,ORD000359,OI0000878,BUY00186,return_and_refund,not_as_described,Simulated after-sales case: not as described.,3067.94,completed,2026-04-12T15:29:00+08:00,2026-04-13T15:29:00+08:00,true
-RET00048,ORD000433,OI0001066,BUY00228,return_and_refund,not_as_described,Simulated after-sales case: not as described.,441.55,completed,2026-02-06T18:54:00+08:00,2026-02-12T18:54:00+08:00,true
-RET00049,ORD000157,OI0000372,BUY00261,refund_only,late_delivery,Simulated after-sales case: late delivery.,908265.11,completed,2026-04-30T17:30:00+08:00,2026-05-06T17:30:00+08:00,true
-RET00050,ORD000315,OI0000767,BUY00275,return_and_refund,wrong_item,Simulated after-sales case: wrong item.,385998.04,rejected,2026-05-05T08:07:00+08:00,,true
+RET00001,ORD000109,OI0000270,BUY00104,return_and_refund,changed_mind,Simulated after-sales case: changed mind.,2198.83,completed,2026-04-23T15:33:00+08:00,2026-04-26T15:33:00+08:00,true
+RET00002,ORD000116,OI0000281,BUY00176,refund_only,changed_mind,Simulated after-sales case: changed mind.,91.66,approved,2026-04-06T12:44:00+08:00,,true
+RET00003,ORD000135,OI0000332,BUY00262,refund_only,damaged,Simulated after-sales case: damaged.,1319.30,rejected,2026-02-10T01:27:00+08:00,,true
+RET00004,ORD000149,OI0000361,BUY00043,refund_only,changed_mind,Simulated after-sales case: changed mind.,25.73,requested,2026-03-05T14:21:00+08:00,,true
+RET00005,ORD000196,OI0000467,BUY00201,return_and_refund,quality_issue,Simulated after-sales case: quality issue.,2224.01,approved,2026-05-25T09:00:00+08:00,,true
+RET00006,ORD000208,OI0000497,BUY00202,return_and_refund,changed_mind,Simulated after-sales case: changed mind.,285.40,approved,2026-02-15T05:09:00+08:00,,true
+RET00007,ORD000213,OI0000506,BUY00149,refund_only,damaged,Simulated after-sales case: damaged.,237.58,completed,2026-02-14T13:42:00+08:00,2026-02-17T13:42:00+08:00,true
+RET00008,ORD000225,OI0000538,BUY00293,refund_only,size_issue,Simulated after-sales case: size issue.,1862841.35,requested,2026-02-02T00:22:00+08:00,,true
+RET00009,ORD000258,OI0000631,BUY00141,return_and_refund,wrong_item,Simulated after-sales case: wrong item.,76.48,completed,2026-05-08T11:16:00+08:00,2026-05-11T11:16:00+08:00,true
+RET00010,ORD000273,OI0000670,BUY00287,return_and_refund,size_issue,Simulated after-sales case: size issue.,10.35,requested,2026-04-15T04:06:00+08:00,,true
+RET00011,ORD000274,OI0000673,BUY00224,refund_only,quality_issue,Simulated after-sales case: quality issue.,56.42,completed,2026-06-12T16:09:00+08:00,2026-06-15T16:09:00+08:00,true
+RET00012,ORD000287,OI0000709,BUY00091,return_and_refund,late_delivery,Simulated after-sales case: late delivery.,20.70,completed,2026-01-31T10:55:00+08:00,2026-02-01T10:55:00+08:00,true
+RET00013,ORD000302,OI0000736,BUY00103,return_and_refund,quality_issue,Simulated after-sales case: quality issue.,46.76,approved,2026-07-01T15:41:00+08:00,,true
+RET00014,ORD000325,OI0000805,BUY00098,refund_only,not_as_described,Simulated after-sales case: not as described.,40.55,requested,2026-03-12T09:55:00+08:00,,true
+RET00015,ORD000330,OI0000816,BUY00159,return_and_refund,changed_mind,Simulated after-sales case: changed mind.,3057291.44,completed,2026-03-11T22:53:00+08:00,2026-03-14T22:53:00+08:00,true
+RET00016,ORD000331,OI0000818,BUY00283,refund_only,damaged,Simulated after-sales case: damaged.,1788.49,requested,2026-04-02T07:07:00+08:00,,true
+RET00017,ORD000334,OI0000825,BUY00145,return_and_refund,damaged,Simulated after-sales case: damaged.,394415.03,completed,2026-05-29T07:57:00+08:00,2026-06-03T07:57:00+08:00,true
+RET00018,ORD000349,OI0000858,BUY00234,refund_only,damaged,Simulated after-sales case: damaged.,171.79,requested,2026-04-24T13:45:00+08:00,,true
+RET00019,ORD000375,OI0000925,BUY00210,return_and_refund,wrong_item,Simulated after-sales case: wrong item.,3363.81,requested,2026-05-03T01:52:00+08:00,,true
+RET00020,ORD000376,OI0000927,BUY00037,return_and_refund,late_delivery,Simulated after-sales case: late delivery.,75.42,rejected,2026-03-10T01:31:00+08:00,,true
+RET00021,ORD000400,OI0000986,BUY00046,refund_only,not_as_described,Simulated after-sales case: not as described.,850850.42,completed,2026-03-08T07:35:00+08:00,2026-03-15T07:35:00+08:00,true
+RET00022,ORD000403,OI0000994,BUY00123,return_and_refund,size_issue,Simulated after-sales case: size issue.,209.88,requested,2026-01-24T21:30:00+08:00,,true
+RET00023,ORD000411,OI0001011,BUY00260,return_and_refund,damaged,Simulated after-sales case: damaged.,1970.02,requested,2026-01-24T15:01:00+08:00,,true
+RET00024,ORD000412,OI0001016,BUY00178,return_and_refund,quality_issue,Simulated after-sales case: quality issue.,538964.89,completed,2026-05-21T00:44:00+08:00,2026-05-23T00:44:00+08:00,true
+RET00025,ORD000427,OI0001052,BUY00178,return_and_refund,size_issue,Simulated after-sales case: size issue.,9203.82,completed,2026-04-03T23:03:00+08:00,2026-04-04T23:03:00+08:00,true
+RET00026,ORD000446,OI0001109,BUY00113,return_and_refund,quality_issue,Simulated after-sales case: quality issue.,449713.81,completed,2026-06-04T00:50:00+08:00,2026-06-06T00:50:00+08:00,true
+RET00027,ORD000463,OI0001148,BUY00205,return_and_refund,damaged,Simulated after-sales case: damaged.,672068.51,completed,2026-01-24T09:37:00+08:00,2026-01-29T09:37:00+08:00,true
+RET00028,ORD000488,OI0001209,BUY00247,return_and_refund,size_issue,Simulated after-sales case: size issue.,385998.04,rejected,2026-05-15T13:14:00+08:00,,true
+RET00029,ORD000401,OI0000989,BUY00262,return_and_refund,late_delivery,Simulated after-sales case: late delivery.,1621774.14,completed,2026-04-04T17:13:00+08:00,2026-04-11T17:13:00+08:00,true
+RET00030,ORD000475,OI0001174,BUY00274,refund_only,size_issue,Simulated after-sales case: size issue.,200.99,completed,2026-04-12T21:33:00+08:00,2026-04-19T21:33:00+08:00,true
+RET00031,ORD000021,OI0000050,BUY00051,return_and_refund,size_issue,Simulated after-sales case: size issue.,2743.06,completed,2026-06-07T00:01:00+08:00,2026-06-14T00:01:00+08:00,true
+RET00032,ORD000082,OI0000210,BUY00008,return_and_refund,wrong_item,Simulated after-sales case: wrong item.,1647.91,completed,2026-01-20T01:40:00+08:00,2026-01-25T01:40:00+08:00,true
+RET00033,ORD000220,OI0000526,BUY00041,return_and_refund,not_as_described,Simulated after-sales case: not as described.,1528645.72,rejected,2026-05-31T13:55:00+08:00,,true
+RET00034,ORD000017,OI0000040,BUY00121,return_and_refund,quality_issue,Simulated after-sales case: quality issue.,3891485.34,completed,2026-07-01T14:09:00+08:00,2026-07-05T14:09:00+08:00,true
+RET00035,ORD000492,OI0001217,BUY00227,refund_only,quality_issue,Simulated after-sales case: quality issue.,902668.23,approved,2026-03-13T06:34:00+08:00,,true
+RET00036,ORD000283,OI0000698,BUY00006,return_and_refund,late_delivery,Simulated after-sales case: late delivery.,75.42,completed,2026-06-13T04:37:00+08:00,2026-06-17T04:37:00+08:00,true
+RET00037,ORD000346,OI0000855,BUY00010,refund_only,quality_issue,Simulated after-sales case: quality issue.,1813.24,completed,2026-05-19T06:26:00+08:00,2026-05-22T06:26:00+08:00,true
+RET00038,ORD000327,OI0000808,BUY00085,refund_only,quality_issue,Simulated after-sales case: quality issue.,264.46,rejected,2026-04-06T02:17:00+08:00,,true
+RET00039,ORD000067,OI0000177,BUY00217,refund_only,size_issue,Simulated after-sales case: size issue.,56.42,approved,2026-05-05T12:00:00+08:00,,true
+RET00040,ORD000062,OI0000162,BUY00156,return_and_refund,late_delivery,Simulated after-sales case: late delivery.,280.14,completed,2026-01-19T10:23:00+08:00,2026-01-21T10:23:00+08:00,true
+RET00041,ORD000395,OI0000977,BUY00263,refund_only,wrong_item,Simulated after-sales case: wrong item.,1112093.66,completed,2026-04-24T15:37:00+08:00,2026-04-26T15:37:00+08:00,true
+RET00042,ORD000482,OI0001192,BUY00089,return_and_refund,size_issue,Simulated after-sales case: size issue.,62.78,approved,2026-06-08T08:54:00+08:00,,true
+RET00043,ORD000136,OI0000335,BUY00132,return_and_refund,late_delivery,Simulated after-sales case: late delivery.,732.18,completed,2026-04-21T01:26:00+08:00,2026-04-25T01:26:00+08:00,true
+RET00044,ORD000240,OI0000580,BUY00251,return_and_refund,changed_mind,Simulated after-sales case: changed mind.,69.96,completed,2026-05-28T15:58:00+08:00,2026-06-02T15:58:00+08:00,true
+RET00045,ORD000218,OI0000519,BUY00263,return_and_refund,size_issue,Simulated after-sales case: size issue.,496519.20,completed,2026-06-21T15:54:00+08:00,2026-06-25T15:54:00+08:00,true
+RET00046,ORD000476,OI0001175,BUY00218,refund_only,quality_issue,Simulated after-sales case: quality issue.,45.76,completed,2026-05-03T21:43:00+08:00,2026-05-04T21:43:00+08:00,true
+RET00047,ORD000406,OI0001004,BUY00311,refund_only,quality_issue,Simulated after-sales case: quality issue.,762309.80,rejected,2026-03-05T13:09:00+08:00,,true
+RET00048,ORD000380,OI0000940,BUY00120,return_and_refund,late_delivery,Simulated after-sales case: late delivery.,290.47,approved,2026-05-14T20:59:00+08:00,,true
+RET00049,ORD000286,OI0000707,BUY00307,return_and_refund,damaged,Simulated after-sales case: damaged.,29.49,approved,2026-05-15T13:57:00+08:00,,true
+RET00050,ORD000140,OI0000345,BUY00107,refund_only,damaged,Simulated after-sales case: damaged.,2368.00,rejected,2026-03-19T12:11:00+08:00,,true

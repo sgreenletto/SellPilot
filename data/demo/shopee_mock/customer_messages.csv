@@ -1,597 +1,585 @@
 ﻿message_id,session_id,sender_type,content,language,message_time,is_mock_data
-MSG0000001,SES00001,buyer,[Bahasa Melayu] Which size or variation should I choose?,Malay,2026-06-05T05:31:00+08:00,true
-MSG0000002,SES00001,assistant,[Bahasa Melayu] Please compare your measurements with the listed variation details before choosing.,Malay,2026-06-05T05:34:00+08:00,true
-MSG0000003,SES00001,buyer,[Bahasa Melayu] Which size or variation should I choose? Please confirm using the linked record.,Malay,2026-06-05T05:37:00+08:00,true
-MSG0000004,SES00001,assistant,[Bahasa Melayu] Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,Malay,2026-06-05T05:40:00+08:00,true
-MSG0000005,SES00001,buyer,Thank you. Please save this conversation.,Malay,2026-06-05T05:43:00+08:00,true
-MSG0000006,SES00001,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-06-05T05:46:00+08:00,true
-MSG0000007,SES00001,buyer,"If the status changes, should I contact support again?",Malay,2026-06-05T05:49:00+08:00,true
-MSG0000008,SES00001,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Malay,2026-06-05T05:52:00+08:00,true
-MSG0000009,SES00002,buyer,[Bahasa Melayu] The item did not meet expectations. How can this be resolved?,Malay,2026-03-30T06:32:00+08:00,true
-MSG0000010,SES00002,assistant,[Bahasa Melayu] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Malay,2026-03-30T06:35:00+08:00,true
-MSG0000011,SES00002,buyer,[Bahasa Melayu] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Malay,2026-03-30T06:38:00+08:00,true
-MSG0000012,SES00002,assistant,[Bahasa Melayu] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Malay,2026-03-30T06:41:00+08:00,true
-MSG0000013,SES00002,buyer,Thank you. Please save this conversation.,Malay,2026-03-30T06:44:00+08:00,true
-MSG0000014,SES00002,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-03-30T06:47:00+08:00,true
-MSG0000015,SES00003,buyer,The item did not meet expectations. How can this be resolved?,English,2026-02-02T12:26:00+08:00,true
-MSG0000016,SES00003,assistant,I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,English,2026-02-02T12:29:00+08:00,true
-MSG0000017,SES00003,buyer,The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,English,2026-02-02T12:32:00+08:00,true
-MSG0000018,SES00003,assistant,I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,English,2026-02-02T12:35:00+08:00,true
-MSG0000019,SES00004,buyer,[Bahasa Melayu] Which size or variation should I choose?,Malay,2026-06-14T00:41:00+08:00,true
-MSG0000020,SES00004,assistant,[Bahasa Melayu] Please compare your measurements with the listed variation details before choosing.,Malay,2026-06-14T00:44:00+08:00,true
-MSG0000021,SES00004,buyer,[Bahasa Melayu] Which size or variation should I choose? Please confirm using the linked record.,Malay,2026-06-14T00:47:00+08:00,true
-MSG0000022,SES00004,assistant,[Bahasa Melayu] Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,Malay,2026-06-14T00:50:00+08:00,true
-MSG0000023,SES00005,buyer,[Bahasa Indonesia] Can I cancel this order before shipment?,Indonesian,2026-06-07T02:09:00+08:00,true
-MSG0000024,SES00005,assistant,[Bahasa Indonesia] Cancellation depends on the current order status; shipped orders need manual review.,Indonesian,2026-06-07T02:12:00+08:00,true
-MSG0000025,SES00005,buyer,[Bahasa Indonesia] Can I cancel this order before shipment? Please confirm using the linked record.,Indonesian,2026-06-07T02:15:00+08:00,true
-MSG0000026,SES00005,assistant,[Bahasa Indonesia] Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,Indonesian,2026-06-07T02:18:00+08:00,true
-MSG0000027,SES00006,buyer,Is this item currently available?,English,2026-02-21T22:57:00+08:00,true
-MSG0000028,SES00006,assistant,I checked the simulated inventory and can confirm the current stock status.,English,2026-02-21T23:00:00+08:00,true
-MSG0000029,SES00006,buyer,Is this item currently available? Please confirm using the linked record.,English,2026-02-21T23:03:00+08:00,true
-MSG0000030,SES00006,assistant,I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,English,2026-02-21T23:06:00+08:00,true
-MSG0000031,SES00006,buyer,Thank you. Please save this conversation.,English,2026-02-21T23:09:00+08:00,true
-MSG0000032,SES00006,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-02-21T23:12:00+08:00,true
-MSG0000033,SES00006,buyer,"If the status changes, should I contact support again?",English,2026-02-21T23:15:00+08:00,true
-MSG0000034,SES00006,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,English,2026-02-21T23:18:00+08:00,true
-MSG0000035,SES00007,buyer,[Bahasa Melayu] Can you explain the main product features?,Malay,2026-02-11T21:05:00+08:00,true
-MSG0000036,SES00007,assistant,[Bahasa Melayu] I can help. The product details and selected variation are available in the mock catalog.,Malay,2026-02-11T21:08:00+08:00,true
-MSG0000037,SES00007,buyer,[Bahasa Melayu] Can you explain the main product features? Please confirm using the linked record.,Malay,2026-02-11T21:11:00+08:00,true
-MSG0000038,SES00007,assistant,[Bahasa Melayu] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Malay,2026-02-11T21:14:00+08:00,true
-MSG0000039,SES00008,buyer,[Bahasa Indonesia] The item did not meet expectations. How can this be resolved?,Indonesian,2026-03-20T23:15:00+08:00,true
-MSG0000040,SES00008,assistant,[Bahasa Indonesia] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Indonesian,2026-03-20T23:18:00+08:00,true
-MSG0000041,SES00008,buyer,[Bahasa Indonesia] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Indonesian,2026-03-20T23:21:00+08:00,true
-MSG0000042,SES00008,assistant,[Bahasa Indonesia] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Indonesian,2026-03-20T23:24:00+08:00,true
-MSG0000043,SES00008,buyer,Thank you. Please save this conversation.,Indonesian,2026-03-20T23:27:00+08:00,true
-MSG0000044,SES00008,assistant,The mock conversation has been saved for testing and demonstration.,Indonesian,2026-03-20T23:30:00+08:00,true
-MSG0000045,SES00009,buyer,[ภาษาไทย] Where is my parcel now?,Thai,2026-05-20T12:02:00+08:00,true
-MSG0000046,SES00009,assistant,[ภาษาไทย] I found the linked mock tracking record and its latest location.,Thai,2026-05-20T12:05:00+08:00,true
-MSG0000047,SES00009,buyer,[ภาษาไทย] Where is my parcel now? Please confirm using the linked record.,Thai,2026-05-20T12:08:00+08:00,true
-MSG0000048,SES00009,assistant,[ภาษาไทย] I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,Thai,2026-05-20T12:11:00+08:00,true
-MSG0000049,SES00010,buyer,[ภาษาไทย] I would like to request a refund. What information is needed?,Thai,2026-03-19T12:08:00+08:00,true
-MSG0000050,SES00010,assistant,"[ภาษาไทย] I can register the request, but approval and refund execution require a human review.",Thai,2026-03-19T12:11:00+08:00,true
-MSG0000051,SES00010,buyer,[ภาษาไทย] I would like to request a refund. What information is needed? Please confirm using the linked record.,Thai,2026-03-19T12:14:00+08:00,true
-MSG0000052,SES00010,assistant,"[ภาษาไทย] I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",Thai,2026-03-19T12:17:00+08:00,true
-MSG0000053,SES00010,buyer,Thank you. Please save this conversation.,Thai,2026-03-19T12:20:00+08:00,true
-MSG0000054,SES00010,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-03-19T12:23:00+08:00,true
-MSG0000055,SES00010,buyer,"If the status changes, should I contact support again?",Thai,2026-03-19T12:26:00+08:00,true
-MSG0000056,SES00010,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Thai,2026-03-19T12:29:00+08:00,true
-MSG0000057,SES00011,buyer,Please recommend a suitable option for everyday use.,English,2026-03-13T22:54:00+08:00,true
-MSG0000058,SES00011,assistant,"Based on the stated need, I can compare available mock products and stock.",English,2026-03-13T22:57:00+08:00,true
-MSG0000059,SES00011,buyer,Please recommend a suitable option for everyday use. Please confirm using the linked record.,English,2026-03-13T23:00:00+08:00,true
-MSG0000060,SES00011,assistant,"Based on the stated need, I can compare available mock products and stock. The response is based only on simulated experimental data.",English,2026-03-13T23:03:00+08:00,true
-MSG0000061,SES00011,buyer,Thank you. Please save this conversation.,English,2026-03-13T23:06:00+08:00,true
-MSG0000062,SES00011,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-03-13T23:09:00+08:00,true
-MSG0000063,SES00011,buyer,"If the status changes, should I contact support again?",English,2026-03-13T23:12:00+08:00,true
-MSG0000064,SES00011,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,English,2026-03-13T23:15:00+08:00,true
-MSG0000065,SES00012,buyer,[Tiếng Việt] The item did not meet expectations. How can this be resolved?,Vietnamese,2026-03-22T03:39:00+08:00,true
-MSG0000066,SES00012,assistant,[Tiếng Việt] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Vietnamese,2026-03-22T03:42:00+08:00,true
-MSG0000067,SES00012,buyer,[Tiếng Việt] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Vietnamese,2026-03-22T03:45:00+08:00,true
-MSG0000068,SES00012,assistant,[Tiếng Việt] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Vietnamese,2026-03-22T03:48:00+08:00,true
-MSG0000069,SES00012,buyer,Thank you. Please save this conversation.,Vietnamese,2026-03-22T03:51:00+08:00,true
-MSG0000070,SES00012,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-03-22T03:54:00+08:00,true
-MSG0000071,SES00013,buyer,[ภาษาไทย] What is the current status of my order?,Thai,2026-06-21T20:48:00+08:00,true
-MSG0000072,SES00013,assistant,[ภาษาไทย] I found the simulated order and will summarize its latest status.,Thai,2026-06-21T20:51:00+08:00,true
-MSG0000073,SES00013,buyer,[ภาษาไทย] What is the current status of my order? Please confirm using the linked record.,Thai,2026-06-21T20:54:00+08:00,true
-MSG0000074,SES00013,assistant,[ภาษาไทย] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Thai,2026-06-21T20:57:00+08:00,true
-MSG0000075,SES00013,buyer,Thank you. Please save this conversation.,Thai,2026-06-21T21:00:00+08:00,true
-MSG0000076,SES00013,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-06-21T21:03:00+08:00,true
-MSG0000077,SES00014,buyer,Please recommend a suitable option for everyday use.,English,2026-03-06T09:55:00+08:00,true
-MSG0000078,SES00014,assistant,"Based on the stated need, I can compare available mock products and stock.",English,2026-03-06T09:58:00+08:00,true
-MSG0000079,SES00014,buyer,Please recommend a suitable option for everyday use. Please confirm using the linked record.,English,2026-03-06T10:01:00+08:00,true
-MSG0000080,SES00014,assistant,"Based on the stated need, I can compare available mock products and stock. The response is based only on simulated experimental data.",English,2026-03-06T10:04:00+08:00,true
-MSG0000081,SES00015,buyer,[ภาษาไทย] Can I cancel this order before shipment?,Thai,2026-02-12T12:08:00+08:00,true
-MSG0000082,SES00015,assistant,[ภาษาไทย] Cancellation depends on the current order status; shipped orders need manual review.,Thai,2026-02-12T12:11:00+08:00,true
-MSG0000083,SES00015,buyer,[ภาษาไทย] Can I cancel this order before shipment? Please confirm using the linked record.,Thai,2026-02-12T12:14:00+08:00,true
-MSG0000084,SES00015,assistant,[ภาษาไทย] Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,Thai,2026-02-12T12:17:00+08:00,true
-MSG0000085,SES00015,buyer,Thank you. Please save this conversation.,Thai,2026-02-12T12:20:00+08:00,true
-MSG0000086,SES00015,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-02-12T12:23:00+08:00,true
-MSG0000087,SES00016,buyer,[ภาษาไทย] I would like to request a refund. What information is needed?,Thai,2026-01-18T19:45:00+08:00,true
-MSG0000088,SES00016,assistant,"[ภาษาไทย] I can register the request, but approval and refund execution require a human review.",Thai,2026-01-18T19:48:00+08:00,true
-MSG0000089,SES00016,buyer,[ภาษาไทย] I would like to request a refund. What information is needed? Please confirm using the linked record.,Thai,2026-01-18T19:51:00+08:00,true
-MSG0000090,SES00016,assistant,"[ภาษาไทย] I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",Thai,2026-01-18T19:54:00+08:00,true
-MSG0000091,SES00016,buyer,Thank you. Please save this conversation.,Thai,2026-01-18T19:57:00+08:00,true
-MSG0000092,SES00016,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-01-18T20:00:00+08:00,true
-MSG0000093,SES00016,buyer,"If the status changes, should I contact support again?",Thai,2026-01-18T20:03:00+08:00,true
-MSG0000094,SES00016,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Thai,2026-01-18T20:06:00+08:00,true
-MSG0000095,SES00017,buyer,Where is my parcel now?,English,2026-02-20T00:55:00+08:00,true
-MSG0000096,SES00017,assistant,I found the linked mock tracking record and its latest location.,English,2026-02-20T00:58:00+08:00,true
-MSG0000097,SES00017,buyer,Where is my parcel now? Please confirm using the linked record.,English,2026-02-20T01:01:00+08:00,true
-MSG0000098,SES00017,assistant,I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,English,2026-02-20T01:04:00+08:00,true
-MSG0000099,SES00017,buyer,Thank you. Please save this conversation.,English,2026-02-20T01:07:00+08:00,true
-MSG0000100,SES00017,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-02-20T01:10:00+08:00,true
-MSG0000101,SES00017,buyer,"If the status changes, should I contact support again?",English,2026-02-20T01:13:00+08:00,true
-MSG0000102,SES00017,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,English,2026-02-20T01:16:00+08:00,true
-MSG0000103,SES00018,buyer,[ภาษาไทย] The item did not meet expectations. How can this be resolved?,Thai,2026-05-17T01:46:00+08:00,true
-MSG0000104,SES00018,assistant,[ภาษาไทย] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Thai,2026-05-17T01:49:00+08:00,true
-MSG0000105,SES00018,buyer,[ภาษาไทย] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Thai,2026-05-17T01:52:00+08:00,true
-MSG0000106,SES00018,assistant,[ภาษาไทย] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Thai,2026-05-17T01:55:00+08:00,true
-MSG0000107,SES00019,buyer,The item did not meet expectations. How can this be resolved?,English,2026-03-02T12:03:00+08:00,true
-MSG0000108,SES00019,assistant,I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,English,2026-03-02T12:06:00+08:00,true
-MSG0000109,SES00019,buyer,The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,English,2026-03-02T12:09:00+08:00,true
-MSG0000110,SES00019,assistant,I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,English,2026-03-02T12:12:00+08:00,true
-MSG0000111,SES00020,buyer,Can you explain the main product features?,English,2026-05-12T12:36:00+08:00,true
-MSG0000112,SES00020,assistant,I can help. The product details and selected variation are available in the mock catalog.,English,2026-05-12T12:39:00+08:00,true
-MSG0000113,SES00020,buyer,Can you explain the main product features? Please confirm using the linked record.,English,2026-05-12T12:42:00+08:00,true
-MSG0000114,SES00020,assistant,I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,English,2026-05-12T12:45:00+08:00,true
-MSG0000115,SES00020,buyer,Thank you. Please save this conversation.,English,2026-05-12T12:48:00+08:00,true
-MSG0000116,SES00020,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-05-12T12:51:00+08:00,true
-MSG0000117,SES00021,buyer,[Tiếng Việt] What is the current status of my order?,Vietnamese,2026-02-27T14:18:00+08:00,true
-MSG0000118,SES00021,assistant,[Tiếng Việt] I found the simulated order and will summarize its latest status.,Vietnamese,2026-02-27T14:21:00+08:00,true
-MSG0000119,SES00021,buyer,[Tiếng Việt] What is the current status of my order? Please confirm using the linked record.,Vietnamese,2026-02-27T14:24:00+08:00,true
-MSG0000120,SES00021,assistant,[Tiếng Việt] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Vietnamese,2026-02-27T14:27:00+08:00,true
-MSG0000121,SES00021,buyer,Thank you. Please save this conversation.,Vietnamese,2026-02-27T14:30:00+08:00,true
-MSG0000122,SES00021,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-02-27T14:33:00+08:00,true
-MSG0000123,SES00021,buyer,"If the status changes, should I contact support again?",Vietnamese,2026-02-27T14:36:00+08:00,true
-MSG0000124,SES00021,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Vietnamese,2026-02-27T14:39:00+08:00,true
-MSG0000125,SES00022,buyer,Please recommend a suitable option for everyday use.,English,2026-01-24T09:57:00+08:00,true
-MSG0000126,SES00022,assistant,"Based on the stated need, I can compare available mock products and stock.",English,2026-01-24T10:00:00+08:00,true
-MSG0000127,SES00022,buyer,Please recommend a suitable option for everyday use. Please confirm using the linked record.,English,2026-01-24T10:03:00+08:00,true
-MSG0000128,SES00022,assistant,"Based on the stated need, I can compare available mock products and stock. The response is based only on simulated experimental data.",English,2026-01-24T10:06:00+08:00,true
-MSG0000129,SES00023,buyer,[Bahasa Indonesia] The item did not meet expectations. How can this be resolved?,Indonesian,2026-05-04T08:04:00+08:00,true
-MSG0000130,SES00023,assistant,[Bahasa Indonesia] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Indonesian,2026-05-04T08:07:00+08:00,true
-MSG0000131,SES00023,buyer,[Bahasa Indonesia] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Indonesian,2026-05-04T08:10:00+08:00,true
-MSG0000132,SES00023,assistant,[Bahasa Indonesia] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Indonesian,2026-05-04T08:13:00+08:00,true
-MSG0000133,SES00024,buyer,Please recommend a suitable option for everyday use.,English,2026-02-26T09:47:00+08:00,true
-MSG0000134,SES00024,assistant,"Based on the stated need, I can compare available mock products and stock.",English,2026-02-26T09:50:00+08:00,true
-MSG0000135,SES00024,buyer,Please recommend a suitable option for everyday use. Please confirm using the linked record.,English,2026-02-26T09:53:00+08:00,true
-MSG0000136,SES00024,assistant,"Based on the stated need, I can compare available mock products and stock. The response is based only on simulated experimental data.",English,2026-02-26T09:56:00+08:00,true
-MSG0000137,SES00025,buyer,[Filipino] Is this item currently available?,Filipino,2026-06-20T05:36:00+08:00,true
-MSG0000138,SES00025,assistant,[Filipino] I checked the simulated inventory and can confirm the current stock status.,Filipino,2026-06-20T05:39:00+08:00,true
-MSG0000139,SES00025,buyer,[Filipino] Is this item currently available? Please confirm using the linked record.,Filipino,2026-06-20T05:42:00+08:00,true
-MSG0000140,SES00025,assistant,[Filipino] I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,Filipino,2026-06-20T05:45:00+08:00,true
-MSG0000141,SES00026,buyer,[Bahasa Melayu] Can I cancel this order before shipment?,Malay,2026-05-02T12:11:00+08:00,true
-MSG0000142,SES00026,assistant,[Bahasa Melayu] Cancellation depends on the current order status; shipped orders need manual review.,Malay,2026-05-02T12:14:00+08:00,true
-MSG0000143,SES00026,buyer,[Bahasa Melayu] Can I cancel this order before shipment? Please confirm using the linked record.,Malay,2026-05-02T12:17:00+08:00,true
-MSG0000144,SES00026,assistant,[Bahasa Melayu] Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,Malay,2026-05-02T12:20:00+08:00,true
-MSG0000145,SES00027,buyer,[Bahasa Indonesia] Can you explain the main product features?,Indonesian,2026-05-05T06:44:00+08:00,true
-MSG0000146,SES00027,assistant,[Bahasa Indonesia] I can help. The product details and selected variation are available in the mock catalog.,Indonesian,2026-05-05T06:47:00+08:00,true
-MSG0000147,SES00027,buyer,[Bahasa Indonesia] Can you explain the main product features? Please confirm using the linked record.,Indonesian,2026-05-05T06:50:00+08:00,true
-MSG0000148,SES00027,assistant,[Bahasa Indonesia] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Indonesian,2026-05-05T06:53:00+08:00,true
-MSG0000149,SES00027,buyer,Thank you. Please save this conversation.,Indonesian,2026-05-05T06:56:00+08:00,true
-MSG0000150,SES00027,assistant,The mock conversation has been saved for testing and demonstration.,Indonesian,2026-05-05T06:59:00+08:00,true
-MSG0000151,SES00028,buyer,[Bahasa Melayu] Where is my parcel now?,Malay,2026-01-17T23:51:00+08:00,true
-MSG0000152,SES00028,assistant,[Bahasa Melayu] I found the linked mock tracking record and its latest location.,Malay,2026-01-17T23:54:00+08:00,true
-MSG0000153,SES00028,buyer,[Bahasa Melayu] Where is my parcel now? Please confirm using the linked record.,Malay,2026-01-17T23:57:00+08:00,true
-MSG0000154,SES00028,assistant,[Bahasa Melayu] I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,Malay,2026-01-18T00:00:00+08:00,true
-MSG0000155,SES00028,buyer,Thank you. Please save this conversation.,Malay,2026-01-18T00:03:00+08:00,true
-MSG0000156,SES00028,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-01-18T00:06:00+08:00,true
-MSG0000157,SES00029,buyer,[Tiếng Việt] Where is my parcel now?,Vietnamese,2026-02-12T15:07:00+08:00,true
-MSG0000158,SES00029,assistant,[Tiếng Việt] I found the linked mock tracking record and its latest location.,Vietnamese,2026-02-12T15:10:00+08:00,true
-MSG0000159,SES00029,buyer,[Tiếng Việt] Where is my parcel now? Please confirm using the linked record.,Vietnamese,2026-02-12T15:13:00+08:00,true
-MSG0000160,SES00029,assistant,[Tiếng Việt] I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,Vietnamese,2026-02-12T15:16:00+08:00,true
-MSG0000161,SES00029,buyer,Thank you. Please save this conversation.,Vietnamese,2026-02-12T15:19:00+08:00,true
-MSG0000162,SES00029,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-02-12T15:22:00+08:00,true
-MSG0000163,SES00030,buyer,Is this item currently available?,English,2026-06-04T17:41:00+08:00,true
-MSG0000164,SES00030,assistant,I checked the simulated inventory and can confirm the current stock status.,English,2026-06-04T17:44:00+08:00,true
-MSG0000165,SES00030,buyer,Is this item currently available? Please confirm using the linked record.,English,2026-06-04T17:47:00+08:00,true
-MSG0000166,SES00030,assistant,I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,English,2026-06-04T17:50:00+08:00,true
-MSG0000167,SES00030,buyer,Thank you. Please save this conversation.,English,2026-06-04T17:53:00+08:00,true
-MSG0000168,SES00030,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-06-04T17:56:00+08:00,true
-MSG0000169,SES00031,buyer,What is the current status of my order?,English,2026-04-07T05:42:00+08:00,true
-MSG0000170,SES00031,assistant,I found the simulated order and will summarize its latest status.,English,2026-04-07T05:45:00+08:00,true
-MSG0000171,SES00031,buyer,What is the current status of my order? Please confirm using the linked record.,English,2026-04-07T05:48:00+08:00,true
-MSG0000172,SES00031,assistant,I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,English,2026-04-07T05:51:00+08:00,true
-MSG0000173,SES00031,buyer,Thank you. Please save this conversation.,English,2026-04-07T05:54:00+08:00,true
-MSG0000174,SES00031,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-04-07T05:57:00+08:00,true
-MSG0000175,SES00032,buyer,[Bahasa Indonesia] Can you explain the main product features?,Indonesian,2026-05-21T02:50:00+08:00,true
-MSG0000176,SES00032,assistant,[Bahasa Indonesia] I can help. The product details and selected variation are available in the mock catalog.,Indonesian,2026-05-21T02:53:00+08:00,true
-MSG0000177,SES00032,buyer,[Bahasa Indonesia] Can you explain the main product features? Please confirm using the linked record.,Indonesian,2026-05-21T02:56:00+08:00,true
-MSG0000178,SES00032,assistant,[Bahasa Indonesia] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Indonesian,2026-05-21T02:59:00+08:00,true
-MSG0000179,SES00032,buyer,Thank you. Please save this conversation.,Indonesian,2026-05-21T03:02:00+08:00,true
-MSG0000180,SES00032,assistant,The mock conversation has been saved for testing and demonstration.,Indonesian,2026-05-21T03:05:00+08:00,true
-MSG0000181,SES00033,buyer,[Bahasa Indonesia] Is this item currently available?,Indonesian,2026-03-27T18:57:00+08:00,true
-MSG0000182,SES00033,assistant,[Bahasa Indonesia] I checked the simulated inventory and can confirm the current stock status.,Indonesian,2026-03-27T19:00:00+08:00,true
-MSG0000183,SES00033,buyer,[Bahasa Indonesia] Is this item currently available? Please confirm using the linked record.,Indonesian,2026-03-27T19:03:00+08:00,true
-MSG0000184,SES00033,assistant,[Bahasa Indonesia] I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,Indonesian,2026-03-27T19:06:00+08:00,true
-MSG0000185,SES00033,buyer,Thank you. Please save this conversation.,Indonesian,2026-03-27T19:09:00+08:00,true
-MSG0000186,SES00033,assistant,The mock conversation has been saved for testing and demonstration.,Indonesian,2026-03-27T19:12:00+08:00,true
-MSG0000187,SES00033,buyer,"If the status changes, should I contact support again?",Indonesian,2026-03-27T19:15:00+08:00,true
-MSG0000188,SES00033,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Indonesian,2026-03-27T19:18:00+08:00,true
-MSG0000189,SES00034,buyer,[Bahasa Indonesia] Can I cancel this order before shipment?,Indonesian,2026-02-03T18:43:00+08:00,true
-MSG0000190,SES00034,assistant,[Bahasa Indonesia] Cancellation depends on the current order status; shipped orders need manual review.,Indonesian,2026-02-03T18:46:00+08:00,true
-MSG0000191,SES00034,buyer,[Bahasa Indonesia] Can I cancel this order before shipment? Please confirm using the linked record.,Indonesian,2026-02-03T18:49:00+08:00,true
-MSG0000192,SES00034,assistant,[Bahasa Indonesia] Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,Indonesian,2026-02-03T18:52:00+08:00,true
-MSG0000193,SES00035,buyer,Can I cancel this order before shipment?,English,2026-03-13T17:39:00+08:00,true
-MSG0000194,SES00035,assistant,Cancellation depends on the current order status; shipped orders need manual review.,English,2026-03-13T17:42:00+08:00,true
-MSG0000195,SES00035,buyer,Can I cancel this order before shipment? Please confirm using the linked record.,English,2026-03-13T17:45:00+08:00,true
-MSG0000196,SES00035,assistant,Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,English,2026-03-13T17:48:00+08:00,true
-MSG0000197,SES00036,buyer,[Bahasa Melayu] I would like to request a refund. What information is needed?,Malay,2026-05-05T01:54:00+08:00,true
-MSG0000198,SES00036,assistant,"[Bahasa Melayu] I can register the request, but approval and refund execution require a human review.",Malay,2026-05-05T01:57:00+08:00,true
-MSG0000199,SES00036,buyer,[Bahasa Melayu] I would like to request a refund. What information is needed? Please confirm using the linked record.,Malay,2026-05-05T02:00:00+08:00,true
-MSG0000200,SES00036,assistant,"[Bahasa Melayu] I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",Malay,2026-05-05T02:03:00+08:00,true
-MSG0000201,SES00036,buyer,Thank you. Please save this conversation.,Malay,2026-05-05T02:06:00+08:00,true
-MSG0000202,SES00036,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-05-05T02:09:00+08:00,true
-MSG0000203,SES00037,buyer,[Bahasa Melayu] What is the current status of my order?,Malay,2026-04-08T02:17:00+08:00,true
-MSG0000204,SES00037,assistant,[Bahasa Melayu] I found the simulated order and will summarize its latest status.,Malay,2026-04-08T02:20:00+08:00,true
-MSG0000205,SES00037,buyer,[Bahasa Melayu] What is the current status of my order? Please confirm using the linked record.,Malay,2026-04-08T02:23:00+08:00,true
-MSG0000206,SES00037,assistant,[Bahasa Melayu] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Malay,2026-04-08T02:26:00+08:00,true
-MSG0000207,SES00037,buyer,Thank you. Please save this conversation.,Malay,2026-04-08T02:29:00+08:00,true
-MSG0000208,SES00037,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-04-08T02:32:00+08:00,true
-MSG0000209,SES00038,buyer,[Bahasa Melayu] What is the current status of my order?,Malay,2026-06-18T07:17:00+08:00,true
-MSG0000210,SES00038,assistant,[Bahasa Melayu] I found the simulated order and will summarize its latest status.,Malay,2026-06-18T07:20:00+08:00,true
-MSG0000211,SES00038,buyer,[Bahasa Melayu] What is the current status of my order? Please confirm using the linked record.,Malay,2026-06-18T07:23:00+08:00,true
-MSG0000212,SES00038,assistant,[Bahasa Melayu] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Malay,2026-06-18T07:26:00+08:00,true
-MSG0000213,SES00039,buyer,[Filipino] Can you explain the main product features?,Filipino,2026-05-13T10:20:00+08:00,true
-MSG0000214,SES00039,assistant,[Filipino] I can help. The product details and selected variation are available in the mock catalog.,Filipino,2026-05-13T10:23:00+08:00,true
-MSG0000215,SES00039,buyer,[Filipino] Can you explain the main product features? Please confirm using the linked record.,Filipino,2026-05-13T10:26:00+08:00,true
-MSG0000216,SES00039,assistant,[Filipino] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Filipino,2026-05-13T10:29:00+08:00,true
-MSG0000217,SES00040,buyer,[Bahasa Indonesia] Which size or variation should I choose?,Indonesian,2026-04-17T06:17:00+08:00,true
-MSG0000218,SES00040,assistant,[Bahasa Indonesia] Please compare your measurements with the listed variation details before choosing.,Indonesian,2026-04-17T06:20:00+08:00,true
-MSG0000219,SES00040,buyer,[Bahasa Indonesia] Which size or variation should I choose? Please confirm using the linked record.,Indonesian,2026-04-17T06:23:00+08:00,true
-MSG0000220,SES00040,assistant,[Bahasa Indonesia] Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,Indonesian,2026-04-17T06:26:00+08:00,true
-MSG0000221,SES00041,buyer,[Filipino] Where is my parcel now?,Filipino,2026-06-25T21:11:00+08:00,true
-MSG0000222,SES00041,assistant,[Filipino] I found the linked mock tracking record and its latest location.,Filipino,2026-06-25T21:14:00+08:00,true
-MSG0000223,SES00041,buyer,[Filipino] Where is my parcel now? Please confirm using the linked record.,Filipino,2026-06-25T21:17:00+08:00,true
-MSG0000224,SES00041,assistant,[Filipino] I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,Filipino,2026-06-25T21:20:00+08:00,true
-MSG0000225,SES00041,buyer,Thank you. Please save this conversation.,Filipino,2026-06-25T21:23:00+08:00,true
-MSG0000226,SES00041,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-06-25T21:26:00+08:00,true
-MSG0000227,SES00042,buyer,The item did not meet expectations. How can this be resolved?,English,2026-02-05T17:44:00+08:00,true
-MSG0000228,SES00042,assistant,I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,English,2026-02-05T17:47:00+08:00,true
-MSG0000229,SES00042,buyer,The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,English,2026-02-05T17:50:00+08:00,true
-MSG0000230,SES00042,assistant,I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,English,2026-02-05T17:53:00+08:00,true
-MSG0000231,SES00043,buyer,[Bahasa Melayu] Can you explain the main product features?,Malay,2026-01-19T09:47:00+08:00,true
-MSG0000232,SES00043,assistant,[Bahasa Melayu] I can help. The product details and selected variation are available in the mock catalog.,Malay,2026-01-19T09:50:00+08:00,true
-MSG0000233,SES00043,buyer,[Bahasa Melayu] Can you explain the main product features? Please confirm using the linked record.,Malay,2026-01-19T09:53:00+08:00,true
-MSG0000234,SES00043,assistant,[Bahasa Melayu] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Malay,2026-01-19T09:56:00+08:00,true
-MSG0000235,SES00043,buyer,Thank you. Please save this conversation.,Malay,2026-01-19T09:59:00+08:00,true
-MSG0000236,SES00043,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-01-19T10:02:00+08:00,true
-MSG0000237,SES00043,buyer,"If the status changes, should I contact support again?",Malay,2026-01-19T10:05:00+08:00,true
-MSG0000238,SES00043,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Malay,2026-01-19T10:08:00+08:00,true
-MSG0000239,SES00044,buyer,[Filipino] The item did not meet expectations. How can this be resolved?,Filipino,2026-05-17T21:40:00+08:00,true
-MSG0000240,SES00044,assistant,[Filipino] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Filipino,2026-05-17T21:43:00+08:00,true
-MSG0000241,SES00044,buyer,[Filipino] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Filipino,2026-05-17T21:46:00+08:00,true
-MSG0000242,SES00044,assistant,[Filipino] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Filipino,2026-05-17T21:49:00+08:00,true
-MSG0000243,SES00045,buyer,[Filipino] Can I cancel this order before shipment?,Filipino,2026-02-16T13:09:00+08:00,true
-MSG0000244,SES00045,assistant,[Filipino] Cancellation depends on the current order status; shipped orders need manual review.,Filipino,2026-02-16T13:12:00+08:00,true
-MSG0000245,SES00045,buyer,[Filipino] Can I cancel this order before shipment? Please confirm using the linked record.,Filipino,2026-02-16T13:15:00+08:00,true
-MSG0000246,SES00045,assistant,[Filipino] Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,Filipino,2026-02-16T13:18:00+08:00,true
-MSG0000247,SES00045,buyer,Thank you. Please save this conversation.,Filipino,2026-02-16T13:21:00+08:00,true
-MSG0000248,SES00045,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-02-16T13:24:00+08:00,true
-MSG0000249,SES00046,buyer,[Bahasa Indonesia] What is the current status of my order?,Indonesian,2026-02-01T14:41:00+08:00,true
-MSG0000250,SES00046,assistant,[Bahasa Indonesia] I found the simulated order and will summarize its latest status.,Indonesian,2026-02-01T14:44:00+08:00,true
-MSG0000251,SES00046,buyer,[Bahasa Indonesia] What is the current status of my order? Please confirm using the linked record.,Indonesian,2026-02-01T14:47:00+08:00,true
-MSG0000252,SES00046,assistant,[Bahasa Indonesia] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Indonesian,2026-02-01T14:50:00+08:00,true
-MSG0000253,SES00047,buyer,[Bahasa Melayu] Where is my parcel now?,Malay,2026-02-10T06:08:00+08:00,true
-MSG0000254,SES00047,assistant,[Bahasa Melayu] I found the linked mock tracking record and its latest location.,Malay,2026-02-10T06:11:00+08:00,true
-MSG0000255,SES00047,buyer,[Bahasa Melayu] Where is my parcel now? Please confirm using the linked record.,Malay,2026-02-10T06:14:00+08:00,true
-MSG0000256,SES00047,assistant,[Bahasa Melayu] I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,Malay,2026-02-10T06:17:00+08:00,true
-MSG0000257,SES00047,buyer,Thank you. Please save this conversation.,Malay,2026-02-10T06:20:00+08:00,true
-MSG0000258,SES00047,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-02-10T06:23:00+08:00,true
-MSG0000259,SES00047,buyer,"If the status changes, should I contact support again?",Malay,2026-02-10T06:26:00+08:00,true
-MSG0000260,SES00047,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Malay,2026-02-10T06:29:00+08:00,true
-MSG0000261,SES00048,buyer,[Bahasa Melayu] I would like to request a refund. What information is needed?,Malay,2026-04-18T08:22:00+08:00,true
-MSG0000262,SES00048,assistant,"[Bahasa Melayu] I can register the request, but approval and refund execution require a human review.",Malay,2026-04-18T08:25:00+08:00,true
-MSG0000263,SES00048,buyer,[Bahasa Melayu] I would like to request a refund. What information is needed? Please confirm using the linked record.,Malay,2026-04-18T08:28:00+08:00,true
-MSG0000264,SES00048,assistant,"[Bahasa Melayu] I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",Malay,2026-04-18T08:31:00+08:00,true
-MSG0000265,SES00048,buyer,Thank you. Please save this conversation.,Malay,2026-04-18T08:34:00+08:00,true
-MSG0000266,SES00048,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-04-18T08:37:00+08:00,true
-MSG0000267,SES00048,buyer,"If the status changes, should I contact support again?",Malay,2026-04-18T08:40:00+08:00,true
-MSG0000268,SES00048,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Malay,2026-04-18T08:43:00+08:00,true
-MSG0000269,SES00049,buyer,[Bahasa Melayu] I would like to request a refund. What information is needed?,Malay,2026-01-20T02:29:00+08:00,true
-MSG0000270,SES00049,assistant,"[Bahasa Melayu] I can register the request, but approval and refund execution require a human review.",Malay,2026-01-20T02:32:00+08:00,true
-MSG0000271,SES00049,buyer,[Bahasa Melayu] I would like to request a refund. What information is needed? Please confirm using the linked record.,Malay,2026-01-20T02:35:00+08:00,true
-MSG0000272,SES00049,assistant,"[Bahasa Melayu] I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",Malay,2026-01-20T02:38:00+08:00,true
-MSG0000273,SES00050,buyer,[ภาษาไทย] The item did not meet expectations. How can this be resolved?,Thai,2026-06-29T19:40:00+08:00,true
-MSG0000274,SES00050,assistant,[ภาษาไทย] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Thai,2026-06-29T19:43:00+08:00,true
-MSG0000275,SES00050,buyer,[ภาษาไทย] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Thai,2026-06-29T19:46:00+08:00,true
-MSG0000276,SES00050,assistant,[ภาษาไทย] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Thai,2026-06-29T19:49:00+08:00,true
-MSG0000277,SES00050,buyer,Thank you. Please save this conversation.,Thai,2026-06-29T19:52:00+08:00,true
-MSG0000278,SES00050,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-06-29T19:55:00+08:00,true
-MSG0000279,SES00051,buyer,[ภาษาไทย] Where is my parcel now?,Thai,2026-03-13T18:26:00+08:00,true
-MSG0000280,SES00051,assistant,[ภาษาไทย] I found the linked mock tracking record and its latest location.,Thai,2026-03-13T18:29:00+08:00,true
-MSG0000281,SES00051,buyer,[ภาษาไทย] Where is my parcel now? Please confirm using the linked record.,Thai,2026-03-13T18:32:00+08:00,true
-MSG0000282,SES00051,assistant,[ภาษาไทย] I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,Thai,2026-03-13T18:35:00+08:00,true
-MSG0000283,SES00051,buyer,Thank you. Please save this conversation.,Thai,2026-03-13T18:38:00+08:00,true
-MSG0000284,SES00051,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-03-13T18:41:00+08:00,true
-MSG0000285,SES00051,buyer,"If the status changes, should I contact support again?",Thai,2026-03-13T18:44:00+08:00,true
-MSG0000286,SES00051,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Thai,2026-03-13T18:47:00+08:00,true
-MSG0000287,SES00052,buyer,Can you explain the main product features?,English,2026-05-30T10:03:00+08:00,true
-MSG0000288,SES00052,assistant,I can help. The product details and selected variation are available in the mock catalog.,English,2026-05-30T10:06:00+08:00,true
-MSG0000289,SES00052,buyer,Can you explain the main product features? Please confirm using the linked record.,English,2026-05-30T10:09:00+08:00,true
-MSG0000290,SES00052,assistant,I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,English,2026-05-30T10:12:00+08:00,true
-MSG0000291,SES00052,buyer,Thank you. Please save this conversation.,English,2026-05-30T10:15:00+08:00,true
-MSG0000292,SES00052,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-05-30T10:18:00+08:00,true
-MSG0000293,SES00053,buyer,[Tiếng Việt] What is the current status of my order?,Vietnamese,2026-03-02T11:34:00+08:00,true
-MSG0000294,SES00053,assistant,[Tiếng Việt] I found the simulated order and will summarize its latest status.,Vietnamese,2026-03-02T11:37:00+08:00,true
-MSG0000295,SES00053,buyer,[Tiếng Việt] What is the current status of my order? Please confirm using the linked record.,Vietnamese,2026-03-02T11:40:00+08:00,true
-MSG0000296,SES00053,assistant,[Tiếng Việt] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Vietnamese,2026-03-02T11:43:00+08:00,true
-MSG0000297,SES00053,buyer,Thank you. Please save this conversation.,Vietnamese,2026-03-02T11:46:00+08:00,true
-MSG0000298,SES00053,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-03-02T11:49:00+08:00,true
-MSG0000299,SES00054,buyer,[Bahasa Melayu] Where is my parcel now?,Malay,2026-02-01T11:57:00+08:00,true
-MSG0000300,SES00054,assistant,[Bahasa Melayu] I found the linked mock tracking record and its latest location.,Malay,2026-02-01T12:00:00+08:00,true
-MSG0000301,SES00054,buyer,[Bahasa Melayu] Where is my parcel now? Please confirm using the linked record.,Malay,2026-02-01T12:03:00+08:00,true
-MSG0000302,SES00054,assistant,[Bahasa Melayu] I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,Malay,2026-02-01T12:06:00+08:00,true
-MSG0000303,SES00054,buyer,Thank you. Please save this conversation.,Malay,2026-02-01T12:09:00+08:00,true
-MSG0000304,SES00054,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-02-01T12:12:00+08:00,true
-MSG0000305,SES00055,buyer,[Tiếng Việt] Is this item currently available?,Vietnamese,2026-03-28T06:03:00+08:00,true
-MSG0000306,SES00055,assistant,[Tiếng Việt] I checked the simulated inventory and can confirm the current stock status.,Vietnamese,2026-03-28T06:06:00+08:00,true
-MSG0000307,SES00055,buyer,[Tiếng Việt] Is this item currently available? Please confirm using the linked record.,Vietnamese,2026-03-28T06:09:00+08:00,true
-MSG0000308,SES00055,assistant,[Tiếng Việt] I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,Vietnamese,2026-03-28T06:12:00+08:00,true
-MSG0000309,SES00055,buyer,Thank you. Please save this conversation.,Vietnamese,2026-03-28T06:15:00+08:00,true
-MSG0000310,SES00055,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-03-28T06:18:00+08:00,true
-MSG0000311,SES00055,buyer,"If the status changes, should I contact support again?",Vietnamese,2026-03-28T06:21:00+08:00,true
-MSG0000312,SES00055,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Vietnamese,2026-03-28T06:24:00+08:00,true
-MSG0000313,SES00056,buyer,[Bahasa Indonesia] Please recommend a suitable option for everyday use.,Indonesian,2026-05-03T14:29:00+08:00,true
-MSG0000314,SES00056,assistant,"[Bahasa Indonesia] Based on the stated need, I can compare available mock products and stock.",Indonesian,2026-05-03T14:32:00+08:00,true
-MSG0000315,SES00056,buyer,[Bahasa Indonesia] Please recommend a suitable option for everyday use. Please confirm using the linked record.,Indonesian,2026-05-03T14:35:00+08:00,true
-MSG0000316,SES00056,assistant,"[Bahasa Indonesia] Based on the stated need, I can compare available mock products and stock. The response is based only on simulated experimental data.",Indonesian,2026-05-03T14:38:00+08:00,true
-MSG0000317,SES00056,buyer,Thank you. Please save this conversation.,Indonesian,2026-05-03T14:41:00+08:00,true
-MSG0000318,SES00056,assistant,The mock conversation has been saved for testing and demonstration.,Indonesian,2026-05-03T14:44:00+08:00,true
-MSG0000319,SES00057,buyer,[Bahasa Indonesia] Where is my parcel now?,Indonesian,2026-01-21T18:26:00+08:00,true
-MSG0000320,SES00057,assistant,[Bahasa Indonesia] I found the linked mock tracking record and its latest location.,Indonesian,2026-01-21T18:29:00+08:00,true
-MSG0000321,SES00057,buyer,[Bahasa Indonesia] Where is my parcel now? Please confirm using the linked record.,Indonesian,2026-01-21T18:32:00+08:00,true
-MSG0000322,SES00057,assistant,[Bahasa Indonesia] I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,Indonesian,2026-01-21T18:35:00+08:00,true
-MSG0000323,SES00057,buyer,Thank you. Please save this conversation.,Indonesian,2026-01-21T18:38:00+08:00,true
-MSG0000324,SES00057,assistant,The mock conversation has been saved for testing and demonstration.,Indonesian,2026-01-21T18:41:00+08:00,true
-MSG0000325,SES00057,buyer,"If the status changes, should I contact support again?",Indonesian,2026-01-21T18:44:00+08:00,true
-MSG0000326,SES00057,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Indonesian,2026-01-21T18:47:00+08:00,true
-MSG0000327,SES00058,buyer,The item did not meet expectations. How can this be resolved?,English,2026-01-10T05:32:00+08:00,true
-MSG0000328,SES00058,assistant,I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,English,2026-01-10T05:35:00+08:00,true
-MSG0000329,SES00058,buyer,The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,English,2026-01-10T05:38:00+08:00,true
-MSG0000330,SES00058,assistant,I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,English,2026-01-10T05:41:00+08:00,true
-MSG0000331,SES00059,buyer,I would like to request a refund. What information is needed?,English,2026-02-10T21:21:00+08:00,true
-MSG0000332,SES00059,assistant,"I can register the request, but approval and refund execution require a human review.",English,2026-02-10T21:24:00+08:00,true
-MSG0000333,SES00059,buyer,I would like to request a refund. What information is needed? Please confirm using the linked record.,English,2026-02-10T21:27:00+08:00,true
-MSG0000334,SES00059,assistant,"I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",English,2026-02-10T21:30:00+08:00,true
-MSG0000335,SES00059,buyer,Thank you. Please save this conversation.,English,2026-02-10T21:33:00+08:00,true
-MSG0000336,SES00059,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-02-10T21:36:00+08:00,true
-MSG0000337,SES00060,buyer,[Bahasa Indonesia] I would like to request a refund. What information is needed?,Indonesian,2026-04-25T02:47:00+08:00,true
-MSG0000338,SES00060,assistant,"[Bahasa Indonesia] I can register the request, but approval and refund execution require a human review.",Indonesian,2026-04-25T02:50:00+08:00,true
-MSG0000339,SES00060,buyer,[Bahasa Indonesia] I would like to request a refund. What information is needed? Please confirm using the linked record.,Indonesian,2026-04-25T02:53:00+08:00,true
-MSG0000340,SES00060,assistant,"[Bahasa Indonesia] I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",Indonesian,2026-04-25T02:56:00+08:00,true
-MSG0000341,SES00060,buyer,Thank you. Please save this conversation.,Indonesian,2026-04-25T02:59:00+08:00,true
-MSG0000342,SES00060,assistant,The mock conversation has been saved for testing and demonstration.,Indonesian,2026-04-25T03:02:00+08:00,true
-MSG0000343,SES00061,buyer,[Bahasa Melayu] What is the current status of my order?,Malay,2026-05-13T03:06:00+08:00,true
-MSG0000344,SES00061,assistant,[Bahasa Melayu] I found the simulated order and will summarize its latest status.,Malay,2026-05-13T03:09:00+08:00,true
-MSG0000345,SES00061,buyer,[Bahasa Melayu] What is the current status of my order? Please confirm using the linked record.,Malay,2026-05-13T03:12:00+08:00,true
-MSG0000346,SES00061,assistant,[Bahasa Melayu] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Malay,2026-05-13T03:15:00+08:00,true
-MSG0000347,SES00061,buyer,Thank you. Please save this conversation.,Malay,2026-05-13T03:18:00+08:00,true
-MSG0000348,SES00061,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-05-13T03:21:00+08:00,true
-MSG0000349,SES00062,buyer,[Bahasa Indonesia] The item did not meet expectations. How can this be resolved?,Indonesian,2026-03-14T07:44:00+08:00,true
-MSG0000350,SES00062,assistant,[Bahasa Indonesia] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Indonesian,2026-03-14T07:47:00+08:00,true
-MSG0000351,SES00062,buyer,[Bahasa Indonesia] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Indonesian,2026-03-14T07:50:00+08:00,true
-MSG0000352,SES00062,assistant,[Bahasa Indonesia] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Indonesian,2026-03-14T07:53:00+08:00,true
-MSG0000353,SES00063,buyer,[Bahasa Indonesia] Is this item currently available?,Indonesian,2026-01-11T00:53:00+08:00,true
-MSG0000354,SES00063,assistant,[Bahasa Indonesia] I checked the simulated inventory and can confirm the current stock status.,Indonesian,2026-01-11T00:56:00+08:00,true
-MSG0000355,SES00063,buyer,[Bahasa Indonesia] Is this item currently available? Please confirm using the linked record.,Indonesian,2026-01-11T00:59:00+08:00,true
-MSG0000356,SES00063,assistant,[Bahasa Indonesia] I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,Indonesian,2026-01-11T01:02:00+08:00,true
-MSG0000357,SES00063,buyer,Thank you. Please save this conversation.,Indonesian,2026-01-11T01:05:00+08:00,true
-MSG0000358,SES00063,assistant,The mock conversation has been saved for testing and demonstration.,Indonesian,2026-01-11T01:08:00+08:00,true
-MSG0000359,SES00063,buyer,"If the status changes, should I contact support again?",Indonesian,2026-01-11T01:11:00+08:00,true
-MSG0000360,SES00063,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Indonesian,2026-01-11T01:14:00+08:00,true
-MSG0000361,SES00064,buyer,Can I cancel this order before shipment?,English,2026-01-18T03:07:00+08:00,true
-MSG0000362,SES00064,assistant,Cancellation depends on the current order status; shipped orders need manual review.,English,2026-01-18T03:10:00+08:00,true
-MSG0000363,SES00064,buyer,Can I cancel this order before shipment? Please confirm using the linked record.,English,2026-01-18T03:13:00+08:00,true
-MSG0000364,SES00064,assistant,Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,English,2026-01-18T03:16:00+08:00,true
-MSG0000365,SES00064,buyer,Thank you. Please save this conversation.,English,2026-01-18T03:19:00+08:00,true
-MSG0000366,SES00064,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-01-18T03:22:00+08:00,true
-MSG0000367,SES00064,buyer,"If the status changes, should I contact support again?",English,2026-01-18T03:25:00+08:00,true
-MSG0000368,SES00064,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,English,2026-01-18T03:28:00+08:00,true
-MSG0000369,SES00065,buyer,What is the current status of my order?,English,2026-04-29T03:38:00+08:00,true
-MSG0000370,SES00065,assistant,I found the simulated order and will summarize its latest status.,English,2026-04-29T03:41:00+08:00,true
-MSG0000371,SES00065,buyer,What is the current status of my order? Please confirm using the linked record.,English,2026-04-29T03:44:00+08:00,true
-MSG0000372,SES00065,assistant,I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,English,2026-04-29T03:47:00+08:00,true
-MSG0000373,SES00065,buyer,Thank you. Please save this conversation.,English,2026-04-29T03:50:00+08:00,true
-MSG0000374,SES00065,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-04-29T03:53:00+08:00,true
-MSG0000375,SES00065,buyer,"If the status changes, should I contact support again?",English,2026-04-29T03:56:00+08:00,true
-MSG0000376,SES00065,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,English,2026-04-29T03:59:00+08:00,true
-MSG0000377,SES00066,buyer,Is this item currently available?,English,2026-02-05T01:17:00+08:00,true
-MSG0000378,SES00066,assistant,I checked the simulated inventory and can confirm the current stock status.,English,2026-02-05T01:20:00+08:00,true
-MSG0000379,SES00066,buyer,Is this item currently available? Please confirm using the linked record.,English,2026-02-05T01:23:00+08:00,true
-MSG0000380,SES00066,assistant,I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,English,2026-02-05T01:26:00+08:00,true
-MSG0000381,SES00066,buyer,Thank you. Please save this conversation.,English,2026-02-05T01:29:00+08:00,true
-MSG0000382,SES00066,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-02-05T01:32:00+08:00,true
-MSG0000383,SES00067,buyer,[ภาษาไทย] Which size or variation should I choose?,Thai,2026-01-23T01:14:00+08:00,true
-MSG0000384,SES00067,assistant,[ภาษาไทย] Please compare your measurements with the listed variation details before choosing.,Thai,2026-01-23T01:17:00+08:00,true
-MSG0000385,SES00067,buyer,[ภาษาไทย] Which size or variation should I choose? Please confirm using the linked record.,Thai,2026-01-23T01:20:00+08:00,true
-MSG0000386,SES00067,assistant,[ภาษาไทย] Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,Thai,2026-01-23T01:23:00+08:00,true
-MSG0000387,SES00067,buyer,Thank you. Please save this conversation.,Thai,2026-01-23T01:26:00+08:00,true
-MSG0000388,SES00067,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-01-23T01:29:00+08:00,true
-MSG0000389,SES00068,buyer,[Bahasa Melayu] Is this item currently available?,Malay,2026-03-21T14:01:00+08:00,true
-MSG0000390,SES00068,assistant,[Bahasa Melayu] I checked the simulated inventory and can confirm the current stock status.,Malay,2026-03-21T14:04:00+08:00,true
-MSG0000391,SES00068,buyer,[Bahasa Melayu] Is this item currently available? Please confirm using the linked record.,Malay,2026-03-21T14:07:00+08:00,true
-MSG0000392,SES00068,assistant,[Bahasa Melayu] I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,Malay,2026-03-21T14:10:00+08:00,true
-MSG0000393,SES00068,buyer,Thank you. Please save this conversation.,Malay,2026-03-21T14:13:00+08:00,true
-MSG0000394,SES00068,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-03-21T14:16:00+08:00,true
-MSG0000395,SES00069,buyer,[Filipino] What is the current status of my order?,Filipino,2026-06-03T20:56:00+08:00,true
-MSG0000396,SES00069,assistant,[Filipino] I found the simulated order and will summarize its latest status.,Filipino,2026-06-03T20:59:00+08:00,true
-MSG0000397,SES00069,buyer,[Filipino] What is the current status of my order? Please confirm using the linked record.,Filipino,2026-06-03T21:02:00+08:00,true
-MSG0000398,SES00069,assistant,[Filipino] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Filipino,2026-06-03T21:05:00+08:00,true
-MSG0000399,SES00069,buyer,Thank you. Please save this conversation.,Filipino,2026-06-03T21:08:00+08:00,true
-MSG0000400,SES00069,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-06-03T21:11:00+08:00,true
-MSG0000401,SES00069,buyer,"If the status changes, should I contact support again?",Filipino,2026-06-03T21:14:00+08:00,true
-MSG0000402,SES00069,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Filipino,2026-06-03T21:17:00+08:00,true
-MSG0000403,SES00070,buyer,[Tiếng Việt] Can I cancel this order before shipment?,Vietnamese,2026-03-20T04:13:00+08:00,true
-MSG0000404,SES00070,assistant,[Tiếng Việt] Cancellation depends on the current order status; shipped orders need manual review.,Vietnamese,2026-03-20T04:16:00+08:00,true
-MSG0000405,SES00070,buyer,[Tiếng Việt] Can I cancel this order before shipment? Please confirm using the linked record.,Vietnamese,2026-03-20T04:19:00+08:00,true
-MSG0000406,SES00070,assistant,[Tiếng Việt] Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,Vietnamese,2026-03-20T04:22:00+08:00,true
-MSG0000407,SES00070,buyer,Thank you. Please save this conversation.,Vietnamese,2026-03-20T04:25:00+08:00,true
-MSG0000408,SES00070,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-03-20T04:28:00+08:00,true
-MSG0000409,SES00070,buyer,"If the status changes, should I contact support again?",Vietnamese,2026-03-20T04:31:00+08:00,true
-MSG0000410,SES00070,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Vietnamese,2026-03-20T04:34:00+08:00,true
-MSG0000411,SES00071,buyer,[ภาษาไทย] What is the current status of my order?,Thai,2026-05-20T21:18:00+08:00,true
-MSG0000412,SES00071,assistant,[ภาษาไทย] I found the simulated order and will summarize its latest status.,Thai,2026-05-20T21:21:00+08:00,true
-MSG0000413,SES00071,buyer,[ภาษาไทย] What is the current status of my order? Please confirm using the linked record.,Thai,2026-05-20T21:24:00+08:00,true
-MSG0000414,SES00071,assistant,[ภาษาไทย] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Thai,2026-05-20T21:27:00+08:00,true
-MSG0000415,SES00072,buyer,[Tiếng Việt] I would like to request a refund. What information is needed?,Vietnamese,2026-05-23T18:49:00+08:00,true
-MSG0000416,SES00072,assistant,"[Tiếng Việt] I can register the request, but approval and refund execution require a human review.",Vietnamese,2026-05-23T18:52:00+08:00,true
-MSG0000417,SES00072,buyer,[Tiếng Việt] I would like to request a refund. What information is needed? Please confirm using the linked record.,Vietnamese,2026-05-23T18:55:00+08:00,true
-MSG0000418,SES00072,assistant,"[Tiếng Việt] I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",Vietnamese,2026-05-23T18:58:00+08:00,true
-MSG0000419,SES00072,buyer,Thank you. Please save this conversation.,Vietnamese,2026-05-23T19:01:00+08:00,true
-MSG0000420,SES00072,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-05-23T19:04:00+08:00,true
-MSG0000421,SES00072,buyer,"If the status changes, should I contact support again?",Vietnamese,2026-05-23T19:07:00+08:00,true
-MSG0000422,SES00072,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Vietnamese,2026-05-23T19:10:00+08:00,true
-MSG0000423,SES00073,buyer,[Filipino] Can you explain the main product features?,Filipino,2026-04-09T03:32:00+08:00,true
-MSG0000424,SES00073,assistant,[Filipino] I can help. The product details and selected variation are available in the mock catalog.,Filipino,2026-04-09T03:35:00+08:00,true
-MSG0000425,SES00073,buyer,[Filipino] Can you explain the main product features? Please confirm using the linked record.,Filipino,2026-04-09T03:38:00+08:00,true
-MSG0000426,SES00073,assistant,[Filipino] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Filipino,2026-04-09T03:41:00+08:00,true
-MSG0000427,SES00073,buyer,Thank you. Please save this conversation.,Filipino,2026-04-09T03:44:00+08:00,true
-MSG0000428,SES00073,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-04-09T03:47:00+08:00,true
-MSG0000429,SES00074,buyer,[ภาษาไทย] The item did not meet expectations. How can this be resolved?,Thai,2026-05-01T12:59:00+08:00,true
-MSG0000430,SES00074,assistant,[ภาษาไทย] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Thai,2026-05-01T13:02:00+08:00,true
-MSG0000431,SES00074,buyer,[ภาษาไทย] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Thai,2026-05-01T13:05:00+08:00,true
-MSG0000432,SES00074,assistant,[ภาษาไทย] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Thai,2026-05-01T13:08:00+08:00,true
-MSG0000433,SES00074,buyer,Thank you. Please save this conversation.,Thai,2026-05-01T13:11:00+08:00,true
-MSG0000434,SES00074,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-05-01T13:14:00+08:00,true
-MSG0000435,SES00074,buyer,"If the status changes, should I contact support again?",Thai,2026-05-01T13:17:00+08:00,true
-MSG0000436,SES00074,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Thai,2026-05-01T13:20:00+08:00,true
-MSG0000437,SES00075,buyer,[Tiếng Việt] What is the current status of my order?,Vietnamese,2026-02-06T03:41:00+08:00,true
-MSG0000438,SES00075,assistant,[Tiếng Việt] I found the simulated order and will summarize its latest status.,Vietnamese,2026-02-06T03:44:00+08:00,true
-MSG0000439,SES00075,buyer,[Tiếng Việt] What is the current status of my order? Please confirm using the linked record.,Vietnamese,2026-02-06T03:47:00+08:00,true
-MSG0000440,SES00075,assistant,[Tiếng Việt] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Vietnamese,2026-02-06T03:50:00+08:00,true
-MSG0000441,SES00076,buyer,[Tiếng Việt] Where is my parcel now?,Vietnamese,2026-03-26T00:26:00+08:00,true
-MSG0000442,SES00076,assistant,[Tiếng Việt] I found the linked mock tracking record and its latest location.,Vietnamese,2026-03-26T00:29:00+08:00,true
-MSG0000443,SES00076,buyer,[Tiếng Việt] Where is my parcel now? Please confirm using the linked record.,Vietnamese,2026-03-26T00:32:00+08:00,true
-MSG0000444,SES00076,assistant,[Tiếng Việt] I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,Vietnamese,2026-03-26T00:35:00+08:00,true
-MSG0000445,SES00076,buyer,Thank you. Please save this conversation.,Vietnamese,2026-03-26T00:38:00+08:00,true
-MSG0000446,SES00076,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-03-26T00:41:00+08:00,true
-MSG0000447,SES00076,buyer,"If the status changes, should I contact support again?",Vietnamese,2026-03-26T00:44:00+08:00,true
-MSG0000448,SES00076,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Vietnamese,2026-03-26T00:47:00+08:00,true
-MSG0000449,SES00077,buyer,[Bahasa Indonesia] Is this item currently available?,Indonesian,2026-06-07T04:05:00+08:00,true
-MSG0000450,SES00077,assistant,[Bahasa Indonesia] I checked the simulated inventory and can confirm the current stock status.,Indonesian,2026-06-07T04:08:00+08:00,true
-MSG0000451,SES00077,buyer,[Bahasa Indonesia] Is this item currently available? Please confirm using the linked record.,Indonesian,2026-06-07T04:11:00+08:00,true
-MSG0000452,SES00077,assistant,[Bahasa Indonesia] I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,Indonesian,2026-06-07T04:14:00+08:00,true
-MSG0000453,SES00077,buyer,Thank you. Please save this conversation.,Indonesian,2026-06-07T04:17:00+08:00,true
-MSG0000454,SES00077,assistant,The mock conversation has been saved for testing and demonstration.,Indonesian,2026-06-07T04:20:00+08:00,true
-MSG0000455,SES00077,buyer,"If the status changes, should I contact support again?",Indonesian,2026-06-07T04:23:00+08:00,true
-MSG0000456,SES00077,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Indonesian,2026-06-07T04:26:00+08:00,true
-MSG0000457,SES00078,buyer,[Tiếng Việt] Please recommend a suitable option for everyday use.,Vietnamese,2026-05-29T01:10:00+08:00,true
-MSG0000458,SES00078,assistant,"[Tiếng Việt] Based on the stated need, I can compare available mock products and stock.",Vietnamese,2026-05-29T01:13:00+08:00,true
-MSG0000459,SES00078,buyer,[Tiếng Việt] Please recommend a suitable option for everyday use. Please confirm using the linked record.,Vietnamese,2026-05-29T01:16:00+08:00,true
-MSG0000460,SES00078,assistant,"[Tiếng Việt] Based on the stated need, I can compare available mock products and stock. The response is based only on simulated experimental data.",Vietnamese,2026-05-29T01:19:00+08:00,true
-MSG0000461,SES00078,buyer,Thank you. Please save this conversation.,Vietnamese,2026-05-29T01:22:00+08:00,true
-MSG0000462,SES00078,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-05-29T01:25:00+08:00,true
-MSG0000463,SES00078,buyer,"If the status changes, should I contact support again?",Vietnamese,2026-05-29T01:28:00+08:00,true
-MSG0000464,SES00078,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Vietnamese,2026-05-29T01:31:00+08:00,true
-MSG0000465,SES00079,buyer,[ภาษาไทย] Please recommend a suitable option for everyday use.,Thai,2026-03-29T22:52:00+08:00,true
-MSG0000466,SES00079,assistant,"[ภาษาไทย] Based on the stated need, I can compare available mock products and stock.",Thai,2026-03-29T22:55:00+08:00,true
-MSG0000467,SES00079,buyer,[ภาษาไทย] Please recommend a suitable option for everyday use. Please confirm using the linked record.,Thai,2026-03-29T22:58:00+08:00,true
-MSG0000468,SES00079,assistant,"[ภาษาไทย] Based on the stated need, I can compare available mock products and stock. The response is based only on simulated experimental data.",Thai,2026-03-29T23:01:00+08:00,true
-MSG0000469,SES00079,buyer,Thank you. Please save this conversation.,Thai,2026-03-29T23:04:00+08:00,true
-MSG0000470,SES00079,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-03-29T23:07:00+08:00,true
-MSG0000471,SES00079,buyer,"If the status changes, should I contact support again?",Thai,2026-03-29T23:10:00+08:00,true
-MSG0000472,SES00079,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Thai,2026-03-29T23:13:00+08:00,true
-MSG0000473,SES00080,buyer,[Bahasa Melayu] What is the current status of my order?,Malay,2026-03-18T09:05:00+08:00,true
-MSG0000474,SES00080,assistant,[Bahasa Melayu] I found the simulated order and will summarize its latest status.,Malay,2026-03-18T09:08:00+08:00,true
-MSG0000475,SES00080,buyer,[Bahasa Melayu] What is the current status of my order? Please confirm using the linked record.,Malay,2026-03-18T09:11:00+08:00,true
-MSG0000476,SES00080,assistant,[Bahasa Melayu] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Malay,2026-03-18T09:14:00+08:00,true
-MSG0000477,SES00080,buyer,Thank you. Please save this conversation.,Malay,2026-03-18T09:17:00+08:00,true
-MSG0000478,SES00080,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-03-18T09:20:00+08:00,true
-MSG0000479,SES00081,buyer,[Bahasa Indonesia] What is the current status of my order?,Indonesian,2026-04-30T16:41:00+08:00,true
-MSG0000480,SES00081,assistant,[Bahasa Indonesia] I found the simulated order and will summarize its latest status.,Indonesian,2026-04-30T16:44:00+08:00,true
-MSG0000481,SES00081,buyer,[Bahasa Indonesia] What is the current status of my order? Please confirm using the linked record.,Indonesian,2026-04-30T16:47:00+08:00,true
-MSG0000482,SES00081,assistant,[Bahasa Indonesia] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Indonesian,2026-04-30T16:50:00+08:00,true
-MSG0000483,SES00081,buyer,Thank you. Please save this conversation.,Indonesian,2026-04-30T16:53:00+08:00,true
-MSG0000484,SES00081,assistant,The mock conversation has been saved for testing and demonstration.,Indonesian,2026-04-30T16:56:00+08:00,true
-MSG0000485,SES00082,buyer,[Bahasa Indonesia] I would like to request a refund. What information is needed?,Indonesian,2026-01-22T01:22:00+08:00,true
-MSG0000486,SES00082,assistant,"[Bahasa Indonesia] I can register the request, but approval and refund execution require a human review.",Indonesian,2026-01-22T01:25:00+08:00,true
-MSG0000487,SES00082,buyer,[Bahasa Indonesia] I would like to request a refund. What information is needed? Please confirm using the linked record.,Indonesian,2026-01-22T01:28:00+08:00,true
-MSG0000488,SES00082,assistant,"[Bahasa Indonesia] I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",Indonesian,2026-01-22T01:31:00+08:00,true
-MSG0000489,SES00083,buyer,The item did not meet expectations. How can this be resolved?,English,2026-02-25T10:24:00+08:00,true
-MSG0000490,SES00083,assistant,I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,English,2026-02-25T10:27:00+08:00,true
-MSG0000491,SES00083,buyer,The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,English,2026-02-25T10:30:00+08:00,true
-MSG0000492,SES00083,assistant,I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,English,2026-02-25T10:33:00+08:00,true
-MSG0000493,SES00083,buyer,Thank you. Please save this conversation.,English,2026-02-25T10:36:00+08:00,true
-MSG0000494,SES00083,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-02-25T10:39:00+08:00,true
-MSG0000495,SES00084,buyer,Where is my parcel now?,English,2026-05-20T10:18:00+08:00,true
-MSG0000496,SES00084,assistant,I found the linked mock tracking record and its latest location.,English,2026-05-20T10:21:00+08:00,true
-MSG0000497,SES00084,buyer,Where is my parcel now? Please confirm using the linked record.,English,2026-05-20T10:24:00+08:00,true
-MSG0000498,SES00084,assistant,I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,English,2026-05-20T10:27:00+08:00,true
-MSG0000499,SES00085,buyer,[ภาษาไทย] Where is my parcel now?,Thai,2026-06-04T05:35:00+08:00,true
-MSG0000500,SES00085,assistant,[ภาษาไทย] I found the linked mock tracking record and its latest location.,Thai,2026-06-04T05:38:00+08:00,true
-MSG0000501,SES00085,buyer,[ภาษาไทย] Where is my parcel now? Please confirm using the linked record.,Thai,2026-06-04T05:41:00+08:00,true
-MSG0000502,SES00085,assistant,[ภาษาไทย] I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,Thai,2026-06-04T05:44:00+08:00,true
-MSG0000503,SES00085,buyer,Thank you. Please save this conversation.,Thai,2026-06-04T05:47:00+08:00,true
-MSG0000504,SES00085,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-06-04T05:50:00+08:00,true
-MSG0000505,SES00085,buyer,"If the status changes, should I contact support again?",Thai,2026-06-04T05:53:00+08:00,true
-MSG0000506,SES00085,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Thai,2026-06-04T05:56:00+08:00,true
-MSG0000507,SES00086,buyer,[Tiếng Việt] Which size or variation should I choose?,Vietnamese,2026-02-16T17:40:00+08:00,true
-MSG0000508,SES00086,assistant,[Tiếng Việt] Please compare your measurements with the listed variation details before choosing.,Vietnamese,2026-02-16T17:43:00+08:00,true
-MSG0000509,SES00086,buyer,[Tiếng Việt] Which size or variation should I choose? Please confirm using the linked record.,Vietnamese,2026-02-16T17:46:00+08:00,true
-MSG0000510,SES00086,assistant,[Tiếng Việt] Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,Vietnamese,2026-02-16T17:49:00+08:00,true
-MSG0000511,SES00087,buyer,[Tiếng Việt] Can you explain the main product features?,Vietnamese,2026-04-18T00:30:00+08:00,true
-MSG0000512,SES00087,assistant,[Tiếng Việt] I can help. The product details and selected variation are available in the mock catalog.,Vietnamese,2026-04-18T00:33:00+08:00,true
-MSG0000513,SES00087,buyer,[Tiếng Việt] Can you explain the main product features? Please confirm using the linked record.,Vietnamese,2026-04-18T00:36:00+08:00,true
-MSG0000514,SES00087,assistant,[Tiếng Việt] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Vietnamese,2026-04-18T00:39:00+08:00,true
-MSG0000515,SES00087,buyer,Thank you. Please save this conversation.,Vietnamese,2026-04-18T00:42:00+08:00,true
-MSG0000516,SES00087,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-04-18T00:45:00+08:00,true
-MSG0000517,SES00087,buyer,"If the status changes, should I contact support again?",Vietnamese,2026-04-18T00:48:00+08:00,true
-MSG0000518,SES00087,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Vietnamese,2026-04-18T00:51:00+08:00,true
-MSG0000519,SES00088,buyer,[Filipino] The item did not meet expectations. How can this be resolved?,Filipino,2026-01-15T02:01:00+08:00,true
-MSG0000520,SES00088,assistant,[Filipino] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Filipino,2026-01-15T02:04:00+08:00,true
-MSG0000521,SES00088,buyer,[Filipino] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Filipino,2026-01-15T02:07:00+08:00,true
-MSG0000522,SES00088,assistant,[Filipino] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Filipino,2026-01-15T02:10:00+08:00,true
-MSG0000523,SES00089,buyer,[Tiếng Việt] Can I cancel this order before shipment?,Vietnamese,2026-04-11T06:32:00+08:00,true
-MSG0000524,SES00089,assistant,[Tiếng Việt] Cancellation depends on the current order status; shipped orders need manual review.,Vietnamese,2026-04-11T06:35:00+08:00,true
-MSG0000525,SES00089,buyer,[Tiếng Việt] Can I cancel this order before shipment? Please confirm using the linked record.,Vietnamese,2026-04-11T06:38:00+08:00,true
-MSG0000526,SES00089,assistant,[Tiếng Việt] Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,Vietnamese,2026-04-11T06:41:00+08:00,true
-MSG0000527,SES00089,buyer,Thank you. Please save this conversation.,Vietnamese,2026-04-11T06:44:00+08:00,true
-MSG0000528,SES00089,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-04-11T06:47:00+08:00,true
-MSG0000529,SES00089,buyer,"If the status changes, should I contact support again?",Vietnamese,2026-04-11T06:50:00+08:00,true
-MSG0000530,SES00089,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Vietnamese,2026-04-11T06:53:00+08:00,true
-MSG0000531,SES00090,buyer,[Bahasa Indonesia] Where is my parcel now?,Indonesian,2026-01-11T02:49:00+08:00,true
-MSG0000532,SES00090,assistant,[Bahasa Indonesia] I found the linked mock tracking record and its latest location.,Indonesian,2026-01-11T02:52:00+08:00,true
-MSG0000533,SES00090,buyer,[Bahasa Indonesia] Where is my parcel now? Please confirm using the linked record.,Indonesian,2026-01-11T02:55:00+08:00,true
-MSG0000534,SES00090,assistant,[Bahasa Indonesia] I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,Indonesian,2026-01-11T02:58:00+08:00,true
-MSG0000535,SES00091,buyer,[Filipino] Please recommend a suitable option for everyday use.,Filipino,2026-06-05T00:34:00+08:00,true
-MSG0000536,SES00091,assistant,"[Filipino] Based on the stated need, I can compare available mock products and stock.",Filipino,2026-06-05T00:37:00+08:00,true
-MSG0000537,SES00091,buyer,[Filipino] Please recommend a suitable option for everyday use. Please confirm using the linked record.,Filipino,2026-06-05T00:40:00+08:00,true
-MSG0000538,SES00091,assistant,"[Filipino] Based on the stated need, I can compare available mock products and stock. The response is based only on simulated experimental data.",Filipino,2026-06-05T00:43:00+08:00,true
-MSG0000539,SES00091,buyer,Thank you. Please save this conversation.,Filipino,2026-06-05T00:46:00+08:00,true
-MSG0000540,SES00091,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-06-05T00:49:00+08:00,true
-MSG0000541,SES00091,buyer,"If the status changes, should I contact support again?",Filipino,2026-06-05T00:52:00+08:00,true
-MSG0000542,SES00091,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Filipino,2026-06-05T00:55:00+08:00,true
-MSG0000543,SES00092,buyer,Where is my parcel now?,English,2026-01-26T01:17:00+08:00,true
-MSG0000544,SES00092,assistant,I found the linked mock tracking record and its latest location.,English,2026-01-26T01:20:00+08:00,true
-MSG0000545,SES00092,buyer,Where is my parcel now? Please confirm using the linked record.,English,2026-01-26T01:23:00+08:00,true
-MSG0000546,SES00092,assistant,I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,English,2026-01-26T01:26:00+08:00,true
-MSG0000547,SES00092,buyer,Thank you. Please save this conversation.,English,2026-01-26T01:29:00+08:00,true
-MSG0000548,SES00092,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-01-26T01:32:00+08:00,true
-MSG0000549,SES00093,buyer,[Filipino] Is this item currently available?,Filipino,2026-03-30T02:29:00+08:00,true
-MSG0000550,SES00093,assistant,[Filipino] I checked the simulated inventory and can confirm the current stock status.,Filipino,2026-03-30T02:32:00+08:00,true
-MSG0000551,SES00093,buyer,[Filipino] Is this item currently available? Please confirm using the linked record.,Filipino,2026-03-30T02:35:00+08:00,true
-MSG0000552,SES00093,assistant,[Filipino] I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,Filipino,2026-03-30T02:38:00+08:00,true
-MSG0000553,SES00094,buyer,[Bahasa Melayu] I would like to request a refund. What information is needed?,Malay,2026-02-17T09:33:00+08:00,true
-MSG0000554,SES00094,assistant,"[Bahasa Melayu] I can register the request, but approval and refund execution require a human review.",Malay,2026-02-17T09:36:00+08:00,true
-MSG0000555,SES00094,buyer,[Bahasa Melayu] I would like to request a refund. What information is needed? Please confirm using the linked record.,Malay,2026-02-17T09:39:00+08:00,true
-MSG0000556,SES00094,assistant,"[Bahasa Melayu] I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",Malay,2026-02-17T09:42:00+08:00,true
-MSG0000557,SES00095,buyer,[ภาษาไทย] Can you explain the main product features?,Thai,2026-01-08T22:38:00+08:00,true
-MSG0000558,SES00095,assistant,[ภาษาไทย] I can help. The product details and selected variation are available in the mock catalog.,Thai,2026-01-08T22:41:00+08:00,true
-MSG0000559,SES00095,buyer,[ภาษาไทย] Can you explain the main product features? Please confirm using the linked record.,Thai,2026-01-08T22:44:00+08:00,true
-MSG0000560,SES00095,assistant,[ภาษาไทย] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Thai,2026-01-08T22:47:00+08:00,true
-MSG0000561,SES00095,buyer,Thank you. Please save this conversation.,Thai,2026-01-08T22:50:00+08:00,true
-MSG0000562,SES00095,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-01-08T22:53:00+08:00,true
-MSG0000563,SES00096,buyer,[Bahasa Melayu] Can you explain the main product features?,Malay,2026-04-27T12:37:00+08:00,true
-MSG0000564,SES00096,assistant,[Bahasa Melayu] I can help. The product details and selected variation are available in the mock catalog.,Malay,2026-04-27T12:40:00+08:00,true
-MSG0000565,SES00096,buyer,[Bahasa Melayu] Can you explain the main product features? Please confirm using the linked record.,Malay,2026-04-27T12:43:00+08:00,true
-MSG0000566,SES00096,assistant,[Bahasa Melayu] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Malay,2026-04-27T12:46:00+08:00,true
-MSG0000567,SES00096,buyer,Thank you. Please save this conversation.,Malay,2026-04-27T12:49:00+08:00,true
-MSG0000568,SES00096,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-04-27T12:52:00+08:00,true
-MSG0000569,SES00097,buyer,[ภาษาไทย] Which size or variation should I choose?,Thai,2026-04-13T10:33:00+08:00,true
-MSG0000570,SES00097,assistant,[ภาษาไทย] Please compare your measurements with the listed variation details before choosing.,Thai,2026-04-13T10:36:00+08:00,true
-MSG0000571,SES00097,buyer,[ภาษาไทย] Which size or variation should I choose? Please confirm using the linked record.,Thai,2026-04-13T10:39:00+08:00,true
-MSG0000572,SES00097,assistant,[ภาษาไทย] Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,Thai,2026-04-13T10:42:00+08:00,true
-MSG0000573,SES00097,buyer,Thank you. Please save this conversation.,Thai,2026-04-13T10:45:00+08:00,true
-MSG0000574,SES00097,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-04-13T10:48:00+08:00,true
-MSG0000575,SES00097,buyer,"If the status changes, should I contact support again?",Thai,2026-04-13T10:51:00+08:00,true
-MSG0000576,SES00097,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Thai,2026-04-13T10:54:00+08:00,true
-MSG0000577,SES00098,buyer,[Bahasa Melayu] Can I cancel this order before shipment?,Malay,2026-04-18T04:59:00+08:00,true
-MSG0000578,SES00098,assistant,[Bahasa Melayu] Cancellation depends on the current order status; shipped orders need manual review.,Malay,2026-04-18T05:02:00+08:00,true
-MSG0000579,SES00098,buyer,[Bahasa Melayu] Can I cancel this order before shipment? Please confirm using the linked record.,Malay,2026-04-18T05:05:00+08:00,true
-MSG0000580,SES00098,assistant,[Bahasa Melayu] Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,Malay,2026-04-18T05:08:00+08:00,true
-MSG0000581,SES00098,buyer,Thank you. Please save this conversation.,Malay,2026-04-18T05:11:00+08:00,true
-MSG0000582,SES00098,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-04-18T05:14:00+08:00,true
-MSG0000583,SES00098,buyer,"If the status changes, should I contact support again?",Malay,2026-04-18T05:17:00+08:00,true
-MSG0000584,SES00098,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Malay,2026-04-18T05:20:00+08:00,true
-MSG0000585,SES00099,buyer,[Filipino] Can you explain the main product features?,Filipino,2026-06-20T22:06:00+08:00,true
-MSG0000586,SES00099,assistant,[Filipino] I can help. The product details and selected variation are available in the mock catalog.,Filipino,2026-06-20T22:09:00+08:00,true
-MSG0000587,SES00099,buyer,[Filipino] Can you explain the main product features? Please confirm using the linked record.,Filipino,2026-06-20T22:12:00+08:00,true
-MSG0000588,SES00099,assistant,[Filipino] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Filipino,2026-06-20T22:15:00+08:00,true
-MSG0000589,SES00100,buyer,[Tiếng Việt] What is the current status of my order?,Vietnamese,2026-06-27T11:05:00+08:00,true
-MSG0000590,SES00100,assistant,[Tiếng Việt] I found the simulated order and will summarize its latest status.,Vietnamese,2026-06-27T11:08:00+08:00,true
-MSG0000591,SES00100,buyer,[Tiếng Việt] What is the current status of my order? Please confirm using the linked record.,Vietnamese,2026-06-27T11:11:00+08:00,true
-MSG0000592,SES00100,assistant,[Tiếng Việt] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Vietnamese,2026-06-27T11:14:00+08:00,true
-MSG0000593,SES00100,buyer,Thank you. Please save this conversation.,Vietnamese,2026-06-27T11:17:00+08:00,true
-MSG0000594,SES00100,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-06-27T11:20:00+08:00,true
-MSG0000595,SES00100,buyer,"If the status changes, should I contact support again?",Vietnamese,2026-06-27T11:23:00+08:00,true
-MSG0000596,SES00100,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Vietnamese,2026-06-27T11:26:00+08:00,true
+MSG0000001,SES00001,buyer,[Tiếng Việt] Can I cancel this order before shipment?,Vietnamese,2026-02-26T22:18:00+08:00,true
+MSG0000002,SES00001,assistant,[Tiếng Việt] Cancellation depends on the current order status; shipped orders need manual review.,Vietnamese,2026-02-26T22:21:00+08:00,true
+MSG0000003,SES00001,buyer,[Tiếng Việt] Can I cancel this order before shipment? Please confirm using the linked record.,Vietnamese,2026-02-26T22:24:00+08:00,true
+MSG0000004,SES00001,assistant,[Tiếng Việt] Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,Vietnamese,2026-02-26T22:27:00+08:00,true
+MSG0000005,SES00002,buyer,Can I cancel this order before shipment?,English,2026-04-08T20:07:00+08:00,true
+MSG0000006,SES00002,assistant,Cancellation depends on the current order status; shipped orders need manual review.,English,2026-04-08T20:10:00+08:00,true
+MSG0000007,SES00002,buyer,Can I cancel this order before shipment? Please confirm using the linked record.,English,2026-04-08T20:13:00+08:00,true
+MSG0000008,SES00002,assistant,Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,English,2026-04-08T20:16:00+08:00,true
+MSG0000009,SES00003,buyer,[ภาษาไทย] Which size or variation should I choose?,Thai,2026-01-05T23:11:00+08:00,true
+MSG0000010,SES00003,assistant,[ภาษาไทย] Please compare your measurements with the listed variation details before choosing.,Thai,2026-01-05T23:14:00+08:00,true
+MSG0000011,SES00003,buyer,[ภาษาไทย] Which size or variation should I choose? Please confirm using the linked record.,Thai,2026-01-05T23:17:00+08:00,true
+MSG0000012,SES00003,assistant,[ภาษาไทย] Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,Thai,2026-01-05T23:20:00+08:00,true
+MSG0000013,SES00004,buyer,I would like to request a refund. What information is needed?,English,2026-05-13T18:46:00+08:00,true
+MSG0000014,SES00004,assistant,"I can register the request, but approval and refund execution require a human review.",English,2026-05-13T18:49:00+08:00,true
+MSG0000015,SES00004,buyer,I would like to request a refund. What information is needed? Please confirm using the linked record.,English,2026-05-13T18:52:00+08:00,true
+MSG0000016,SES00004,assistant,"I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",English,2026-05-13T18:55:00+08:00,true
+MSG0000017,SES00004,buyer,Thank you. Please save this conversation.,English,2026-05-13T18:58:00+08:00,true
+MSG0000018,SES00004,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-05-13T19:01:00+08:00,true
+MSG0000019,SES00004,buyer,"If the status changes, should I contact support again?",English,2026-05-13T19:04:00+08:00,true
+MSG0000020,SES00004,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,English,2026-05-13T19:07:00+08:00,true
+MSG0000021,SES00005,buyer,Can I cancel this order before shipment?,English,2026-02-02T04:26:00+08:00,true
+MSG0000022,SES00005,assistant,Cancellation depends on the current order status; shipped orders need manual review.,English,2026-02-02T04:29:00+08:00,true
+MSG0000023,SES00005,buyer,Can I cancel this order before shipment? Please confirm using the linked record.,English,2026-02-02T04:32:00+08:00,true
+MSG0000024,SES00005,assistant,Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,English,2026-02-02T04:35:00+08:00,true
+MSG0000025,SES00005,buyer,Thank you. Please save this conversation.,English,2026-02-02T04:38:00+08:00,true
+MSG0000026,SES00005,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-02-02T04:41:00+08:00,true
+MSG0000027,SES00005,buyer,"If the status changes, should I contact support again?",English,2026-02-02T04:44:00+08:00,true
+MSG0000028,SES00005,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,English,2026-02-02T04:47:00+08:00,true
+MSG0000029,SES00006,buyer,[Tiếng Việt] Can I cancel this order before shipment?,Vietnamese,2026-06-02T19:48:00+08:00,true
+MSG0000030,SES00006,assistant,[Tiếng Việt] Cancellation depends on the current order status; shipped orders need manual review.,Vietnamese,2026-06-02T19:51:00+08:00,true
+MSG0000031,SES00006,buyer,[Tiếng Việt] Can I cancel this order before shipment? Please confirm using the linked record.,Vietnamese,2026-06-02T19:54:00+08:00,true
+MSG0000032,SES00006,assistant,[Tiếng Việt] Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,Vietnamese,2026-06-02T19:57:00+08:00,true
+MSG0000033,SES00006,buyer,Thank you. Please save this conversation.,Vietnamese,2026-06-02T20:00:00+08:00,true
+MSG0000034,SES00006,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-06-02T20:03:00+08:00,true
+MSG0000035,SES00007,buyer,[Bahasa Indonesia] Can you explain the main product features?,Indonesian,2026-05-03T11:34:00+08:00,true
+MSG0000036,SES00007,assistant,[Bahasa Indonesia] I can help. The product details and selected variation are available in the mock catalog.,Indonesian,2026-05-03T11:37:00+08:00,true
+MSG0000037,SES00007,buyer,[Bahasa Indonesia] Can you explain the main product features? Please confirm using the linked record.,Indonesian,2026-05-03T11:40:00+08:00,true
+MSG0000038,SES00007,assistant,[Bahasa Indonesia] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Indonesian,2026-05-03T11:43:00+08:00,true
+MSG0000039,SES00007,buyer,Thank you. Please save this conversation.,Indonesian,2026-05-03T11:46:00+08:00,true
+MSG0000040,SES00007,assistant,The mock conversation has been saved for testing and demonstration.,Indonesian,2026-05-03T11:49:00+08:00,true
+MSG0000041,SES00008,buyer,[Tiếng Việt] Which size or variation should I choose?,Vietnamese,2026-03-29T10:46:00+08:00,true
+MSG0000042,SES00008,assistant,[Tiếng Việt] Please compare your measurements with the listed variation details before choosing.,Vietnamese,2026-03-29T10:49:00+08:00,true
+MSG0000043,SES00008,buyer,[Tiếng Việt] Which size or variation should I choose? Please confirm using the linked record.,Vietnamese,2026-03-29T10:52:00+08:00,true
+MSG0000044,SES00008,assistant,[Tiếng Việt] Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,Vietnamese,2026-03-29T10:55:00+08:00,true
+MSG0000045,SES00009,buyer,[Tiếng Việt] Where is my parcel now?,Vietnamese,2026-05-12T10:55:00+08:00,true
+MSG0000046,SES00009,assistant,[Tiếng Việt] I found the linked mock tracking record and its latest location.,Vietnamese,2026-05-12T10:58:00+08:00,true
+MSG0000047,SES00009,buyer,[Tiếng Việt] Where is my parcel now? Please confirm using the linked record.,Vietnamese,2026-05-12T11:01:00+08:00,true
+MSG0000048,SES00009,assistant,[Tiếng Việt] I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,Vietnamese,2026-05-12T11:04:00+08:00,true
+MSG0000049,SES00009,buyer,Thank you. Please save this conversation.,Vietnamese,2026-05-12T11:07:00+08:00,true
+MSG0000050,SES00009,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-05-12T11:10:00+08:00,true
+MSG0000051,SES00009,buyer,"If the status changes, should I contact support again?",Vietnamese,2026-05-12T11:13:00+08:00,true
+MSG0000052,SES00009,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Vietnamese,2026-05-12T11:16:00+08:00,true
+MSG0000053,SES00010,buyer,[Bahasa Melayu] The item did not meet expectations. How can this be resolved?,Malay,2026-01-29T23:16:00+08:00,true
+MSG0000054,SES00010,assistant,[Bahasa Melayu] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Malay,2026-01-29T23:19:00+08:00,true
+MSG0000055,SES00010,buyer,[Bahasa Melayu] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Malay,2026-01-29T23:22:00+08:00,true
+MSG0000056,SES00010,assistant,[Bahasa Melayu] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Malay,2026-01-29T23:25:00+08:00,true
+MSG0000057,SES00010,buyer,Thank you. Please save this conversation.,Malay,2026-01-29T23:28:00+08:00,true
+MSG0000058,SES00010,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-01-29T23:31:00+08:00,true
+MSG0000059,SES00010,buyer,"If the status changes, should I contact support again?",Malay,2026-01-29T23:34:00+08:00,true
+MSG0000060,SES00010,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Malay,2026-01-29T23:37:00+08:00,true
+MSG0000061,SES00011,buyer,[ภาษาไทย] What is the current status of my order?,Thai,2026-03-18T02:00:00+08:00,true
+MSG0000062,SES00011,assistant,[ภาษาไทย] I found the simulated order and will summarize its latest status.,Thai,2026-03-18T02:03:00+08:00,true
+MSG0000063,SES00011,buyer,[ภาษาไทย] What is the current status of my order? Please confirm using the linked record.,Thai,2026-03-18T02:06:00+08:00,true
+MSG0000064,SES00011,assistant,[ภาษาไทย] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Thai,2026-03-18T02:09:00+08:00,true
+MSG0000065,SES00011,buyer,Thank you. Please save this conversation.,Thai,2026-03-18T02:12:00+08:00,true
+MSG0000066,SES00011,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-03-18T02:15:00+08:00,true
+MSG0000067,SES00012,buyer,[Filipino] I would like to request a refund. What information is needed?,Filipino,2026-06-02T08:56:00+08:00,true
+MSG0000068,SES00012,assistant,"[Filipino] I can register the request, but approval and refund execution require a human review.",Filipino,2026-06-02T08:59:00+08:00,true
+MSG0000069,SES00012,buyer,[Filipino] I would like to request a refund. What information is needed? Please confirm using the linked record.,Filipino,2026-06-02T09:02:00+08:00,true
+MSG0000070,SES00012,assistant,"[Filipino] I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",Filipino,2026-06-02T09:05:00+08:00,true
+MSG0000071,SES00012,buyer,Thank you. Please save this conversation.,Filipino,2026-06-02T09:08:00+08:00,true
+MSG0000072,SES00012,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-06-02T09:11:00+08:00,true
+MSG0000073,SES00012,buyer,"If the status changes, should I contact support again?",Filipino,2026-06-02T09:14:00+08:00,true
+MSG0000074,SES00012,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Filipino,2026-06-02T09:17:00+08:00,true
+MSG0000075,SES00013,buyer,Where is my parcel now?,English,2026-02-03T23:59:00+08:00,true
+MSG0000076,SES00013,assistant,I found the linked mock tracking record and its latest location.,English,2026-02-04T00:02:00+08:00,true
+MSG0000077,SES00013,buyer,Where is my parcel now? Please confirm using the linked record.,English,2026-02-04T00:05:00+08:00,true
+MSG0000078,SES00013,assistant,I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,English,2026-02-04T00:08:00+08:00,true
+MSG0000079,SES00013,buyer,Thank you. Please save this conversation.,English,2026-02-04T00:11:00+08:00,true
+MSG0000080,SES00013,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-02-04T00:14:00+08:00,true
+MSG0000081,SES00014,buyer,Can you explain the main product features?,English,2026-03-16T19:35:00+08:00,true
+MSG0000082,SES00014,assistant,I can help. The product details and selected variation are available in the mock catalog.,English,2026-03-16T19:38:00+08:00,true
+MSG0000083,SES00014,buyer,Can you explain the main product features? Please confirm using the linked record.,English,2026-03-16T19:41:00+08:00,true
+MSG0000084,SES00014,assistant,I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,English,2026-03-16T19:44:00+08:00,true
+MSG0000085,SES00014,buyer,Thank you. Please save this conversation.,English,2026-03-16T19:47:00+08:00,true
+MSG0000086,SES00014,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-03-16T19:50:00+08:00,true
+MSG0000087,SES00015,buyer,[ภาษาไทย] Is this item currently available?,Thai,2026-01-28T03:40:00+08:00,true
+MSG0000088,SES00015,assistant,[ภาษาไทย] I checked the simulated inventory and can confirm the current stock status.,Thai,2026-01-28T03:43:00+08:00,true
+MSG0000089,SES00015,buyer,[ภาษาไทย] Is this item currently available? Please confirm using the linked record.,Thai,2026-01-28T03:46:00+08:00,true
+MSG0000090,SES00015,assistant,[ภาษาไทย] I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,Thai,2026-01-28T03:49:00+08:00,true
+MSG0000091,SES00016,buyer,[Filipino] Which size or variation should I choose?,Filipino,2026-01-22T01:59:00+08:00,true
+MSG0000092,SES00016,assistant,[Filipino] Please compare your measurements with the listed variation details before choosing.,Filipino,2026-01-22T02:02:00+08:00,true
+MSG0000093,SES00016,buyer,[Filipino] Which size or variation should I choose? Please confirm using the linked record.,Filipino,2026-01-22T02:05:00+08:00,true
+MSG0000094,SES00016,assistant,[Filipino] Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,Filipino,2026-01-22T02:08:00+08:00,true
+MSG0000095,SES00016,buyer,Thank you. Please save this conversation.,Filipino,2026-01-22T02:11:00+08:00,true
+MSG0000096,SES00016,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-01-22T02:14:00+08:00,true
+MSG0000097,SES00017,buyer,[Tiếng Việt] Can you explain the main product features?,Vietnamese,2026-01-31T21:36:00+08:00,true
+MSG0000098,SES00017,assistant,[Tiếng Việt] I can help. The product details and selected variation are available in the mock catalog.,Vietnamese,2026-01-31T21:39:00+08:00,true
+MSG0000099,SES00017,buyer,[Tiếng Việt] Can you explain the main product features? Please confirm using the linked record.,Vietnamese,2026-01-31T21:42:00+08:00,true
+MSG0000100,SES00017,assistant,[Tiếng Việt] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Vietnamese,2026-01-31T21:45:00+08:00,true
+MSG0000101,SES00017,buyer,Thank you. Please save this conversation.,Vietnamese,2026-01-31T21:48:00+08:00,true
+MSG0000102,SES00017,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-01-31T21:51:00+08:00,true
+MSG0000103,SES00017,buyer,"If the status changes, should I contact support again?",Vietnamese,2026-01-31T21:54:00+08:00,true
+MSG0000104,SES00017,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Vietnamese,2026-01-31T21:57:00+08:00,true
+MSG0000105,SES00018,buyer,Which size or variation should I choose?,English,2026-01-28T06:47:00+08:00,true
+MSG0000106,SES00018,assistant,Please compare your measurements with the listed variation details before choosing.,English,2026-01-28T06:50:00+08:00,true
+MSG0000107,SES00018,buyer,Which size or variation should I choose? Please confirm using the linked record.,English,2026-01-28T06:53:00+08:00,true
+MSG0000108,SES00018,assistant,Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,English,2026-01-28T06:56:00+08:00,true
+MSG0000109,SES00018,buyer,Thank you. Please save this conversation.,English,2026-01-28T06:59:00+08:00,true
+MSG0000110,SES00018,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-01-28T07:02:00+08:00,true
+MSG0000111,SES00019,buyer,[Bahasa Melayu] Which size or variation should I choose?,Malay,2026-01-28T21:42:00+08:00,true
+MSG0000112,SES00019,assistant,[Bahasa Melayu] Please compare your measurements with the listed variation details before choosing.,Malay,2026-01-28T21:45:00+08:00,true
+MSG0000113,SES00019,buyer,[Bahasa Melayu] Which size or variation should I choose? Please confirm using the linked record.,Malay,2026-01-28T21:48:00+08:00,true
+MSG0000114,SES00019,assistant,[Bahasa Melayu] Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,Malay,2026-01-28T21:51:00+08:00,true
+MSG0000115,SES00020,buyer,Which size or variation should I choose?,English,2026-01-24T16:55:00+08:00,true
+MSG0000116,SES00020,assistant,Please compare your measurements with the listed variation details before choosing.,English,2026-01-24T16:58:00+08:00,true
+MSG0000117,SES00020,buyer,Which size or variation should I choose? Please confirm using the linked record.,English,2026-01-24T17:01:00+08:00,true
+MSG0000118,SES00020,assistant,Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,English,2026-01-24T17:04:00+08:00,true
+MSG0000119,SES00020,buyer,Thank you. Please save this conversation.,English,2026-01-24T17:07:00+08:00,true
+MSG0000120,SES00020,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-01-24T17:10:00+08:00,true
+MSG0000121,SES00021,buyer,What is the current status of my order?,English,2026-04-18T15:12:00+08:00,true
+MSG0000122,SES00021,assistant,I found the simulated order and will summarize its latest status.,English,2026-04-18T15:15:00+08:00,true
+MSG0000123,SES00021,buyer,What is the current status of my order? Please confirm using the linked record.,English,2026-04-18T15:18:00+08:00,true
+MSG0000124,SES00021,assistant,I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,English,2026-04-18T15:21:00+08:00,true
+MSG0000125,SES00021,buyer,Thank you. Please save this conversation.,English,2026-04-18T15:24:00+08:00,true
+MSG0000126,SES00021,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-04-18T15:27:00+08:00,true
+MSG0000127,SES00022,buyer,Can I cancel this order before shipment?,English,2026-05-25T13:20:00+08:00,true
+MSG0000128,SES00022,assistant,Cancellation depends on the current order status; shipped orders need manual review.,English,2026-05-25T13:23:00+08:00,true
+MSG0000129,SES00022,buyer,Can I cancel this order before shipment? Please confirm using the linked record.,English,2026-05-25T13:26:00+08:00,true
+MSG0000130,SES00022,assistant,Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,English,2026-05-25T13:29:00+08:00,true
+MSG0000131,SES00022,buyer,Thank you. Please save this conversation.,English,2026-05-25T13:32:00+08:00,true
+MSG0000132,SES00022,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-05-25T13:35:00+08:00,true
+MSG0000133,SES00023,buyer,[ภาษาไทย] Is this item currently available?,Thai,2026-04-07T20:00:00+08:00,true
+MSG0000134,SES00023,assistant,[ภาษาไทย] I checked the simulated inventory and can confirm the current stock status.,Thai,2026-04-07T20:03:00+08:00,true
+MSG0000135,SES00023,buyer,[ภาษาไทย] Is this item currently available? Please confirm using the linked record.,Thai,2026-04-07T20:06:00+08:00,true
+MSG0000136,SES00023,assistant,[ภาษาไทย] I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,Thai,2026-04-07T20:09:00+08:00,true
+MSG0000137,SES00024,buyer,[Tiếng Việt] Where is my parcel now?,Vietnamese,2026-02-19T11:06:00+08:00,true
+MSG0000138,SES00024,assistant,[Tiếng Việt] I found the linked mock tracking record and its latest location.,Vietnamese,2026-02-19T11:09:00+08:00,true
+MSG0000139,SES00024,buyer,[Tiếng Việt] Where is my parcel now? Please confirm using the linked record.,Vietnamese,2026-02-19T11:12:00+08:00,true
+MSG0000140,SES00024,assistant,[Tiếng Việt] I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,Vietnamese,2026-02-19T11:15:00+08:00,true
+MSG0000141,SES00024,buyer,Thank you. Please save this conversation.,Vietnamese,2026-02-19T11:18:00+08:00,true
+MSG0000142,SES00024,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-02-19T11:21:00+08:00,true
+MSG0000143,SES00025,buyer,[Filipino] The item did not meet expectations. How can this be resolved?,Filipino,2026-04-07T04:33:00+08:00,true
+MSG0000144,SES00025,assistant,[Filipino] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Filipino,2026-04-07T04:36:00+08:00,true
+MSG0000145,SES00025,buyer,[Filipino] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Filipino,2026-04-07T04:39:00+08:00,true
+MSG0000146,SES00025,assistant,[Filipino] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Filipino,2026-04-07T04:42:00+08:00,true
+MSG0000147,SES00025,buyer,Thank you. Please save this conversation.,Filipino,2026-04-07T04:45:00+08:00,true
+MSG0000148,SES00025,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-04-07T04:48:00+08:00,true
+MSG0000149,SES00025,buyer,"If the status changes, should I contact support again?",Filipino,2026-04-07T04:51:00+08:00,true
+MSG0000150,SES00025,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Filipino,2026-04-07T04:54:00+08:00,true
+MSG0000151,SES00026,buyer,The item did not meet expectations. How can this be resolved?,English,2026-06-01T03:38:00+08:00,true
+MSG0000152,SES00026,assistant,I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,English,2026-06-01T03:41:00+08:00,true
+MSG0000153,SES00026,buyer,The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,English,2026-06-01T03:44:00+08:00,true
+MSG0000154,SES00026,assistant,I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,English,2026-06-01T03:47:00+08:00,true
+MSG0000155,SES00027,buyer,[Filipino] Which size or variation should I choose?,Filipino,2026-05-18T07:40:00+08:00,true
+MSG0000156,SES00027,assistant,[Filipino] Please compare your measurements with the listed variation details before choosing.,Filipino,2026-05-18T07:43:00+08:00,true
+MSG0000157,SES00027,buyer,[Filipino] Which size or variation should I choose? Please confirm using the linked record.,Filipino,2026-05-18T07:46:00+08:00,true
+MSG0000158,SES00027,assistant,[Filipino] Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,Filipino,2026-05-18T07:49:00+08:00,true
+MSG0000159,SES00027,buyer,Thank you. Please save this conversation.,Filipino,2026-05-18T07:52:00+08:00,true
+MSG0000160,SES00027,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-05-18T07:55:00+08:00,true
+MSG0000161,SES00028,buyer,[ภาษาไทย] The item did not meet expectations. How can this be resolved?,Thai,2026-03-12T11:07:00+08:00,true
+MSG0000162,SES00028,assistant,[ภาษาไทย] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Thai,2026-03-12T11:10:00+08:00,true
+MSG0000163,SES00028,buyer,[ภาษาไทย] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Thai,2026-03-12T11:13:00+08:00,true
+MSG0000164,SES00028,assistant,[ภาษาไทย] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Thai,2026-03-12T11:16:00+08:00,true
+MSG0000165,SES00028,buyer,Thank you. Please save this conversation.,Thai,2026-03-12T11:19:00+08:00,true
+MSG0000166,SES00028,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-03-12T11:22:00+08:00,true
+MSG0000167,SES00029,buyer,[ภาษาไทย] Where is my parcel now?,Thai,2026-03-28T05:18:00+08:00,true
+MSG0000168,SES00029,assistant,[ภาษาไทย] I found the linked mock tracking record and its latest location.,Thai,2026-03-28T05:21:00+08:00,true
+MSG0000169,SES00029,buyer,[ภาษาไทย] Where is my parcel now? Please confirm using the linked record.,Thai,2026-03-28T05:24:00+08:00,true
+MSG0000170,SES00029,assistant,[ภาษาไทย] I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,Thai,2026-03-28T05:27:00+08:00,true
+MSG0000171,SES00029,buyer,Thank you. Please save this conversation.,Thai,2026-03-28T05:30:00+08:00,true
+MSG0000172,SES00029,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-03-28T05:33:00+08:00,true
+MSG0000173,SES00029,buyer,"If the status changes, should I contact support again?",Thai,2026-03-28T05:36:00+08:00,true
+MSG0000174,SES00029,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Thai,2026-03-28T05:39:00+08:00,true
+MSG0000175,SES00030,buyer,Can I cancel this order before shipment?,English,2026-06-28T17:23:00+08:00,true
+MSG0000176,SES00030,assistant,Cancellation depends on the current order status; shipped orders need manual review.,English,2026-06-28T17:26:00+08:00,true
+MSG0000177,SES00030,buyer,Can I cancel this order before shipment? Please confirm using the linked record.,English,2026-06-28T17:29:00+08:00,true
+MSG0000178,SES00030,assistant,Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,English,2026-06-28T17:32:00+08:00,true
+MSG0000179,SES00031,buyer,[Filipino] I would like to request a refund. What information is needed?,Filipino,2026-01-28T03:41:00+08:00,true
+MSG0000180,SES00031,assistant,"[Filipino] I can register the request, but approval and refund execution require a human review.",Filipino,2026-01-28T03:44:00+08:00,true
+MSG0000181,SES00031,buyer,[Filipino] I would like to request a refund. What information is needed? Please confirm using the linked record.,Filipino,2026-01-28T03:47:00+08:00,true
+MSG0000182,SES00031,assistant,"[Filipino] I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",Filipino,2026-01-28T03:50:00+08:00,true
+MSG0000183,SES00032,buyer,[Bahasa Indonesia] I would like to request a refund. What information is needed?,Indonesian,2026-03-16T02:52:00+08:00,true
+MSG0000184,SES00032,assistant,"[Bahasa Indonesia] I can register the request, but approval and refund execution require a human review.",Indonesian,2026-03-16T02:55:00+08:00,true
+MSG0000185,SES00032,buyer,[Bahasa Indonesia] I would like to request a refund. What information is needed? Please confirm using the linked record.,Indonesian,2026-03-16T02:58:00+08:00,true
+MSG0000186,SES00032,assistant,"[Bahasa Indonesia] I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",Indonesian,2026-03-16T03:01:00+08:00,true
+MSG0000187,SES00032,buyer,Thank you. Please save this conversation.,Indonesian,2026-03-16T03:04:00+08:00,true
+MSG0000188,SES00032,assistant,The mock conversation has been saved for testing and demonstration.,Indonesian,2026-03-16T03:07:00+08:00,true
+MSG0000189,SES00033,buyer,[Bahasa Melayu] What is the current status of my order?,Malay,2026-04-10T08:17:00+08:00,true
+MSG0000190,SES00033,assistant,[Bahasa Melayu] I found the simulated order and will summarize its latest status.,Malay,2026-04-10T08:20:00+08:00,true
+MSG0000191,SES00033,buyer,[Bahasa Melayu] What is the current status of my order? Please confirm using the linked record.,Malay,2026-04-10T08:23:00+08:00,true
+MSG0000192,SES00033,assistant,[Bahasa Melayu] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Malay,2026-04-10T08:26:00+08:00,true
+MSG0000193,SES00033,buyer,Thank you. Please save this conversation.,Malay,2026-04-10T08:29:00+08:00,true
+MSG0000194,SES00033,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-04-10T08:32:00+08:00,true
+MSG0000195,SES00034,buyer,[Filipino] Can I cancel this order before shipment?,Filipino,2026-03-04T04:35:00+08:00,true
+MSG0000196,SES00034,assistant,[Filipino] Cancellation depends on the current order status; shipped orders need manual review.,Filipino,2026-03-04T04:38:00+08:00,true
+MSG0000197,SES00034,buyer,[Filipino] Can I cancel this order before shipment? Please confirm using the linked record.,Filipino,2026-03-04T04:41:00+08:00,true
+MSG0000198,SES00034,assistant,[Filipino] Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,Filipino,2026-03-04T04:44:00+08:00,true
+MSG0000199,SES00034,buyer,Thank you. Please save this conversation.,Filipino,2026-03-04T04:47:00+08:00,true
+MSG0000200,SES00034,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-03-04T04:50:00+08:00,true
+MSG0000201,SES00034,buyer,"If the status changes, should I contact support again?",Filipino,2026-03-04T04:53:00+08:00,true
+MSG0000202,SES00034,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Filipino,2026-03-04T04:56:00+08:00,true
+MSG0000203,SES00035,buyer,[Bahasa Indonesia] Which size or variation should I choose?,Indonesian,2026-01-26T01:11:00+08:00,true
+MSG0000204,SES00035,assistant,[Bahasa Indonesia] Please compare your measurements with the listed variation details before choosing.,Indonesian,2026-01-26T01:14:00+08:00,true
+MSG0000205,SES00035,buyer,[Bahasa Indonesia] Which size or variation should I choose? Please confirm using the linked record.,Indonesian,2026-01-26T01:17:00+08:00,true
+MSG0000206,SES00035,assistant,[Bahasa Indonesia] Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,Indonesian,2026-01-26T01:20:00+08:00,true
+MSG0000207,SES00036,buyer,[ภาษาไทย] What is the current status of my order?,Thai,2026-05-27T00:40:00+08:00,true
+MSG0000208,SES00036,assistant,[ภาษาไทย] I found the simulated order and will summarize its latest status.,Thai,2026-05-27T00:43:00+08:00,true
+MSG0000209,SES00036,buyer,[ภาษาไทย] What is the current status of my order? Please confirm using the linked record.,Thai,2026-05-27T00:46:00+08:00,true
+MSG0000210,SES00036,assistant,[ภาษาไทย] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Thai,2026-05-27T00:49:00+08:00,true
+MSG0000211,SES00036,buyer,Thank you. Please save this conversation.,Thai,2026-05-27T00:52:00+08:00,true
+MSG0000212,SES00036,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-05-27T00:55:00+08:00,true
+MSG0000213,SES00037,buyer,Is this item currently available?,English,2026-04-06T22:06:00+08:00,true
+MSG0000214,SES00037,assistant,I checked the simulated inventory and can confirm the current stock status.,English,2026-04-06T22:09:00+08:00,true
+MSG0000215,SES00037,buyer,Is this item currently available? Please confirm using the linked record.,English,2026-04-06T22:12:00+08:00,true
+MSG0000216,SES00037,assistant,I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,English,2026-04-06T22:15:00+08:00,true
+MSG0000217,SES00038,buyer,[Filipino] Please recommend a suitable option for everyday use.,Filipino,2026-03-17T19:03:00+08:00,true
+MSG0000218,SES00038,assistant,"[Filipino] Based on the stated need, I can compare available mock products and stock.",Filipino,2026-03-17T19:06:00+08:00,true
+MSG0000219,SES00038,buyer,[Filipino] Please recommend a suitable option for everyday use. Please confirm using the linked record.,Filipino,2026-03-17T19:09:00+08:00,true
+MSG0000220,SES00038,assistant,"[Filipino] Based on the stated need, I can compare available mock products and stock. The response is based only on simulated experimental data.",Filipino,2026-03-17T19:12:00+08:00,true
+MSG0000221,SES00038,buyer,Thank you. Please save this conversation.,Filipino,2026-03-17T19:15:00+08:00,true
+MSG0000222,SES00038,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-03-17T19:18:00+08:00,true
+MSG0000223,SES00038,buyer,"If the status changes, should I contact support again?",Filipino,2026-03-17T19:21:00+08:00,true
+MSG0000224,SES00038,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Filipino,2026-03-17T19:24:00+08:00,true
+MSG0000225,SES00039,buyer,Can I cancel this order before shipment?,English,2026-01-18T23:24:00+08:00,true
+MSG0000226,SES00039,assistant,Cancellation depends on the current order status; shipped orders need manual review.,English,2026-01-18T23:27:00+08:00,true
+MSG0000227,SES00039,buyer,Can I cancel this order before shipment? Please confirm using the linked record.,English,2026-01-18T23:30:00+08:00,true
+MSG0000228,SES00039,assistant,Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,English,2026-01-18T23:33:00+08:00,true
+MSG0000229,SES00039,buyer,Thank you. Please save this conversation.,English,2026-01-18T23:36:00+08:00,true
+MSG0000230,SES00039,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-01-18T23:39:00+08:00,true
+MSG0000231,SES00039,buyer,"If the status changes, should I contact support again?",English,2026-01-18T23:42:00+08:00,true
+MSG0000232,SES00039,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,English,2026-01-18T23:45:00+08:00,true
+MSG0000233,SES00040,buyer,[ภาษาไทย] What is the current status of my order?,Thai,2026-02-11T10:36:00+08:00,true
+MSG0000234,SES00040,assistant,[ภาษาไทย] I found the simulated order and will summarize its latest status.,Thai,2026-02-11T10:39:00+08:00,true
+MSG0000235,SES00040,buyer,[ภาษาไทย] What is the current status of my order? Please confirm using the linked record.,Thai,2026-02-11T10:42:00+08:00,true
+MSG0000236,SES00040,assistant,[ภาษาไทย] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Thai,2026-02-11T10:45:00+08:00,true
+MSG0000237,SES00040,buyer,Thank you. Please save this conversation.,Thai,2026-02-11T10:48:00+08:00,true
+MSG0000238,SES00040,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-02-11T10:51:00+08:00,true
+MSG0000239,SES00041,buyer,[Bahasa Melayu] Can you explain the main product features?,Malay,2026-05-01T18:37:00+08:00,true
+MSG0000240,SES00041,assistant,[Bahasa Melayu] I can help. The product details and selected variation are available in the mock catalog.,Malay,2026-05-01T18:40:00+08:00,true
+MSG0000241,SES00041,buyer,[Bahasa Melayu] Can you explain the main product features? Please confirm using the linked record.,Malay,2026-05-01T18:43:00+08:00,true
+MSG0000242,SES00041,assistant,[Bahasa Melayu] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Malay,2026-05-01T18:46:00+08:00,true
+MSG0000243,SES00041,buyer,Thank you. Please save this conversation.,Malay,2026-05-01T18:49:00+08:00,true
+MSG0000244,SES00041,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-05-01T18:52:00+08:00,true
+MSG0000245,SES00042,buyer,Can I cancel this order before shipment?,English,2026-05-07T05:57:00+08:00,true
+MSG0000246,SES00042,assistant,Cancellation depends on the current order status; shipped orders need manual review.,English,2026-05-07T06:00:00+08:00,true
+MSG0000247,SES00042,buyer,Can I cancel this order before shipment? Please confirm using the linked record.,English,2026-05-07T06:03:00+08:00,true
+MSG0000248,SES00042,assistant,Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,English,2026-05-07T06:06:00+08:00,true
+MSG0000249,SES00042,buyer,Thank you. Please save this conversation.,English,2026-05-07T06:09:00+08:00,true
+MSG0000250,SES00042,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-05-07T06:12:00+08:00,true
+MSG0000251,SES00043,buyer,[ภาษาไทย] Where is my parcel now?,Thai,2026-01-19T11:45:00+08:00,true
+MSG0000252,SES00043,assistant,[ภาษาไทย] I found the linked mock tracking record and its latest location.,Thai,2026-01-19T11:48:00+08:00,true
+MSG0000253,SES00043,buyer,[ภาษาไทย] Where is my parcel now? Please confirm using the linked record.,Thai,2026-01-19T11:51:00+08:00,true
+MSG0000254,SES00043,assistant,[ภาษาไทย] I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,Thai,2026-01-19T11:54:00+08:00,true
+MSG0000255,SES00043,buyer,Thank you. Please save this conversation.,Thai,2026-01-19T11:57:00+08:00,true
+MSG0000256,SES00043,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-01-19T12:00:00+08:00,true
+MSG0000257,SES00043,buyer,"If the status changes, should I contact support again?",Thai,2026-01-19T12:03:00+08:00,true
+MSG0000258,SES00043,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Thai,2026-01-19T12:06:00+08:00,true
+MSG0000259,SES00044,buyer,[ภาษาไทย] The item did not meet expectations. How can this be resolved?,Thai,2026-06-23T14:12:00+08:00,true
+MSG0000260,SES00044,assistant,[ภาษาไทย] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Thai,2026-06-23T14:15:00+08:00,true
+MSG0000261,SES00044,buyer,[ภาษาไทย] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Thai,2026-06-23T14:18:00+08:00,true
+MSG0000262,SES00044,assistant,[ภาษาไทย] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Thai,2026-06-23T14:21:00+08:00,true
+MSG0000263,SES00044,buyer,Thank you. Please save this conversation.,Thai,2026-06-23T14:24:00+08:00,true
+MSG0000264,SES00044,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-06-23T14:27:00+08:00,true
+MSG0000265,SES00044,buyer,"If the status changes, should I contact support again?",Thai,2026-06-23T14:30:00+08:00,true
+MSG0000266,SES00044,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Thai,2026-06-23T14:33:00+08:00,true
+MSG0000267,SES00045,buyer,[Filipino] Can you explain the main product features?,Filipino,2026-03-29T04:24:00+08:00,true
+MSG0000268,SES00045,assistant,[Filipino] I can help. The product details and selected variation are available in the mock catalog.,Filipino,2026-03-29T04:27:00+08:00,true
+MSG0000269,SES00045,buyer,[Filipino] Can you explain the main product features? Please confirm using the linked record.,Filipino,2026-03-29T04:30:00+08:00,true
+MSG0000270,SES00045,assistant,[Filipino] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Filipino,2026-03-29T04:33:00+08:00,true
+MSG0000271,SES00045,buyer,Thank you. Please save this conversation.,Filipino,2026-03-29T04:36:00+08:00,true
+MSG0000272,SES00045,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-03-29T04:39:00+08:00,true
+MSG0000273,SES00046,buyer,Please recommend a suitable option for everyday use.,English,2026-03-27T16:07:00+08:00,true
+MSG0000274,SES00046,assistant,"Based on the stated need, I can compare available mock products and stock.",English,2026-03-27T16:10:00+08:00,true
+MSG0000275,SES00046,buyer,Please recommend a suitable option for everyday use. Please confirm using the linked record.,English,2026-03-27T16:13:00+08:00,true
+MSG0000276,SES00046,assistant,"Based on the stated need, I can compare available mock products and stock. The response is based only on simulated experimental data.",English,2026-03-27T16:16:00+08:00,true
+MSG0000277,SES00046,buyer,Thank you. Please save this conversation.,English,2026-03-27T16:19:00+08:00,true
+MSG0000278,SES00046,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-03-27T16:22:00+08:00,true
+MSG0000279,SES00047,buyer,Can I cancel this order before shipment?,English,2026-06-27T01:37:00+08:00,true
+MSG0000280,SES00047,assistant,Cancellation depends on the current order status; shipped orders need manual review.,English,2026-06-27T01:40:00+08:00,true
+MSG0000281,SES00047,buyer,Can I cancel this order before shipment? Please confirm using the linked record.,English,2026-06-27T01:43:00+08:00,true
+MSG0000282,SES00047,assistant,Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,English,2026-06-27T01:46:00+08:00,true
+MSG0000283,SES00048,buyer,Can I cancel this order before shipment?,English,2026-04-28T23:48:00+08:00,true
+MSG0000284,SES00048,assistant,Cancellation depends on the current order status; shipped orders need manual review.,English,2026-04-28T23:51:00+08:00,true
+MSG0000285,SES00048,buyer,Can I cancel this order before shipment? Please confirm using the linked record.,English,2026-04-28T23:54:00+08:00,true
+MSG0000286,SES00048,assistant,Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,English,2026-04-28T23:57:00+08:00,true
+MSG0000287,SES00049,buyer,[ภาษาไทย] Which size or variation should I choose?,Thai,2026-02-02T10:10:00+08:00,true
+MSG0000288,SES00049,assistant,[ภาษาไทย] Please compare your measurements with the listed variation details before choosing.,Thai,2026-02-02T10:13:00+08:00,true
+MSG0000289,SES00049,buyer,[ภาษาไทย] Which size or variation should I choose? Please confirm using the linked record.,Thai,2026-02-02T10:16:00+08:00,true
+MSG0000290,SES00049,assistant,[ภาษาไทย] Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,Thai,2026-02-02T10:19:00+08:00,true
+MSG0000291,SES00049,buyer,Thank you. Please save this conversation.,Thai,2026-02-02T10:22:00+08:00,true
+MSG0000292,SES00049,assistant,The mock conversation has been saved for testing and demonstration.,Thai,2026-02-02T10:25:00+08:00,true
+MSG0000293,SES00050,buyer,[Tiếng Việt] Is this item currently available?,Vietnamese,2026-04-27T08:55:00+08:00,true
+MSG0000294,SES00050,assistant,[Tiếng Việt] I checked the simulated inventory and can confirm the current stock status.,Vietnamese,2026-04-27T08:58:00+08:00,true
+MSG0000295,SES00050,buyer,[Tiếng Việt] Is this item currently available? Please confirm using the linked record.,Vietnamese,2026-04-27T09:01:00+08:00,true
+MSG0000296,SES00050,assistant,[Tiếng Việt] I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,Vietnamese,2026-04-27T09:04:00+08:00,true
+MSG0000297,SES00051,buyer,[Tiếng Việt] The item did not meet expectations. How can this be resolved?,Vietnamese,2026-03-20T02:15:00+08:00,true
+MSG0000298,SES00051,assistant,[Tiếng Việt] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Vietnamese,2026-03-20T02:18:00+08:00,true
+MSG0000299,SES00051,buyer,[Tiếng Việt] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Vietnamese,2026-03-20T02:21:00+08:00,true
+MSG0000300,SES00051,assistant,[Tiếng Việt] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Vietnamese,2026-03-20T02:24:00+08:00,true
+MSG0000301,SES00051,buyer,Thank you. Please save this conversation.,Vietnamese,2026-03-20T02:27:00+08:00,true
+MSG0000302,SES00051,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-03-20T02:30:00+08:00,true
+MSG0000303,SES00052,buyer,[Filipino] Is this item currently available?,Filipino,2026-02-01T18:26:00+08:00,true
+MSG0000304,SES00052,assistant,[Filipino] I checked the simulated inventory and can confirm the current stock status.,Filipino,2026-02-01T18:29:00+08:00,true
+MSG0000305,SES00052,buyer,[Filipino] Is this item currently available? Please confirm using the linked record.,Filipino,2026-02-01T18:32:00+08:00,true
+MSG0000306,SES00052,assistant,[Filipino] I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,Filipino,2026-02-01T18:35:00+08:00,true
+MSG0000307,SES00052,buyer,Thank you. Please save this conversation.,Filipino,2026-02-01T18:38:00+08:00,true
+MSG0000308,SES00052,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-02-01T18:41:00+08:00,true
+MSG0000309,SES00053,buyer,[Filipino] The item did not meet expectations. How can this be resolved?,Filipino,2026-04-02T03:33:00+08:00,true
+MSG0000310,SES00053,assistant,[Filipino] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Filipino,2026-04-02T03:36:00+08:00,true
+MSG0000311,SES00053,buyer,[Filipino] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Filipino,2026-04-02T03:39:00+08:00,true
+MSG0000312,SES00053,assistant,[Filipino] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Filipino,2026-04-02T03:42:00+08:00,true
+MSG0000313,SES00053,buyer,Thank you. Please save this conversation.,Filipino,2026-04-02T03:45:00+08:00,true
+MSG0000314,SES00053,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-04-02T03:48:00+08:00,true
+MSG0000315,SES00053,buyer,"If the status changes, should I contact support again?",Filipino,2026-04-02T03:51:00+08:00,true
+MSG0000316,SES00053,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Filipino,2026-04-02T03:54:00+08:00,true
+MSG0000317,SES00054,buyer,Is this item currently available?,English,2026-05-23T15:17:00+08:00,true
+MSG0000318,SES00054,assistant,I checked the simulated inventory and can confirm the current stock status.,English,2026-05-23T15:20:00+08:00,true
+MSG0000319,SES00054,buyer,Is this item currently available? Please confirm using the linked record.,English,2026-05-23T15:23:00+08:00,true
+MSG0000320,SES00054,assistant,I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,English,2026-05-23T15:26:00+08:00,true
+MSG0000321,SES00054,buyer,Thank you. Please save this conversation.,English,2026-05-23T15:29:00+08:00,true
+MSG0000322,SES00054,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-05-23T15:32:00+08:00,true
+MSG0000323,SES00054,buyer,"If the status changes, should I contact support again?",English,2026-05-23T15:35:00+08:00,true
+MSG0000324,SES00054,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,English,2026-05-23T15:38:00+08:00,true
+MSG0000325,SES00055,buyer,[Bahasa Melayu] The item did not meet expectations. How can this be resolved?,Malay,2026-02-20T03:26:00+08:00,true
+MSG0000326,SES00055,assistant,[Bahasa Melayu] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Malay,2026-02-20T03:29:00+08:00,true
+MSG0000327,SES00055,buyer,[Bahasa Melayu] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Malay,2026-02-20T03:32:00+08:00,true
+MSG0000328,SES00055,assistant,[Bahasa Melayu] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Malay,2026-02-20T03:35:00+08:00,true
+MSG0000329,SES00055,buyer,Thank you. Please save this conversation.,Malay,2026-02-20T03:38:00+08:00,true
+MSG0000330,SES00055,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-02-20T03:41:00+08:00,true
+MSG0000331,SES00056,buyer,I would like to request a refund. What information is needed?,English,2026-04-13T07:38:00+08:00,true
+MSG0000332,SES00056,assistant,"I can register the request, but approval and refund execution require a human review.",English,2026-04-13T07:41:00+08:00,true
+MSG0000333,SES00056,buyer,I would like to request a refund. What information is needed? Please confirm using the linked record.,English,2026-04-13T07:44:00+08:00,true
+MSG0000334,SES00056,assistant,"I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",English,2026-04-13T07:47:00+08:00,true
+MSG0000335,SES00056,buyer,Thank you. Please save this conversation.,English,2026-04-13T07:50:00+08:00,true
+MSG0000336,SES00056,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-04-13T07:53:00+08:00,true
+MSG0000337,SES00057,buyer,[Filipino] Which size or variation should I choose?,Filipino,2026-02-27T16:42:00+08:00,true
+MSG0000338,SES00057,assistant,[Filipino] Please compare your measurements with the listed variation details before choosing.,Filipino,2026-02-27T16:45:00+08:00,true
+MSG0000339,SES00057,buyer,[Filipino] Which size or variation should I choose? Please confirm using the linked record.,Filipino,2026-02-27T16:48:00+08:00,true
+MSG0000340,SES00057,assistant,[Filipino] Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,Filipino,2026-02-27T16:51:00+08:00,true
+MSG0000341,SES00057,buyer,Thank you. Please save this conversation.,Filipino,2026-02-27T16:54:00+08:00,true
+MSG0000342,SES00057,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-02-27T16:57:00+08:00,true
+MSG0000343,SES00057,buyer,"If the status changes, should I contact support again?",Filipino,2026-02-27T17:00:00+08:00,true
+MSG0000344,SES00057,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Filipino,2026-02-27T17:03:00+08:00,true
+MSG0000345,SES00058,buyer,[Bahasa Indonesia] Is this item currently available?,Indonesian,2026-05-08T19:24:00+08:00,true
+MSG0000346,SES00058,assistant,[Bahasa Indonesia] I checked the simulated inventory and can confirm the current stock status.,Indonesian,2026-05-08T19:27:00+08:00,true
+MSG0000347,SES00058,buyer,[Bahasa Indonesia] Is this item currently available? Please confirm using the linked record.,Indonesian,2026-05-08T19:30:00+08:00,true
+MSG0000348,SES00058,assistant,[Bahasa Indonesia] I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,Indonesian,2026-05-08T19:33:00+08:00,true
+MSG0000349,SES00058,buyer,Thank you. Please save this conversation.,Indonesian,2026-05-08T19:36:00+08:00,true
+MSG0000350,SES00058,assistant,The mock conversation has been saved for testing and demonstration.,Indonesian,2026-05-08T19:39:00+08:00,true
+MSG0000351,SES00058,buyer,"If the status changes, should I contact support again?",Indonesian,2026-05-08T19:42:00+08:00,true
+MSG0000352,SES00058,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Indonesian,2026-05-08T19:45:00+08:00,true
+MSG0000353,SES00059,buyer,[Bahasa Melayu] The item did not meet expectations. How can this be resolved?,Malay,2026-05-28T07:39:00+08:00,true
+MSG0000354,SES00059,assistant,[Bahasa Melayu] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Malay,2026-05-28T07:42:00+08:00,true
+MSG0000355,SES00059,buyer,[Bahasa Melayu] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Malay,2026-05-28T07:45:00+08:00,true
+MSG0000356,SES00059,assistant,[Bahasa Melayu] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Malay,2026-05-28T07:48:00+08:00,true
+MSG0000357,SES00059,buyer,Thank you. Please save this conversation.,Malay,2026-05-28T07:51:00+08:00,true
+MSG0000358,SES00059,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-05-28T07:54:00+08:00,true
+MSG0000359,SES00060,buyer,Can you explain the main product features?,English,2026-05-14T15:58:00+08:00,true
+MSG0000360,SES00060,assistant,I can help. The product details and selected variation are available in the mock catalog.,English,2026-05-14T16:01:00+08:00,true
+MSG0000361,SES00060,buyer,Can you explain the main product features? Please confirm using the linked record.,English,2026-05-14T16:04:00+08:00,true
+MSG0000362,SES00060,assistant,I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,English,2026-05-14T16:07:00+08:00,true
+MSG0000363,SES00061,buyer,Where is my parcel now?,English,2026-02-19T22:55:00+08:00,true
+MSG0000364,SES00061,assistant,I found the linked mock tracking record and its latest location.,English,2026-02-19T22:58:00+08:00,true
+MSG0000365,SES00061,buyer,Where is my parcel now? Please confirm using the linked record.,English,2026-02-19T23:01:00+08:00,true
+MSG0000366,SES00061,assistant,I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,English,2026-02-19T23:04:00+08:00,true
+MSG0000367,SES00061,buyer,Thank you. Please save this conversation.,English,2026-02-19T23:07:00+08:00,true
+MSG0000368,SES00061,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-02-19T23:10:00+08:00,true
+MSG0000369,SES00061,buyer,"If the status changes, should I contact support again?",English,2026-02-19T23:13:00+08:00,true
+MSG0000370,SES00061,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,English,2026-02-19T23:16:00+08:00,true
+MSG0000371,SES00062,buyer,[Filipino] Can you explain the main product features?,Filipino,2026-01-12T13:23:00+08:00,true
+MSG0000372,SES00062,assistant,[Filipino] I can help. The product details and selected variation are available in the mock catalog.,Filipino,2026-01-12T13:26:00+08:00,true
+MSG0000373,SES00062,buyer,[Filipino] Can you explain the main product features? Please confirm using the linked record.,Filipino,2026-01-12T13:29:00+08:00,true
+MSG0000374,SES00062,assistant,[Filipino] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Filipino,2026-01-12T13:32:00+08:00,true
+MSG0000375,SES00062,buyer,Thank you. Please save this conversation.,Filipino,2026-01-12T13:35:00+08:00,true
+MSG0000376,SES00062,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-01-12T13:38:00+08:00,true
+MSG0000377,SES00062,buyer,"If the status changes, should I contact support again?",Filipino,2026-01-12T13:41:00+08:00,true
+MSG0000378,SES00062,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Filipino,2026-01-12T13:44:00+08:00,true
+MSG0000379,SES00063,buyer,What is the current status of my order?,English,2026-04-28T20:38:00+08:00,true
+MSG0000380,SES00063,assistant,I found the simulated order and will summarize its latest status.,English,2026-04-28T20:41:00+08:00,true
+MSG0000381,SES00063,buyer,What is the current status of my order? Please confirm using the linked record.,English,2026-04-28T20:44:00+08:00,true
+MSG0000382,SES00063,assistant,I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,English,2026-04-28T20:47:00+08:00,true
+MSG0000383,SES00063,buyer,Thank you. Please save this conversation.,English,2026-04-28T20:50:00+08:00,true
+MSG0000384,SES00063,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-04-28T20:53:00+08:00,true
+MSG0000385,SES00063,buyer,"If the status changes, should I contact support again?",English,2026-04-28T20:56:00+08:00,true
+MSG0000386,SES00063,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,English,2026-04-28T20:59:00+08:00,true
+MSG0000387,SES00064,buyer,[Bahasa Melayu] The item did not meet expectations. How can this be resolved?,Malay,2026-06-15T00:41:00+08:00,true
+MSG0000388,SES00064,assistant,[Bahasa Melayu] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Malay,2026-06-15T00:44:00+08:00,true
+MSG0000389,SES00064,buyer,[Bahasa Melayu] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Malay,2026-06-15T00:47:00+08:00,true
+MSG0000390,SES00064,assistant,[Bahasa Melayu] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Malay,2026-06-15T00:50:00+08:00,true
+MSG0000391,SES00064,buyer,Thank you. Please save this conversation.,Malay,2026-06-15T00:53:00+08:00,true
+MSG0000392,SES00064,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-06-15T00:56:00+08:00,true
+MSG0000393,SES00064,buyer,"If the status changes, should I contact support again?",Malay,2026-06-15T00:59:00+08:00,true
+MSG0000394,SES00064,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Malay,2026-06-15T01:02:00+08:00,true
+MSG0000395,SES00065,buyer,[ภาษาไทย] Please recommend a suitable option for everyday use.,Thai,2026-05-27T15:00:00+08:00,true
+MSG0000396,SES00065,assistant,"[ภาษาไทย] Based on the stated need, I can compare available mock products and stock.",Thai,2026-05-27T15:03:00+08:00,true
+MSG0000397,SES00065,buyer,[ภาษาไทย] Please recommend a suitable option for everyday use. Please confirm using the linked record.,Thai,2026-05-27T15:06:00+08:00,true
+MSG0000398,SES00065,assistant,"[ภาษาไทย] Based on the stated need, I can compare available mock products and stock. The response is based only on simulated experimental data.",Thai,2026-05-27T15:09:00+08:00,true
+MSG0000399,SES00066,buyer,[Filipino] I would like to request a refund. What information is needed?,Filipino,2026-04-07T02:32:00+08:00,true
+MSG0000400,SES00066,assistant,"[Filipino] I can register the request, but approval and refund execution require a human review.",Filipino,2026-04-07T02:35:00+08:00,true
+MSG0000401,SES00066,buyer,[Filipino] I would like to request a refund. What information is needed? Please confirm using the linked record.,Filipino,2026-04-07T02:38:00+08:00,true
+MSG0000402,SES00066,assistant,"[Filipino] I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",Filipino,2026-04-07T02:41:00+08:00,true
+MSG0000403,SES00067,buyer,[Bahasa Melayu] Which size or variation should I choose?,Malay,2026-02-13T01:12:00+08:00,true
+MSG0000404,SES00067,assistant,[Bahasa Melayu] Please compare your measurements with the listed variation details before choosing.,Malay,2026-02-13T01:15:00+08:00,true
+MSG0000405,SES00067,buyer,[Bahasa Melayu] Which size or variation should I choose? Please confirm using the linked record.,Malay,2026-02-13T01:18:00+08:00,true
+MSG0000406,SES00067,assistant,[Bahasa Melayu] Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,Malay,2026-02-13T01:21:00+08:00,true
+MSG0000407,SES00067,buyer,Thank you. Please save this conversation.,Malay,2026-02-13T01:24:00+08:00,true
+MSG0000408,SES00067,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-02-13T01:27:00+08:00,true
+MSG0000409,SES00067,buyer,"If the status changes, should I contact support again?",Malay,2026-02-13T01:30:00+08:00,true
+MSG0000410,SES00067,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Malay,2026-02-13T01:33:00+08:00,true
+MSG0000411,SES00068,buyer,The item did not meet expectations. How can this be resolved?,English,2026-04-22T19:52:00+08:00,true
+MSG0000412,SES00068,assistant,I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,English,2026-04-22T19:55:00+08:00,true
+MSG0000413,SES00068,buyer,The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,English,2026-04-22T19:58:00+08:00,true
+MSG0000414,SES00068,assistant,I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,English,2026-04-22T20:01:00+08:00,true
+MSG0000415,SES00068,buyer,Thank you. Please save this conversation.,English,2026-04-22T20:04:00+08:00,true
+MSG0000416,SES00068,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-04-22T20:07:00+08:00,true
+MSG0000417,SES00068,buyer,"If the status changes, should I contact support again?",English,2026-04-22T20:10:00+08:00,true
+MSG0000418,SES00068,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,English,2026-04-22T20:13:00+08:00,true
+MSG0000419,SES00069,buyer,[Tiếng Việt] Where is my parcel now?,Vietnamese,2026-05-22T07:09:00+08:00,true
+MSG0000420,SES00069,assistant,[Tiếng Việt] I found the linked mock tracking record and its latest location.,Vietnamese,2026-05-22T07:12:00+08:00,true
+MSG0000421,SES00069,buyer,[Tiếng Việt] Where is my parcel now? Please confirm using the linked record.,Vietnamese,2026-05-22T07:15:00+08:00,true
+MSG0000422,SES00069,assistant,[Tiếng Việt] I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,Vietnamese,2026-05-22T07:18:00+08:00,true
+MSG0000423,SES00070,buyer,[Filipino] What is the current status of my order?,Filipino,2026-05-29T11:01:00+08:00,true
+MSG0000424,SES00070,assistant,[Filipino] I found the simulated order and will summarize its latest status.,Filipino,2026-05-29T11:04:00+08:00,true
+MSG0000425,SES00070,buyer,[Filipino] What is the current status of my order? Please confirm using the linked record.,Filipino,2026-05-29T11:07:00+08:00,true
+MSG0000426,SES00070,assistant,[Filipino] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Filipino,2026-05-29T11:10:00+08:00,true
+MSG0000427,SES00071,buyer,[Bahasa Melayu] Can I cancel this order before shipment?,Malay,2026-05-30T22:01:00+08:00,true
+MSG0000428,SES00071,assistant,[Bahasa Melayu] Cancellation depends on the current order status; shipped orders need manual review.,Malay,2026-05-30T22:04:00+08:00,true
+MSG0000429,SES00071,buyer,[Bahasa Melayu] Can I cancel this order before shipment? Please confirm using the linked record.,Malay,2026-05-30T22:07:00+08:00,true
+MSG0000430,SES00071,assistant,[Bahasa Melayu] Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,Malay,2026-05-30T22:10:00+08:00,true
+MSG0000431,SES00072,buyer,[Bahasa Indonesia] Can you explain the main product features?,Indonesian,2026-04-16T11:17:00+08:00,true
+MSG0000432,SES00072,assistant,[Bahasa Indonesia] I can help. The product details and selected variation are available in the mock catalog.,Indonesian,2026-04-16T11:20:00+08:00,true
+MSG0000433,SES00072,buyer,[Bahasa Indonesia] Can you explain the main product features? Please confirm using the linked record.,Indonesian,2026-04-16T11:23:00+08:00,true
+MSG0000434,SES00072,assistant,[Bahasa Indonesia] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Indonesian,2026-04-16T11:26:00+08:00,true
+MSG0000435,SES00072,buyer,Thank you. Please save this conversation.,Indonesian,2026-04-16T11:29:00+08:00,true
+MSG0000436,SES00072,assistant,The mock conversation has been saved for testing and demonstration.,Indonesian,2026-04-16T11:32:00+08:00,true
+MSG0000437,SES00072,buyer,"If the status changes, should I contact support again?",Indonesian,2026-04-16T11:35:00+08:00,true
+MSG0000438,SES00072,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Indonesian,2026-04-16T11:38:00+08:00,true
+MSG0000439,SES00073,buyer,[Tiếng Việt] Which size or variation should I choose?,Vietnamese,2026-03-21T09:41:00+08:00,true
+MSG0000440,SES00073,assistant,[Tiếng Việt] Please compare your measurements with the listed variation details before choosing.,Vietnamese,2026-03-21T09:44:00+08:00,true
+MSG0000441,SES00073,buyer,[Tiếng Việt] Which size or variation should I choose? Please confirm using the linked record.,Vietnamese,2026-03-21T09:47:00+08:00,true
+MSG0000442,SES00073,assistant,[Tiếng Việt] Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,Vietnamese,2026-03-21T09:50:00+08:00,true
+MSG0000443,SES00073,buyer,Thank you. Please save this conversation.,Vietnamese,2026-03-21T09:53:00+08:00,true
+MSG0000444,SES00073,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-03-21T09:56:00+08:00,true
+MSG0000445,SES00074,buyer,[Bahasa Indonesia] Which size or variation should I choose?,Indonesian,2026-03-09T23:56:00+08:00,true
+MSG0000446,SES00074,assistant,[Bahasa Indonesia] Please compare your measurements with the listed variation details before choosing.,Indonesian,2026-03-09T23:59:00+08:00,true
+MSG0000447,SES00074,buyer,[Bahasa Indonesia] Which size or variation should I choose? Please confirm using the linked record.,Indonesian,2026-03-10T00:02:00+08:00,true
+MSG0000448,SES00074,assistant,[Bahasa Indonesia] Please compare your measurements with the listed variation details before choosing. The response is based only on simulated experimental data.,Indonesian,2026-03-10T00:05:00+08:00,true
+MSG0000449,SES00075,buyer,Is this item currently available?,English,2026-02-07T09:41:00+08:00,true
+MSG0000450,SES00075,assistant,I checked the simulated inventory and can confirm the current stock status.,English,2026-02-07T09:44:00+08:00,true
+MSG0000451,SES00075,buyer,Is this item currently available? Please confirm using the linked record.,English,2026-02-07T09:47:00+08:00,true
+MSG0000452,SES00075,assistant,I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,English,2026-02-07T09:50:00+08:00,true
+MSG0000453,SES00075,buyer,Thank you. Please save this conversation.,English,2026-02-07T09:53:00+08:00,true
+MSG0000454,SES00075,assistant,The mock conversation has been saved for testing and demonstration.,English,2026-02-07T09:56:00+08:00,true
+MSG0000455,SES00075,buyer,"If the status changes, should I contact support again?",English,2026-02-07T09:59:00+08:00,true
+MSG0000456,SES00075,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,English,2026-02-07T10:02:00+08:00,true
+MSG0000457,SES00076,buyer,[Tiếng Việt] The item did not meet expectations. How can this be resolved?,Vietnamese,2026-05-02T19:26:00+08:00,true
+MSG0000458,SES00076,assistant,[Tiếng Việt] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Vietnamese,2026-05-02T19:29:00+08:00,true
+MSG0000459,SES00076,buyer,[Tiếng Việt] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Vietnamese,2026-05-02T19:32:00+08:00,true
+MSG0000460,SES00076,assistant,[Tiếng Việt] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Vietnamese,2026-05-02T19:35:00+08:00,true
+MSG0000461,SES00077,buyer,[Bahasa Indonesia] Please recommend a suitable option for everyday use.,Indonesian,2026-01-18T21:45:00+08:00,true
+MSG0000462,SES00077,assistant,"[Bahasa Indonesia] Based on the stated need, I can compare available mock products and stock.",Indonesian,2026-01-18T21:48:00+08:00,true
+MSG0000463,SES00077,buyer,[Bahasa Indonesia] Please recommend a suitable option for everyday use. Please confirm using the linked record.,Indonesian,2026-01-18T21:51:00+08:00,true
+MSG0000464,SES00077,assistant,"[Bahasa Indonesia] Based on the stated need, I can compare available mock products and stock. The response is based only on simulated experimental data.",Indonesian,2026-01-18T21:54:00+08:00,true
+MSG0000465,SES00077,buyer,Thank you. Please save this conversation.,Indonesian,2026-01-18T21:57:00+08:00,true
+MSG0000466,SES00077,assistant,The mock conversation has been saved for testing and demonstration.,Indonesian,2026-01-18T22:00:00+08:00,true
+MSG0000467,SES00078,buyer,[Bahasa Melayu] I would like to request a refund. What information is needed?,Malay,2026-05-26T15:54:00+08:00,true
+MSG0000468,SES00078,assistant,"[Bahasa Melayu] I can register the request, but approval and refund execution require a human review.",Malay,2026-05-26T15:57:00+08:00,true
+MSG0000469,SES00078,buyer,[Bahasa Melayu] I would like to request a refund. What information is needed? Please confirm using the linked record.,Malay,2026-05-26T16:00:00+08:00,true
+MSG0000470,SES00078,assistant,"[Bahasa Melayu] I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",Malay,2026-05-26T16:03:00+08:00,true
+MSG0000471,SES00078,buyer,Thank you. Please save this conversation.,Malay,2026-05-26T16:06:00+08:00,true
+MSG0000472,SES00078,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-05-26T16:09:00+08:00,true
+MSG0000473,SES00079,buyer,[Filipino] Can you explain the main product features?,Filipino,2026-03-31T04:29:00+08:00,true
+MSG0000474,SES00079,assistant,[Filipino] I can help. The product details and selected variation are available in the mock catalog.,Filipino,2026-03-31T04:32:00+08:00,true
+MSG0000475,SES00079,buyer,[Filipino] Can you explain the main product features? Please confirm using the linked record.,Filipino,2026-03-31T04:35:00+08:00,true
+MSG0000476,SES00079,assistant,[Filipino] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Filipino,2026-03-31T04:38:00+08:00,true
+MSG0000477,SES00079,buyer,Thank you. Please save this conversation.,Filipino,2026-03-31T04:41:00+08:00,true
+MSG0000478,SES00079,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-03-31T04:44:00+08:00,true
+MSG0000479,SES00079,buyer,"If the status changes, should I contact support again?",Filipino,2026-03-31T04:47:00+08:00,true
+MSG0000480,SES00079,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Filipino,2026-03-31T04:50:00+08:00,true
+MSG0000481,SES00080,buyer,[Bahasa Indonesia] Can you explain the main product features?,Indonesian,2026-03-21T10:29:00+08:00,true
+MSG0000482,SES00080,assistant,[Bahasa Indonesia] I can help. The product details and selected variation are available in the mock catalog.,Indonesian,2026-03-21T10:32:00+08:00,true
+MSG0000483,SES00080,buyer,[Bahasa Indonesia] Can you explain the main product features? Please confirm using the linked record.,Indonesian,2026-03-21T10:35:00+08:00,true
+MSG0000484,SES00080,assistant,[Bahasa Indonesia] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Indonesian,2026-03-21T10:38:00+08:00,true
+MSG0000485,SES00081,buyer,[Bahasa Indonesia] I would like to request a refund. What information is needed?,Indonesian,2026-01-29T14:24:00+08:00,true
+MSG0000486,SES00081,assistant,"[Bahasa Indonesia] I can register the request, but approval and refund execution require a human review.",Indonesian,2026-01-29T14:27:00+08:00,true
+MSG0000487,SES00081,buyer,[Bahasa Indonesia] I would like to request a refund. What information is needed? Please confirm using the linked record.,Indonesian,2026-01-29T14:30:00+08:00,true
+MSG0000488,SES00081,assistant,"[Bahasa Indonesia] I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",Indonesian,2026-01-29T14:33:00+08:00,true
+MSG0000489,SES00082,buyer,[Tiếng Việt] Is this item currently available?,Vietnamese,2026-03-22T06:13:00+08:00,true
+MSG0000490,SES00082,assistant,[Tiếng Việt] I checked the simulated inventory and can confirm the current stock status.,Vietnamese,2026-03-22T06:16:00+08:00,true
+MSG0000491,SES00082,buyer,[Tiếng Việt] Is this item currently available? Please confirm using the linked record.,Vietnamese,2026-03-22T06:19:00+08:00,true
+MSG0000492,SES00082,assistant,[Tiếng Việt] I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,Vietnamese,2026-03-22T06:22:00+08:00,true
+MSG0000493,SES00082,buyer,Thank you. Please save this conversation.,Vietnamese,2026-03-22T06:25:00+08:00,true
+MSG0000494,SES00082,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-03-22T06:28:00+08:00,true
+MSG0000495,SES00082,buyer,"If the status changes, should I contact support again?",Vietnamese,2026-03-22T06:31:00+08:00,true
+MSG0000496,SES00082,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Vietnamese,2026-03-22T06:34:00+08:00,true
+MSG0000497,SES00083,buyer,[Bahasa Indonesia] What is the current status of my order?,Indonesian,2026-01-15T00:11:00+08:00,true
+MSG0000498,SES00083,assistant,[Bahasa Indonesia] I found the simulated order and will summarize its latest status.,Indonesian,2026-01-15T00:14:00+08:00,true
+MSG0000499,SES00083,buyer,[Bahasa Indonesia] What is the current status of my order? Please confirm using the linked record.,Indonesian,2026-01-15T00:17:00+08:00,true
+MSG0000500,SES00083,assistant,[Bahasa Indonesia] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Indonesian,2026-01-15T00:20:00+08:00,true
+MSG0000501,SES00084,buyer,[Bahasa Melayu] Can I cancel this order before shipment?,Malay,2026-03-02T11:14:00+08:00,true
+MSG0000502,SES00084,assistant,[Bahasa Melayu] Cancellation depends on the current order status; shipped orders need manual review.,Malay,2026-03-02T11:17:00+08:00,true
+MSG0000503,SES00084,buyer,[Bahasa Melayu] Can I cancel this order before shipment? Please confirm using the linked record.,Malay,2026-03-02T11:20:00+08:00,true
+MSG0000504,SES00084,assistant,[Bahasa Melayu] Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,Malay,2026-03-02T11:23:00+08:00,true
+MSG0000505,SES00085,buyer,[Filipino] Can you explain the main product features?,Filipino,2026-02-26T22:29:00+08:00,true
+MSG0000506,SES00085,assistant,[Filipino] I can help. The product details and selected variation are available in the mock catalog.,Filipino,2026-02-26T22:32:00+08:00,true
+MSG0000507,SES00085,buyer,[Filipino] Can you explain the main product features? Please confirm using the linked record.,Filipino,2026-02-26T22:35:00+08:00,true
+MSG0000508,SES00085,assistant,[Filipino] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Filipino,2026-02-26T22:38:00+08:00,true
+MSG0000509,SES00085,buyer,Thank you. Please save this conversation.,Filipino,2026-02-26T22:41:00+08:00,true
+MSG0000510,SES00085,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-02-26T22:44:00+08:00,true
+MSG0000511,SES00086,buyer,What is the current status of my order?,English,2026-06-20T13:23:00+08:00,true
+MSG0000512,SES00086,assistant,I found the simulated order and will summarize its latest status.,English,2026-06-20T13:26:00+08:00,true
+MSG0000513,SES00086,buyer,What is the current status of my order? Please confirm using the linked record.,English,2026-06-20T13:29:00+08:00,true
+MSG0000514,SES00086,assistant,I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,English,2026-06-20T13:32:00+08:00,true
+MSG0000515,SES00087,buyer,[Bahasa Indonesia] The item did not meet expectations. How can this be resolved?,Indonesian,2026-03-26T03:22:00+08:00,true
+MSG0000516,SES00087,assistant,[Bahasa Indonesia] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Indonesian,2026-03-26T03:25:00+08:00,true
+MSG0000517,SES00087,buyer,[Bahasa Indonesia] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Indonesian,2026-03-26T03:28:00+08:00,true
+MSG0000518,SES00087,assistant,[Bahasa Indonesia] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Indonesian,2026-03-26T03:31:00+08:00,true
+MSG0000519,SES00088,buyer,[Filipino] What is the current status of my order?,Filipino,2026-06-08T09:22:00+08:00,true
+MSG0000520,SES00088,assistant,[Filipino] I found the simulated order and will summarize its latest status.,Filipino,2026-06-08T09:25:00+08:00,true
+MSG0000521,SES00088,buyer,[Filipino] What is the current status of my order? Please confirm using the linked record.,Filipino,2026-06-08T09:28:00+08:00,true
+MSG0000522,SES00088,assistant,[Filipino] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Filipino,2026-06-08T09:31:00+08:00,true
+MSG0000523,SES00089,buyer,[Bahasa Indonesia] Is this item currently available?,Indonesian,2026-02-10T05:44:00+08:00,true
+MSG0000524,SES00089,assistant,[Bahasa Indonesia] I checked the simulated inventory and can confirm the current stock status.,Indonesian,2026-02-10T05:47:00+08:00,true
+MSG0000525,SES00089,buyer,[Bahasa Indonesia] Is this item currently available? Please confirm using the linked record.,Indonesian,2026-02-10T05:50:00+08:00,true
+MSG0000526,SES00089,assistant,[Bahasa Indonesia] I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,Indonesian,2026-02-10T05:53:00+08:00,true
+MSG0000527,SES00090,buyer,[Bahasa Melayu] Is this item currently available?,Malay,2026-03-11T03:34:00+08:00,true
+MSG0000528,SES00090,assistant,[Bahasa Melayu] I checked the simulated inventory and can confirm the current stock status.,Malay,2026-03-11T03:37:00+08:00,true
+MSG0000529,SES00090,buyer,[Bahasa Melayu] Is this item currently available? Please confirm using the linked record.,Malay,2026-03-11T03:40:00+08:00,true
+MSG0000530,SES00090,assistant,[Bahasa Melayu] I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,Malay,2026-03-11T03:43:00+08:00,true
+MSG0000531,SES00090,buyer,Thank you. Please save this conversation.,Malay,2026-03-11T03:46:00+08:00,true
+MSG0000532,SES00090,assistant,The mock conversation has been saved for testing and demonstration.,Malay,2026-03-11T03:49:00+08:00,true
+MSG0000533,SES00091,buyer,[Filipino] What is the current status of my order?,Filipino,2026-03-05T00:02:00+08:00,true
+MSG0000534,SES00091,assistant,[Filipino] I found the simulated order and will summarize its latest status.,Filipino,2026-03-05T00:05:00+08:00,true
+MSG0000535,SES00091,buyer,[Filipino] What is the current status of my order? Please confirm using the linked record.,Filipino,2026-03-05T00:08:00+08:00,true
+MSG0000536,SES00091,assistant,[Filipino] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Filipino,2026-03-05T00:11:00+08:00,true
+MSG0000537,SES00091,buyer,Thank you. Please save this conversation.,Filipino,2026-03-05T00:14:00+08:00,true
+MSG0000538,SES00091,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-03-05T00:17:00+08:00,true
+MSG0000539,SES00092,buyer,[Filipino] Where is my parcel now?,Filipino,2026-04-03T14:23:00+08:00,true
+MSG0000540,SES00092,assistant,[Filipino] I found the linked mock tracking record and its latest location.,Filipino,2026-04-03T14:26:00+08:00,true
+MSG0000541,SES00092,buyer,[Filipino] Where is my parcel now? Please confirm using the linked record.,Filipino,2026-04-03T14:29:00+08:00,true
+MSG0000542,SES00092,assistant,[Filipino] I found the linked mock tracking record and its latest location. The response is based only on simulated experimental data.,Filipino,2026-04-03T14:32:00+08:00,true
+MSG0000543,SES00093,buyer,I would like to request a refund. What information is needed?,English,2026-06-22T09:50:00+08:00,true
+MSG0000544,SES00093,assistant,"I can register the request, but approval and refund execution require a human review.",English,2026-06-22T09:53:00+08:00,true
+MSG0000545,SES00093,buyer,I would like to request a refund. What information is needed? Please confirm using the linked record.,English,2026-06-22T09:56:00+08:00,true
+MSG0000546,SES00093,assistant,"I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",English,2026-06-22T09:59:00+08:00,true
+MSG0000547,SES00094,buyer,[ภาษาไทย] I would like to request a refund. What information is needed?,Thai,2026-06-04T07:35:00+08:00,true
+MSG0000548,SES00094,assistant,"[ภาษาไทย] I can register the request, but approval and refund execution require a human review.",Thai,2026-06-04T07:38:00+08:00,true
+MSG0000549,SES00094,buyer,[ภาษาไทย] I would like to request a refund. What information is needed? Please confirm using the linked record.,Thai,2026-06-04T07:41:00+08:00,true
+MSG0000550,SES00094,assistant,"[ภาษาไทย] I can register the request, but approval and refund execution require a human review. The response is based only on simulated experimental data.",Thai,2026-06-04T07:44:00+08:00,true
+MSG0000551,SES00095,buyer,[ภาษาไทย] Can I cancel this order before shipment?,Thai,2026-06-09T13:04:00+08:00,true
+MSG0000552,SES00095,assistant,[ภาษาไทย] Cancellation depends on the current order status; shipped orders need manual review.,Thai,2026-06-09T13:07:00+08:00,true
+MSG0000553,SES00095,buyer,[ภาษาไทย] Can I cancel this order before shipment? Please confirm using the linked record.,Thai,2026-06-09T13:10:00+08:00,true
+MSG0000554,SES00095,assistant,[ภาษาไทย] Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,Thai,2026-06-09T13:13:00+08:00,true
+MSG0000555,SES00096,buyer,[Filipino] The item did not meet expectations. How can this be resolved?,Filipino,2026-01-15T14:01:00+08:00,true
+MSG0000556,SES00096,assistant,[Filipino] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent.,Filipino,2026-01-15T14:04:00+08:00,true
+MSG0000557,SES00096,buyer,[Filipino] The item did not meet expectations. How can this be resolved? Please confirm using the linked record.,Filipino,2026-01-15T14:07:00+08:00,true
+MSG0000558,SES00096,assistant,[Filipino] I am sorry about the experience. I will record the issue and route higher-risk cases to an agent. The response is based only on simulated experimental data.,Filipino,2026-01-15T14:10:00+08:00,true
+MSG0000559,SES00096,buyer,Thank you. Please save this conversation.,Filipino,2026-01-15T14:13:00+08:00,true
+MSG0000560,SES00096,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-01-15T14:16:00+08:00,true
+MSG0000561,SES00096,buyer,"If the status changes, should I contact support again?",Filipino,2026-01-15T14:19:00+08:00,true
+MSG0000562,SES00096,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Filipino,2026-01-15T14:22:00+08:00,true
+MSG0000563,SES00097,buyer,[ภาษาไทย] Can you explain the main product features?,Thai,2026-04-30T06:59:00+08:00,true
+MSG0000564,SES00097,assistant,[ภาษาไทย] I can help. The product details and selected variation are available in the mock catalog.,Thai,2026-04-30T07:02:00+08:00,true
+MSG0000565,SES00097,buyer,[ภาษาไทย] Can you explain the main product features? Please confirm using the linked record.,Thai,2026-04-30T07:05:00+08:00,true
+MSG0000566,SES00097,assistant,[ภาษาไทย] I can help. The product details and selected variation are available in the mock catalog. The response is based only on simulated experimental data.,Thai,2026-04-30T07:08:00+08:00,true
+MSG0000567,SES00098,buyer,[Filipino] Is this item currently available?,Filipino,2026-02-11T05:38:00+08:00,true
+MSG0000568,SES00098,assistant,[Filipino] I checked the simulated inventory and can confirm the current stock status.,Filipino,2026-02-11T05:41:00+08:00,true
+MSG0000569,SES00098,buyer,[Filipino] Is this item currently available? Please confirm using the linked record.,Filipino,2026-02-11T05:44:00+08:00,true
+MSG0000570,SES00098,assistant,[Filipino] I checked the simulated inventory and can confirm the current stock status. The response is based only on simulated experimental data.,Filipino,2026-02-11T05:47:00+08:00,true
+MSG0000571,SES00098,buyer,Thank you. Please save this conversation.,Filipino,2026-02-11T05:50:00+08:00,true
+MSG0000572,SES00098,assistant,The mock conversation has been saved for testing and demonstration.,Filipino,2026-02-11T05:53:00+08:00,true
+MSG0000573,SES00099,buyer,[Tiếng Việt] Can I cancel this order before shipment?,Vietnamese,2026-03-03T01:34:00+08:00,true
+MSG0000574,SES00099,assistant,[Tiếng Việt] Cancellation depends on the current order status; shipped orders need manual review.,Vietnamese,2026-03-03T01:37:00+08:00,true
+MSG0000575,SES00099,buyer,[Tiếng Việt] Can I cancel this order before shipment? Please confirm using the linked record.,Vietnamese,2026-03-03T01:40:00+08:00,true
+MSG0000576,SES00099,assistant,[Tiếng Việt] Cancellation depends on the current order status; shipped orders need manual review. The response is based only on simulated experimental data.,Vietnamese,2026-03-03T01:43:00+08:00,true
+MSG0000577,SES00099,buyer,Thank you. Please save this conversation.,Vietnamese,2026-03-03T01:46:00+08:00,true
+MSG0000578,SES00099,assistant,The mock conversation has been saved for testing and demonstration.,Vietnamese,2026-03-03T01:49:00+08:00,true
+MSG0000579,SES00099,buyer,"If the status changes, should I contact support again?",Vietnamese,2026-03-03T01:52:00+08:00,true
+MSG0000580,SES00099,assistant,Yes. A later test can retrieve the updated mock status through the adapter.,Vietnamese,2026-03-03T01:55:00+08:00,true
+MSG0000581,SES00100,buyer,[Tiếng Việt] What is the current status of my order?,Vietnamese,2026-01-11T23:15:00+08:00,true
+MSG0000582,SES00100,assistant,[Tiếng Việt] I found the simulated order and will summarize its latest status.,Vietnamese,2026-01-11T23:18:00+08:00,true
+MSG0000583,SES00100,buyer,[Tiếng Việt] What is the current status of my order? Please confirm using the linked record.,Vietnamese,2026-01-11T23:21:00+08:00,true
+MSG0000584,SES00100,assistant,[Tiếng Việt] I found the simulated order and will summarize its latest status. The response is based only on simulated experimental data.,Vietnamese,2026-01-11T23:24:00+08:00,true
