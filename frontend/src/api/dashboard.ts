@@ -1,17 +1,10 @@
 import { request } from "@/api/http";
 import { listInventory, listOrders, listProducts } from "@/api/commerce";
 import type { InventoryItem, Order, Product } from "@/types/commerce";
+import type { PaginatedResponse, TaskDetail } from "@/types/contracts";
 import type { DashboardMetric } from "@/types/dashboard";
 
 // ---- 后端 Schema 类型（与 commerce.ts 一致）----
-
-interface TaskListResponse {
-  items: unknown[];
-  total: number;
-  page: number;
-  page_size: number;
-  pages: number;
-}
 
 // ---- Dashboard API ----
 
@@ -45,11 +38,11 @@ export function fetchInventory(params?: {
 export function fetchTasks(params?: {
   page?: number;
   page_size?: number;
-}): Promise<TaskListResponse> {
+}): Promise<PaginatedResponse<TaskDetail>> {
   const searchParams = new URLSearchParams();
   searchParams.set("page", String(params?.page ?? 1));
   searchParams.set("page_size", String(params?.page_size ?? 20));
-  return request<TaskListResponse>(`/v1/tasks?${searchParams.toString()}`);
+  return request<PaginatedResponse<TaskDetail>>(`/v1/tasks?${searchParams.toString()}`);
 }
 
 // ---- Funnel 数据 ----
