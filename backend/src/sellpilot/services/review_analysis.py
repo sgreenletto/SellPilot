@@ -25,6 +25,7 @@ from sellpilot.schemas.common import SourceMetadata
 from sellpilot.schemas.review_analysis import (
     ReviewAnalysisCreatedResponse,
     ReviewAnalysisCreateRequest,
+    ReviewAnalysisExportResponse,
     ReviewAnalysisResultResponse,
     ReviewEvidencePage,
     ReviewEvidenceResponse,
@@ -32,6 +33,7 @@ from sellpilot.schemas.review_analysis import (
     ReviewResponse,
 )
 from sellpilot.services.commerce_query import CommerceQueryService
+from sellpilot.services.model_gateway import translate_review_batch
 from sellpilot.services.task import TaskService
 from sellpilot.workflows.review_analysis import ReviewAnalyzer, build_review_analysis_workflow
 
@@ -241,6 +243,32 @@ class ReviewAnalysisService:
     ) -> ReviewAnalysisResultResponse:
         return await self._result_response(await self._owned_result(analysis_id, user_id))
 
+    async def export(self, analysis_id: UUID, user_id: UUID) -> ReviewAnalysisExportResponse:
+        response = await self.get(analysis_id, user_id)
+        sentiment = response.sentiment.model_dump(mode="json") if response.sentiment else {}
+        topics = [item.model_dump(mode="json") for item in response.topics]
+        pain_points = [item.model_dump(mode="json") for item in response.pain_points]
+        lines = [
+            "# SellPilot 评论分析报告",
+            "",
+            f"- 商品：`{response.product_id}`",
+            f"- 站点：`{response.site}`",
+            f"- 分析模式：`{response.analysis_mode}`",
+            f"- 数据来源：`{'Mock Shopee' if response.is_mock_data else 'platform'}`",
+            "",
+            "## 情感概览",
+            f"```json\n{json.dumps(sentiment, ensure_ascii=False, indent=2)}\n```",
+            "## 主题",
+            f"```json\n{json.dumps(topics, ensure_ascii=False, indent=2)}\n```",
+            "## 痛点",
+            f"```json\n{json.dumps(pain_points, ensure_ascii=False, indent=2)}\n```",
+        ]
+        return ReviewAnalysisExportResponse(
+            filename=f"review-analysis-{analysis_id}.md",
+            media_type="text/markdown",
+            content="\n".join(lines),
+        )
+
     async def list_evidence(
         self,
         analysis_id: UUID,
@@ -296,7 +324,30 @@ class ReviewAnalysisService:
             offset += len(batch)
             if len(batch) < limit:
                 break
-        return [self._domain_review(row) for row in rows]
+        reviews = [self._domain_review(row) for row in rows]
+        missing = [
+            (review.review_id, review.content)
+            for review in reviews
+            if not review.translated_content
+            and (review.declared_language or "").lower() not in {"en", "english"}
+        ]
+        translations: dict[str, str] = {}
+        for offset in range(0, len(missing), 30):
+            translations.update(
+                await translate_review_batch(self.settings, missing[offset : offset + 30])
+            )
+        if translations:
+            reviews = [
+                review.model_copy(
+                    update={
+                        "translated_content": translations.get(
+                            review.review_id, review.translated_content
+                        )
+                    }
+                )
+                for review in reviews
+            ]
+        return reviews
 
     async def _persist_report(
         self,
@@ -305,9 +356,17 @@ class ReviewAnalysisService:
     ) -> None:
         result.summary = {
             **report.model_dump(mode="json"),
-            "analysis_mode": "rule",
-            "prompt_version": None,
-            "model_version": None,
+            "analysis_mode": (
+                "validated_model"
+                if self.settings.content_model_provider == "aliyun_bailian"
+                else "rule"
+            ),
+            "prompt_version": "review-translation-v1"
+            if self.settings.content_model_provider == "aliyun_bailian"
+            else None,
+            "model_version": self.settings.bailian_model
+            if self.settings.content_model_provider == "aliyun_bailian"
+            else None,
         }
         evidence_items = []
         for judgement in report.judgements:

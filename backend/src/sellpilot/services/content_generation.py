@@ -47,9 +47,13 @@ from sellpilot.repositories.model_management import (
 from sellpilot.repositories.operation_log import OperationLogRepository
 from sellpilot.schemas.content_generation import (
     ContentDraftRequest,
+    ContentExportResponse,
     ContentGenerateRequest,
     ContentGenerateResponse,
+    ContentRegenerateFieldRequest,
+    ContentRegenerateFieldResponse,
     ContentRestoreRequest,
+    ContentVersionComparisonResponse,
     ContentVersionResponse,
     ContentVersionsResponse,
 )
@@ -121,6 +125,10 @@ class ContentGenerationService:
             invocation.prompt_tokens = gateway.prompt_tokens
             invocation.completion_tokens = gateway.completion_tokens
             invocation.total_tokens = gateway.total_tokens
+            invocation.estimated_cost = (
+                Decimal(gateway.prompt_tokens) * self.settings.bailian_input_cost_per_million
+                + Decimal(gateway.completion_tokens) * self.settings.bailian_output_cost_per_million
+            ) / Decimal("1000000")
             invocation.status = ModelInvocationStatus.SUCCEEDED
             invocation.duration_ms = int((time.perf_counter() - started) * 1000)
             invocation.output_summary = {
@@ -260,6 +268,76 @@ class ContentGenerationService:
             content_id=content_id,
             items=[self._version_response(item) for item in rows],
             total=total,
+        )
+
+    async def get_version(
+        self, content_id: UUID, version_id: UUID, user_id: UUID
+    ) -> ContentVersionResponse:
+        content = await self.contents.get_content(content_id)
+        version = await self.contents.get_version(version_id)
+        if (
+            content is None
+            or version is None
+            or version.content_id != content_id
+            or content.created_by != user_id
+        ):
+            raise ResourceNotFoundError("Content version not found")
+        return self._version_response(version)
+
+    async def compare_versions(
+        self,
+        content_id: UUID,
+        left_id: UUID,
+        right_id: UUID,
+        user_id: UUID,
+    ) -> ContentVersionComparisonResponse:
+        left = await self.get_version(content_id, left_id, user_id)
+        right = await self.get_version(content_id, right_id, user_id)
+        fields = (
+            "title",
+            "bullet_points",
+            "description",
+            "marketing_copy",
+            "faq",
+            "sku_content",
+            "keywords",
+            "fact_check_result",
+            "compliance_result",
+        )
+        return ContentVersionComparisonResponse(
+            content_id=content_id,
+            left=left,
+            right=right,
+            changed_fields=[
+                field for field in fields if getattr(left, field) != getattr(right, field)
+            ],
+        )
+
+    async def regenerate_field(
+        self,
+        payload: ContentRegenerateFieldRequest,
+        user_id: UUID,
+    ) -> ContentRegenerateFieldResponse:
+        generation = await self.generate(payload.request, user_id)
+        return ContentRegenerateFieldResponse(
+            task_id=generation.task_id,
+            invocation_id=generation.invocation_id,
+            field=payload.field,
+            value=getattr(generation.result.content, payload.field),
+            quality=generation.result.quality.model_dump(mode="json"),
+            provider=generation.provider,
+            model_name=generation.model_name,
+        )
+
+    async def export_version(
+        self, content_id: UUID, version_id: UUID, user_id: UUID
+    ) -> ContentExportResponse:
+        version = await self.get_version(content_id, version_id, user_id)
+        payload = version.model_dump(mode="json")
+        return ContentExportResponse(
+            filename=f"sellpilot-content-v{version.version}.json",
+            media_type="application/json",
+            content=json.dumps(payload, ensure_ascii=False, indent=2),
         )
 
     async def _confirmation(

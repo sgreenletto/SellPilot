@@ -1,4 +1,5 @@
 import json
+from inspect import signature
 
 import httpx
 import pytest
@@ -11,6 +12,7 @@ from sellpilot.services.model_gateway import (
     ModelGatewayError,
     OfflineTemplateGateway,
     build_model_gateway,
+    translate_review_batch,
 )
 
 
@@ -65,6 +67,10 @@ def test_bailian_requires_explicit_credentials() -> None:
 def test_default_gateway_remains_offline() -> None:
     gateway = build_model_gateway(Settings(_env_file=None))
     assert isinstance(gateway, OfflineTemplateGateway)
+
+
+def test_review_translation_defaults_to_simplified_chinese() -> None:
+    assert signature(translate_review_batch).parameters["target_language"].default == "zh-CN"
 
 
 @pytest.mark.asyncio

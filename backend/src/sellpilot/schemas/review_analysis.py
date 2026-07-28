@@ -166,3 +166,9 @@ class ReviewEvidencePage(ContractModel):
     page: int
     page_size: int
     total: int
+
+
+class ReviewAnalysisExportResponse(ContractModel):
+    filename: str
+    media_type: str
+    content: str

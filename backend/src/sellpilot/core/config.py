@@ -1,3 +1,4 @@
+from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -151,6 +152,16 @@ class Settings(BaseSettings):
         gt=0,
         le=120,
         validation_alias="BAILIAN_TIMEOUT_SECONDS",
+    )
+    bailian_input_cost_per_million: Decimal = Field(
+        default=Decimal("0"),
+        ge=0,
+        validation_alias="BAILIAN_INPUT_COST_PER_MILLION",
+    )
+    bailian_output_cost_per_million: Decimal = Field(
+        default=Decimal("0"),
+        ge=0,
+        validation_alias="BAILIAN_OUTPUT_COST_PER_MILLION",
     )
 
     @field_validator("api_v1_prefix")

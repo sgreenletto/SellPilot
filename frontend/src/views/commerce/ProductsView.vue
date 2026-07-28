@@ -12,6 +12,11 @@ import {
   requestProductImport,
 } from "@/api/commerce";
 import { loadCommerceDashboardSnapshot } from "@/api/dashboard";
+import {
+  getProductTranslationProviderStatus,
+  getProductTranslationTask,
+  requestProductTranslation,
+} from "@/api/product-translation";
 import SpButton from "@/components/base/SpButton.vue";
 import SpCard from "@/components/base/SpCard.vue";
 import SpEmptyState from "@/components/base/SpEmptyState.vue";
@@ -22,6 +27,10 @@ import PageContainer from "@/components/layout/PageContainer.vue";
 import { useAppStore } from "@/stores/app";
 import { csvRows, sheetRows } from "@/utils/spreadsheet";
 import type { ProductDraftPayload } from "@/types/commerce";
+import type {
+  ProductTranslationLanguage,
+  ProductTranslationProviderStatus,
+} from "@/types/product-translation";
 
 type Row = Record<string, string | number | boolean | null>;
 
@@ -71,6 +80,8 @@ const contentWorkshopHref = computed(() => {
   const queryString = params.toString();
   return `/products/content${queryString ? `?${queryString}` : ""}`;
 });
+const translationStatus = ref<ProductTranslationProviderStatus | null>(null);
+const translating = ref(false);
 
 const filtered = computed(() => {
   const keyword = query.value.trim().toLowerCase();
@@ -123,6 +134,55 @@ async function loadCurrentShop(): Promise<void> {
     selected.value = null;
     dataStatus.value = "error";
     dataMessage.value = "后端商品读取失败，未使用本地全量 CSV 冒充当前店铺数据。";
+  }
+}
+
+async function loadTranslationStatus(): Promise<void> {
+  try {
+    translationStatus.value = await getProductTranslationProviderStatus();
+  } catch {
+    translationStatus.value = null;
+  }
+}
+
+async function translateActiveLanguage(): Promise<void> {
+  if (!selected.value || activeLanguage.value === "en") return;
+  translating.value = true;
+  notice.value = `正在请求${activeLanguageLabel.value}机器翻译确认…`;
+  try {
+    const requested = await requestProductTranslation({
+      source: {
+        product_id: String(selected.value.product_id),
+        source_language: "en",
+        title: String(selected.value.title ?? ""),
+        description: String(selected.value.description ?? ""),
+        category_name: String(selected.value.category_name ?? ""),
+        specifications: [],
+      },
+      target_languages: [activeLanguage.value as ProductTranslationLanguage],
+      fields: ["title", "description", "category_name", "specifications"],
+      idempotency_key: `product-translation-${selected.value.product_id}-${activeLanguage.value}-${Date.now()}`,
+    });
+    await confirmCommerceOperation(requested.confirmation_task_id);
+    const completed = await getProductTranslationTask(requested.task_id);
+    const translated = completed.results.find((item) => item.language === activeLanguage.value);
+    if (!translated) {
+      throw new Error(completed.failed_languages[0]?.message ?? "翻译服务未返回目标语言");
+    }
+    const productId = String(selected.value.product_id);
+    localizedByProduct.value[productId] = {
+      ...localizedByProduct.value[productId],
+      [activeLanguage.value]: {
+        title: translated.title,
+        description: translated.description,
+        category_name: translated.category_name ?? "",
+      },
+    };
+    notice.value = `${activeLanguageLabel.value}机器翻译已生成，当前仅保存在浏览器会话中`;
+  } catch (reason) {
+    notice.value = reason instanceof Error ? reason.message : "商品机器翻译失败";
+  } finally {
+    translating.value = false;
   }
 }
 
@@ -353,7 +413,10 @@ function badge(value: unknown): "active" | "pending" | "failed" {
 
 watch([query, status, pageSize], () => (currentPage.value = 1));
 watch(selectedShopId, () => void loadCurrentShop());
-onMounted(() => void loadCurrentShop());
+onMounted(() => {
+  void loadCurrentShop();
+  void loadTranslationStatus();
+});
 </script>
 
 <template>
@@ -470,17 +533,25 @@ onMounted(() => void loadCurrentShop());
           </label>
           <div v-if="activeLanguage !== 'en'" class="translation-status wide" role="status">
             <div>
-              <strong>{{ hasLocalizedContent ? "人工译文" : "待翻译" }}</strong>
+              <strong>{{ hasLocalizedContent ? "本地化内容" : "待翻译" }}</strong>
               <span v-if="hasLocalizedContent">
                 当前{{ activeLanguageLabel }}内容保存在浏览器会话中，尚未写入后端。
               </span>
               <span v-else>
                 暂无{{
                   activeLanguageLabel
-                }}内容；机器翻译接口待成员三接入，也可以进入编辑模式人工补充。
+                }}内容；可以调用百炼机器翻译，也可以进入编辑模式人工补充。
               </span>
             </div>
-            <SpButton size="sm" variant="secondary" disabled>机器翻译服务未配置</SpButton>
+            <SpButton
+              size="sm"
+              variant="secondary"
+              :loading="translating"
+              :disabled="!translationStatus?.configured"
+              @click="translateActiveLanguage"
+            >
+              {{ translationStatus?.configured ? "百炼机器翻译" : "机器翻译服务未配置" }}
+            </SpButton>
           </div>
           <label
             >商品名称<input
