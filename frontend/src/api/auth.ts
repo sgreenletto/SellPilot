@@ -16,6 +16,10 @@ export async function login(payload: LoginRequest): Promise<LoginResponse> {
   // -- 模拟网络延迟 --
   await new Promise((resolve) => setTimeout(resolve, 600 + Math.random() * 400))
 
+  console.log("[auth API] received:", JSON.stringify(payload))
+  console.log("[auth API] expected: username=", MOCK_USER.username, "password=admin123")
+  console.log("[auth API] match:", payload.username === MOCK_USER.username && payload.password === "admin123")
+
   if (payload.username !== MOCK_USER.username || payload.password !== "admin123") {
     throw new Error("用户名或密码错误")
   }

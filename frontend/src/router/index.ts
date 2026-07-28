@@ -5,6 +5,7 @@ import { useAuthStore } from "@/stores/auth";
 
 const LoginView = () => import("@/views/login/LoginView.vue");
 const DashboardView = () => import("@/views/dashboard/DashboardView.vue");
+const ConversationView = () => import("@/views/customer-service/ConversationView.vue");
 const DesignSystemView = () => import("@/views/dev/DesignSystemView.vue");
 const ModulePlaceholderView = () => import("@/views/placeholder/ModulePlaceholderView.vue");
 
@@ -82,7 +83,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
   {
     path: "/customer-service/conversations",
     name: "conversations",
-    component: ModulePlaceholderView,
+    component: ConversationView,
     meta: {
       title: "会话工作台",
       module: "智能客服",
