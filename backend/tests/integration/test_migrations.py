@@ -136,7 +136,7 @@ def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
     revisions = list(script.walk_revisions())
     revision_ids = [item.revision for item in revisions]
     assert len(revision_ids) == len(set(revision_ids))
-    assert script.get_heads() == ["20260728_0005"]
+    assert script.get_heads() == ["20260728_0006"]
     assert all(
         item.down_revision is None or script.get_revision(item.down_revision) is not None
         for item in revisions
@@ -352,7 +352,7 @@ def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
         },
     ) == {"RESTRICT"}
 
-    command.upgrade(config, "20260728_0005")
+    command.upgrade(config, "20260728_0006")
     assert {
         "workflow_name",
         "workflow_version",
@@ -418,7 +418,7 @@ def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
     assert "sequence" not in column_names(database_path, "agent_task_steps")
     assert "task_step_id" not in column_names(database_path, "operation_logs")
 
-    command.upgrade(config, "20260728_0005")
+    command.upgrade(config, "20260728_0006")
     assert "workflow_name" in column_names(database_path, "agent_tasks")
 
     command.downgrade(config, "20260728_0003")
@@ -429,7 +429,7 @@ def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
     )
     assert "products" in table_names(database_path)
 
-    command.upgrade(config, "20260728_0005")
+    command.upgrade(config, "20260728_0006")
     assert "idempotency_scope" in column_names(database_path, "confirmation_tasks")
     command.check(config)
 

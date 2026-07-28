@@ -40,19 +40,18 @@ const colorSoftMap: Record<string, string> = {
 
 function buildFunnelOption(): echarts.EChartsOption {
   const values = props.dataset.series[0]?.data ?? [];
-  const maxVal = Math.max(...values, 1);
-  const scaled = values.map((v) => Math.max(8, (v / maxVal) * 100));
-  const mid = scaled.map((v) => v * 0.7);
-  const inner = scaled.map((v) => v * 0.42);
-  const funnelColors = [
+  const maxValue = Math.max(...values, 1);
+  const middleLayer = values.map((value) => value * 0.68);
+  const innerLayer = values.map((value) => value * 0.38);
+  const layerColors = [
     token("--sp-color-accent-blue-soft"),
     token("--sp-color-accent-blue"),
     token("--sp-color-primary"),
-  ] as const;
+  ];
 
   return {
     animationDuration: 700,
-    grid: { top: 8, right: 12, bottom: 2, left: 12 },
+    grid: { top: 12, right: 12, bottom: 4, left: 12 },
     tooltip: {
       trigger: "axis",
       backgroundColor: "#ffffff",
@@ -61,10 +60,10 @@ function buildFunnelOption(): echarts.EChartsOption {
       formatter: (params) => {
         const items = Array.isArray(params) ? params : [params];
         const index = items[0]?.dataIndex ?? 0;
-        const cat = props.dataset.categories[index];
-        const val = values[index];
-        return cat && val != null
-          ? `${cat}<br/><strong>${val.toLocaleString("zh-CN")}</strong>`
+        const category = props.dataset.categories[index];
+        const value = values[index];
+        return category && value != null
+          ? `${category}<br/><strong>${value.toLocaleString("zh-CN")}</strong>`
           : "";
       },
     },
@@ -80,25 +79,23 @@ function buildFunnelOption(): echarts.EChartsOption {
         lineStyle: { color: token("--sp-border-soft"), width: 1 },
       },
     },
-    yAxis: { type: "value", min: 0, max: 110, show: false },
-    series: [scaled, mid, inner].map((data, i) => ({
+    yAxis: { type: "value", min: 0, max: Math.ceil(maxValue * 1.1), show: false },
+    series: [values, middleLayer, innerLayer].map((data, index) => ({
       type: "line",
       data,
-      smooth: 0.52,
+      smooth: 0.32,
       symbol: "none",
+      silent: index > 0,
       lineStyle: {
-        width: i === 0 ? 1 : i === 1 ? 1 : 0,
-        color: funnelColors[i] ?? funnelColors[2],
+        width: index === 0 ? 1.5 : index === 1 ? 1 : 0,
+        color: layerColors[index],
       },
       areaStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-          {
-            offset: 0,
-            color: funnelColors[i] ?? funnelColors[2],
-          },
+          { offset: 0, color: layerColors[index]! },
           { offset: 1, color: "transparent" },
         ]),
-        opacity: [0.85, 0.34, 0.16][i],
+        opacity: [0.78, 0.34, 0.16][index],
       },
     })),
   };
@@ -141,19 +138,11 @@ function buildLineOption(): echarts.EChartsOption {
       smooth: 0.45,
       symbol: "circle",
       symbolSize: 5,
-      lineStyle: {
-        width: 2,
-        color: colorMap[s.color ?? "blue"] ?? token("--sp-color-accent-blue"),
-      },
-      itemStyle: {
-        color: colorMap[s.color ?? "blue"] ?? token("--sp-color-accent-blue"),
-      },
+      lineStyle: { width: 2, color: colorMap[s.color ?? "blue"] ?? colorMap.blue! },
+      itemStyle: { color: colorMap[s.color ?? "blue"] ?? colorMap.blue! },
       areaStyle: {
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          {
-            offset: 0,
-            color: colorSoftMap[s.color ?? "blue"] ?? token("--sp-color-accent-blue-soft"),
-          },
+          { offset: 0, color: colorSoftMap[s.color ?? "blue"] ?? colorSoftMap.blue! },
           { offset: 1, color: "transparent" },
         ]),
         opacity: 0.45,

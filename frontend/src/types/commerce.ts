@@ -21,6 +21,7 @@ export interface InventoryItem {
   reserved_stock: number;
   safety_stock: number;
   stock_status: string;
+  updated_at?: string | null;
   is_mock_data: boolean;
 }
 
@@ -73,6 +74,30 @@ export interface ConfirmationTask {
   target_id: string | null;
   status: string;
   idempotency_key: string;
+  created_at?: string;
+}
+
+export interface SelectionCandidate {
+  product_id: string;
+  title: string;
+  source_type: string;
+  is_mock_data: boolean;
+  created_at: string;
+}
+
+export interface ProductDraftPayload {
+  product_id?: string;
+  source_shop_id: string;
+  title: string;
+  category_id: string;
+  category_name: string;
+  description: string;
+  site: string;
+  currency: string;
+  price: number;
+  cost: number;
+  shipping_cost: number;
+  source_type: string;
 }
 
 export type CommerceRow = Product | InventoryItem | Order;

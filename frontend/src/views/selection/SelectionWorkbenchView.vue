@@ -356,11 +356,6 @@ onMounted(loadCandidates);
 <template>
   <PageContainer>
     <header class="page-heading">
-      <div>
-        <p class="eyebrow">SELECTION WORKBENCH · MOCK SHOPEE</p>
-        <h1>智能选品</h1>
-        <p>用可追溯的市场数据、利润公式和分项证据筛选候选商品。</p>
-      </div>
       <div class="heading-actions">
         <SpBadge tone="info" dot>模拟实验数据</SpBadge>
         <SpButton variant="secondary" :loading="loadingCandidates" @click="loadCandidates">
@@ -753,6 +748,7 @@ onMounted(loadCandidates);
   justify-content: space-between;
 }
 .page-heading {
+  justify-content: flex-end;
   margin-bottom: var(--sp-space-6);
 }
 .page-heading h1 {

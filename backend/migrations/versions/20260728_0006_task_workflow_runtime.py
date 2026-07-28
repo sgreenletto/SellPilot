@@ -1,7 +1,7 @@
 """Add persistent task workflow runtime fields.
 
-Revision ID: 20260728_0005
-Revises: 20260728_0004
+Revision ID: 20260728_0006
+Revises: 20260728_0005
 Create Date: 2026-07-28
 """
 
@@ -12,8 +12,8 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql.sqltypes import Text
 
-revision: str = "20260728_0005"
-down_revision: str | Sequence[str] | None = "20260728_0004"
+revision: str = "20260728_0006"
+down_revision: str | Sequence[str] | None = "20260728_0005"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

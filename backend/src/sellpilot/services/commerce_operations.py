@@ -4,14 +4,14 @@ from typing import Any
 from uuid import UUID
 
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sellpilot.adapters.factory import create_platform_adapter
 from sellpilot.core.config import Settings
 from sellpilot.core.enums import OperationStatus, ToolRiskLevel
 from sellpilot.core.exceptions import IdempotencyConflictError, ResourceNotFoundError
-from sellpilot.db.models.commerce import InventoryRecord, Product, Sku
+from sellpilot.db.models.commerce import InventoryRecord, Product, SelectionCandidate, Sku
 from sellpilot.db.models.confirmation_task import ConfirmationTask
 from sellpilot.db.models.operation_log import OperationLog
 from sellpilot.repositories.operation_log import OperationLogRepository
@@ -22,6 +22,10 @@ PUBLISH = "commerce.publish_product"
 UNPUBLISH = "commerce.unpublish_product"
 UPDATE_PRICE = "commerce.update_price"
 UPDATE_INVENTORY = "commerce.update_inventory"
+SAVE_PRODUCT_DRAFT = "commerce.save_product_draft"
+IMPORT_PRODUCTS = "commerce.import_products"
+ADD_CANDIDATE = "commerce.add_selection_candidate"
+REMOVE_CANDIDATE = "commerce.remove_selection_candidate"
 
 
 class CommerceOperationService:
@@ -117,6 +121,98 @@ class CommerceOperationService:
             created_by=created_by,
         )
 
+    async def request_product_draft(
+        self,
+        *,
+        product: dict[str, Any],
+        idempotency_key: str,
+        created_by: UUID,
+    ) -> ConfirmationTask:
+        product_id = product.get("product_id")
+        before = await self.adapter.get_product(product_id) if product_id else {}
+        return await self._create_confirmation(
+            operation=SAVE_PRODUCT_DRAFT,
+            target_type="product",
+            target_id=product_id or f"new:{idempotency_key}",
+            before=before,
+            after=product,
+            idempotency_key=idempotency_key,
+            created_by=created_by,
+        )
+
+    async def request_product_import(
+        self,
+        *,
+        products: list[dict[str, Any]],
+        idempotency_key: str,
+        created_by: UUID,
+    ) -> ConfirmationTask:
+        return await self._create_confirmation(
+            operation=IMPORT_PRODUCTS,
+            target_type="product_import",
+            target_id=f"batch:{idempotency_key}",
+            before={"count": 0},
+            after={"products": products},
+            idempotency_key=idempotency_key,
+            created_by=created_by,
+        )
+
+    async def request_candidate_change(
+        self,
+        *,
+        product_id: str,
+        add: bool,
+        title: str,
+        source_type: str,
+        is_mock_data: bool,
+        idempotency_key: str,
+        created_by: UUID,
+    ) -> ConfirmationTask:
+        existing = await self.session.scalar(
+            select(SelectionCandidate).where(
+                SelectionCandidate.created_by == created_by,
+                SelectionCandidate.product_external_id == product_id,
+            )
+        )
+        operation = ADD_CANDIDATE if add else REMOVE_CANDIDATE
+        return await self._create_confirmation(
+            operation=operation,
+            target_type="selection_candidate",
+            target_id=product_id,
+            before={"selected": existing is not None},
+            after={
+                "selected": add,
+                "title": title,
+                "source_type": source_type,
+                "is_mock_data": is_mock_data,
+            },
+            idempotency_key=idempotency_key,
+            created_by=created_by,
+        )
+
+    async def list_candidates(self, created_by: UUID) -> list[dict[str, Any]]:
+        rows = (
+            (
+                await self.session.execute(
+                    select(SelectionCandidate)
+                    .where(SelectionCandidate.created_by == created_by)
+                    .order_by(SelectionCandidate.created_at.desc())
+                )
+            )
+            .scalars()
+            .all()
+        )
+        return [
+            {
+                "product_id": item.product_external_id,
+                "title": item.title_snapshot,
+                "source_type": item.source_type,
+                "is_mock_data": item.is_mock_data,
+                "created_at": item.created_at,
+            }
+            for item in rows
+        ]
+
     async def _create_confirmation(
         self,
         *,
@@ -188,6 +284,10 @@ class CommerceOperationService:
         confirmations.register_executor(UNPUBLISH, self._execute)
         confirmations.register_executor(UPDATE_PRICE, self._execute)
         confirmations.register_executor(UPDATE_INVENTORY, self._execute)
+        confirmations.register_executor(SAVE_PRODUCT_DRAFT, self._execute)
+        confirmations.register_executor(IMPORT_PRODUCTS, self._execute)
+        confirmations.register_executor(ADD_CANDIDATE, self._execute)
+        confirmations.register_executor(REMOVE_CANDIDATE, self._execute)
 
     async def _execute(self, confirmation: ConfirmationTask) -> dict[str, Any]:
         payload = confirmation.after_snapshot or {}
@@ -200,8 +300,55 @@ class CommerceOperationService:
                 result = await self.adapter.unpublish_product(str(product_id))
             elif confirmation.operation_type == UPDATE_PRICE:
                 result = await self.adapter.update_price(str(product_id), payload)
-            else:
+            elif confirmation.operation_type == UPDATE_INVENTORY:
                 result = await self.adapter.update_inventory(str(product_id), payload)
+            elif confirmation.operation_type == SAVE_PRODUCT_DRAFT:
+                result = (
+                    await self.adapter.update_product(str(product_id), payload)
+                    if payload.get("product_id")
+                    else await self.adapter.create_product(payload)
+                )
+            elif confirmation.operation_type == IMPORT_PRODUCTS:
+                imported = []
+                for product in payload.get("products", []):
+                    existing = (
+                        await self.adapter.get_product(str(product["product_id"]))
+                        if product.get("product_id")
+                        else {}
+                    )
+                    imported.append(
+                        await self.adapter.update_product(str(product["product_id"]), product)
+                        if existing
+                        else await self.adapter.create_product(product)
+                    )
+                result = {"imported_count": len(imported), "products": imported}
+            elif confirmation.operation_type == ADD_CANDIDATE:
+                existing = await self.session.scalar(
+                    select(SelectionCandidate).where(
+                        SelectionCandidate.created_by == confirmation.created_by,
+                        SelectionCandidate.product_external_id == confirmation.target_id,
+                    )
+                )
+                if existing is None:
+                    self.session.add(
+                        SelectionCandidate(
+                            created_by=confirmation.created_by,
+                            product_external_id=confirmation.target_id,
+                            source_type=payload["source_type"],
+                            title_snapshot=payload["title"],
+                            is_mock_data=payload["is_mock_data"],
+                        )
+                    )
+                await self.session.flush()
+                result = {"product_id": confirmation.target_id, "selected": True}
+            else:
+                await self.session.execute(
+                    delete(SelectionCandidate).where(
+                        SelectionCandidate.created_by == confirmation.created_by,
+                        SelectionCandidate.product_external_id == confirmation.target_id,
+                    )
+                )
+                result = {"product_id": confirmation.target_id, "selected": False}
             if not result:
                 raise ResourceNotFoundError("Commerce operation target not found")
             await self.tasks.complete(confirmation.agent_task_id, jsonable_encoder(result))

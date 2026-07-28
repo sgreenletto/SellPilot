@@ -127,3 +127,48 @@ export async function fetchDashboardMetrics(): Promise<DashboardMetric[]> {
     },
   ];
 }
+
+const PAGE_SIZE = 100;
+
+async function loadAllPages<T>(
+  loader: (query: string) => Promise<T[]>,
+  maximumRecords: number,
+): Promise<T[]> {
+  const records: T[] = [];
+  for (let offset = 0; offset < maximumRecords; offset += PAGE_SIZE) {
+    const page = await loader(`?offset=${offset}&limit=${PAGE_SIZE}`);
+    records.push(...page);
+    if (page.length < PAGE_SIZE) break;
+  }
+  return records;
+}
+
+export interface CommerceDashboardSnapshot {
+  products: Product[];
+  inventory: InventoryItem[];
+  orders: Order[];
+}
+
+export async function loadCommerceDashboardSnapshot(
+  shopId = "all",
+): Promise<CommerceDashboardSnapshot> {
+  const scope = shopId === "all" ? "" : `&shop_id=${encodeURIComponent(shopId)}`;
+  const [products, inventory, orders] = await Promise.all([
+    loadAllPages((query) => fetchProductsFromQuery(`${query}${scope}`), 1_000),
+    loadAllPages((query) => fetchInventoryFromQuery(`${query}${scope}`), 5_000),
+    loadAllPages((query) => fetchOrdersFromQuery(`${query}${scope}`), 10_000),
+  ]);
+  return { products, inventory, orders };
+}
+
+function fetchProductsFromQuery(query: string): Promise<Product[]> {
+  return request<Product[]>(`/v1/commerce/products${query}`);
+}
+
+function fetchInventoryFromQuery(query: string): Promise<InventoryItem[]> {
+  return request<InventoryItem[]>(`/v1/commerce/inventory${query}`);
+}
+
+function fetchOrdersFromQuery(query: string): Promise<Order[]> {
+  return request<Order[]>(`/v1/commerce/orders${query}`);
+}

@@ -20,6 +20,7 @@ from sellpilot.db.models.commerce import (
     Product,
     ReturnRefund,
     Review,
+    SelectionCandidate,
     Shop,
     Sku,
 )
@@ -62,6 +63,7 @@ __all__ = [
     "ReviewAnalysisResult",
     "ReturnRefund",
     "Review",
+    "SelectionCandidate",
     "Shop",
     "Sku",
     "ToolCall",

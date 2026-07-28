@@ -1,60 +1,63 @@
 <script setup lang="ts">
 import {
+  AlertTriangle,
   ArrowDown,
   ArrowUp,
+  BarChart3,
   CheckCircle2,
   ChevronRight,
   Clock,
+  MessageCircleMore,
   Minus,
   PackageCheck,
   TrendingUp,
 } from "@lucide/vue";
-import { computed, onMounted, ref } from "vue";
+import { storeToRefs } from "pinia";
+import { computed, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 
-import {
-  fetchFunnelData,
-  fetchInventory,
-  fetchOrders,
-  fetchProducts,
-  fetchTasks,
-} from "@/api/dashboard";
+import { listConfirmations } from "@/api/commerce";
+import { loadCommerceDashboardSnapshot } from "@/api/dashboard";
 import SpButton from "@/components/base/SpButton.vue";
+import SpEmptyState from "@/components/base/SpEmptyState.vue";
 import DashboardTrendChart from "@/components/charts/DashboardTrendChart.vue";
 import StatusBadge from "@/components/data-display/StatusBadge.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
-import { trendDatasets as fallbackTrendDatasets } from "@/mocks/dashboard";
-import type { InventoryItem, Order, Product } from "@/types/commerce";
-import type { MetricCardData, TrendDataset, TrendType } from "@/types/dashboard";
+import { topMetrics as mockTopMetrics, trendDatasets } from "@/mocks/dashboard";
+import type {
+  AlertItem,
+  MetricCardData,
+  RecentActivity,
+  TrendDataset,
+  TrendType,
+} from "@/types/dashboard";
+import { useAppStore } from "@/stores/app";
 
 const router = useRouter();
-
-// ---- 加载状态 ----
-
-const loading = ref(true);
-
-// ---- 动态数据 ----
-
-const products = ref<Product[]>([]);
-const orders = ref<Order[]>([]);
-const inventory = ref<InventoryItem[]>([]);
-const metricCards = ref<MetricCardData[]>([]);
-const taskTotal = ref(0);
-const alertItems = ref<
-  {
-    id: string;
-    type: "danger" | "warning" | "info";
-    title: string;
-    description: string;
-    linkTo: string;
-    linkLabel: string;
-    timestamp: string;
-  }[]
->([]);
+const appStore = useAppStore();
+const { selectedShopId } = storeToRefs(appStore);
 
 // ---- 趋势切换 ----
 
 const trendType = ref<TrendType>("funnel");
+const metrics = ref<MetricCardData[]>(mockTopMetrics.map((metric) => ({ ...metric })));
+const datasets = ref<Record<string, TrendDataset>>(
+  Object.fromEntries(
+    Object.entries(trendDatasets).map(([key, dataset]) => [
+      key,
+      {
+        categories: [...dataset.categories],
+        series: dataset.series.map((series) => ({ ...series, data: [...series.data] })),
+      },
+    ]),
+  ),
+);
+datasets.value.sentiment = { categories: [], series: [] };
+datasets.value.service = { categories: [], series: [] };
+const dataStatus = ref<"loading" | "backend" | "fallback">("loading");
+const dataMessage = ref("正在读取后端经营数据…");
+const dashboardAlerts = ref<AlertItem[]>([]);
+const dashboardActivities = ref<RecentActivity[]>([]);
 
 const trendTabs: { key: TrendType; label: string }[] = [
   { key: "funnel", label: "商品运营漏斗" },
@@ -64,50 +67,182 @@ const trendTabs: { key: TrendType; label: string }[] = [
   { key: "service", label: "客服问题趋势" },
 ];
 
-const trendDatasets = ref<Record<TrendType, TrendDataset>>({
-  funnel: { categories: [], series: [] },
-  orders: { categories: [], series: [] },
-  popularity: { categories: [], series: [] },
-  sentiment: fallbackTrendDatasets.sentiment,
-  service: fallbackTrendDatasets.service,
-});
-
 const currentDataset = computed(
-  () =>
-    trendDatasets.value[trendType.value] ?? {
-      categories: [],
-      series: [],
-    },
+  () => datasets.value[trendType.value] ?? { categories: [], series: [] },
 );
 
-// ---- 加载全部数据 ----
+function orderTrend(orders: Awaited<ReturnType<typeof loadCommerceDashboardSnapshot>>["orders"]) {
+  const counts = new Map<string, number>();
+  for (const order of orders) {
+    const date = order.created_at.slice(0, 10);
+    counts.set(date, (counts.get(date) ?? 0) + 1);
+  }
+  const dates = [...counts.keys()].sort().slice(-7);
+  return {
+    categories: dates.map((date) => date.slice(5)),
+    series: [{ name: "模拟订单", data: dates.map((date) => counts.get(date) ?? 0), color: "blue" }],
+  };
+}
 
-const loadError = ref("");
+function buildStoreOperationsFunnel(
+  snapshot: Awaited<ReturnType<typeof loadCommerceDashboardSnapshot>>,
+): TrendDataset {
+  const completeProductIds = new Set(
+    snapshot.products
+      .filter(
+        (product) =>
+          product.title.trim().length > 0 &&
+          product.category_name.trim().length > 0 &&
+          Number(product.price) > 0,
+      )
+      .map((product) => product.product_id),
+  );
+  const healthyStockProductIds = new Set(
+    snapshot.inventory
+      .filter(
+        (item) =>
+          completeProductIds.has(item.product_id) &&
+          item.stock_status !== "low_stock" &&
+          item.available_stock > item.safety_stock,
+      )
+      .map((item) => item.product_id),
+  );
+  const listedCount = snapshot.products.filter(
+    (product) => healthyStockProductIds.has(product.product_id) && product.status === "active",
+  ).length;
 
-async function loadAll() {
-  loading.value = true;
-  loadError.value = "";
+  return {
+    categories: ["店铺商品", "资料完整", "库存健康", "健康且已上架"],
+    series: [
+      {
+        name: "当前店铺商品",
+        data: [
+          snapshot.products.length,
+          completeProductIds.size,
+          healthyStockProductIds.size,
+          listedCount,
+        ],
+        color: "blue",
+      },
+    ],
+  };
+}
+
+function backendTimestamp(value?: string | null): string {
+  if (!value) return "后端记录";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "后端记录";
+  return date.toLocaleString("zh-CN", { hour12: false });
+}
+
+async function loadBackendDashboard(): Promise<void> {
   try {
-    const [prods, ords, inv, tasks] = await Promise.all([
-      fetchProducts({ limit: 100 }),
-      fetchOrders({ limit: 100 }),
-      fetchInventory({ limit: 200 }),
-      fetchTasks({ page_size: 1 }),
-    ]);
-    products.value = prods;
-    orders.value = ords;
-    inventory.value = inv;
-    taskTotal.value = tasks.total;
+    const snapshot = await loadCommerceDashboardSnapshot(selectedShopId.value);
+    const lowStock = snapshot.inventory.filter(
+      (item) => item.stock_status === "low_stock" || item.available_stock <= item.safety_stock,
+    ).length;
+    const popular = [...snapshot.products]
+      .sort((left, right) => right.sales_count - left.sales_count)
+      .slice(0, 6);
+    const productById = new Map(snapshot.products.map((product) => [product.product_id, product]));
+    const lowStockItems = snapshot.inventory
+      .filter(
+        (item) => item.stock_status === "low_stock" || item.available_stock <= item.safety_stock,
+      )
+      .sort(
+        (left, right) =>
+          left.available_stock - left.safety_stock - (right.available_stock - right.safety_stock),
+      );
+    const pendingPaymentOrders = snapshot.orders.filter(
+      (order) =>
+        order.payment_status.includes("pending") || order.order_status.includes("pending_payment"),
+    );
+    let shopConfirmations: Awaited<ReturnType<typeof listConfirmations>>["items"] = [];
+    try {
+      const confirmationPage = await listConfirmations();
+      const currentProductIds = new Set(snapshot.products.map((product) => product.product_id));
+      shopConfirmations = confirmationPage.items.filter(
+        (confirmation) =>
+          confirmation.target_id != null && currentProductIds.has(confirmation.target_id),
+      );
+    } catch {
+      shopConfirmations = [];
+    }
+    const pendingConfirmations = shopConfirmations.filter(
+      (confirmation) => confirmation.status === "pending",
+    );
 
-    // 构建指标卡
-    const lowStock = inv.filter((i) => i.stock_status === "low_stock").length;
-    metricCards.value = [
+    const alerts: AlertItem[] = [];
+    const firstLowStock = lowStockItems[0];
+    if (firstLowStock) {
+      const product = productById.get(firstLowStock.product_id);
+      alerts.push({
+        id: `low-stock-${firstLowStock.inventory_id}`,
+        type: "danger",
+        title: "低库存预警",
+        description: `${product?.title ?? firstLowStock.product_id}（${firstLowStock.sku_id}）可用库存 ${firstLowStock.available_stock}，安全阈值 ${firstLowStock.safety_stock}；当前店铺共 ${lowStockItems.length} 条低库存记录。`,
+        linkTo: "/products/listing-inventory",
+        linkLabel: "前往补货",
+        timestamp: backendTimestamp(firstLowStock.updated_at),
+      });
+    }
+    const firstPendingOrder = pendingPaymentOrders[0];
+    if (firstPendingOrder) {
+      alerts.push({
+        id: `pending-order-${firstPendingOrder.order_id}`,
+        type: "warning",
+        title: "待支付订单",
+        description: `当前店铺共有 ${pendingPaymentOrders.length} 笔待支付订单，示例订单 ${firstPendingOrder.order_id}。`,
+        linkTo: "/orders",
+        linkLabel: "查看订单",
+        timestamp: backendTimestamp(firstPendingOrder.created_at),
+      });
+    }
+    const firstConfirmation = pendingConfirmations[0];
+    if (firstConfirmation) {
+      alerts.push({
+        id: `confirmation-${firstConfirmation.id}`,
+        type: "info",
+        title: "待确认 Mock 操作",
+        description: `当前店铺共有 ${pendingConfirmations.length} 个待确认任务，目标 ${firstConfirmation.target_id}，操作 ${firstConfirmation.operation_type}。`,
+        linkTo: "/tasks",
+        linkLabel: "查看任务",
+        timestamp: backendTimestamp(firstConfirmation.created_at),
+      });
+    }
+    dashboardAlerts.value = alerts;
+    dashboardActivities.value = [
+      ...shopConfirmations.slice(0, 4).map((confirmation): RecentActivity => ({
+        id: `confirmation-activity-${confirmation.id}`,
+        type: "task",
+        action: "Mock 操作确认",
+        target: `${confirmation.target_id} · ${confirmation.operation_type}`,
+        status:
+          confirmation.status === "succeeded"
+            ? "completed"
+            : confirmation.status === "pending"
+              ? "pending"
+              : confirmation.status === "failed"
+                ? "failed"
+                : "processing",
+        timestamp: backendTimestamp(confirmation.created_at),
+      })),
+      {
+        id: `backend-load-${selectedShopId.value}`,
+        type: "system",
+        action: "后端数据加载",
+        target: `${snapshot.products.length} 个商品、${snapshot.inventory.length} 条库存、${snapshot.orders.length} 笔订单`,
+        status: "completed",
+        timestamp: "刚刚",
+      },
+    ];
+
+    metrics.value = [
       {
         id: "total-products",
         label: "商品总数",
-        value: prods.length,
-        suffix: "SKU",
-        trend: undefined,
+        value: snapshot.products.length,
+        suffix: "件",
         icon: "package",
         tone: "navy",
         linkTo: "/products",
@@ -117,114 +252,73 @@ async function loadAll() {
         label: "低库存 SKU",
         value: lowStock,
         suffix: "项",
-        trend: undefined,
         icon: "alert",
         tone: "pink",
         linkTo: "/products/listing-inventory",
       },
       {
-        id: "total-orders",
+        id: "mock-orders",
         label: "模拟订单数",
-        value: ords.length,
+        value: snapshot.orders.length,
         suffix: "单",
-        trend: undefined,
         icon: "trend",
         tone: "blue",
         linkTo: "/orders",
       },
       {
-        id: "active-products",
-        label: "激活商品",
-        value: prods.filter((p) => p.status === "active").length,
-        suffix: "SKU",
-        trend: undefined,
-        icon: "check",
-        tone: "green",
-        linkTo: "/products",
+        id: "pending-sessions",
+        label: "待处理客服会话",
+        value: 0,
+        suffix: "未接入",
+        icon: "message",
+        tone: "purple",
+        linkTo: "/customer-service/conversations",
       },
       {
         id: "pending-tasks",
-        label: "任务总数",
-        value: tasks.total,
+        label: "待确认任务",
+        value: pendingConfirmations.length,
         suffix: "项",
-        trend: undefined,
         icon: "check",
-        tone: "purple",
+        tone: "green",
         linkTo: "/tasks",
       },
     ];
-
-    // 漏斗数据
-    const funnel = await fetchFunnelData();
-    trendDatasets.value.funnel = {
-      categories: funnel.map((f) => f.label),
-      series: [{ name: "商品数量", data: funnel.map((f) => f.count), color: "blue" }],
-    };
-
-    // 订单趋势（按状态分组）
-    const statusCounts: Record<string, number> = {};
-    ords.forEach((o) => {
-      statusCounts[o.order_status] = (statusCounts[o.order_status] ?? 0) + 1;
-    });
-    trendDatasets.value.orders = {
-      categories: Object.keys(statusCounts),
-      series: [{ name: "订单数", data: Object.values(statusCounts), color: "blue" }],
-    };
-
-    // 商品热度（按销量 Top 6）
-    const topProducts = [...prods].sort((a, b) => b.sales_count - a.sales_count).slice(0, 6);
-    trendDatasets.value.popularity = {
-      categories: topProducts.map((p) => p.title.slice(0, 8)),
+    datasets.value.funnel = buildStoreOperationsFunnel(snapshot);
+    datasets.value.orders = orderTrend(snapshot.orders);
+    datasets.value.popularity = {
+      categories: popular.map((product) => product.title),
       series: [
-        { name: "销量", data: topProducts.map((p) => p.sales_count), color: "blue" },
-        { name: "评论数", data: topProducts.map((p) => p.review_count), color: "pink" },
+        {
+          name: "模拟销量",
+          data: popular.map((product) => product.sales_count),
+          color: "blue",
+        },
       ],
     };
-
-    // 异常提醒
-    const alerts: typeof alertItems.value = [];
-    inv
-      .filter((i) => i.stock_status === "low_stock" || i.stock_status === "out_of_stock")
-      .slice(0, 2)
-      .forEach((i) => {
-        alerts.push({
-          id: `alert-inv-${i.inventory_id}`,
-          type: "danger",
-          title: "低库存预警",
-          description: `SKU ${i.sku_id} 库存状态: ${i.stock_status}，可用 ${i.available_stock}，预留 ${i.reserved_stock}`,
-          linkTo: "/products/listing-inventory",
-          linkLabel: "前往补货",
-          timestamp: "实时",
-        });
-      });
-    if (tasks.total > 0) {
-      alerts.push({
-        id: "alert-tasks",
-        type: "warning",
-        title: "待处理任务",
-        description: `当前共有 ${tasks.total} 个任务待处理`,
-        linkTo: "/tasks",
-        linkLabel: "查看任务",
-        timestamp: "实时",
-      });
-    }
-    alertItems.value = alerts;
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "未知错误";
-    loadError.value = `数据加载失败：${msg}`;
-  } finally {
-    loading.value = false;
+    datasets.value.sentiment = { categories: [], series: [] };
+    datasets.value.service = { categories: [], series: [] };
+    dataStatus.value = "backend";
+    const scopeLabel =
+      selectedShopId.value === "all" ? "全部模拟店铺" : `来源店铺 ${selectedShopId.value}`;
+    dataMessage.value = `已连接后端：当前展示${scopeLabel}的商品、库存、订单和待确认操作；客服仍未接入店铺关联。`;
+  } catch {
+    dashboardAlerts.value = [];
+    dashboardActivities.value = [];
+    datasets.value.sentiment = { categories: [], series: [] };
+    datasets.value.service = { categories: [], series: [] };
+    dataStatus.value = "fallback";
+    dataMessage.value = "后端未连接，当前展示明确标识的合成 Mock 演示数据。";
   }
 }
-
-onMounted(loadAll);
 
 // ---- 指标卡图标 ----
 
 const iconMap: Record<string, typeof TrendingUp> = {
   trend: TrendingUp,
+  message: MessageCircleMore,
   package: PackageCheck,
-  alert: TrendingUp,
+  alert: AlertTriangle,
   check: CheckCircle2,
 };
 
@@ -234,77 +328,40 @@ function goTo(path: string) {
   void router.push(path);
 }
 
-function formatTrend(value: number | undefined): string {
-  if (value == null || value === 0) return "";
-  return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
+// ---- 格式化趋势数字 ----
+
+function formatTrend(v: number | undefined): string {
+  if (v == null || v === 0) return "";
+  return `${v > 0 ? "+" : ""}${v.toFixed(1)}%`;
 }
 
-// ---- 分区活动列表（基于 API 数据） ----
+// ---- 分区活动列表（避免模板中重复 filter） ----
 
-interface ActivityItem {
-  id: string;
-  action: string;
-  target: string;
-  status: "completed" | "pending";
-  timestamp: string;
-}
+const taskActivities = computed(() => dashboardActivities.value.filter((a) => a.type === "task"));
 
-const taskActivities = computed<ActivityItem[]>(() => {
-  const items: ActivityItem[] = [];
-  const lowStockItems = inventory.value.filter((i) => i.stock_status === "low_stock");
-  if (lowStockItems.length > 0) {
-    items.push({
-      id: "task-low-stock",
-      action: "库存预警",
-      target: `${lowStockItems.length} 个 SKU 库存偏低`,
-      status: "pending",
-      timestamp: "实时",
-    });
-  }
-  if (taskTotal.value > 0) {
-    items.push({
-      id: "task-pending",
-      action: "待处理",
-      target: `${taskTotal.value} 个任务`,
-      status: "pending",
-      timestamp: "实时",
-    });
-  }
-  return items;
+const systemActivities = computed(() =>
+  dashboardActivities.value.filter((a) => a.type === "system"),
+);
+
+onMounted(() => void loadBackendDashboard());
+
+watch(selectedShopId, () => {
+  dataStatus.value = "loading";
+  dataMessage.value = "正在按店铺范围读取后端经营数据…";
+  void loadBackendDashboard();
 });
-
-const systemActivities = computed<ActivityItem[]>(() => [
-  {
-    id: "sys-products",
-    action: "数据加载",
-    target: `${products.value.length} 个商品已同步`,
-    status: "completed",
-    timestamp: "实时",
-  },
-  {
-    id: "sys-orders",
-    action: "数据加载",
-    target: `${orders.value.length} 个订单已同步`,
-    status: "completed",
-    timestamp: "实时",
-  },
-]);
 </script>
 
 <template>
   <PageContainer>
     <div class="dashboard">
-      <div v-if="loading" class="dash-error">正在加载经营数据…</div>
-      <!-- 错误提示 -->
-      <div v-if="loadError" class="dash-error">
-        <span>⚠️ {{ loadError }}</span>
-        <SpButton size="sm" variant="secondary" @click="loadAll">重试</SpButton>
-      </div>
-
+      <p :class="['data-status', `data-status--${dataStatus}`]" role="status">
+        {{ dataMessage }}
+      </p>
       <!-- ==================== 1. 顶部指标卡 ==================== -->
       <section class="metrics-row" aria-label="核心指标">
         <button
-          v-for="metric in metricCards"
+          v-for="metric in metrics"
           :key="metric.id"
           type="button"
           :class="['metric-card', `metric-card--${metric.tone}`]"
@@ -379,9 +436,14 @@ const systemActivities = computed<ActivityItem[]>(() => [
           <header class="dash-card__header">
             <h3 class="dash-card__title">异常提醒 &amp; 今日待办</h3>
           </header>
-          <ul class="alerts-list">
+          <SpEmptyState
+            v-if="dashboardAlerts.length === 0"
+            title="当前店铺暂无可展示提醒"
+            description="这里只展示后端可核验的库存、订单和待确认任务数据。"
+          />
+          <ul v-else class="alerts-list">
             <li
-              v-for="item in alertItems"
+              v-for="item in dashboardAlerts"
               :key="item.id"
               :class="['alert-item', `alert-item--${item.type}`]"
             >
@@ -415,15 +477,30 @@ const systemActivities = computed<ActivityItem[]>(() => [
             <ul class="activity-list">
               <li v-for="act in taskActivities" :key="act.id" class="activity-item">
                 <span class="activity-item__icon">
-                  <Clock :size="15" />
+                  <BarChart3 v-if="act.status === 'completed'" :size="15" />
+                  <Clock v-else :size="15" />
                 </span>
                 <div class="activity-item__body">
                   <span class="activity-item__action">{{ act.action }}</span>
                   <span class="activity-item__target">{{ act.target }}</span>
                 </div>
                 <StatusBadge
-                  :status="act.status === 'completed' ? 'active' : 'pending'"
-                  :label="act.status === 'completed' ? '已完成' : '待处理'"
+                  :status="
+                    act.status === 'completed'
+                      ? 'active'
+                      : act.status === 'pending'
+                        ? 'pending'
+                        : 'failed'
+                  "
+                  :label="
+                    act.status === 'completed'
+                      ? '已完成'
+                      : act.status === 'pending'
+                        ? '待处理'
+                        : act.status === 'processing'
+                          ? '处理中'
+                          : '失败'
+                  "
                 />
                 <span class="activity-item__time">{{ act.timestamp }}</span>
               </li>
@@ -435,13 +512,17 @@ const systemActivities = computed<ActivityItem[]>(() => [
             <ul class="activity-list">
               <li v-for="act in systemActivities" :key="act.id" class="activity-item">
                 <span class="activity-item__icon activity-item__icon--system">
-                  <CheckCircle2 :size="15" />
+                  <CheckCircle2 v-if="act.status === 'completed'" :size="15" />
+                  <Clock v-else :size="15" />
                 </span>
                 <div class="activity-item__body">
                   <span class="activity-item__action">{{ act.action }}</span>
                   <span class="activity-item__target">{{ act.target }}</span>
                 </div>
-                <StatusBadge status="active" label="成功" />
+                <StatusBadge
+                  :status="act.status === 'completed' ? 'active' : 'pending'"
+                  :label="act.status === 'completed' ? '成功' : '处理中'"
+                />
                 <span class="activity-item__time">{{ act.timestamp }}</span>
               </li>
             </ul>
@@ -461,18 +542,23 @@ const systemActivities = computed<ActivityItem[]>(() => [
   min-width: 0;
 }
 
-.dash-error {
-  display: flex;
-  gap: var(--sp-space-4);
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--sp-space-4) var(--sp-space-5);
-  background: color-mix(in srgb, var(--sp-color-danger) 8%, #ffffff);
-  border: 1px solid color-mix(in srgb, var(--sp-color-danger) 22%, transparent);
-  border-radius: 16px;
-  font-size: var(--sp-font-sm);
+.data-status {
+  padding: var(--sp-space-3) var(--sp-space-4);
+  margin: 0;
+  color: var(--sp-color-text-secondary);
+  background: var(--sp-color-surface);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-control);
+}
+
+.data-status--backend {
+  color: var(--sp-color-success);
+  background: var(--sp-color-success-soft);
+}
+
+.data-status--fallback {
   color: var(--sp-color-danger);
-  font-weight: 600;
+  background: var(--sp-color-danger-soft);
 }
 
 /* ==================== Shared Card ==================== */

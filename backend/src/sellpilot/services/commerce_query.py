@@ -41,7 +41,12 @@ class CommerceQueryService:
         return await self.adapter.list_messages(**filters)
 
     async def list_inventory(
-        self, *, status: str | None, offset: int, limit: int
+        self,
+        *,
+        status: str | None,
+        offset: int,
+        limit: int,
+        shop_id: str | None = None,
     ) -> list[dict[str, Any]]:
         statement = (
             select(InventoryRecord, Sku.external_id, Product.external_id)
@@ -51,6 +56,8 @@ class CommerceQueryService:
         )
         if status:
             statement = statement.where(InventoryRecord.stock_status == status)
+        if shop_id:
+            statement = statement.where(Product.source_shop_external_id == shop_id)
         rows = (await self.session.execute(statement.offset(offset).limit(limit))).all()
         return [
             {
