@@ -13,6 +13,7 @@ describe("成员二业务工作台", () => {
     expect(wrapper.findAll(".mock-image")).toHaveLength(3);
     expect(wrapper.get(".commerce-pagination").text()).toContain("共 100 条 · 第 1 / 10 页");
     expect(wrapper.findAll("tbody tr")).toHaveLength(10);
+    expect(wrapper.get(".form-grid select").findAll("option")).toHaveLength(9);
 
     await wrapper
       .findAll("button")
@@ -20,10 +21,9 @@ describe("成员二业务工作台", () => {
       .trigger("click");
     expect(wrapper.text()).toContain("未命名商品");
     await wrapper.get(".form-grid select").setValue("zh-CN");
-    expect(wrapper.get(".form-grid textarea").element).toHaveProperty(
-      "value",
-      expect.stringContaining("【Mock 中文】"),
-    );
+    expect(wrapper.text()).toContain("待翻译");
+    expect(wrapper.text()).toContain("机器翻译服务未配置");
+    expect(wrapper.get(".form-grid textarea").element).toHaveProperty("value", "");
     await wrapper.get(".form-grid textarea").setValue("本地中文商品描述");
     expect(wrapper.get(".form-grid textarea").element).toHaveProperty("value", "本地中文商品描述");
     await wrapper
