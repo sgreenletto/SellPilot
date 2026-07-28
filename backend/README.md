@@ -58,7 +58,7 @@ uv run sellpilot-create-admin --username admin
 ## 启动 API
 
 ```powershell
-uv run uvicorn sellpilot.main:app --host 127.0.0.1 --port 8000
+uv run python -m uvicorn sellpilot.main:app --host 127.0.0.1 --port 8000
 ```
 
 基础地址为 `http://127.0.0.1:8000/api/v1`。

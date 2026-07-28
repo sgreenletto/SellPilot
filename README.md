@@ -93,7 +93,7 @@ Vue Views
 ```powershell
 uv sync
 uv run alembic upgrade head
-uv run uvicorn sellpilot.main:app --host 127.0.0.1 --port 8000
+uv run python -m uvicorn sellpilot.main:app --host 127.0.0.1 --port 8000
 ```
 
 交互式创建单用户管理员：
@@ -180,6 +180,11 @@ npm run build
 - `GET /api/v1/confirmations/{confirmation_id}`
 - `POST /api/v1/confirmations/{confirmation_id}/confirm`
 - `POST /api/v1/confirmations/{confirmation_id}/cancel`
+- `GET /api/v1/tools`
+- `GET /api/v1/tools/{tool_name}`
+- `POST /api/v1/tools/{tool_name}/execute`
+- `GET /api/v1/tool-calls`
+- `GET /api/v1/tool-calls/{tool_call_id}`
 
 Task 和 Confirmation 只能由内部 Service 创建，不提供公共创建 API。
 

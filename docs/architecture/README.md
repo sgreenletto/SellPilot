@@ -1,5 +1,8 @@
 # Architecture
 
+- `tool-execution-runtime.md`: unified ToolRegistry, ToolExecutor, confirmation,
+  audit, retry and MCP runtime.
+
 本目录用于记录系统上下文、模块边界、数据流、部署视图和架构决策。
 
 当前架构约束：
