@@ -1,6 +1,14 @@
 from fastapi import APIRouter
 
-from sellpilot.api.v1.endpoints import auth, confirmations, health, platform, tasks
+from sellpilot.api.v1.endpoints import (
+    auth,
+    confirmations,
+    health,
+    platform,
+    tasks,
+    tool_calls,
+    tools,
+)
 
 router = APIRouter()
 router.include_router(health.router, prefix="/health", tags=["health"])
@@ -8,3 +16,5 @@ router.include_router(auth.router, prefix="/auth", tags=["auth"])
 router.include_router(platform.router, prefix="/platform", tags=["platform"])
 router.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
 router.include_router(confirmations.router, prefix="/confirmations", tags=["confirmations"])
+router.include_router(tools.router, prefix="/tools", tags=["tools"])
+router.include_router(tool_calls.router, prefix="/tool-calls", tags=["tool-calls"])
