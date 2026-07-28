@@ -27,6 +27,18 @@ async function parseBody(response: Response): Promise<unknown> {
   return response.json();
 }
 
+function getAuthHeaders(): Record<string, string> {
+  try {
+    const token = localStorage.getItem("sellpilot_token")
+    if (token) {
+      return { Authorization: `Bearer ${token}` }
+    }
+  } catch {
+    // 无痕模式等静默忽略
+  }
+  return {}
+}
+
 export async function request<T>(
   path: string,
   init: RequestInit = {},
@@ -41,6 +53,7 @@ export async function request<T>(
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        ...getAuthHeaders(),
         ...init.headers,
       },
       signal: controller.signal,
