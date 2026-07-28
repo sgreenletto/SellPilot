@@ -1,33 +1,96 @@
-import { mount } from "@vue/test-utils";
-import { describe, expect, it } from "vitest";
+import { mount } from "@vue/test-utils"
+import { describe, expect, it } from "vitest"
 
-import DashboardView from "@/views/dashboard/DashboardView.vue";
+import DashboardView from "@/views/dashboard/DashboardView.vue"
 
-describe("经营看板", () => {
-  it("渲染漏斗、AI Co-Pilot 与风险事项核心卡片", () => {
-    const wrapper = mount(DashboardView);
+describe("经营看板 v2", () => {
+  function mountDashboard() {
+    return mount(DashboardView, {
+      global: {
+        stubs: {
+          RouterLink: {
+            template: "<a><slot /></a>",
+          },
+          DashboardTrendChart: {
+            template: '<div class="mock-chart">chart</div>',
+          },
+        },
+      },
+    })
+  }
 
-    expect(wrapper.text()).toContain("商品运营漏斗");
-    expect(wrapper.text()).toContain("SellPilot");
-    expect(wrapper.text()).toContain("AI Co-Pilot");
-    expect(wrapper.text()).toContain("高风险运营事项");
-  });
+  it("渲染五个顶部指标卡", () => {
+    const wrapper = mountDashboard()
 
-  it("渲染四个漏斗阶段及模拟标签", () => {
-    const wrapper = mount(DashboardView);
+    expect(wrapper.text()).toContain("商品总数")
+    expect(wrapper.text()).toContain("低库存 SKU")
+    expect(wrapper.text()).toContain("模拟订单数")
+    expect(wrapper.text()).toContain("待处理客服会话")
+    expect(wrapper.text()).toContain("待确认任务")
+  })
 
-    for (const label of ["市场商品", "选品候选", "上架草稿", "模拟上架"]) {
-      expect(wrapper.text()).toContain(label);
-    }
-  });
+  it("展示指标数值", () => {
+    const wrapper = mountDashboard()
 
-  it("渲染三条稳定 ID 的风险事项数据", () => {
-    const wrapper = mount(DashboardView);
+    expect(wrapper.text()).toContain("186")
+    expect(wrapper.text()).toContain("1,247")
+    expect(wrapper.text()).toContain("23")
+    expect(wrapper.text()).toContain("15")
+  })
 
-    expect(wrapper.findAll(".risk-table tbody tr")).toHaveLength(3);
-    expect(wrapper.text()).toContain("无线耳机");
-    expect(wrapper.text()).toContain("折叠支架");
-    expect(wrapper.text()).toContain("收纳包");
-    expect(wrapper.text()).toContain("¥18,600");
-  });
-});
+  it("渲染趋势切换标签", () => {
+    const wrapper = mountDashboard()
+
+    expect(wrapper.text()).toContain("商品运营漏斗")
+    expect(wrapper.text()).toContain("订单趋势")
+    expect(wrapper.text()).toContain("商品热度")
+    expect(wrapper.text()).toContain("评论情绪分布")
+    expect(wrapper.text()).toContain("客服问题趋势")
+  })
+
+  it("渲染异常提醒与今日待办面板", () => {
+    const wrapper = mountDashboard()
+
+    expect(wrapper.text()).toContain("异常提醒")
+    expect(wrapper.text()).toContain("低库存预警")
+    expect(wrapper.text()).toContain("高风险客服消息")
+    expect(wrapper.text()).toContain("待审批确认任务")
+    expect(wrapper.text()).toContain("折叠支架")
+    expect(wrapper.text()).toContain("无线耳机")
+  })
+
+  it("提醒项包含快捷跳转按钮", () => {
+    const wrapper = mountDashboard()
+
+    expect(wrapper.text()).toContain("前往补货")
+    expect(wrapper.text()).toContain("查看会话")
+    expect(wrapper.text()).toContain("立即处理")
+  })
+
+  it("渲染最近动态面板", () => {
+    const wrapper = mountDashboard()
+
+    expect(wrapper.text()).toContain("最近动态")
+    expect(wrapper.text()).toContain("最近任务")
+    expect(wrapper.text()).toContain("系统操作记录")
+  })
+
+  it("展示任务和系统操作记录内容", () => {
+    const wrapper = mountDashboard()
+
+    expect(wrapper.text()).toContain("AI 生成")
+    expect(wrapper.text()).toContain("数据同步")
+    expect(wrapper.text()).toContain("模拟上架")
+    expect(wrapper.text()).toContain("状态检测")
+  })
+
+  it("五张指标卡均可点击跳转", () => {
+    const wrapper = mountDashboard()
+    const cards = wrapper.findAll(".metric-card")
+
+    expect(cards).toHaveLength(5)
+    cards.forEach((card) => {
+      expect(card.attributes("type")).toBe("button")
+    })
+  })
+})

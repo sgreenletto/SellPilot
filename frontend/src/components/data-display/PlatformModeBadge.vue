@@ -17,24 +17,15 @@ const props = withDefaults(defineProps<Props>(), {
 
 const view = computed(() => {
   if (props.loading) {
-    return { label: "状态检测中", tone: "neutral" as const };
+    return { label: "状态检测中", tone: "neutral" as const }
   }
   if (props.error || !props.status) {
-    return { label: "后端未连接", tone: "danger" as const };
+    return { label: "后端未连接", tone: "danger" as const }
   }
-  if (props.status.adapter === "mock") {
-    return {
-      label: props.status.reachable ? "Mock 模拟模式" : "Mock 不可用",
-      tone: props.status.reachable ? ("info" as const) : ("danger" as const),
-    };
+  if (props.status.reachable) {
+    return { label: "后端已连接", tone: "success" as const }
   }
-  return {
-    label: props.status.configured && props.status.reachable ? "Real 模式" : "Real Stub 未配置",
-    tone:
-      props.status.configured && props.status.reachable
-        ? ("success" as const)
-        : ("warning" as const),
-  };
+  return { label: "后端未连接", tone: "danger" as const }
 });
 </script>
 

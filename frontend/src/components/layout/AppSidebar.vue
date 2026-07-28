@@ -49,7 +49,7 @@ const entries = computed(() =>
     </nav>
 
     <div class="app-sidebar__operator">
-      <SpAvatar initials="AD" gradient="pink" />
+      <SpAvatar initials="AD" gradient="purple" />
       <div v-if="!sidebarCollapsed">
         <strong>Admin</strong>
         <span>SellPilot Operator</span>

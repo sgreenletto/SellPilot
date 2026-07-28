@@ -1,8 +1,12 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 
 import DefaultLayout from "@/layouts/DefaultLayout.vue";
+import { useAuthStore } from "@/stores/auth";
 
+const LoginView = () => import("@/views/login/LoginView.vue");
 const DashboardView = () => import("@/views/dashboard/DashboardView.vue");
+const ConversationView = () => import("@/views/customer-service/ConversationView.vue");
+const KnowledgeBaseView = () => import("@/views/knowledge-base/KnowledgeBaseView.vue");
 const DesignSystemView = () => import("@/views/dev/DesignSystemView.vue");
 const ModulePlaceholderView = () => import("@/views/placeholder/ModulePlaceholderView.vue");
 const ProductsView = () => import("@/views/commerce/ProductsView.vue");
@@ -85,7 +89,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
   {
     path: "/customer-service/conversations",
     name: "conversations",
-    component: ModulePlaceholderView,
+    component: ConversationView,
     meta: {
       title: "会话工作台",
       module: "智能客服",
@@ -95,7 +99,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
   {
     path: "/customer-service/knowledge",
     name: "knowledge",
-    component: ModulePlaceholderView,
+    component: KnowledgeBaseView,
     meta: {
       title: "知识库",
       module: "智能客服",
@@ -155,11 +159,36 @@ export const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
+      path: "/login",
+      name: "login",
+      component: LoginView,
+      meta: { title: "登录", requiresAuth: false },
+    },
+    {
       path: "/",
       component: DefaultLayout,
       children: childRoutes,
+      meta: { requiresAuth: true },
     },
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" },
   ],
   scrollBehavior: () => ({ top: 0 }),
 });
+
+router.beforeEach((to, _from, next) => {
+  const authStore = useAuthStore()
+
+  if (to.meta.requiresAuth === false) {
+    // 已登录用户访问登录页 → 直接进入看板
+    if (authStore.isAuthenticated && to.name === "login") {
+      return next("/dashboard")
+    }
+    return next()
+  }
+
+  if (!authStore.isAuthenticated) {
+    return next("/login")
+  }
+
+  return next()
+})
