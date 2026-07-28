@@ -31,6 +31,17 @@ const pageSize = ref(10);
 const selected = ref<Row | null>(products.value[0] ?? null);
 const editing = ref(false);
 const activeLanguage = ref("en");
+const languageOptions = [
+  { code: "en", label: "English" },
+  { code: "zh-CN", label: "简体中文" },
+  { code: "zh-TW", label: "繁體中文" },
+  { code: "ms", label: "Bahasa Melayu" },
+  { code: "id", label: "Bahasa Indonesia" },
+  { code: "th", label: "ไทย" },
+  { code: "vi", label: "Tiếng Việt" },
+  { code: "tl", label: "Filipino" },
+  { code: "pt-BR", label: "Português (Brasil)" },
+] as const;
 interface LocalizedVersion {
   title?: string;
   description?: string;
@@ -64,20 +75,12 @@ const selectedInventory = computed(() =>
 
 function defaultLocalizedTitle(language: string): string {
   const title = String(selected.value?.title ?? "未命名商品");
-  if (language === "zh-CN") return `【Mock 中文】${title}`;
-  if (language === "ms") return `[Mock Bahasa Melayu] ${title}`;
-  return title;
+  return language === "en" ? title : "";
 }
 
 function defaultLocalizedDescription(language: string): string {
-  const title = String(selected.value?.title ?? "未命名商品");
-  const category = String(selected.value?.category_name ?? "未分类");
   const description = String(selected.value?.description ?? "");
-  if (language === "en") return description;
-  if (language === "zh-CN") {
-    return `【Mock 中文】${title}。这是 ${category} 类目的合成多语言演示内容，可在编辑模式下修改。`;
-  }
-  return `[Mock Bahasa Melayu] ${title}. Ini ialah kandungan demo sintetik untuk kategori ${category} dan boleh disunting.`;
+  return language === "en" ? description : "";
 }
 
 function localizedField(field: keyof LocalizedVersion, fallback: () => string) {
@@ -104,6 +107,14 @@ function localizedField(field: keyof LocalizedVersion, fallback: () => string) {
 const localizedTitle = localizedField("title", () => defaultLocalizedTitle(activeLanguage.value));
 const localizedDescription = localizedField("description", () =>
   defaultLocalizedDescription(activeLanguage.value),
+);
+const activeLanguageLabel = computed(
+  () =>
+    languageOptions.find((language) => language.code === activeLanguage.value)?.label ??
+    activeLanguage.value,
+);
+const hasLocalizedContent = computed(
+  () => Boolean(localizedTitle.value.trim()) && Boolean(localizedDescription.value.trim()),
 );
 
 async function importProducts(event: Event): Promise<void> {
@@ -272,17 +283,48 @@ watch([query, status, pageSize], () => (currentPage.value = 1));
           <label class="wide">
             当前内容语言
             <select v-model="activeLanguage">
-              <option value="en">English</option>
-              <option value="zh-CN">简体中文</option>
-              <option value="ms">Bahasa Melayu</option>
+              <option
+                v-for="language in languageOptions"
+                :key="language.code"
+                :value="language.code"
+              >
+                {{ language.label }}
+              </option>
             </select>
           </label>
-          <label>商品名称<input v-model="localizedTitle" :disabled="!editing" /></label>
+          <div v-if="activeLanguage !== 'en'" class="translation-status wide" role="status">
+            <div>
+              <strong>{{ hasLocalizedContent ? "人工译文" : "待翻译" }}</strong>
+              <span v-if="hasLocalizedContent">
+                当前{{ activeLanguageLabel }}内容保存在浏览器会话中，尚未写入后端。
+              </span>
+              <span v-else>
+                暂无{{
+                  activeLanguageLabel
+                }}内容；机器翻译接口待成员三接入，也可以进入编辑模式人工补充。
+              </span>
+            </div>
+            <SpButton size="sm" variant="secondary" disabled>机器翻译服务未配置</SpButton>
+          </div>
+          <label
+            >商品名称<input
+              v-model="localizedTitle"
+              :disabled="!editing"
+              :placeholder="
+                activeLanguage === 'en' ? '商品名称' : `待补充${activeLanguageLabel}名称`
+              "
+          /></label>
           <label>类目<input v-model="selected.category_name" :disabled="!editing" /></label>
           <label>价格<input v-model="selected.price" :disabled="!editing" type="number" /></label>
           <label>状态<input v-model="selected.status" disabled /></label>
           <label class="wide"
-            >商品描述<textarea v-model="localizedDescription" :disabled="!editing" />
+            >商品描述<textarea
+              v-model="localizedDescription"
+              :disabled="!editing"
+              :placeholder="
+                activeLanguage === 'en' ? '商品描述' : `待补充${activeLanguageLabel}描述`
+              "
+            />
           </label>
         </div>
         <SpButton v-if="editing" block @click="saveDraft">保存为草稿</SpButton>
@@ -384,6 +426,28 @@ small {
   color: var(--sp-color-primary);
   background: var(--sp-color-accent-blue-soft);
   border-radius: var(--sp-radius-control);
+}
+.translation-status {
+  display: flex;
+  gap: var(--sp-space-3);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-space-3);
+  color: var(--sp-color-text-secondary);
+  background: var(--sp-color-accent-blue-soft);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-control);
+}
+.translation-status div {
+  display: grid;
+  gap: var(--sp-space-1);
+}
+.translation-status strong {
+  color: var(--sp-color-text);
+}
+.translation-status span {
+  font-size: var(--sp-font-xs);
+  font-weight: 500;
 }
 select,
 input,
