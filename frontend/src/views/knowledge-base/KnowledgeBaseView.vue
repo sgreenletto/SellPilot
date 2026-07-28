@@ -183,6 +183,12 @@ const scoreTone = (s: number) => {
 <template>
   <PageContainer>
     <div class="kb-page">
+      <!-- 后端尚未提供知识库 API，当前使用本地 Mock 数据 -->
+      <div class="kb-mock-notice">
+        <SpBadge tone="warning" dot>本地 Mock 数据</SpBadge>
+        <span>知识库 API 尚未在后端实现，当前展示为本地模拟数据。接入后端后将替换为真实检索结果。</span>
+      </div>
+
       <!-- ==================== 1. 知识条目管理 ==================== -->
       <section class="kb-section">
         <div class="kb-section__head">
@@ -432,6 +438,18 @@ const scoreTone = (s: number) => {
   display: grid;
   gap: var(--sp-space-6);
   min-width: 0;
+}
+
+.kb-mock-notice {
+  display: flex;
+  gap: var(--sp-space-3);
+  align-items: center;
+  padding: var(--sp-space-3) var(--sp-space-5);
+  background: color-mix(in srgb, var(--sp-color-warning) 8%, #ffffff);
+  border: 1px solid color-mix(in srgb, var(--sp-color-warning) 20%, transparent);
+  border-radius: 14px;
+  font-size: var(--sp-font-xs);
+  color: var(--sp-color-text-secondary);
 }
 
 /* ==================== Section Shared ==================== */
