@@ -26,7 +26,7 @@ describe("数据展示组件", () => {
       },
     });
 
-    expect(wrapper.text()).toContain("Mock 模拟模式");
+    expect(wrapper.text()).toContain("后端已连接");
 
     await wrapper.setProps({
       status: {
@@ -37,7 +37,7 @@ describe("数据展示组件", () => {
         capabilities: [],
       },
     });
-    expect(wrapper.text()).toContain("Real Stub 未配置");
+    expect(wrapper.text()).toContain("后端未连接");
 
     await wrapper.setProps({ status: null, error: "后端未连接" });
     expect(wrapper.text()).toContain("后端未连接");
