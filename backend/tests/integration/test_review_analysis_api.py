@@ -151,6 +151,24 @@ async def test_review_analysis_api_create_run_query_and_evidence(client_bundle):
     assert evidence.status_code == 200
     assert evidence.json()["data"]["total"] >= 1
     assert len(evidence.json()["data"]["items"]) == 1
+    evidence_item = evidence.json()["data"]["items"][0]
+
+    filtered_evidence = await client.get(
+        f"/api/v1/review-analysis/analyses/{payload['analysis_id']}/evidence",
+        params={
+            "page": 1,
+            "page_size": 20,
+            "evidence_type": "topic",
+            "label": evidence_item["label"],
+        },
+        headers=headers,
+    )
+    assert filtered_evidence.status_code == 200
+    assert filtered_evidence.json()["data"]["total"] >= 1
+    assert all(
+        item["evidence_type"] == "topic" and item["label"] == evidence_item["label"]
+        for item in filtered_evidence.json()["data"]["items"]
+    )
 
 
 async def test_review_analysis_api_validates_schema_and_missing_resources(client_bundle):
