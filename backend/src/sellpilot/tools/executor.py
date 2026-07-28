@@ -537,9 +537,14 @@ class ToolExecutor:
         validated_input: BaseModel,
         context: ToolExecutionContext,
     ) -> BaseModel | dict[str, JsonValue]:
+        handler_context = context.model_copy(update={"session": self.session})
         if inspect.iscoroutinefunction(definition.handler):
-            return await definition.handler(validated_input, context)
-        result = await asyncio.to_thread(definition.handler, validated_input, context)
+            return await definition.handler(validated_input, handler_context)
+        result = await asyncio.to_thread(
+            definition.handler,
+            validated_input,
+            handler_context,
+        )
         if inspect.isawaitable(result):
             return await result
         return result

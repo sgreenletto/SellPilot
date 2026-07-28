@@ -4,12 +4,14 @@ from sellpilot.core.config import Settings
 from sellpilot.services.confirmation import ConfirmationService
 from sellpilot.tools.executor import TOOL_CONFIRMATION_OPERATION, ToolExecutor
 from sellpilot.tools.registry import ToolRegistry
+from sellpilot.tools.selection import register_selection_tools
 from sellpilot.tools.system import build_system_health_tool
 
 
 def build_tool_registry(settings: Settings) -> ToolRegistry:
     registry = ToolRegistry(settings)
     registry.register(build_system_health_tool(settings))
+    register_selection_tools(registry)
     return registry
 
 

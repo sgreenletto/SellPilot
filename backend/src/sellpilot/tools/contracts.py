@@ -12,6 +12,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from sellpilot.core.enums import ToolCallerType, ToolCallStatus, ToolRiskLevel
 from sellpilot.tools.sanitization import contains_sensitive_values
@@ -48,7 +49,11 @@ class RetryPolicy(BaseModel):
 
 
 class ToolExecutionContext(BaseModel):
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        extra="forbid",
+        frozen=True,
+    )
 
     request_id: str = Field(min_length=36, max_length=36)
     user_id: UUID | None = None
@@ -59,6 +64,7 @@ class ToolExecutionContext(BaseModel):
     caller_type: ToolCallerType
     caller_name: str = Field(min_length=1, max_length=100)
     metadata: dict[str, str | int | bool | None] = Field(default_factory=dict)
+    session: AsyncSession | None = Field(default=None, exclude=True)
 
     @field_validator("request_id")
     @classmethod

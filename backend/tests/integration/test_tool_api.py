@@ -53,7 +53,14 @@ async def test_tool_metadata_and_not_found_are_safe(client_bundle):
     listing = await client.get("/api/v1/tools", headers=headers)
     assert listing.status_code == 200
     tools = listing.json()["data"]
-    assert [item["name"] for item in tools] == ["system_health"]
+    assert [item["name"] for item in tools] == [
+        "calculate_product_profit",
+        "compare_products",
+        "export_product_analysis_report",
+        "score_product_opportunity",
+        "search_market_products",
+        "system_health",
+    ]
     assert tools[0]["risk_level"] == "read"
     assert tools[0]["confirmation_required"] is False
     assert "handler" not in listing.text
@@ -105,6 +112,53 @@ async def test_read_execute_and_tool_call_pagination_are_audited(client_bundle):
     missing = await client.get(f"/api/v1/tool-calls/{uuid4()}", headers=headers)
     assert missing.status_code == 404
     assert missing.json()["code"] == "RESOURCE_NOT_FOUND"
+
+
+async def test_selection_read_tool_uses_unified_executor_and_audit(client_bundle):
+    client, _, session_factory, _ = client_bundle
+    _, headers = await auth_headers(client, session_factory)
+    request_id = str(uuid4())
+
+    executed = await client.post(
+        "/api/v1/tools/calculate_product_profit/execute",
+        headers={**headers, "X-Request-ID": request_id},
+        json={
+            "input": {
+                "candidate": {
+                    "product_id": "SELECTION-TOOL-001",
+                    "site": "sg",
+                    "currency": "SGD",
+                    "source": {
+                        "source_type": "mock",
+                        "source_name": "selection_tool_test",
+                        "source_reference": "SELECTION-TOOL-001",
+                        "is_mock": True,
+                    },
+                    "price": "50",
+                    "cost": "20",
+                    "shipping_cost": "5",
+                    "platform_fee_rate": "0.10",
+                }
+            }
+        },
+    )
+
+    assert executed.status_code == 200
+    body = executed.json()
+    assert body["request_id"] == request_id
+    assert body["data"]["tool_name"] == "calculate_product_profit"
+    assert body["data"]["status"] == "succeeded"
+    assert body["data"]["data"]["profit"]["profit"] == "20.00"
+
+    listing = await client.get(
+        "/api/v1/tool-calls?tool_name=calculate_product_profit",
+        headers=headers,
+    )
+    assert listing.status_code == 200
+    tool_call = listing.json()["data"]["items"][0]
+    assert tool_call["id"] == body["data"]["tool_call_id"]
+    assert tool_call["caller_type"] == "api"
+    assert tool_call["request_id"] == request_id
 
 
 async def test_tool_input_validation_is_safe(client_bundle):

@@ -94,6 +94,10 @@ uv run sellpilot-mcp
 
 当前只暴露只读 `system_health`，不包含商品、订单、客服或外部 MCP 客户端。
 
+## 智能选品 API
+
+智能选品后端通过 `/api/v1/selection` 提供候选查询、确定性分析、任务详情、商品比较和 JSON 报告导出。数据来自数据库中的 Mock Shopee 商品与类目趋势，所有响应明确携带模拟数据标记。评分不依赖 LLM；当前解释使用经过结构化校验的规则模板，不宣称已接入真实模型。详细边界见 `../docs/architecture/selection-api-tools.md`。
+
 ## 测试与代码质量
 
 ```powershell
