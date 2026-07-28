@@ -87,24 +87,25 @@ order_items
 
 ### 4.1 `shops`（由数据集去重生成）
 
-数据包没有独立 `shops.csv`。导入服务从 `products.shop_id/shop_name` 和 `orders.shop_id` 去重创建单个模拟店铺。
+数据包没有独立 `shops.csv`，且六个站点分别使用 `SHOP001` 至 `SHOP006`。首版仍坚持单模拟店铺：导入服务创建一个内部逻辑店铺 `SELLPILOT_MOCK_SHOP`，各行原始站点店铺标识保存在商品和订单的 `source_shop_external_id` 中。
 
 | 目标字段 | 来源 | 类型与约束 |
 | --- | --- | --- |
-| `external_id` | `products.shop_id` / `orders.shop_id` | String(100)，唯一 |
-| `name` | `products.shop_name` | String(200)，非空 |
+| `external_id` | 固定值 | String(100)，`SELLPILOT_MOCK_SHOP`，唯一 |
+| `name` | 固定值 | String(200)，`SellPilot Mock Shop` |
 | `platform` | `products.platform` | String(50)，当前为 Shopee 模拟值 |
 | `mode` | 固定值 | String(32)，`mock` |
 | `is_active` | 固定值 | Boolean，`true` |
 
-首版导入结果必须只有一个店铺；发现多个 `shop_id` 时导入失败，不静默合并。
+首版导入结果必须只有一个内部店铺；站点级 `shop_id` 不创建额外店铺记录，也不得丢弃。
 
 ### 4.2 `products.csv` → `products`
 
 | CSV 字段 | 目标字段 | 类型与约束 |
 | --- | --- | --- |
 | `product_id` | `external_id` | String(100)，唯一 |
-| `shop_id` | `shop_id` | UUID FK → `shops.id` |
+| `shop_id` | 固定映射 | UUID FK → 单个 `shops.id` |
+| `shop_id` | `source_shop_external_id` | String(100)，保留站点级源标识 |
 | `title` | `title` | String(500)，非空 |
 | `category_id` | `category_external_id` | String(100)，非空 |
 | `category_name` | `category_name` | String(200)，非空 |
@@ -166,7 +167,8 @@ order_items
 | CSV 字段 | 目标字段 | 类型与约束 |
 | --- | --- | --- |
 | `order_id` | `external_id` | String(100)，唯一 |
-| `shop_id` | `shop_id` | UUID FK → `shops.id` |
+| `shop_id` | 固定映射 | UUID FK → 单个 `shops.id` |
+| `shop_id` | `source_shop_external_id` | String(100)，保留站点级源标识 |
 | `buyer_id` | `buyer_external_id` | String(100)，合成脱敏标识 |
 | `site` | `site` | String(32)，受控枚举 |
 | `currency` | `currency` | String(3)，受控枚举 |
