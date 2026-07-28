@@ -48,6 +48,10 @@ uv run alembic downgrade base
 
 成员三持久化结构包括选品运行与结果、评论分析与证据、产品改良报告、商品内容版本、Prompt 版本、模型调用和生成报告。该结构使用稳定来源业务 ID 对接后续商品与评论服务，不直接依赖模拟 CSV；详细设计见 `../docs/architecture/analysis-persistence.md`。
 
+评论分析纯领域内核位于 `sellpilot.domain.review_analysis`，提供多语言质量检查、确定性情感与主题分类、证据聚合及站点/月度趋势。内核不读取数据库或 CSV，不调用真实模型；应用层通过 Service、API、统一 ToolExecutor 和 TaskWorkflowRuntime 接入。
+
+评论分析应用层现提供有界评论查询、分阶段分析任务、证据分页、幂等控制、AgentTaskStep 工作流以及统一 ToolExecutor 工具，前端 Review Analysis Workbench 已接入这些 API。当前仍使用规则内核，Prompt 和模型版本明确为空；真实 Model Gateway 尚未实现。
+
 成员二迁移 `20260728_0003` 创建 13 张业务表，详细设计见 `../docs/architecture/commerce-data-foundation.md`。
 
 ## 导入模拟业务数据
@@ -102,7 +106,7 @@ uv run sellpilot-mcp
 
 `/api/v1/tasks` 提供已认证的工作流任务创建、查询、步骤历史、run、resume、
 retry、rerun 和 cancel。生产 Registry 当前注册 deterministic diagnostic、
-`system_health_check` 和 Selection 兼容适配；工具节点统一经过 ToolExecutor，
+`system_health_check`、Selection 和 Review Analysis 兼容适配；工具节点统一经过 ToolExecutor，
 WRITE/HIGH_RISK 会暂停到现有 Confirmation，确认成功后由显式 resume 继续。
 详细边界见 `../docs/architecture/task-workflow-runtime.md`。
 

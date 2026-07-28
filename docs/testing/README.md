@@ -2,7 +2,7 @@
 
 - `tool-execution-runtime.md`: unified runtime, confirmation, MCP and migration tests.
 - `task-workflow-runtime.md`: TaskRunner, step, confirmation recovery, concurrency,
-  Selection compatibility and migration tests.
+  Selection/Review Analysis compatibility and migration tests.
 
 本目录用于后续维护测试策略、测试分层、测试数据规则和质量门槛。
 
@@ -15,3 +15,10 @@
 智能选品利润、评分、缺失数据和稳定排序单元测试见 `selection-scoring.md`。
 
 智能选品 Service、持久化、结构化 Tool、解释校验与导出测试见 `selection-api-tools.md`。
+
+智能选品前端 API、工作台状态、表单边界和错误状态测试见 `selection-workbench.md`。
+
+评论分析多语言预处理、结构化模型失败边界、证据与趋势测试见 `review-analysis-core.md`。
+
+评论分析 Service、API、Tool、工作流、幂等、批处理和失败状态测试见
+`review-analysis-service.md`。

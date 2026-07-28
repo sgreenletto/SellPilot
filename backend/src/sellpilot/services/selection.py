@@ -1,6 +1,7 @@
 import hashlib
 import json
 from datetime import UTC, datetime
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,7 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sellpilot.core.enums import AnalysisStatus, CurrencyCode, DataSource, SiteCode, TaskType
 from sellpilot.core.exceptions import ParameterError, ResourceNotFoundError
 from sellpilot.db.models.analysis import ProductSelectionResult, ProductSelectionTask
-from sellpilot.domain.selection.models import SelectionCandidate, SelectionCriteria
+from sellpilot.domain.selection.models import (
+    SelectionCandidate,
+    SelectionCriteria,
+    SelectionFormulaConfig,
+    SelectionMetric,
+)
 from sellpilot.domain.selection.scoring import DEFAULT_SELECTION_CONFIG, score_candidates
 from sellpilot.repositories.analysis import SelectionRepository
 from sellpilot.repositories.selection_market import SelectionMarketRepository
@@ -36,6 +42,34 @@ SITE_CODES = {
     "Thailand": SiteCode.TH,
     "Vietnam": SiteCode.VN,
     "Indonesia": SiteCode.ID,
+}
+
+SELECTION_CONFIGS = {
+    "balanced": DEFAULT_SELECTION_CONFIG,
+    "conservative": SelectionFormulaConfig(
+        version="selection-v1.0.0-conservative",
+        weights={
+            SelectionMetric.DEMAND: Decimal("0.18"),
+            SelectionMetric.COMPETITION: Decimal("0.12"),
+            SelectionMetric.PROFITABILITY: Decimal("0.30"),
+            SelectionMetric.REVIEW_QUALITY: Decimal("0.10"),
+            SelectionMetric.LOGISTICS: Decimal("0.15"),
+            SelectionMetric.AFTER_SALES: Decimal("0.10"),
+            SelectionMetric.FACTORY_FIT: Decimal("0.05"),
+        },
+    ),
+    "growth": SelectionFormulaConfig(
+        version="selection-v1.0.0-growth",
+        weights={
+            SelectionMetric.DEMAND: Decimal("0.35"),
+            SelectionMetric.COMPETITION: Decimal("0.18"),
+            SelectionMetric.PROFITABILITY: Decimal("0.20"),
+            SelectionMetric.REVIEW_QUALITY: Decimal("0.12"),
+            SelectionMetric.LOGISTICS: Decimal("0.05"),
+            SelectionMetric.AFTER_SALES: Decimal("0.05"),
+            SelectionMetric.FACTORY_FIT: Decimal("0.05"),
+        },
+    ),
 }
 
 
@@ -68,6 +102,7 @@ class SelectionService:
         agent_task_id: UUID | None = None,
         manage_agent_task: bool = True,
     ) -> SelectionAnalysisResponse:
+        formula_config = SELECTION_CONFIGS[request.risk_preference]
         if agent_task_id is None:
             agent_task = await self.tasks.create_internal_task(
                 task_type=TaskType.SELECTION,
@@ -83,7 +118,7 @@ class SelectionService:
                 agent_task_id=agent_task.id,
                 status=AnalysisStatus.RUNNING,
                 criteria=request.model_dump(mode="json"),
-                algorithm_version=DEFAULT_SELECTION_CONFIG.version,
+                algorithm_version=formula_config.version,
                 source_type="simulated_experiment",
                 source_snapshot_version="shopee_mock",
                 is_mock_data=True,
@@ -110,6 +145,7 @@ class SelectionService:
                 minimum_profit=request.minimum_profit,
                 minimum_margin=request.minimum_margin,
             ),
+            formula_config,
         )
         title_by_id = {product.external_id: product.title for product, _ in rows}
         persisted: list[ProductSelectionResult] = []
@@ -253,8 +289,10 @@ class SelectionService:
                 collected_at=product.collected_at,
             ),
             price=product.price,
-            cost=product.cost,
-            shipping_cost=product.shipping_cost,
+            cost=request.cost_override if request.cost_override is not None else product.cost,
+            shipping_cost=request.shipping_cost_override
+            if request.shipping_cost_override is not None
+            else product.shipping_cost,
             platform_fee_rate=request.platform_fee_rate,
             other_costs=request.other_costs,
             sales_count=product.sales_count,

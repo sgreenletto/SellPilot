@@ -2,7 +2,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from sellpilot.core.config import Settings
 from sellpilot.core.enums import TaskStepStatus, TaskType, WorkflowNodeType
+from sellpilot.schemas.review_analysis import ReviewAnalysisCreateRequest
 from sellpilot.schemas.selection import SelectionAnalysisRequest
+from sellpilot.tools.review_analysis import AnalyzeProductReviewsOutput
 from sellpilot.tools.selection import ScoreProductOpportunityOutput
 from sellpilot.tools.system import SystemHealthOutput
 from sellpilot.workflows.contracts import (
@@ -122,9 +124,37 @@ def build_selection_definition(settings: Settings) -> WorkflowDefinition:
     )
 
 
+def build_review_analysis_definition(settings: Settings) -> WorkflowDefinition:
+    return WorkflowDefinition(
+        name="review_analysis",
+        version="1.0.0",
+        description=(
+            "Run the evidence-bound Review Analysis Service through the unified ToolExecutor."
+        ),
+        task_type=TaskType.REVIEW_ANALYSIS,
+        input_schema=ReviewAnalysisCreateRequest,
+        output_schema=AnalyzeProductReviewsOutput,
+        nodes=(
+            NodeDefinition(
+                name="analyze_product_reviews",
+                node_type=WorkflowNodeType.TOOL,
+                tool_name="analyze_product_reviews",
+                timeout_seconds=min(
+                    60,
+                    settings.task_max_node_timeout_seconds,
+                ),
+            ),
+        ),
+        entry_node="analyze_product_reviews",
+        max_steps=1,
+        max_task_attempts=1,
+    )
+
+
 def build_workflow_registry(settings: Settings) -> WorkflowRegistry:
     registry = WorkflowRegistry(settings)
     registry.register(build_diagnostic_definition(settings))
     registry.register(build_system_health_definition(settings))
     registry.register(build_selection_definition(settings))
+    registry.register(build_review_analysis_definition(settings))
     return registry

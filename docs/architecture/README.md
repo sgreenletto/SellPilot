@@ -22,5 +22,9 @@
 `domain-contracts.md`；成员三的分析与内容持久化设计见 `analysis-persistence.md`；
 智能选品确定性计算内核见 `selection-scoring.md`；成员二的数据表、单店铺映射和模拟数据
 导入设计见 `commerce-data-foundation.md`；选品 Service、API、Tool 和解释工作流见
-`selection-api-tools.md`。当前已建立公共契约、成员二/成员三持久化结构、模拟数据导入、
-选品确定性计算和后端应用层能力，但尚未实现选品前端页面、评论分析或内容生成。
+`selection-api-tools.md`；选品前端页面见 `selection-workbench.md`；评论分析领域内核见
+`review-analysis-core.md`。当前已建立公共契约、
+成员二/成员三持久化结构、模拟数据导入、选品确定性计算、后端应用层和选品工作台，
+评论分析领域内核及 Service、分阶段 API、统一 Tool 与 AgentTask 工作流已经实现，
+详见 `review-analysis-core.md` 和 `review-analysis-service.md`；评论分析页面见
+`review-analysis-workbench.md`，内容生成仍属于后续阶段。

@@ -131,6 +131,11 @@ class TaskRepository:
         )
         return list(result.scalars()), int(total or 0)
 
+    async def add_steps(self, steps: list[AgentTaskStep]) -> list[AgentTaskStep]:
+        self.session.add_all(steps)
+        await self.session.flush()
+        return steps
+
     async def claim_execution(
         self,
         task_id: UUID,

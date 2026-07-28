@@ -5,8 +5,8 @@
 The suite covers typed definition validation, registry isolation, stable ordering,
 diagnostic and system-health execution, Step sequence and persistence, linked
 ToolCalls, task audit events, safe input rejection, retry-in-place, API ownership and
-pagination, confirmation pause/confirm/resume, rerun/cancel, and Selection adapter
-compatibility.
+pagination, confirmation pause/confirm/resume, rerun/cancel, and Selection/Review
+Analysis adapter compatibility.
 
 Concurrency tests use separate SQLAlchemy sessions. A blocked test node lets one
 request commit the execution claim before a second run/retry request attempts to

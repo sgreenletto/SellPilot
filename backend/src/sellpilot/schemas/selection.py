@@ -8,6 +8,7 @@ from sellpilot.core.enums import AnalysisStatus, CurrencyCode, SiteCode
 from sellpilot.schemas.common import ContractModel
 
 SelectionSortField = Literal["sales_count", "rating", "review_count", "price", "updated_at"]
+SelectionRiskPreference = Literal["conservative", "balanced", "growth"]
 
 
 class SelectionCandidateQuery(ContractModel):
@@ -34,6 +35,10 @@ class SelectionAnalysisRequest(SelectionCandidateQuery):
     minimum_margin: Decimal = Field(default=Decimal("0"), ge=-1, le=1)
     platform_fee_rate: Decimal = Field(default=Decimal("0"), ge=0, le=1)
     other_costs: Decimal = Field(default=Decimal("0"), ge=0)
+    cost_override: Decimal | None = Field(default=None, ge=0)
+    shipping_cost_override: Decimal | None = Field(default=None, ge=0)
+    product_weight_kg: Decimal | None = Field(default=None, gt=0)
+    risk_preference: SelectionRiskPreference = "balanced"
 
 
 class SelectionCandidateResponse(ContractModel):

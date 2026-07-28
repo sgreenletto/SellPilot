@@ -81,6 +81,10 @@ uses the existing `SelectionAnalysisRequest` fields, for example:
 Selection results are based only on persisted synthetic Mock commerce data and remain
 explicitly marked as Mock. No real Shopee or LLM call is made.
 
+`review_analysis` accepts the existing `ReviewAnalysisCreateRequest` fields and runs
+the registered `analyze_product_reviews` tool. It reuses the workflow AgentTask while
+the original `/review-analysis` API remains compatible.
+
 ## Errors
 
 Stable workflow/task codes include `WORKFLOW_NOT_FOUND`, `WORKFLOW_DISABLED`,

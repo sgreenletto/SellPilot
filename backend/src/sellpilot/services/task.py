@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from datetime import UTC, datetime
 from typing import Any
@@ -7,7 +9,7 @@ from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sellpilot.core.config import Settings
-from sellpilot.core.enums import OperationStatus, TaskStatus
+from sellpilot.core.enums import OperationStatus, TaskStatus, TaskStepStatus, WorkflowNodeType
 from sellpilot.core.exceptions import (
     ErrorCode,
     ParameterError,
@@ -15,8 +17,9 @@ from sellpilot.core.exceptions import (
     StateConflictError,
     TaskRuntimeError,
 )
-from sellpilot.core.transitions import validate_task_transition
+from sellpilot.core.transitions import validate_task_step_transition, validate_task_transition
 from sellpilot.db.models.agent_task import AgentTask
+from sellpilot.db.models.agent_task_step import AgentTaskStep
 from sellpilot.db.models.operation_log import OperationLog
 from sellpilot.repositories.operation_log import OperationLogRepository
 from sellpilot.repositories.task import TaskRepository
@@ -207,6 +210,78 @@ class TaskService:
         task.error_message = error_message
         task.finished_at = datetime.now(UTC)
         return task
+
+    async def create_steps(
+        self,
+        task_id: UUID,
+        step_names: list[str],
+    ) -> list[AgentTaskStep]:
+        if len(step_names) != len(set(step_names)):
+            raise StateConflictError("Task step names must be unique")
+        sequence = await self.tasks.next_sequence(task_id)
+        return await self.tasks.add_steps(
+            [
+                AgentTaskStep(
+                    task_id=task_id,
+                    sequence=sequence + offset,
+                    step_name=step_name,
+                    node_type=WorkflowNodeType.ACTION,
+                    status=TaskStepStatus.PENDING,
+                    attempt_count=0,
+                )
+                for offset, step_name in enumerate(step_names)
+            ]
+        )
+
+    async def start_step(
+        self,
+        step_id: UUID,
+        *,
+        input_summary: dict[str, Any] | None = None,
+    ) -> AgentTaskStep:
+        step = await self.tasks.get_step(step_id)
+        if step is None:
+            raise ResourceNotFoundError("Agent task step not found")
+        validate_task_step_transition(TaskStepStatus(step.status), TaskStepStatus.RUNNING)
+        step.status = TaskStepStatus.RUNNING
+        step.attempt_count += 1
+        step.input_summary = input_summary
+        step.started_at = datetime.now(UTC)
+        await self.update_current_step(step.task_id, step.step_name)
+        return step
+
+    async def complete_step(
+        self,
+        step_id: UUID,
+        *,
+        output_summary: dict[str, Any] | None = None,
+    ) -> AgentTaskStep:
+        step = await self.tasks.get_step(step_id)
+        if step is None:
+            raise ResourceNotFoundError("Agent task step not found")
+        validate_task_step_transition(TaskStepStatus(step.status), TaskStepStatus.SUCCEEDED)
+        step.status = TaskStepStatus.SUCCEEDED
+        step.output_summary = output_summary
+        step.finished_at = datetime.now(UTC)
+        return step
+
+    async def fail_step(self, step_id: UUID, error_message: str) -> AgentTaskStep:
+        step = await self.tasks.get_step(step_id)
+        if step is None:
+            raise ResourceNotFoundError("Agent task step not found")
+        current = TaskStepStatus(step.status)
+        if current is TaskStepStatus.PENDING:
+            validate_task_step_transition(current, TaskStepStatus.RUNNING)
+            step.status = TaskStepStatus.RUNNING
+            step.attempt_count += 1
+            step.started_at = datetime.now(UTC)
+            current = TaskStepStatus.RUNNING
+        validate_task_step_transition(current, TaskStepStatus.FAILED)
+        step.status = TaskStepStatus.FAILED
+        step.error_message = error_message
+        step.started_at = step.started_at or datetime.now(UTC)
+        step.finished_at = datetime.now(UTC)
+        return step
 
     async def _log_event(
         self,

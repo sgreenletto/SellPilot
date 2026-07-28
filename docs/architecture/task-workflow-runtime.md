@@ -126,6 +126,9 @@ not persisted or returned.
   ToolExecutor.
 - `selection`: adapts the existing `score_product_opportunity` tool and Selection
   Service. The scoring formula and legacy Selection API are unchanged.
+- `review_analysis`: adapts the registered READ `analyze_product_reviews` tool,
+  reuses the current AgentTask, and preserves the existing Review Analysis API,
+  domain core and evidence persistence.
 
 LangGraph remains available for the existing bounded explanation graph. It is not a
 second persistence runtime. A future graph adapter must still delegate task state,

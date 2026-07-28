@@ -31,6 +31,7 @@ async def test_mock_adapter_foundation_status_and_unimplemented_business_method(
         "products.read",
         "orders.read",
         "logistics.read",
+        "reviews.read",
         "messages.read",
     ]
     with pytest.raises(PlatformFeatureNotImplementedError):

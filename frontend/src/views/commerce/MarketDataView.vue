@@ -4,15 +4,18 @@ import { FileSpreadsheet, Search, Star } from "@lucide/vue";
 import * as XLSX from "xlsx";
 
 import defaultProductsCsv from "../../../../data/demo/shopee_mock/products.csv?raw";
+import defaultReviewsCsv from "../../../../data/demo/shopee_mock/reviews.csv?raw";
 import SpButton from "@/components/base/SpButton.vue";
 import SpCard from "@/components/base/SpCard.vue";
 import SpEmptyState from "@/components/base/SpEmptyState.vue";
 import SpInput from "@/components/base/SpInput.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
+import { sheetRows } from "@/utils/spreadsheet";
 
 type MarketRow = Record<string, string | number | boolean>;
 
 const rows = ref<MarketRow[]>([]);
+const reviews = ref<MarketRow[]>([]);
 const query = ref("");
 const sourceFilter = ref("");
 const siteFilter = ref("");
@@ -21,6 +24,7 @@ const statusFilter = ref("");
 const currentPage = ref(1);
 const pageSize = ref(10);
 const source = ref("尚未导入");
+const reviewSource = ref("尚未导入");
 const selected = ref<MarketRow | null>(null);
 const candidates = ref(new Set<string>());
 const importMessage = ref("");
@@ -50,36 +54,65 @@ const sourceOptions = computed(() => optionValues("source_type"));
 const siteOptions = computed(() => optionValues("site"));
 const categoryOptions = computed(() => optionValues("category_name"));
 const statusOptions = computed(() => optionValues("status"));
+const selectedReviews = computed(() => {
+  const productId = selected.value?.product_id;
+  if (!productId) return [];
+  return reviews.value.filter((review) => String(review.product_id) === String(productId));
+});
 
 function normalizedRow(row: MarketRow): MarketRow {
+  const isMock = String(row.is_mock_data).toLowerCase() === "true";
   return {
     ...row,
-    source_type: row.source_type || "manual_import",
-    is_mock_data: String(row.is_mock_data).toLowerCase() === "true",
+    source_type: row.source_type || (isMock ? "simulated_experiment" : "manual_import"),
+    is_mock_data: isMock,
   };
 }
 
-function loadWorkbook(workbook: XLSX.WorkBook, sourceName: string): void {
-  const sheet = workbook.Sheets[workbook.SheetNames[0] ?? ""];
-  if (!sheet) throw new Error("文件中没有可读取的工作表");
-  rows.value = XLSX.utils.sheet_to_json<MarketRow>(sheet, { defval: "" }).map(normalizedRow);
+function isReviewDataset(importedRows: MarketRow[]): boolean {
+  return importedRows.some((row) => row.review_id !== undefined && row.product_id !== undefined);
+}
+
+function loadWorkbook(workbook: XLSX.WorkBook, sourceName: string): "products" | "reviews" {
+  const importedRows = sheetRows(workbook);
+  if (!importedRows.length) throw new Error("文件中没有可读取的工作表或数据");
+  const normalizedRows = importedRows.map(normalizedRow);
+  if (isReviewDataset(normalizedRows)) {
+    reviews.value = normalizedRows;
+    reviewSource.value = sourceName;
+    return "reviews";
+  }
+  rows.value = normalizedRows;
   source.value = sourceName;
   selected.value = null;
   candidates.value.clear();
   currentPage.value = 1;
+  return "products";
+}
+
+async function readFileWorkbook(file: File): Promise<XLSX.WorkBook> {
+  if (file.name.toLowerCase().endsWith(".csv")) {
+    return XLSX.read(await file.text(), { type: "string" });
+  }
+  return XLSX.read(await file.arrayBuffer(), { type: "array" });
 }
 
 async function importFile(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  if (!file) return;
+  const files = [...(input.files ?? [])];
+  if (!files.length) return;
   importMessage.value = "";
   try {
-    const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
-    loadWorkbook(workbook, file.name);
-    importMessage.value = `已在本地解析 ${rows.value.length} 条记录；尚未写入后端。`;
+    const results: string[] = [];
+    for (const file of files) {
+      const workbook = await readFileWorkbook(file);
+      const kind = loadWorkbook(workbook, file.name);
+      results.push(
+        `${file.name}（${kind === "reviews" ? reviews.value.length : rows.value.length} 条）`,
+      );
+    }
+    importMessage.value = `已在本地解析 ${results.join("、")}；商品与评论分别保留，尚未写入后端。`;
   } catch (error) {
-    rows.value = [];
     importMessage.value = error instanceof Error ? error.message : "文件解析失败";
   } finally {
     input.value = "";
@@ -88,7 +121,8 @@ async function importFile(event: Event): Promise<void> {
 
 function loadProjectDemo(): void {
   loadWorkbook(XLSX.read(defaultProductsCsv, { type: "string" }), "项目演示数据 · products.csv");
-  importMessage.value = `已加载项目内置的 ${rows.value.length} 条 Mock 商品记录。`;
+  loadWorkbook(XLSX.read(defaultReviewsCsv, { type: "string" }), "项目演示数据 · reviews.csv");
+  importMessage.value = `已加载项目内置的 ${rows.value.length} 条 Mock 商品和 ${reviews.value.length} 条关联评论。`;
 }
 
 function rowKey(row: MarketRow): string {
@@ -136,7 +170,7 @@ watch(totalPages, (pages) => {
         <label class="file-button">
           <FileSpreadsheet :size="17" />
           导入 CSV / Excel
-          <input type="file" accept=".csv,.xlsx,.xls" @change="importFile" />
+          <input type="file" accept=".csv,.xlsx,.xls" multiple @change="importFile" />
         </label>
       </div>
     </header>
@@ -144,11 +178,11 @@ watch(totalPages, (pages) => {
     <section class="metrics" aria-label="导入摘要">
       <SpCard padding="md"
         ><strong>{{ rows.length }}</strong
-        ><span>导入记录</span></SpCard
+        ><span>商品记录</span></SpCard
       >
       <SpCard padding="md"
-        ><strong>{{ filteredRows.length }}</strong
-        ><span>当前结果</span></SpCard
+        ><strong>{{ reviews.length }}</strong
+        ><span>关联评论</span></SpCard
       >
       <SpCard padding="md"
         ><strong>{{ candidates.size }}</strong
@@ -156,9 +190,10 @@ watch(totalPages, (pages) => {
       >
       <SpCard padding="md"
         ><strong>{{ source }}</strong
-        ><span>数据来源文件</span></SpCard
+        ><span>商品来源文件</span></SpCard
       >
     </section>
+    <p v-if="reviews.length" class="review-source">评论来源：{{ reviewSource }}</p>
 
     <p v-if="importMessage" class="message" role="status">{{ importMessage }}</p>
 
@@ -264,20 +299,52 @@ watch(totalPages, (pages) => {
       </template>
     </SpCard>
 
-    <SpCard v-if="selected" class="detail" padding="lg">
-      <template #header>
-        <div class="toolbar">
-          <strong>市场商品详情抽屉</strong
-          ><SpButton variant="ghost" @click="selected = null">关闭</SpButton>
-        </div>
-      </template>
-      <dl>
-        <template v-for="(fieldValue, key) in selected" :key="key">
-          <dt>{{ key }}</dt>
-          <dd>{{ fieldValue }}</dd>
-        </template>
-      </dl>
-    </SpCard>
+    <Teleport to="body">
+      <div
+        v-if="selected"
+        class="drawer-backdrop"
+        role="presentation"
+        @click.self="selected = null"
+      >
+        <aside class="detail-drawer" role="dialog" aria-modal="true" aria-label="市场商品详情">
+          <header class="drawer-header">
+            <div><span>MARKET RECORD</span><strong>市场商品详情</strong></div>
+            <SpButton variant="ghost" @click="selected = null">关闭</SpButton>
+          </header>
+          <dl>
+            <template v-for="(fieldValue, key) in selected" :key="key">
+              <dt>{{ key }}</dt>
+              <dd>{{ fieldValue }}</dd>
+            </template>
+          </dl>
+          <section class="review-section" aria-label="商品评论">
+            <header>
+              <div>
+                <span>PRODUCT REVIEWS</span>
+                <strong>关联评论（{{ selectedReviews.length }}）</strong>
+              </div>
+            </header>
+            <p v-if="selectedReviews.length === 0" class="review-empty">
+              当前评论文件中没有与该商品 product_id 匹配的记录。
+            </p>
+            <template v-else>
+              <article v-for="review in selectedReviews" :key="rowKey(review)" class="review-card">
+                <div class="review-meta">
+                  <strong>{{ value(review, "rating") }} / 5</strong>
+                  <span>{{ value(review, "language") }}</span>
+                  <time>{{ value(review, "created_at") }}</time>
+                </div>
+                <p>{{ value(review, "content") }}</p>
+                <p v-if="review.content_zh" class="review-translation">
+                  中文：{{ review.content_zh }}
+                </p>
+                <small>评论 ID：{{ value(review, "review_id") }}</small>
+              </article>
+            </template>
+          </section>
+        </aside>
+      </div>
+    </Teleport>
   </PageContainer>
 </template>
 
@@ -317,6 +384,11 @@ watch(totalPages, (pages) => {
   display: flex;
   gap: var(--sp-space-2);
   align-items: center;
+}
+.review-source {
+  margin: calc(var(--sp-space-4) * -1) 0 var(--sp-space-4);
+  color: var(--sp-color-text-secondary);
+  font-size: var(--sp-font-sm);
 }
 .heading {
   margin-bottom: var(--sp-space-6);
@@ -396,8 +468,94 @@ th {
   color: var(--sp-color-text-muted);
   font-size: var(--sp-font-xs);
 }
-.detail {
+.drawer-backdrop {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  background: color-mix(in srgb, var(--sp-color-text) 28%, transparent);
+  inset: 0;
+}
+.detail-drawer {
+  width: min(560px, 92vw);
+  height: 100%;
+  padding: var(--sp-space-6);
+  overflow-y: auto;
+  background: var(--sp-color-surface-strong);
+  box-shadow: -24px 0 60px color-mix(in srgb, var(--sp-color-text) 16%, transparent);
+  animation: drawer-enter 180ms ease-out;
+}
+.drawer-header {
+  position: sticky;
+  top: calc(var(--sp-space-6) * -1);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-space-4) 0;
+  margin-bottom: var(--sp-space-4);
+  background: var(--sp-color-surface-strong);
+}
+.drawer-header > div {
+  display: grid;
+  gap: var(--sp-space-1);
+}
+.drawer-header span {
+  color: var(--sp-color-accent-blue);
+  font-size: var(--sp-font-xs);
+  font-weight: 750;
+  letter-spacing: 0.1em;
+}
+.review-section {
+  padding-top: var(--sp-space-5);
   margin-top: var(--sp-space-5);
+  border-top: 1px solid var(--sp-border-subtle);
+}
+.review-section header div {
+  display: grid;
+  gap: var(--sp-space-1);
+}
+.review-section header span {
+  color: var(--sp-color-primary);
+  font-size: var(--sp-font-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.review-empty {
+  color: var(--sp-color-text-secondary);
+}
+.review-card {
+  padding: var(--sp-space-4);
+  margin-top: var(--sp-space-3);
+  background: var(--sp-color-surface-muted);
+  border: 1px solid var(--sp-border-subtle);
+  border-radius: var(--sp-radius-card);
+}
+.review-card p {
+  margin: var(--sp-space-3) 0;
+  line-height: 1.6;
+}
+.review-card small,
+.review-meta,
+.review-translation {
+  color: var(--sp-color-text-secondary);
+}
+.review-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-space-3);
+  align-items: center;
+}
+.review-meta strong {
+  color: var(--sp-color-text);
+}
+@keyframes drawer-enter {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 dl {
   display: grid;

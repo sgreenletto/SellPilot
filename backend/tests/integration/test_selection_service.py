@@ -86,6 +86,10 @@ async def test_selection_service_persists_explainable_mock_results(
             site="sg",
             category_id="CAT-SEL",
             platform_fee_rate=Decimal("0.10"),
+            cost_override=Decimal("10"),
+            shipping_cost_override=Decimal("2"),
+            product_weight_kg=Decimal("0.5"),
+            risk_preference="conservative",
         ),
         admin_user.id,
     )
@@ -93,12 +97,14 @@ async def test_selection_service_persists_explainable_mock_results(
     assert result.status == "SUCCEEDED"
     assert result.ranked_count == 2
     assert result.generation_mode == "rule_template"
-    assert result.results[0].profit["profit"] == "20.00"
+    assert result.formula_version == "selection-v1.0.0-conservative"
+    assert result.results[0].profit["profit"] == "33.00"
     assert result.results[0].is_mock_data is True
     assert result.results[0].explanation["generation_mode"] == "rule_template"
 
     fetched = await SelectionService(session).get_task(result.task_id, admin_user.id)
     assert len(fetched.results) == 2
+    assert fetched.criteria["product_weight_kg"] == "0.5"
     exported = await SelectionService(session).export(result.task_id, admin_user.id)
     assert exported.filename.endswith(".json")
     assert len(exported.checksum_sha256) == 64

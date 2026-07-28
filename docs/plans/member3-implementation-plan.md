@@ -550,6 +550,8 @@ docs: document selection page usage
 
 ## Step 5：评论分析内核
 
+> **实现状态**：已在 `feature/review-analysis-core` 完成领域内核与离线测试，待审核合并；Service、API、Tool、Workflow 和页面仍按 Step 6—Step 7 实施。
+
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 建立多语言、证据驱动、可评估的评论分析流水线 |
@@ -622,6 +624,8 @@ docs: document review taxonomy and evidence rules
 
 ## Step 6：评论分析 Service、API、Tool 与工作流
 
+> **实现状态**：已在 `feature/review-analysis-service` 完成应用层、分阶段 API、Tool、AgentTaskStep 工作流、幂等和批处理，待审核合并；评论分析前端仍按 Step 7 实施。
+
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 将评论流水线接入持久化、API、工具和 Agent 任务 |
@@ -668,6 +672,9 @@ docs: document review analysis api
 ---
 
 ## Step 7：评论分析前端
+
+> **实现状态**：已在 `feature/review-analysis-workbench` 完成评论筛选、分析概览、
+> 趋势、证据分页与定位、任务错误状态及 Step 8 入口，待审核合并。
 
 | 项目 | 内容 |
 | --- | --- |

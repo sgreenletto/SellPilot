@@ -1,7 +1,14 @@
 <script setup lang="ts">
-import { MessageCircleMore, PackageCheck, TrendingUp } from "@lucide/vue";
+import {
+  BadgeAlert,
+  BadgeCheck,
+  MessageCircleMore,
+  PackageCheck,
+  TrendingUp,
+  type LucideIcon,
+} from "@lucide/vue";
 
-import type { DashboardMetric } from "@/types/dashboard";
+import type { DashboardMetric, MetricIconName } from "@/types/dashboard";
 
 interface Props {
   metric: DashboardMetric;
@@ -9,10 +16,12 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const iconMap = {
+const iconMap: Record<MetricIconName, LucideIcon> = {
   trend: TrendingUp,
   message: MessageCircleMore,
   package: PackageCheck,
+  alert: BadgeAlert,
+  check: BadgeCheck,
 };
 </script>
 

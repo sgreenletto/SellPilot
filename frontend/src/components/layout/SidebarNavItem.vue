@@ -72,8 +72,9 @@ const emit = defineEmits<{
 .sidebar-nav-item--active {
   color: var(--sp-color-primary);
   font-weight: 750;
-  background: var(--sp-color-surface);
+  background: #ffffff;
   border-color: var(--sp-border-highlight);
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--sp-color-primary) 5%, transparent);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(11, 35, 74, 0.08);
 }
 </style>
