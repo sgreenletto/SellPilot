@@ -1,6 +1,6 @@
 from collections.abc import Mapping, Set
 
-from sellpilot.core.enums import ConfirmationStatus, TaskStatus
+from sellpilot.core.enums import ConfirmationStatus, TaskStatus, TaskStepStatus
 from sellpilot.core.exceptions import StateConflictError
 
 TASK_TRANSITIONS: dict[TaskStatus, frozenset[TaskStatus]] = {
@@ -13,7 +13,9 @@ TASK_TRANSITIONS: dict[TaskStatus, frozenset[TaskStatus]] = {
             TaskStatus.CANCELLED,
         }
     ),
-    TaskStatus.WAITING_CONFIRMATION: frozenset({TaskStatus.RUNNING, TaskStatus.CANCELLED}),
+    TaskStatus.WAITING_CONFIRMATION: frozenset(
+        {TaskStatus.RUNNING, TaskStatus.FAILED, TaskStatus.CANCELLED}
+    ),
     TaskStatus.SUCCEEDED: frozenset(),
     TaskStatus.FAILED: frozenset({TaskStatus.PENDING, TaskStatus.RUNNING}),
     TaskStatus.CANCELLED: frozenset(),
@@ -34,7 +36,7 @@ CONFIRMATION_TRANSITIONS: dict[ConfirmationStatus, frozenset[ConfirmationStatus]
     ConfirmationStatus.CANCELED: frozenset(),
 }
 
-TASK_TERMINAL_STATUSES = frozenset({TaskStatus.SUCCEEDED, TaskStatus.CANCELLED})
+TASK_TERMINAL_STATUSES = frozenset({TaskStatus.SUCCEEDED, TaskStatus.FAILED, TaskStatus.CANCELLED})
 CONFIRMATION_TERMINAL_STATUSES = frozenset(
     {
         ConfirmationStatus.SUCCEEDED,
@@ -42,6 +44,32 @@ CONFIRMATION_TERMINAL_STATUSES = frozenset(
         ConfirmationStatus.CANCELED,
     }
 )
+
+TASK_STEP_TRANSITIONS: dict[TaskStepStatus, frozenset[TaskStepStatus]] = {
+    TaskStepStatus.PENDING: frozenset(
+        {TaskStepStatus.RUNNING, TaskStepStatus.SKIPPED, TaskStepStatus.CANCELLED}
+    ),
+    TaskStepStatus.RUNNING: frozenset(
+        {
+            TaskStepStatus.WAITING_CONFIRMATION,
+            TaskStepStatus.SUCCEEDED,
+            TaskStepStatus.FAILED,
+            TaskStepStatus.CANCELLED,
+        }
+    ),
+    TaskStepStatus.WAITING_CONFIRMATION: frozenset(
+        {
+            TaskStepStatus.RUNNING,
+            TaskStepStatus.SUCCEEDED,
+            TaskStepStatus.FAILED,
+            TaskStepStatus.CANCELLED,
+        }
+    ),
+    TaskStepStatus.SUCCEEDED: frozenset(),
+    TaskStepStatus.FAILED: frozenset({TaskStepStatus.RUNNING}),
+    TaskStepStatus.SKIPPED: frozenset(),
+    TaskStepStatus.CANCELLED: frozenset(),
+}
 
 
 def _validate_transition[StatusT](
@@ -80,4 +108,20 @@ def validate_confirmation_transition(
         target,
         CONFIRMATION_TRANSITIONS,
         resource_name="Confirmation",
+    )
+
+
+def validate_task_step_transition(
+    current: TaskStepStatus,
+    target: TaskStepStatus,
+    *,
+    allow_retry: bool = False,
+) -> None:
+    if current is TaskStepStatus.FAILED and not allow_retry:
+        raise StateConflictError("Failed task step retry requires explicit retry authorization")
+    _validate_transition(
+        current,
+        target,
+        TASK_STEP_TRANSITIONS,
+        resource_name="Task step",
     )
