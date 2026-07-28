@@ -29,8 +29,8 @@ describe("市场数据页面", () => {
   it("导入 CSV 后展示指标、来源和候选操作", async () => {
     const wrapper = mount(MarketDataView);
     const csv = [
-      "title,source_type,price,rating,review_count,sales_count,updated_at,is_mock_data",
-      "USB-C Hub,simulated_experiment,19.9,4.8,20,88,2026-07-01,true",
+      "title,price,rating,review_count,sales_count,updated_at,is_mock_data",
+      "USB-C Hub,19.9,4.8,20,88,2026-07-01,true",
     ].join("\n");
     const file = new File([csv], "products.csv", { type: "text/csv" });
 
@@ -44,8 +44,13 @@ describe("市场数据页面", () => {
     expect(wrapper.text()).toContain("simulated_experiment");
     expect(wrapper.text()).toContain("已在本地解析 1 条记录");
 
+    await wrapper.get(".actions .sp-button--ghost").trigger("click");
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get(".detail-drawer").text()).toContain("USB-C Hub");
+
     await wrapper.get(".actions .sp-button--secondary").trigger("click");
     expect(wrapper.text()).toContain("移出候选");
+    wrapper.unmount();
   });
 
   it("接受 Excel 工作簿", async () => {
