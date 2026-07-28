@@ -70,6 +70,27 @@ const selectedReviews = computed(() => {
   return reviews.value.filter((review) => String(review.product_id) === String(productId));
 });
 const candidateRows = computed(() => rows.value.filter((row) => candidates.value.has(rowKey(row))));
+const selectionWorkbenchHref = computed(() => {
+  const firstCandidate = candidateRows.value[0];
+  const siteMap: Record<string, string> = {
+    Singapore: "sg",
+    Malaysia: "my",
+    Philippines: "ph",
+    Thailand: "th",
+    Vietnam: "vn",
+    Indonesia: "id",
+  };
+  const params = new URLSearchParams();
+  const site = siteFilter.value || String(firstCandidate?.site ?? "");
+  const normalizedSite = siteMap[site] ?? site.toLowerCase();
+  if (["sg", "my", "ph", "th", "vn", "id"].includes(normalizedSite)) {
+    params.set("site", normalizedSite);
+  }
+  const categoryId = String(firstCandidate?.category_id ?? "");
+  if (categoryId) params.set("category", categoryId);
+  const queryString = params.toString();
+  return `/market/selection${queryString ? `?${queryString}` : ""}`;
+});
 
 function normalizedRow(row: MarketRow): MarketRow {
   const isMock = String(row.is_mock_data).toLowerCase() === "true";
@@ -266,7 +287,10 @@ watch(totalPages, (pages) => {
             <strong>选品候选列表</strong>
             <span>候选清单保存在后端，可跨会话和模块继续使用。</span>
           </div>
-          <SpButton size="sm" variant="ghost" @click="showCandidateList = false">收起</SpButton>
+          <div class="candidate-list-actions">
+            <a class="handoff-link" :href="selectionWorkbenchHref">打开智能选品</a>
+            <SpButton size="sm" variant="ghost" @click="showCandidateList = false">收起</SpButton>
+          </div>
         </div>
       </template>
       <SpEmptyState
@@ -565,6 +589,26 @@ watch(totalPages, (pages) => {
 .candidate-list-header span {
   color: var(--sp-color-text-secondary);
   font-size: var(--sp-font-xs);
+}
+.candidate-list-actions {
+  display: flex;
+  gap: var(--sp-space-2);
+  align-items: center;
+}
+.handoff-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 var(--sp-space-3);
+  color: var(--sp-color-primary);
+  font-size: var(--sp-font-xs);
+  font-weight: 650;
+  text-decoration: none;
+  border: 1px solid var(--sp-border-strong);
+  border-radius: var(--sp-radius-control);
+}
+.handoff-link:hover {
+  background: var(--sp-color-accent-blue-soft);
 }
 .candidate-list ul {
   display: grid;
