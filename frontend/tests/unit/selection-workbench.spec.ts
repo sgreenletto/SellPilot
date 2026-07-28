@@ -116,6 +116,7 @@ describe("SelectionWorkbenchView", () => {
         results: [result, secondResult],
       },
     });
+    selectionApi.downloadSelectionExport.mockReturnValue("selection-task-1.md");
   });
 
   it("loads formal candidates and renders explainable results", async () => {
@@ -123,7 +124,7 @@ describe("SelectionWorkbenchView", () => {
     await flushPromises();
 
     expect(wrapper.text()).toContain("Mock Wireless Earbuds");
-    expect(wrapper.text()).toContain("模拟实验数据");
+    expect(wrapper.text()).toContain("Shopee 模拟实验数据");
 
     const analyze = wrapper
       .findAll("button")
@@ -132,9 +133,9 @@ describe("SelectionWorkbenchView", () => {
     await flushPromises();
 
     expect(selectionApi.createSelectionAnalysis).toHaveBeenCalledOnce();
-    expect(wrapper.text()).toContain("需求与利润表现良好");
+    expect(wrapper.text()).toContain("商品机会总分 82.1");
     expect(wrapper.text()).toContain("规则解释");
-    expect(wrapper.text()).toContain("logistics data missing");
+    expect(wrapper.find(".risk-list").exists()).toBe(false);
   });
 
   it("shows an explicit backend disconnected state", async () => {
@@ -201,6 +202,53 @@ describe("SelectionWorkbenchView", () => {
     await exportButton?.trigger("click");
     await flushPromises();
     expect(selectionApi.downloadSelectionExport).toHaveBeenCalledOnce();
-    expect(wrapper.text()).toContain("selection-task-1.json");
+    expect(wrapper.text()).toContain("selection-task-1.md");
+  });
+
+  it("explains an analysis with no ranked products", async () => {
+    selectionApi.createSelectionAnalysis.mockResolvedValue({
+      task_id: "task-empty",
+      agent_task_id: "agent-empty",
+      status: "SUCCEEDED",
+      formula_version: "selection-v1.0.0",
+      generation_mode: "rule_template",
+      total_candidates: 1,
+      ranked_count: 0,
+      excluded_count: 1,
+      results: [],
+      excluded: [{ product_id: "P001", reason: "minimum_profit" }],
+      is_mock_data: true,
+    });
+
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+    const analyze = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析全部候选"));
+    await analyze?.trigger("click");
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("没有商品满足利润条件");
+    expect(wrapper.text()).toContain("1 个候选已被最低利润或利润率条件排除");
+  });
+
+  it("closes the product detail with Escape", async () => {
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+    const analyze = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析全部候选"));
+    await analyze?.trigger("click");
+    await flushPromises();
+
+    const detailsButton = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("查看详情"));
+    await detailsButton?.trigger("click");
+    expect(wrapper.find('[aria-label="选品详情"]').exists()).toBe(true);
+
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find('[aria-label="选品详情"]').exists()).toBe(false);
   });
 });

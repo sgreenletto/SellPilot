@@ -137,7 +137,7 @@ async def test_review_service_creates_runs_persists_steps_and_evidence(
     assert result.pain_points
     assert result.keywords
     assert result.judgements
-    assert result.analyzer_version == "review-analysis-v1.0.0"
+    assert result.analyzer_version == "review-analysis-v1.1.0"
     assert result.analysis_mode == "rule"
     assert result.progress == 100
     assert result.current_step == "persist_results"
@@ -398,7 +398,7 @@ async def test_product_improvement_report_uses_task_workflow_runtime(
     ).run(task.id, user_id=admin_user.id)
 
     assert result.status is TaskStatus.SUCCEEDED
-    assert result.result["report"]["algorithm_version"] == "product-improvement-rule-v1.0.0"
+    assert result.result["report"]["algorithm_version"] == "product-improvement-rule-v1.2.0"
     steps = await TaskRepository(session).list_steps(task.id)
     assert [step.step_name for step in steps] == ["generate_product_improvement_plan"]
     assert TaskStepStatus(steps[0].status) is TaskStepStatus.SUCCEEDED

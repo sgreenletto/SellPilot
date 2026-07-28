@@ -6,21 +6,17 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Query, Request
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from sellpilot.api.dependencies import (
     CurrentUserDependency,
     SessionDependency,
     SettingsDependency,
 )
-from sellpilot.core.config import Settings
 from sellpilot.core.exceptions import ResourceNotFoundError
 from sellpilot.core.middleware import get_request_id
 from sellpilot.core.response import ApiResponse, PageResult, success_response
 from sellpilot.schemas.knowledge_base import (
-    KnowledgeChunkListParams,
     KnowledgeChunkResponse,
-    KnowledgeDocumentListParams,
     KnowledgeDocumentResponse,
     KnowledgeRetrievalItem,
     KnowledgeRetrievalRequest,
@@ -33,6 +29,7 @@ router = APIRouter()
 
 
 # ---- 检索 ----
+
 
 @router.post("/retrieve", response_model=ApiResponse[list[KnowledgeRetrievalItem]])
 async def retrieve_knowledge(
@@ -64,6 +61,7 @@ async def retrieve_knowledge(
 
 # ---- 文档 CRUD ----
 
+
 @router.get("/documents", response_model=ApiResponse[PageResult[KnowledgeDocumentResponse]])
 async def list_documents(
     request: Request,
@@ -77,9 +75,7 @@ async def list_documents(
 ) -> ApiResponse[PageResult[KnowledgeDocumentResponse]]:
     """分页查询知识文档列表，支持 category/status 筛选。"""
     service = KnowledgeBaseService(session, settings)
-    docs, total = await service.list_documents(
-        page, page_size, category=category, status=status
-    )
+    docs, total = await service.list_documents(page, page_size, category=category, status=status)
     items = [KnowledgeDocumentResponse.model_validate(d) for d in docs]
     return success_response(
         PageResult(
@@ -108,9 +104,7 @@ async def get_document(
     doc = await service.get_document(document_id)
     if doc is None:
         raise ResourceNotFoundError("Knowledge document not found")
-    return success_response(
-        KnowledgeDocumentResponse.model_validate(doc), get_request_id(request)
-    )
+    return success_response(KnowledgeDocumentResponse.model_validate(doc), get_request_id(request))
 
 
 @router.delete("/documents/{document_id}", response_model=ApiResponse[dict])
@@ -136,6 +130,7 @@ async def delete_document(
 
 
 # ---- Chunk 查询 ----
+
 
 @router.get(
     "/documents/{document_id}/chunks",

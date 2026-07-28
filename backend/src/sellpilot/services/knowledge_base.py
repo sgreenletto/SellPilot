@@ -59,9 +59,7 @@ class KnowledgeBaseService:
         category: str | None = None,
         status: str | None = None,
     ) -> tuple[list[KnowledgeDocument], int]:
-        return await self.doc_repo.list(
-            page, page_size, category=category, status=status
-        )
+        return await self.doc_repo.list(page, page_size, category=category, status=status)
 
     async def update_document_status(
         self,
@@ -91,9 +89,7 @@ class KnowledgeBaseService:
 
     # ---- 切块管理 ----
 
-    async def add_chunks(
-        self, document_id: UUID, chunks: list[dict]
-    ) -> list[KnowledgeChunk]:
+    async def add_chunks(self, document_id: UUID, chunks: list[dict]) -> list[KnowledgeChunk]:
         """批量添加文本切块。每个 dict 包含 content, chunk_index, metadata_json。"""
         models = [
             KnowledgeChunk(

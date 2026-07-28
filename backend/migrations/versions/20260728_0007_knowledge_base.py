@@ -1,7 +1,7 @@
 """Create knowledge base tables.
 
-Revision ID: 20260728_0005
-Revises: 20260728_0004
+Revision ID: 20260728_0007
+Revises: 20260728_0006
 Create Date: 2026-07-28
 """
 
@@ -13,8 +13,8 @@ from sqlalchemy.dialects import postgresql
 
 JSON_TYPE = sa.JSON().with_variant(postgresql.JSONB(), "postgresql")
 
-revision: str = "20260728_0005"
-down_revision: str | Sequence[str] | None = "20260728_0004"
+revision: str = "20260728_0007"
+down_revision: str | Sequence[str] | None = "20260728_0006"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
@@ -92,7 +92,5 @@ def downgrade() -> None:
     op.drop_index("ix_knowledge_chunks_document_id", table_name="knowledge_chunks")
     op.drop_table("knowledge_chunks")
     op.drop_index("ix_knowledge_documents_created_by", table_name="knowledge_documents")
-    op.drop_index(
-        "ix_knowledge_documents_category_status", table_name="knowledge_documents"
-    )
+    op.drop_index("ix_knowledge_documents_category_status", table_name="knowledge_documents")
     op.drop_table("knowledge_documents")

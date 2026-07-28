@@ -27,7 +27,10 @@ vi.mock("@/api/commerce", () => ({
 describe("市场数据页面", () => {
   beforeEach(() => {
     selectedIds.clear();
-    vi.stubGlobal("confirm", vi.fn(() => true));
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => true),
+    );
   });
 
   it("对项目商品执行筛选和分页", async () => {

@@ -109,7 +109,6 @@ class ChromaVectorStore:
 
     def clear_all(self) -> int:
         """清空整个 collection。分批处理，避免 ChromaDB get() 默认限制。"""
-        count = self._collection.count()
         batch_size = 1000
         deleted = 0
         while True:
@@ -147,10 +146,12 @@ class ChromaVectorStore:
 
         for i, chroma_id in enumerate(ids):
             score = 1.0 - distances[i] if i < len(distances) else 0.0
-            items.append({
-                "chroma_id": chroma_id,
-                "document": documents[i] if i < len(documents) else "",
-                "score": max(0.0, min(1.0, score)),
-                "metadata": metadatas[i] if i < len(metadatas) else {},
-            })
+            items.append(
+                {
+                    "chroma_id": chroma_id,
+                    "document": documents[i] if i < len(documents) else "",
+                    "score": max(0.0, min(1.0, score)),
+                    "metadata": metadatas[i] if i < len(metadatas) else {},
+                }
+            )
         return items

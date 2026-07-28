@@ -36,7 +36,7 @@ export const updateImprovementSuggestion = (
   );
 
 export const exportImprovementReport = (reportId: string) =>
-  request<{ filename: string; format: string; content: Record<string, unknown> }>(
+  request<{ filename: string; format: "markdown"; content: string }>(
     `/v1/product-improvement/reports/${encodeURIComponent(reportId)}/export`,
     auth(),
   );

@@ -16,6 +16,7 @@ const MarketDataView = () => import("@/views/commerce/MarketDataView.vue");
 const SelectionWorkbenchView = () => import("@/views/selection/SelectionWorkbenchView.vue");
 const ReviewAnalysisView = () => import("@/views/reviews/ReviewAnalysisView.vue");
 const ProductImprovementView = () => import("@/views/reviews/ProductImprovementView.vue");
+const ContentWorkshopView = () => import("@/views/content/ContentWorkshopView.vue");
 
 const placeholderRoutes: RouteRecordRaw[] = [
   {
@@ -81,7 +82,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
   {
     path: "/products/content",
     name: "product-content",
-    component: ModulePlaceholderView,
+    component: ContentWorkshopView,
     meta: {
       title: "内容工坊",
       module: "商品运营",

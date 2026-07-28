@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   AlertTriangle,
@@ -64,10 +64,11 @@ const sortOptions = [
   { label: "评论数优先", value: "review_count" },
   { label: "价格优先", value: "price" },
 ];
+const categoryCatalog = ref<Record<string, string>>({});
 
 const form = reactive({
   site: queryOption("site", ["sg", "my", "ph", "th", "vn", "id"], "sg") as SiteCode,
-  categoryId: queryText("category", ""),
+  categoryId: queryText("category", "__all__"),
   minPrice: queryText("min_price", ""),
   maxPrice: queryText("max_price", ""),
   costOverride: queryText("cost", ""),
@@ -152,6 +153,12 @@ const compareIds = computed(() =>
 );
 const backendDisconnected = computed(() => errorCode.value === "NETWORK_ERROR");
 const needsAuthentication = computed(() => errorCode.value === "UNAUTHENTICATED");
+const categoryOptions = computed(() => [
+  { label: "全部类目", value: "__all__" },
+  ...Object.entries(categoryCatalog.value)
+    .sort(([, left], [, right]) => left.localeCompare(right))
+    .map(([value, name]) => ({ label: `${name}（${value}）`, value })),
+]);
 
 function queryText(key: string, fallback: string): string {
   const value = route.query[key];
@@ -199,7 +206,7 @@ function handleError(reason: unknown): void {
 function candidateQuery() {
   return {
     site: form.site,
-    category_id: form.categoryId || undefined,
+    category_id: form.categoryId === "__all__" ? undefined : form.categoryId,
     min_price: optionalNumber(form.minPrice),
     max_price: optionalNumber(form.maxPrice),
     sort_by: form.sortBy,
@@ -229,9 +236,17 @@ async function loadCandidates(): Promise<void> {
   clearFeedback();
   loadingCandidates.value = true;
   analysis.value = null;
+  selectedResult.value = null;
   comparison.value = [];
   try {
     candidates.value = await listSelectionCandidates(candidateQuery());
+    categoryCatalog.value = candidates.value.reduce<Record<string, string>>(
+      (catalog, candidate) => {
+        catalog[candidate.category_id] = candidate.category_name;
+        return catalog;
+      },
+      { ...categoryCatalog.value },
+    );
     selectedCandidateIds.value = selectedCandidateIds.value.filter((id) =>
       candidates.value.some((candidate) => candidate.product_id === id),
     );
@@ -248,6 +263,7 @@ async function runAnalysis(): Promise<void> {
   if (!canAnalyze.value) return;
   clearFeedback();
   analyzing.value = true;
+  selectedResult.value = null;
   comparison.value = [];
   try {
     analysis.value = await createSelectionAnalysis(analysisPayload());
@@ -293,8 +309,8 @@ async function exportReport(): Promise<void> {
   exporting.value = true;
   try {
     const report = await exportSelectionAnalysis(analysis.value.task_id);
-    downloadSelectionExport(report);
-    message.value = `报告已生成：${report.filename}，校验和 ${report.checksum_sha256.slice(0, 12)}…`;
+    const filename = downloadSelectionExport(report);
+    message.value = `Markdown 报告已导出：${filename}`;
   } catch (reason) {
     handleError(reason);
   } finally {
@@ -321,19 +337,81 @@ function metricLabel(key: string): string {
       logistics: "物流风险",
       after_sales: "售后风险",
       factory_fit: "工厂适配",
+      total_score: "综合得分",
+      profit: "预计利润",
+      margin: "利润率",
+      data_completeness: "数据完整度",
     }[key] ?? key
   );
+}
+
+function localizedExplanation(result: SelectionResult): string {
+  const strongest = Object.entries(result.metrics)
+    .filter(([, metric]) => metric.score !== null)
+    .sort(([, left], [, right]) => Number(right.score) - Number(left.score))[0];
+  const strongestText = strongest
+    ? `优势最明显的是${metricLabel(strongest[0])}（${Number(strongest[1].score).toFixed(1)} 分）`
+    : "目前没有足够的分项数据判断主要优势";
+  return `商品机会总分 ${Number(result.total_score).toFixed(1)}，预计利润 ${formatMoney(
+    result.profit.profit,
+    result.currency,
+  )}，利润率 ${percent(result.profit.margin || 0)}；${strongestText}。`;
+}
+
+function localizedRisk(risk: string): string {
+  const missingMatch = /^missing ([a-z_]+):/.exec(risk);
+  if (missingMatch) {
+    return `${metricLabel(missingMatch[1] ?? "")}数据缺失，当前评分未计入这一项`;
+  }
+  const legacyMissingMatch = /^([a-z_]+) data missing$/.exec(risk);
+  if (legacyMissingMatch) {
+    return `${metricLabel(legacyMissingMatch[1] ?? "")}数据缺失，当前评分未计入这一项`;
+  }
+  if (risk === "negative profit") return "预计利润为负";
+  if (risk === "negative margin") return "预计利润率为负";
+  return risk;
+}
+
+function cardRisks(result: SelectionResult): string[] {
+  return result.risk_warnings.filter(
+    (risk) =>
+      !risk.startsWith("missing ") &&
+      !risk.endsWith(" data missing") &&
+      !risk.includes("required source metric is unavailable"),
+  );
+}
+
+function localizedEvidenceSource(source: string): string {
+  if (source.startsWith("deterministic formula"))
+    return `确定性评分公式 ${source.split(" ").at(-1)}`;
+  if (source === "price minus item, logistics, platform and other costs") {
+    return "售价减去商品、物流、平台及其他成本";
+  }
+  if (source === "profit divided by price") return "利润除以售价";
+  if (source === "available scoring dimensions") return "可计算的评分维度";
+  return source;
 }
 
 function metricScore(metric: MetricEvidence): number {
   return metric.score === null ? 0 : Number(metric.score);
 }
 
+function closeDialog(): void {
+  selectedResult.value = null;
+  comparison.value = [];
+}
+
+function handleGlobalKeydown(event: KeyboardEvent): void {
+  if (event.key === "Escape" && (selectedResult.value || comparison.value.length)) {
+    closeDialog();
+  }
+}
+
 function syncQuery(): void {
   void router.replace({
     query: {
       site: form.site,
-      category: form.categoryId || undefined,
+      category: form.categoryId === "__all__" ? undefined : form.categoryId,
       min_price: form.minPrice || undefined,
       max_price: form.maxPrice || undefined,
       cost: form.costOverride || undefined,
@@ -350,14 +428,21 @@ function syncQuery(): void {
 }
 
 watch(form, syncQuery, { deep: true });
-onMounted(loadCandidates);
+onMounted(() => {
+  document.addEventListener("keydown", handleGlobalKeydown);
+  void loadCandidates();
+});
+onBeforeUnmount(() => document.removeEventListener("keydown", handleGlobalKeydown));
 </script>
 
 <template>
   <PageContainer>
     <header class="page-heading">
+      <div class="page-context">
+        <SpBadge tone="info" dot>Shopee 模拟实验数据</SpBadge>
+        <p>用可追溯的市场数据、利润公式和分项证据筛选候选商品。</p>
+      </div>
       <div class="heading-actions">
-        <SpBadge tone="info" dot>模拟实验数据</SpBadge>
         <SpButton variant="secondary" :loading="loadingCandidates" @click="loadCandidates">
           <template #icon><RefreshCw :size="16" /></template>
           刷新候选
@@ -389,11 +474,11 @@ onMounted(loadCandidates);
           </template>
           <form class="filters" @submit.prevent="loadCandidates">
             <SpSelect v-model="form.site" label="目标站点" :options="siteOptions" />
-            <SpInput
+            <SpSelect
               v-model="form.categoryId"
-              label="商品类目 ID"
-              placeholder="例如 CAT-001"
-              clearable
+              label="商品类目"
+              :options="categoryOptions"
+              placeholder="请选择类目范围"
             />
             <div class="field-pair">
               <SpInput
@@ -412,17 +497,20 @@ onMounted(loadCandidates);
             <div class="field-pair">
               <SpInput
                 v-model="form.costOverride"
-                label="统一产品成本"
+                label="产品成本覆盖（可选）"
                 placeholder="使用商品成本"
                 :error="fieldErrors.cost"
               />
               <SpInput
                 v-model="form.shippingOverride"
-                label="统一物流成本"
+                label="物流成本覆盖（可选）"
                 placeholder="使用商品运费"
                 :error="fieldErrors.shipping"
               />
             </div>
+            <p class="field-note">
+              留空时使用每个候选商品自身的成本；填写后会用该数值统一重新估算利润。
+            </p>
             <div class="field-pair">
               <SpInput
                 v-model="form.minimumProfit"
@@ -458,7 +546,7 @@ onMounted(loadCandidates);
               :error="fieldErrors.weight"
             />
             <p class="field-note">
-              当前 Mock 数据没有重量运费阶梯；重量会写入任务条件，不伪造评分影响。
+              当前模拟数据没有重量运费阶梯；重量会写入任务条件，不伪造评分影响。
             </p>
             <SpSelect v-model="form.riskPreference" label="风险偏好" :options="riskOptions" />
             <SpSelect v-model="form.sortBy" label="候选排序" :options="sortOptions" />
@@ -518,9 +606,11 @@ onMounted(loadCandidates);
                   <span>{{ formatMoney(candidate.price, candidate.currency) }}</span>
                   <span>销量 {{ candidate.sales_count }}</span>
                   <span>评分 {{ candidate.rating }}</span>
+                  <span>成本 {{ formatMoney(candidate.cost, candidate.currency) }}</span>
+                  <span>物流 {{ formatMoney(candidate.shipping_cost, candidate.currency) }}</span>
                 </span>
               </span>
-              <SpBadge tone="info">{{ candidate.is_mock_data ? "Mock" : "导入" }}</SpBadge>
+              <SpBadge tone="info">{{ candidate.is_mock_data ? "模拟" : "导入" }}</SpBadge>
             </label>
           </div>
         </SpCard>
@@ -533,7 +623,7 @@ onMounted(loadCandidates);
                   <span><ArrowDownUp :size="18" />选品结果</span>
                 </div>
                 <p>
-                  {{ analysis.formula_version }} ·
+                  评分公式 {{ analysis.formula_version }} ·
                   {{ analysis.generation_mode === "rule_template" ? "规则解释" : "校验生成解释" }}
                 </p>
               </div>
@@ -555,7 +645,14 @@ onMounted(loadCandidates);
             </div>
           </template>
 
-          <div class="result-list">
+          <SpEmptyState
+            v-if="analysis.results.length === 0"
+            title="没有商品满足利润条件"
+            :description="`${analysis.excluded_count} 个候选已被最低利润或利润率条件排除，请调整条件后重新分析。`"
+          >
+            <template #icon><SlidersHorizontal :size="24" /></template>
+          </SpEmptyState>
+          <div v-else class="result-list">
             <article v-for="result in analysis.results" :key="result.id" class="result-card">
               <div class="rank" :aria-label="`排名第 ${result.rank}`">#{{ result.rank }}</div>
               <div class="result-main">
@@ -564,7 +661,7 @@ onMounted(loadCandidates);
                     <h2>{{ result.title || result.product_id }}</h2>
                     <p>
                       {{ result.product_id }} · 数据完整度 {{ percent(result.data_completeness) }}
-                      <SpBadge v-if="result.is_mock_data" tone="info">Mock 数据</SpBadge>
+                      <SpBadge v-if="result.is_mock_data" tone="info">模拟数据</SpBadge>
                     </p>
                   </div>
                   <strong>{{ Number(result.total_score).toFixed(1) }}<small> / 100</small></strong>
@@ -583,10 +680,10 @@ onMounted(loadCandidates);
                     </div>
                   </div>
                 </div>
-                <p class="explanation">{{ result.explanation.summary }}</p>
-                <div v-if="result.risk_warnings.length" class="risk-list">
-                  <SpBadge v-for="risk in result.risk_warnings" :key="risk" tone="warning">
-                    {{ risk }}
+                <p class="explanation">{{ localizedExplanation(result) }}</p>
+                <div v-if="cardRisks(result).length" class="risk-list">
+                  <SpBadge v-for="risk in cardRisks(result)" :key="risk" tone="warning">
+                    {{ localizedRisk(risk) }}
                   </SpBadge>
                 </div>
                 <div class="result-actions">
@@ -622,7 +719,7 @@ onMounted(loadCandidates);
       <aside class="detail-drawer" role="dialog" aria-modal="true" aria-label="选品详情">
         <header>
           <div>
-            <p class="eyebrow">SELECTION DETAIL</p>
+            <p class="eyebrow">选品详情</p>
             <h2>{{ selectedResult.title || selectedResult.product_id }}</h2>
           </div>
           <button
@@ -653,13 +750,13 @@ onMounted(loadCandidates);
         </section>
         <section>
           <h3>推荐解释</h3>
-          <p>{{ selectedResult.explanation.summary }}</p>
+          <p>{{ localizedExplanation(selectedResult) }}</p>
           <dl>
             <template v-for="item in selectedResult.explanation.evidence" :key="item.metric">
               <dt>{{ metricLabel(item.metric) }}</dt>
               <dd>
                 <strong>{{ item.value }}</strong
-                ><small>{{ item.source }}</small>
+                ><small>{{ localizedEvidenceSource(item.source) }}</small>
               </dd>
             </template>
           </dl>
@@ -667,7 +764,9 @@ onMounted(loadCandidates);
         <section>
           <h3>风险与缺失数据</h3>
           <ul v-if="selectedResult.risk_warnings.length">
-            <li v-for="risk in selectedResult.risk_warnings" :key="risk">{{ risk }}</li>
+            <li v-for="risk in selectedResult.risk_warnings" :key="risk">
+              {{ localizedRisk(risk) }}
+            </li>
           </ul>
           <p v-else>未发现额外风险提示。</p>
         </section>
@@ -683,7 +782,6 @@ onMounted(loadCandidates);
       <section class="compare-dialog" role="dialog" aria-modal="true" aria-label="候选商品对比">
         <header>
           <div>
-            <p class="eyebrow">PRODUCT COMPARISON</p>
             <h2>候选商品对比</h2>
           </div>
           <button type="button" class="close-button" aria-label="关闭对比" @click="comparison = []">
@@ -748,14 +846,16 @@ onMounted(loadCandidates);
   justify-content: space-between;
 }
 .page-heading {
-  justify-content: flex-end;
+  justify-content: space-between;
   margin-bottom: var(--sp-space-6);
 }
-.page-heading h1 {
-  margin: var(--sp-space-1) 0;
-  font-size: var(--sp-font-page-title);
+.page-context {
+  display: flex;
+  gap: var(--sp-space-3);
+  align-items: center;
+  min-width: 0;
 }
-.page-heading p,
+.page-context p,
 .results-heading p,
 .result-title p,
 .field-note {
@@ -776,11 +876,26 @@ onMounted(loadCandidates);
 .workbench > aside {
   position: sticky;
   top: var(--sp-space-4);
+  max-height: 70dvh;
+  padding-right: var(--sp-space-2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 .main-content {
   display: grid;
   gap: var(--sp-space-5);
+  max-height: 70dvh;
   min-width: 0;
+  padding-right: var(--sp-space-2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.workbench > aside,
+.main-content {
+  scrollbar-color: var(--sp-border-strong) transparent;
+  scrollbar-width: thin;
 }
 .filters {
   display: grid;
@@ -1087,6 +1202,14 @@ th {
   .workbench > aside {
     position: static;
   }
+  .workbench > aside,
+  .main-content {
+    max-height: none;
+    padding-right: 0;
+    overflow-y: visible;
+    overscroll-behavior: auto;
+    scrollbar-gutter: auto;
+  }
 }
 @media (max-width: 767px) {
   .page-heading,
@@ -1095,8 +1218,15 @@ th {
     align-items: stretch;
     flex-direction: column;
   }
+  .page-context {
+    align-items: flex-start;
+    flex-direction: column;
+  }
   .heading-actions {
     flex-wrap: wrap;
+  }
+  .heading-actions > * {
+    flex: 1 1 auto;
   }
   .candidate-grid,
   .field-pair,

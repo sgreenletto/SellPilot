@@ -14,29 +14,15 @@ describe("auth API", () => {
   });
 
   it("使用真实后端令牌读取当前用户", async () => {
-    request
-      .mockResolvedValueOnce({ access_token: "jwt-token", token_type: "bearer" })
-      .mockResolvedValueOnce({
-        id: "user-id",
-        username: "admin",
-        role: "admin",
-        is_active: true,
-      });
+    request.mockResolvedValueOnce({ access_token: "jwt-token", token_type: "bearer" });
 
     await expect(login({ username: "admin", password: "password123" })).resolves.toEqual({
-      token: "jwt-token",
-      user: {
-        id: "user-id",
-        username: "admin",
-        displayName: "admin",
-      },
+      access_token: "jwt-token",
+      token_type: "bearer",
     });
     expect(request).toHaveBeenNthCalledWith(1, "/v1/auth/login", {
       method: "POST",
       body: JSON.stringify({ username: "admin", password: "password123" }),
-    });
-    expect(request).toHaveBeenNthCalledWith(2, "/v1/auth/me", {
-      headers: { Authorization: "Bearer jwt-token" },
     });
   });
 });

@@ -140,6 +140,18 @@ class Settings(BaseSettings):
         default=None, validation_alias="SHOPEE_PARTNER_KEY"
     )
     shopee_shop_id: str | None = Field(default=None, validation_alias="SHOPEE_SHOP_ID")
+    content_model_provider: Literal["offline_template", "aliyun_bailian"] = Field(
+        default="offline_template", validation_alias="CONTENT_MODEL_PROVIDER"
+    )
+    bailian_api_key: SecretStr | None = Field(default=None, validation_alias="DASHSCOPE_API_KEY")
+    bailian_base_url: str | None = Field(default=None, validation_alias="BAILIAN_BASE_URL")
+    bailian_model: str = Field(default="qwen-plus", validation_alias="BAILIAN_MODEL")
+    bailian_timeout_seconds: float = Field(
+        default=30,
+        gt=0,
+        le=120,
+        validation_alias="BAILIAN_TIMEOUT_SECONDS",
+    )
 
     @field_validator("api_v1_prefix")
     @classmethod
@@ -176,6 +188,15 @@ class Settings(BaseSettings):
                     "Real platform mode requires explicit Shopee configuration; "
                     "it never falls back to mock"
                 )
+        if self.content_model_provider == "aliyun_bailian":
+            api_key = self.bailian_api_key.get_secret_value() if self.bailian_api_key else ""
+            if not api_key or not self.bailian_base_url:
+                raise ValueError(
+                    "Aliyun Bailian mode requires DASHSCOPE_API_KEY and "
+                    "BAILIAN_BASE_URL; it never silently falls back to offline output"
+                )
+            if not self.bailian_base_url.startswith("https://"):
+                raise ValueError("BAILIAN_BASE_URL must use HTTPS")
         return self
 
 

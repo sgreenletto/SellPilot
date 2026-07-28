@@ -128,9 +128,7 @@ class KnowledgeIngestionService:
 
     async def _clear_existing(self) -> int:
         """清空已有知识库数据，返回删除的文档数。"""
-        count_result = await self.session.execute(
-            select(KnowledgeDocument.id)
-        )
+        count_result = await self.session.execute(select(KnowledgeDocument.id))
         count = len(list(count_result.scalars()))
         await self.session.execute(delete(KnowledgeDocument))
         await self.session.flush()
@@ -246,7 +244,7 @@ class KnowledgeIngestionService:
             texts = [c.content for c in batch]
             embeddings = embedding_service.encode(texts)
 
-            for chunk, embedding in zip(batch, embeddings):
+            for chunk, embedding in zip(batch, embeddings, strict=True):
                 # 关联文档获取 category
                 doc = await self.session.get(KnowledgeDocument, chunk.document_id)
                 category = doc.category if doc else "unknown"
@@ -255,12 +253,14 @@ class KnowledgeIngestionService:
                     chunk_indices=[chunk.chunk_index],
                     texts=[chunk.content],
                     embeddings=[embedding],
-                    metadata_list=[{
-                        "document_id": str(chunk.document_id),
-                        "chunk_index": chunk.chunk_index,
-                        "category": category,
-                        "source": doc.source if doc else "",
-                    }],
+                    metadata_list=[
+                        {
+                            "document_id": str(chunk.document_id),
+                            "chunk_index": chunk.chunk_index,
+                            "category": category,
+                            "source": doc.source if doc else "",
+                        }
+                    ],
                 )
                 chunk.embedding_status = "embedded"
                 chunk.chroma_id = f"{chunk.document_id}_{chunk.chunk_index}"
@@ -269,7 +269,8 @@ class KnowledgeIngestionService:
             embed_count += len(batch)
             offset += batch_size
             logger.info(
-                "Embedded %d/%d chunks", embed_count,
+                "Embedded %d/%d chunks",
+                embed_count,
                 product_count + review_count + faq_count,
             )
 

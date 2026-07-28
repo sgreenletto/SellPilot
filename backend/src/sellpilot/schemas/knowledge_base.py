@@ -5,8 +5,8 @@ from pydantic import ConfigDict, Field
 
 from sellpilot.schemas.common import ContractModel, PaginationParams
 
-
 # ---- Enums (wire-value strings matching DB) ----
+
 
 class KnowledgeDocumentStatus:
     UPLOADED = "uploaded"
@@ -35,6 +35,7 @@ class KnowledgeCategory:
 
 
 # ---- Document Schemas ----
+
 
 class KnowledgeDocumentCreate(ContractModel):
     title: str = Field(min_length=1, max_length=300)
@@ -81,6 +82,7 @@ class KnowledgeDocumentListParams(PaginationParams):
 
 # ---- Chunk Schemas ----
 
+
 class KnowledgeChunkResponse(ContractModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -102,6 +104,7 @@ class KnowledgeChunkListParams(PaginationParams):
 
 
 # ---- Retrieval Schemas (Phase 2 使用，先定义结构) ----
+
 
 class KnowledgeRetrievalRequest(ContractModel):
     query: str = Field(min_length=1, max_length=2000)

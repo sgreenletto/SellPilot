@@ -109,14 +109,14 @@ describe("ReviewAnalysisView", () => {
     await flushPromises();
     await wrapper
       .findAll("button")
-      .find((button) => button.text().includes("运行分析"))
+      .find((button) => button.text().includes("分析当前范围"))
       ?.trigger("click");
     await flushPromises();
-    expect(wrapper.text()).toContain("情感分布");
-    expect(wrapper.text()).toContain("规则分析");
+    expect(wrapper.text()).toContain("评论概览");
+    expect(wrapper.text()).toContain("评论分析结果");
     await wrapper
       .findAll("button")
-      .find((button) => button.text().includes("定位评论"))
+      .find((button) => button.text() === "REV1")
       ?.trigger("click");
     expect(wrapper.get("#review-REV1").classes()).toContain("selected");
   });
@@ -151,15 +151,49 @@ describe("ReviewAnalysisView", () => {
 
     await wrapper
       .findAll("button")
-      .find((button) => button.text().includes("运行分析"))
+      .find((button) => button.text().includes("分析当前范围"))
       ?.trigger("click");
     await flushPromises();
     await wrapper
       .findAll("button")
-      .find((button) => button.text().includes("packaging"))
+      .find((button) => button.text().includes("包装"))
       ?.trigger("click");
     await flushPromises();
     expect(api.listReviewEvidence).toHaveBeenLastCalledWith("A1", 1, "topic", "packaging");
-    expect(wrapper.text()).toContain("load_reviews");
+    expect(wrapper.text()).toContain("同一评论涉及的多个方面合并展示");
+  });
+
+  it("does not display stale mismatch evidence for explicitly matching descriptions", async () => {
+    api.listReviewEvidence.mockResolvedValue({
+      items: [
+        {
+          id: "E-STALE",
+          review_id: "REV1",
+          language: "en",
+          rating: 5,
+          evidence_type: "topic",
+          label: "description_mismatch",
+          sentiment: "positive",
+          issue_type: "description_mismatch",
+          original_content: "The color matches the photos and it works as described.",
+          translated_content: "颜色与图片一致，功能符合描述。",
+          source_created_at: "2026-01-01T00:00:00Z",
+          confidence: "0.82",
+          is_mock_data: true,
+        },
+      ],
+      page: 1,
+      page_size: 20,
+      total: 1,
+    });
+    const wrapper = await mountView();
+    await flushPromises();
+    await wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析当前范围"))
+      ?.trigger("click");
+    await flushPromises();
+    expect(wrapper.get(".evidence-table__topics").text()).toContain("未识别明确方面");
+    expect(wrapper.get(".evidence-table__topics").text()).not.toContain("描述不符");
   });
 });

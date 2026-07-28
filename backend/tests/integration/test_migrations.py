@@ -136,7 +136,7 @@ def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
     revisions = list(script.walk_revisions())
     revision_ids = [item.revision for item in revisions]
     assert len(revision_ids) == len(set(revision_ids))
-    assert script.get_heads() == ["20260728_0006"]
+    assert script.get_heads() == ["20260728_0007"]
     assert all(
         item.down_revision is None or script.get_revision(item.down_revision) is not None
         for item in revisions
@@ -429,7 +429,7 @@ def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
     )
     assert "products" in table_names(database_path)
 
-    command.upgrade(config, "20260728_0006")
+    command.upgrade(config, "20260728_0007")
     assert "idempotency_scope" in column_names(database_path, "confirmation_tasks")
     command.check(config)
 

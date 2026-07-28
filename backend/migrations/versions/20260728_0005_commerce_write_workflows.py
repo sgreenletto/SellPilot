@@ -29,9 +29,7 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.ForeignKeyConstraint(["created_by"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint(
-            "created_by", "product_external_id", name="uq_candidate_user_product"
-        ),
+        sa.UniqueConstraint("created_by", "product_external_id", name="uq_candidate_user_product"),
     )
     op.create_index(
         "ix_selection_candidates_user_created",
@@ -41,7 +39,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(
-        "ix_selection_candidates_user_created", table_name="selection_candidates"
-    )
+    op.drop_index("ix_selection_candidates_user_created", table_name="selection_candidates")
     op.drop_table("selection_candidates")

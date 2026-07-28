@@ -29,6 +29,8 @@ async def test_mock_adapter_foundation_status_and_unimplemented_business_method(
         "system.ping",
         "platform.contracts",
         "products.read",
+        "products.create_draft",
+        "products.update_draft",
         "orders.read",
         "logistics.read",
         "reviews.read",

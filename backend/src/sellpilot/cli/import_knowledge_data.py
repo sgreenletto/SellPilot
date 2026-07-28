@@ -22,14 +22,15 @@ DEFAULT_DATA_DIR = REPOSITORY_ROOT / "data" / "demo" / "shopee_mock"
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Import mock CSV data into the knowledge base"
-    )
+    parser = argparse.ArgumentParser(description="Import mock CSV data into the knowledge base")
     parser.add_argument(
         "--data-dir",
         type=Path,
         default=DEFAULT_DATA_DIR,
-        help=f"Directory containing products/reviews/messages/sessions CSV files (default: {DEFAULT_DATA_DIR})",
+        help=(
+            "Directory containing products/reviews/messages/sessions CSV files "
+            f"(default: {DEFAULT_DATA_DIR})"
+        ),
     )
     return parser.parse_args()
 

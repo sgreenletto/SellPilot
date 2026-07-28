@@ -128,8 +128,7 @@ async def test_draft_import_and_candidate_writes_require_confirmation(
         )
         await session.commit()
         assert (
-            await session.scalar(select(Product).where(Product.title == "Confirmed draft"))
-            is None
+            await session.scalar(select(Product).where(Product.title == "Confirmed draft")) is None
         )
         assert (
             await session.scalar(

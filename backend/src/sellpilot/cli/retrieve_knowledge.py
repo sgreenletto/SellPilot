@@ -6,22 +6,15 @@
 """
 
 import argparse
-import json
 
 from sellpilot.services.embedding import EmbeddingService
 from sellpilot.services.vector_store import ChromaVectorStore
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Test RAG knowledge retrieval"
-    )
-    parser.add_argument(
-        "query", type=str, help="Search query (Chinese or English)"
-    )
-    parser.add_argument(
-        "--top-k", type=int, default=5, help="Number of results (default: 5)"
-    )
+    parser = argparse.ArgumentParser(description="Test RAG knowledge retrieval")
+    parser.add_argument("query", type=str, help="Search query (Chinese or English)")
+    parser.add_argument("--top-k", type=int, default=5, help="Number of results (default: 5)")
     parser.add_argument(
         "--category",
         type=str,
@@ -62,7 +55,10 @@ def main() -> None:
         print(f"  ID: {r['chroma_id']}")
         if r.get("metadata"):
             meta = r["metadata"]
-            print(f"  Category: {meta.get('category', 'N/A')}  |  Chunk: {meta.get('chunk_index', 'N/A')}")
+            print(
+                f"  Category: {meta.get('category', 'N/A')}  |  "
+                f"Chunk: {meta.get('chunk_index', 'N/A')}"
+            )
         doc = r.get("document", "")
         # 截断过长文本
         if len(doc) > 400:

@@ -1,4 +1,5 @@
 import { request } from "@/api/http";
+import { listInventory, listOrders, listProducts } from "@/api/commerce";
 import type { InventoryItem, Order, Product } from "@/types/commerce";
 import type { DashboardMetric } from "@/types/dashboard";
 
@@ -154,21 +155,9 @@ export async function loadCommerceDashboardSnapshot(
 ): Promise<CommerceDashboardSnapshot> {
   const scope = shopId === "all" ? "" : `&shop_id=${encodeURIComponent(shopId)}`;
   const [products, inventory, orders] = await Promise.all([
-    loadAllPages((query) => fetchProductsFromQuery(`${query}${scope}`), 1_000),
-    loadAllPages((query) => fetchInventoryFromQuery(`${query}${scope}`), 5_000),
-    loadAllPages((query) => fetchOrdersFromQuery(`${query}${scope}`), 10_000),
+    loadAllPages((query) => listProducts(`${query}${scope}`), 1_000),
+    loadAllPages((query) => listInventory(`${query}${scope}`), 5_000),
+    loadAllPages((query) => listOrders(`${query}${scope}`), 10_000),
   ]);
   return { products, inventory, orders };
-}
-
-function fetchProductsFromQuery(query: string): Promise<Product[]> {
-  return request<Product[]>(`/v1/commerce/products${query}`);
-}
-
-function fetchInventoryFromQuery(query: string): Promise<InventoryItem[]> {
-  return request<InventoryItem[]>(`/v1/commerce/inventory${query}`);
-}
-
-function fetchOrdersFromQuery(query: string): Promise<Order[]> {
-  return request<Order[]>(`/v1/commerce/orders${query}`);
 }

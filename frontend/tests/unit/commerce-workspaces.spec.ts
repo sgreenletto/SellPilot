@@ -37,7 +37,10 @@ describe("成员二业务工作台", () => {
     cancelCommerceOperation.mockReset();
     requestProductDraft.mockReset();
     requestProductImport.mockReset();
-    vi.stubGlobal("confirm", vi.fn(() => true));
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => true),
+    );
     requestProductStatus.mockResolvedValue({
       id: "CONFIRMATION-001",
       operation_type: "commerce.unpublish_product",

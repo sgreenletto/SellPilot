@@ -19,7 +19,7 @@ API / ToolExecutor
 
 当前记录：
 
-- `analyzer_version=review-analysis-v1.0.0`
+- `analyzer_version=review-analysis-v1.1.0`
 - `analysis_mode=rule`
 - `prompt_version=null`
 - `model_version=null`

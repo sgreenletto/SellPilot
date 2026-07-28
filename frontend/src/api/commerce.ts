@@ -114,9 +114,7 @@ export function requestProductDraft(product: ProductDraftPayload): Promise<Confi
   );
 }
 
-export function requestProductImport(
-  products: ProductDraftPayload[],
-): Promise<ConfirmationTask> {
+export function requestProductImport(products: ProductDraftPayload[]): Promise<ConfirmationTask> {
   return request<ConfirmationTask>(
     "/v1/commerce/products/import-request",
     authInit("POST", { idempotency_key: crypto.randomUUID(), products }),

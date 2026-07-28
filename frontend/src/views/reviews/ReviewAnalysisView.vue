@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
 import { useRouter } from "vue-router";
-import { AlertTriangle, FlaskConical, RefreshCw, Search, Sparkles } from "@lucide/vue";
+import { AlertTriangle, RefreshCw, Search, Sparkles } from "@lucide/vue";
 import { FrontendApiError } from "@/api/http";
 import {
   createReviewAnalysis,
@@ -15,7 +15,6 @@ import SpCard from "@/components/base/SpCard.vue";
 import SpEmptyState from "@/components/base/SpEmptyState.vue";
 import SpInput from "@/components/base/SpInput.vue";
 import SpSelect from "@/components/base/SpSelect.vue";
-import SpSkeleton from "@/components/base/SpSkeleton.vue";
 import ReviewTrendChart from "@/components/charts/ReviewTrendChart.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
 import type {
@@ -44,16 +43,12 @@ const hasNextReviewPage = ref(false);
 const result = ref<ReviewAnalysisResult | null>(null);
 const evidence = ref<ReviewEvidencePage | null>(null);
 const evidencePage = ref(1);
-const evidenceType = ref("");
 const evidenceLabel = ref("");
 const selectedReviewId = ref("");
 const loading = ref(false);
 const analyzing = ref(false);
 const error = ref("");
 const errorCode = ref("");
-const taskStatus = ref("IDLE");
-const taskProgress = ref(0);
-const taskMessage = ref("尚未创建分析任务");
 
 const siteOptions = ["sg", "my", "ph", "th", "vn", "id"].map((value) => ({
   label: value.toUpperCase(),
@@ -67,17 +62,25 @@ const sentimentOptions = [
   { label: "负面", value: "negative" },
 ];
 const topicOptions = [
-  { label: "全部主题", value: "" },
+  { label: "全部方面", value: "" },
   { label: "产品质量", value: "product_quality" },
   { label: "包装", value: "packaging" },
-  { label: "文案不符", value: "description_mismatch" },
+  { label: "描述不符", value: "description_mismatch" },
   { label: "物流", value: "logistics" },
   { label: "服务", value: "service" },
 ];
-const evidenceTypeOptions = [
-  { label: "全部证据", value: "" },
-  { label: "主题证据", value: "topic" },
-];
+const topicLabels: Record<string, string> = {
+  product_quality: "产品质量",
+  packaging: "包装",
+  description_mismatch: "描述不符",
+  logistics: "物流",
+  service: "服务",
+  material: "材料",
+  size_specification: "尺寸规格",
+  wrong_or_missing_item: "错发漏发",
+  other: "其他",
+  no_clear_issue: "无明确问题",
+};
 const displayedReviews = computed(() =>
   reviews.value.filter(
     (review) =>
@@ -89,6 +92,39 @@ const sentimentTotal = computed(() => {
   const item = result.value?.sentiment;
   return item ? item.positive + item.neutral + item.negative : 0;
 });
+const hasComparableTrend = computed(() => (result.value?.trends.length ?? 0) > 1);
+const groupedEvidence = computed(() => {
+  const grouped = new Map<
+    string,
+    NonNullable<typeof evidence.value>["items"][number] & { labels: string[] }
+  >();
+  for (const item of evidence.value?.items ?? []) {
+    const current = grouped.get(item.review_id);
+    if (current) {
+      if (!current.labels.includes(item.label)) current.labels.push(item.label);
+      continue;
+    }
+    grouped.set(item.review_id, { ...item, labels: [item.label] });
+  }
+  return [...grouped.values()].map((item) => {
+    const text = `${item.original_content} ${item.translated_content ?? ""}`.toLocaleLowerCase();
+    const explicitlyAligned =
+      text.includes("matches the photo") ||
+      text.includes("works as described") ||
+      text.includes("与图片一致") ||
+      text.includes("符合描述");
+    return {
+      ...item,
+      labels: item.labels.filter((label) => label !== "description_mismatch" || !explicitlyAligned),
+    };
+  });
+});
+const visibleTopicLabels = computed(
+  () => new Set(groupedEvidence.value.flatMap((item) => item.labels)),
+);
+const displayedPainPoints = computed(() =>
+  (result.value?.pain_points ?? []).filter((item) => visibleTopicLabels.value.has(item.pain_point)),
+);
 const issueGroups = computed(() => {
   const labels: Record<string, string> = {
     product_quality: "产品",
@@ -99,8 +135,10 @@ const issueGroups = computed(() => {
   };
   return Object.entries(labels).map(([key, label]) => ({
     key,
-    label,
-    count: result.value?.topics.find((item) => item.topic === key)?.count ?? 0,
+    label: topicLabels[key] ?? label,
+    count: visibleTopicLabels.value.has(key)
+      ? (result.value?.topics.find((item) => item.topic === key)?.count ?? 0)
+      : 0,
   }));
 });
 
@@ -153,9 +191,6 @@ async function analyze(): Promise<void> {
   error.value = "";
   result.value = null;
   evidence.value = null;
-  taskStatus.value = "CREATING";
-  taskProgress.value = 0;
-  taskMessage.value = "正在创建分析任务";
   try {
     const created = await createReviewAnalysis({
       idempotency_key: `review-ui-${form.productId}-${Date.now()}`,
@@ -170,39 +205,28 @@ async function analyze(): Promise<void> {
       maximum_reviews: 1000,
       max_attempts: 2,
     });
-    taskStatus.value = created.status;
-    taskProgress.value = 10;
-    taskMessage.value = created.duplicate ? "复用已有幂等任务" : "任务已创建，准备运行";
-    taskStatus.value = "RUNNING";
-    taskProgress.value = 35;
-    taskMessage.value = "正在加载评论并运行规则分析";
     result.value = await runReviewAnalysis(created.analysis_id);
-    taskStatus.value = result.value.status;
-    taskProgress.value = result.value.progress;
-    taskMessage.value = result.value.current_step ?? "分析完成";
     evidencePage.value = 1;
     evidence.value = await listReviewEvidence(created.analysis_id, 1);
   } catch (reason) {
-    taskStatus.value = "FAILED";
-    taskMessage.value = reason instanceof Error ? reason.message : "分析失败";
     handleError(reason);
   } finally {
     analyzing.value = false;
   }
 }
-async function changeEvidenceType(value: string): Promise<void> {
-  evidenceType.value = value;
-  evidenceLabel.value = "";
+async function changeEvidenceTopic(value: string): Promise<void> {
+  evidenceLabel.value = value;
   if (!result.value) return;
   evidencePage.value = 1;
-  evidence.value = await listReviewEvidence(result.value.analysis_id, 1, value);
+  evidence.value = await listReviewEvidence(
+    result.value.analysis_id,
+    1,
+    value ? "topic" : "",
+    value,
+  );
 }
 async function filterEvidenceLabel(label: string): Promise<void> {
-  evidenceType.value = "topic";
-  evidenceLabel.value = label;
-  if (!result.value) return;
-  evidencePage.value = 1;
-  evidence.value = await listReviewEvidence(result.value.analysis_id, 1, "topic", label);
+  await changeEvidenceTopic(label);
 }
 async function changeEvidencePage(page: number): Promise<void> {
   if (!result.value || page < 1) return;
@@ -210,7 +234,7 @@ async function changeEvidencePage(page: number): Promise<void> {
   evidence.value = await listReviewEvidence(
     result.value.analysis_id,
     page,
-    evidenceType.value,
+    evidenceLabel.value ? "topic" : "",
     evidenceLabel.value,
   );
 }
@@ -225,29 +249,11 @@ onMounted(loadReviews);
 
 <template>
   <PageContainer
-    eyebrow="REVIEW INTELLIGENCE · MOCK SHOPEE"
+    eyebrow="市场与选品 / 评论分析"
     title="评论与产品改良"
-    description="用可追溯证据查看情感、主题、痛点和站点趋势。"
+    description="筛选评论，查看情感、涉及方面、改进信号和对应原文。"
   >
-    <section class="workbench-hero">
-      <div>
-        <span class="workbench-hero__eyebrow">REVIEW INTELLIGENCE · MOCK SHOPEE</span>
-        <h2>评论洞察工作台</h2>
-        <p>从多语言评论中提炼情感、主题、痛点与可追溯证据。</p>
-      </div>
-      <div class="workbench-hero__facts">
-        <span
-          ><strong>{{ reviews.length }}</strong> 当前评论</span
-        >
-        <span
-          ><strong>{{ result?.progress ?? 0 }}%</strong> 分析进度</span
-        >
-        <span><strong>Rule</strong> 当前模式</span>
-      </div>
-    </section>
-    <template #actions
-      ><SpBadge tone="info"><FlaskConical :size="14" /> 模拟实验数据</SpBadge></template
-    >
+    <template #actions><SpBadge tone="info">Mock Shopee · 规则分析</SpBadge></template>
 
     <div v-if="error" class="alert" role="alert">
       <AlertTriangle :size="18" />
@@ -263,118 +269,169 @@ onMounted(loadReviews);
       >
     </div>
 
-    <SpCard class="filters">
-      <SpInput v-model="form.productId" label="商品 ID" placeholder="例如 PROD0001" />
-      <SpSelect v-model="form.site" label="站点" :options="siteOptions" />
-      <SpInput v-model="form.language" label="语言" placeholder="留空为全部语言" />
-      <SpSelect v-model="form.minRating" label="最低评分" :options="ratingOptions" />
-      <SpSelect v-model="form.maxRating" label="最高评分" :options="ratingOptions" />
-      <SpSelect v-model="form.sentiment" label="情感" :options="sentimentOptions" />
-      <SpSelect v-model="form.topic" label="主题" :options="topicOptions" />
-      <label>开始时间<input v-model="form.createdFrom" type="date" /></label>
-      <label>结束时间<input v-model="form.createdTo" type="date" /></label>
-      <SpButton :loading="loading" @click="loadReviews()"
-        ><template #icon><Search :size="16" /></template>筛选评论</SpButton
-      >
-      <SpButton :loading="analyzing" :disabled="reviews.length === 0" @click="analyze"
-        ><template #icon><Sparkles :size="16" /></template>运行分析</SpButton
-      >
-    </SpCard>
-
-    <SpCard class="task-panel" variant="flat">
+    <SpCard class="filters" variant="solid">
       <div class="section-title">
         <div>
-          <small>分析任务状态</small>
-          <h3>{{ taskStatus }} · {{ taskMessage }}</h3>
+          <h2>选择评论范围</h2>
+          <p>情感与涉及方面只筛选下方列表；分析范围由商品、站点、语言、评分和日期决定。</p>
         </div>
-        <strong>{{ taskProgress }}%</strong>
       </div>
-      <div class="task-track"><i :style="{ width: `${taskProgress}%` }"></i></div>
-      <ol v-if="result?.steps.length" class="task-steps">
-        <li v-for="step in result.steps" :key="step.step_name">
-          <span>{{ step.step_name }}</span
-          ><strong>{{ step.status }}</strong>
-          <small v-if="step.error_message">{{ step.error_message }}</small>
-        </li>
-      </ol>
+      <div class="filter-grid">
+        <SpInput v-model="form.productId" label="商品 ID" placeholder="例如 PROD0001" />
+        <SpSelect v-model="form.site" label="站点" :options="siteOptions" />
+        <SpInput v-model="form.language" label="语言" placeholder="全部语言" />
+        <SpSelect v-model="form.minRating" label="最低评分" :options="ratingOptions" />
+        <SpSelect v-model="form.maxRating" label="最高评分" :options="ratingOptions" />
+        <SpSelect v-model="form.sentiment" label="列表情感" :options="sentimentOptions" />
+        <SpSelect v-model="form.topic" label="涉及方面" :options="topicOptions" />
+        <label>开始日期<input v-model="form.createdFrom" type="date" /></label>
+        <label>结束日期<input v-model="form.createdTo" type="date" /></label>
+      </div>
+      <div class="filter-actions">
+        <span>当前页 {{ displayedReviews.length }} 条；单次分析最多读取 1,000 条匹配评论。</span>
+        <SpButton :loading="loading" variant="secondary" @click="loadReviews()">
+          <template #icon><Search :size="16" /></template>刷新评论
+        </SpButton>
+        <SpButton :loading="analyzing" :disabled="reviews.length === 0" @click="analyze">
+          <template #icon><Sparkles :size="16" /></template>分析当前范围
+        </SpButton>
+      </div>
     </SpCard>
 
     <div v-if="analyzing" class="progress" aria-live="polite">
-      <SpSkeleton v-for="n in 3" :key="n" height="72px" />
-      <p>正在加载评论、分析并保存证据，请稍候…</p>
+      <span class="progress__spinner"></span>
+      <div>
+        <strong>正在分析评论</strong>
+        <p>加载评论、执行规则分析并保存证据…</p>
+      </div>
     </div>
     <template v-else-if="result?.status === 'SUCCEEDED'">
-      <section class="summary-grid">
-        <SpCard
-          ><h3>情感分布</h3>
-          <div v-if="result.sentiment" class="sentiments">
-            <span>正面 {{ result.sentiment.positive }}</span
-            ><span>中性 {{ result.sentiment.neutral }}</span
-            ><span>负面 {{ result.sentiment.negative }}</span>
-          </div>
-          <small
-            >共 {{ sentimentTotal }} 条有效评论 ·
-            {{ result.analysis_mode === "rule" ? "规则分析" : "已验证模型" }}</small
-          ></SpCard
-        >
-        <SpCard
-          ><h3>五类问题</h3>
-          <div class="issue-grid">
-            <span v-for="item in issueGroups" :key="item.key"
-              >{{ item.label }} <strong>{{ item.count }}</strong></span
-            >
-          </div></SpCard
-        >
-        <SpCard
-          ><h3>高频痛点</h3>
-          <button
-            v-for="item in result.pain_points.slice(0, 6)"
-            :key="item.pain_point"
-            class="tag"
-            @click="filterEvidenceLabel(item.pain_point)"
-          >
-            {{ item.pain_point }} · {{ item.negative_count }}
-          </button></SpCard
+      <section class="result-heading">
+        <div>
+          <small>评论分析结果</small>
+          <h2>{{ result.product_id }} 评论概览</h2>
+        </div>
+        <SpButton
+          variant="secondary"
+          @click="
+            router.push({
+              path: '/market/reviews/improvement',
+              query: { analysis_id: result.analysis_id },
+            })
+          "
+          >生成产品改良报告</SpButton
         >
       </section>
-      <SpCard
-        ><h3>时间与站点趋势</h3>
-        <ReviewTrendChart :points="result.trends"
-      /></SpCard>
-      <SpCard
-        ><div class="section-title">
-          <h3>代表评论与证据</h3>
-          <div class="evidence-actions">
-            <SpSelect
-              :model-value="evidenceType"
-              aria-label="证据类型"
-              :options="evidenceTypeOptions"
-              @update:model-value="changeEvidenceType"
-            />
-            <SpBadge v-if="evidenceLabel" variant="info"> 主题：{{ evidenceLabel }} </SpBadge>
-            <SpButton
-              size="sm"
-              variant="secondary"
-              @click="
-                router.push({
-                  path: '/market/reviews/improvement',
-                  query: { analysis_id: result.analysis_id },
-                })
-              "
-              >进入产品改良（Step 8）</SpButton
+      <section class="metric-grid">
+        <SpCard variant="solid"
+          ><small>有效评论</small><strong>{{ sentimentTotal }}</strong
+          ><span>{{ result.site.toUpperCase() }} 站点</span></SpCard
+        >
+        <SpCard variant="solid"
+          ><small>情感概览</small
+          ><strong
+            >{{ result.sentiment?.positive ?? 0 }} / {{ result.sentiment?.neutral ?? 0 }} /
+            {{ result.sentiment?.negative ?? 0 }}</strong
+          ><span>正向 / 中性 / 含改进信号</span></SpCard
+        >
+        <SpCard variant="solid"
+          ><small>涉及方面</small><strong>{{ visibleTopicLabels.size }}</strong
+          ><span>评论中提到的不同方面</span></SpCard
+        >
+        <SpCard variant="solid"
+          ><small>建议关注方向</small><strong>{{ displayedPainPoints.length }}</strong
+          ><span>低评分或明确缺点涉及的方面数</span></SpCard
+        >
+      </section>
+      <div class="analysis-grid">
+        <SpCard class="issue-card" variant="solid">
+          <div class="section-title">
+            <div>
+              <h3>评论涉及方面</h3>
+              <p>用于归纳评论内容，不代表这些方面一定存在问题。</p>
+            </div>
+          </div>
+          <div class="issue-table">
+            <div v-for="item in issueGroups" :key="item.key">
+              <span>{{ item.label }}</span>
+              <i
+                :style="{
+                  width: `${sentimentTotal ? Math.max(4, (item.count / sentimentTotal) * 100) : 0}%`,
+                }"
+              ></i>
+              <strong>{{ item.count }}</strong>
+            </div>
+          </div>
+        </SpCard>
+        <SpCard class="pain-card" variant="solid">
+          <div class="section-title">
+            <div>
+              <h3>改进信号</h3>
+              <p>来自低评分或含明确缺点表达的评论，可点击核对原文。</p>
+            </div>
+          </div>
+          <div v-if="displayedPainPoints.length" class="pain-list">
+            <button
+              v-for="item in displayedPainPoints.slice(0, 6)"
+              :key="item.pain_point"
+              @click="filterEvidenceLabel(item.pain_point)"
             >
+              <span>{{ topicLabels[item.pain_point] ?? item.pain_point }}</span
+              ><strong>{{ item.negative_count }} 条</strong>
+            </button>
+          </div>
+          <SpEmptyState
+            v-else
+            title="当前没有改进信号"
+            description="所选评论中没有低评分或明确缺点表达，因此不会生成改良建议。"
+          />
+        </SpCard>
+      </div>
+      <SpCard v-if="hasComparableTrend" class="trend-card" variant="solid">
+        <div class="section-title">
+          <div>
+            <h3>时间与站点趋势</h3>
+            <p>按月份和站点汇总评论量、负面评论与平均评分。</p>
           </div>
         </div>
-        <div v-if="evidence?.items.length" class="evidence-list">
-          <article v-for="item in evidence.items" :key="item.id">
-            <button @click="locateReview(item.review_id)">定位评论 {{ item.review_id }}</button
-            ><strong>{{ item.label }} · 置信度 {{ Number(item.confidence).toFixed(2) }}</strong>
-            <p>{{ item.original_content }}</p>
-            <p v-if="item.translated_content">译文：{{ item.translated_content }}</p>
-            <small v-else>未提供翻译（当前未接入真实翻译服务）</small>
+        <ReviewTrendChart :points="result.trends" />
+      </SpCard>
+      <SpCard class="evidence-card" variant="solid">
+        <div class="section-title">
+          <div>
+            <h3>代表评论证据</h3>
+            <p>同一评论涉及的多个方面合并展示，避免重复阅读。</p>
+          </div>
+          <button v-if="evidenceLabel" class="clear-filter" @click="changeEvidenceTopic('')">
+            清除“{{ topicLabels[evidenceLabel] ?? evidenceLabel }}”筛选
+          </button>
+        </div>
+        <div v-if="groupedEvidence.length" class="evidence-table">
+          <article v-for="item in groupedEvidence" :key="item.review_id">
+            <div class="evidence-table__meta">
+              <button @click="locateReview(item.review_id)">{{ item.review_id }}</button>
+              <span>{{ item.rating }} 星</span><span>{{ item.language }}</span>
+              <em v-if="item.sentiment === 'negative'">含改进信号</em>
+            </div>
+            <div class="evidence-table__content">
+              <p>{{ item.original_content }}</p>
+              <small>{{
+                item.translated_content ? `译文：${item.translated_content}` : "数据源未提供译文"
+              }}</small>
+            </div>
+            <div class="evidence-table__topics">
+              <span v-for="label in item.labels" :key="label"
+                >涉及 · {{ topicLabels[label] ?? label }}</span
+              >
+              <span v-if="!item.labels.length">未识别明确方面</span>
+            </div>
           </article>
         </div>
-        <SpEmptyState v-else title="暂无分析证据" description="当前结果没有可展示的代表评论。" />
+        <SpEmptyState
+          v-else
+          title="暂无匹配证据"
+          description="当前分析结果没有可展示的代表评论。"
+        />
         <div v-if="evidence && evidence.total > evidence.page_size" class="pager">
           <SpButton
             size="sm"
@@ -394,9 +451,12 @@ onMounted(loadReviews);
       </SpCard>
     </template>
 
-    <SpCard
+    <SpCard class="reviews-card" variant="solid"
       ><div class="section-title">
-        <h3>评论原文与翻译</h3>
+        <div>
+          <h3>评论原文</h3>
+          <p>用于核对筛选范围和分析结果。</p>
+        </div>
         <span>第 {{ reviewPage }} 页 · {{ displayedReviews.length }} 条</span>
       </div>
       <div v-if="displayedReviews.length" class="review-list">
@@ -447,114 +507,46 @@ onMounted(loadReviews);
 </template>
 
 <style scoped>
-.workbench-hero {
-  display: flex;
-  gap: var(--sp-space-6);
-  align-items: flex-end;
-  justify-content: space-between;
-  padding: var(--sp-space-6);
-  margin-bottom: var(--sp-space-5);
-  color: white;
-  background:
-    radial-gradient(circle at 88% 0%, rgb(91 164 255 / 45%), transparent 34%),
-    linear-gradient(135deg, #102b5c 0%, #244f91 58%, #6755b9 100%);
-  border-radius: calc(var(--sp-radius-card) + 4px);
-  box-shadow: 0 18px 42px rgb(20 48 94 / 20%);
-}
-.workbench-hero__eyebrow {
-  color: #9fd3ff;
-  font-size: var(--sp-font-xs);
-  font-weight: 750;
-  letter-spacing: 0.12em;
-}
-.workbench-hero h2 {
-  margin: 8px 0 6px;
-  font-size: clamp(24px, 3vw, 36px);
-}
-.workbench-hero p {
-  margin: 0;
-  color: rgb(255 255 255 / 72%);
-}
-.workbench-hero__facts {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(90px, 1fr));
-  gap: 10px;
-}
-.workbench-hero__facts span {
-  display: grid;
-  padding: 12px 16px;
-  color: rgb(255 255 255 / 70%);
-  font-size: 12px;
-  background: rgb(255 255 255 / 10%);
-  border: 1px solid rgb(255 255 255 / 15%);
-  border-radius: 16px;
-}
-.workbench-hero__facts strong {
-  color: white;
-  font-size: 20px;
-}
 .filters {
   margin-bottom: var(--sp-space-5);
 }
-.task-panel {
-  margin-bottom: var(--sp-space-5);
-}
-.task-panel h3 {
-  margin: 4px 0 0;
-}
-.task-track {
-  height: 8px;
-  margin-top: var(--sp-space-3);
-  overflow: hidden;
-  background: var(--sp-color-surface-hover);
-  border-radius: 999px;
-}
-.task-track i {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, var(--sp-color-accent-blue), #7766d8);
-  border-radius: inherit;
-  transition: width 0.3s ease;
-}
-.task-steps {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--sp-space-3);
-  padding: 0;
-  margin: var(--sp-space-4) 0 0;
-  list-style: none;
-}
-.task-steps li {
-  display: grid;
-  gap: 4px;
-  padding: var(--sp-space-3);
-  background: var(--sp-color-surface);
-  border-radius: var(--sp-radius-control);
-}
-.evidence-actions {
-  display: flex;
-  gap: var(--sp-space-3);
-  align-items: center;
-}
 .filters :deep(.sp-card__body) {
+  display: block;
+}
+.filter-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  grid-template-columns: repeat(5, minmax(150px, 1fr));
   gap: var(--sp-space-4);
   align-items: end;
+  margin-top: var(--sp-space-5);
 }
-.filters label {
+.filter-grid label {
   display: grid;
   gap: var(--sp-space-2);
   color: var(--sp-color-text-secondary);
   font-size: var(--sp-font-xs);
   font-weight: 650;
 }
-.filters input {
+.filter-grid input {
   min-height: 40px;
   padding: 0 var(--sp-space-3);
   border: 1px solid var(--sp-border-strong);
   border-radius: var(--sp-radius-control);
   background: var(--sp-color-surface);
+}
+.filter-actions {
+  display: flex;
+  gap: var(--sp-space-3);
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: var(--sp-space-5);
+  margin-top: var(--sp-space-5);
+  border-top: 1px solid var(--sp-border-soft);
+}
+.filter-actions > span {
+  margin-right: auto;
+  color: var(--sp-color-text-muted);
+  font-size: var(--sp-font-xs);
 }
 .alert {
   display: flex;
@@ -563,7 +555,8 @@ onMounted(loadReviews);
   padding: var(--sp-space-4);
   margin-bottom: var(--sp-space-4);
   color: var(--sp-color-danger);
-  background: var(--sp-color-danger-soft);
+  background: var(--sp-color-surface);
+  border: 1px solid var(--sp-color-danger);
   border-radius: var(--sp-radius-card);
 }
 .alert div {
@@ -572,29 +565,84 @@ onMounted(loadReviews);
 .alert p {
   margin: 4px 0 0;
 }
-.summary-grid {
+.result-heading {
+  display: flex;
+  gap: var(--sp-space-5);
+  align-items: end;
+  justify-content: space-between;
+  margin: var(--sp-space-8) 0 var(--sp-space-4);
+}
+.result-heading h2,
+.section-title h2,
+.section-title h3 {
+  margin: 0;
+}
+.result-heading p,
+.section-title p {
+  margin: var(--sp-space-1) 0 0;
+  color: var(--sp-color-text-muted);
+  font-size: var(--sp-font-sm);
+}
+.metric-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: var(--sp-space-4);
   margin-bottom: var(--sp-space-4);
 }
-.sentiments,
-.issue-grid {
-  display: flex;
-  flex-wrap: wrap;
+.metric-grid :deep(.sp-card__body) {
+  display: grid;
+  gap: var(--sp-space-1);
+}
+.metric-grid strong {
+  font-size: var(--sp-font-2xl);
+}
+.metric-grid span,
+.metric-grid small {
+  color: var(--sp-color-text-muted);
+}
+.analysis-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: var(--sp-space-4);
+}
+.issue-table {
+  display: grid;
+  gap: var(--sp-space-4);
+  margin-top: var(--sp-space-5);
+}
+.issue-table > div {
+  display: grid;
+  grid-template-columns: 92px minmax(80px, 1fr) 24px;
   gap: var(--sp-space-3);
+  align-items: center;
 }
-.sentiments span,
-.issue-grid span,
-.tag {
-  padding: 8px 12px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--sp-color-surface-hover);
+.issue-table i {
+  display: block;
+  max-width: 100%;
+  height: 8px;
+  background: var(--sp-color-primary);
+  border-radius: var(--sp-radius-pill);
 }
-.tag {
-  margin: 0 6px 6px 0;
+.pain-list {
+  display: grid;
+  gap: var(--sp-space-2);
+  margin-top: var(--sp-space-5);
+}
+.pain-list button {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--sp-space-3);
+  color: var(--sp-color-text);
+  text-align: left;
+  background: var(--sp-color-surface-muted);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-control);
   cursor: pointer;
+}
+.trend-card,
+.evidence-card,
+.reviews-card {
+  margin-top: var(--sp-space-4);
 }
 .section-title {
   display: flex;
@@ -603,12 +651,13 @@ onMounted(loadReviews);
   gap: var(--sp-space-3);
 }
 .review-list,
-.evidence-list {
+.evidence-table {
   display: grid;
   gap: var(--sp-space-3);
+  margin-top: var(--sp-space-5);
 }
 .review-list article,
-.evidence-list article {
+.evidence-table article {
   padding: var(--sp-space-4);
   border: 1px solid var(--sp-border-soft);
   border-radius: var(--sp-radius-card);
@@ -622,12 +671,53 @@ onMounted(loadReviews);
   gap: var(--sp-space-2);
   align-items: center;
 }
-.evidence-list button {
-  margin-right: var(--sp-space-3);
+.evidence-table article {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr) 180px;
+  gap: var(--sp-space-4);
+}
+.evidence-table__meta {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-space-1);
+  color: var(--sp-color-text-muted);
+  font-size: var(--sp-font-xs);
+}
+.evidence-table__meta button,
+.clear-filter {
   color: var(--sp-color-primary);
   background: none;
   border: 0;
   cursor: pointer;
+}
+.evidence-table__meta button {
+  padding: 0;
+  font-weight: 700;
+  text-align: left;
+}
+.evidence-table__meta em {
+  width: fit-content;
+  padding: var(--sp-space-1) var(--sp-space-2);
+  color: var(--sp-color-warning);
+  font-style: normal;
+  font-weight: 700;
+  background: var(--sp-color-surface-muted);
+  border-radius: var(--sp-radius-pill);
+}
+.evidence-table__content p {
+  margin: 0 0 var(--sp-space-2);
+}
+.evidence-table__topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-space-2);
+  align-content: start;
+}
+.evidence-table__topics span {
+  padding: var(--sp-space-1) var(--sp-space-2);
+  font-size: var(--sp-font-xs);
+  background: var(--sp-color-surface-muted);
+  border-radius: var(--sp-radius-pill);
 }
 .pager,
 .progress {
@@ -637,37 +727,67 @@ onMounted(loadReviews);
   justify-content: center;
   margin-top: var(--sp-space-4);
 }
+.progress {
+  padding: var(--sp-space-5);
+  background: var(--sp-color-surface);
+  border-radius: var(--sp-radius-card);
+}
+.progress p {
+  margin: var(--sp-space-1) 0 0;
+  color: var(--sp-color-text-muted);
+}
+.progress__spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--sp-border-strong);
+  border-top-color: var(--sp-color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 @media (max-width: 1100px) {
-  .filters :deep(.sp-card__body) {
+  .filter-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .metric-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .workbench-hero {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-  .summary-grid {
+  .analysis-grid {
     grid-template-columns: 1fr;
   }
-  .task-steps {
-    grid-template-columns: 1fr;
+  .evidence-table article {
+    grid-template-columns: 150px minmax(0, 1fr);
+  }
+  .evidence-table__topics {
+    grid-column: 2;
   }
 }
 @media (max-width: 640px) {
-  .filters :deep(.sp-card__body) {
+  .filter-grid,
+  .metric-grid {
     grid-template-columns: 1fr;
   }
-  .workbench-hero__facts {
-    width: 100%;
-    grid-template-columns: 1fr;
+  .filter-actions,
+  .result-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .filter-actions > span {
+    margin-right: 0;
   }
   .section-title {
     align-items: flex-start;
     flex-direction: column;
   }
-  .evidence-actions {
-    width: 100%;
-    align-items: stretch;
-    flex-direction: column;
+  .evidence-table article {
+    grid-template-columns: 1fr;
+  }
+  .evidence-table__topics {
+    grid-column: auto;
   }
 }
 </style>

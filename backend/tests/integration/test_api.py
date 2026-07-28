@@ -195,6 +195,8 @@ async def test_platform_status_reports_mock_boundary(client_bundle):
             "system.ping",
             "platform.contracts",
             "products.read",
+            "products.create_draft",
+            "products.update_draft",
             "orders.read",
             "logistics.read",
             "reviews.read",
