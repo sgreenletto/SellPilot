@@ -25,7 +25,14 @@ async def test_mock_adapter_foundation_status_and_unimplemented_business_method(
     ping = await adapter.ping()
     assert ping.configured is True
     assert ping.reachable is True
-    assert await adapter.get_capabilities() == ["system.ping", "platform.contracts"]
+    assert await adapter.get_capabilities() == [
+        "system.ping",
+        "platform.contracts",
+        "products.read",
+        "orders.read",
+        "logistics.read",
+        "messages.read",
+    ]
     with pytest.raises(PlatformFeatureNotImplementedError):
         await adapter.list_products()
 
