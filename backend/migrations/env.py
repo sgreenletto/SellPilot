@@ -59,7 +59,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
-        render_as_batch=config.get_main_option("sqlalchemy.url").startswith("sqlite"),
+        render_as_batch=False,
     )
 
     with context.begin_transaction():
@@ -71,7 +71,7 @@ def do_run_migrations(connection: Connection) -> None:
         connection=connection,
         target_metadata=target_metadata,
         compare_type=True,
-        render_as_batch=connection.dialect.name == "sqlite",
+        render_as_batch=False,
     )
 
     with context.begin_transaction():

@@ -18,10 +18,10 @@ EXAMPLE_JWT_SECRETS = {
 
 
 class Settings(BaseSettings):
-    """Application settings loaded from environment variables and backend/.env."""
+    """Application settings loaded from environment variables and the repository .env."""
 
     model_config = SettingsConfigDict(
-        env_file=(REPOSITORY_ROOT / ".env", BACKEND_ROOT / ".env"),
+        env_file=REPOSITORY_ROOT / ".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
@@ -170,6 +170,13 @@ class Settings(BaseSettings):
         if not value.startswith("/"):
             raise ValueError("API_V1_PREFIX must start with '/'")
         return value.rstrip("/")
+
+    @field_validator("database_url")
+    @classmethod
+    def validate_database_url(cls, value: str) -> str:
+        if not value.startswith("postgresql+asyncpg://"):
+            raise ValueError("DATABASE_URL must use PostgreSQL with the asyncpg driver")
+        return value
 
     @model_validator(mode="after")
     def validate_security_and_platform(self) -> "Settings":

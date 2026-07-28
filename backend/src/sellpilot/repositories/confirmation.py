@@ -33,7 +33,7 @@ class ConfirmationRepository:
         confirmed_at: datetime,
         execution_started_at: datetime,
     ) -> ConfirmationTask | None:
-        """Atomically claim pending/confirmed work across SQLite and PostgreSQL."""
+        """Atomically claim pending or confirmed work in PostgreSQL."""
 
         result = await self.session.execute(
             update(ConfirmationTask)

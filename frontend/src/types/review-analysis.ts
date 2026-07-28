@@ -4,6 +4,7 @@ export type AnalysisStatus = "PENDING" | "RUNNING" | "SUCCEEDED" | "FAILED";
 
 export interface ReviewQuery {
   product_id: string;
+  keyword?: string;
   site?: SiteCode;
   language?: string;
   min_rating?: number;
@@ -32,6 +33,7 @@ export interface ProductReview {
 export interface ReviewAnalysisRequest {
   idempotency_key: string;
   product_id: string;
+  keyword?: string;
   site?: SiteCode;
   languages: string[];
   min_rating?: number;
@@ -86,19 +88,44 @@ export interface TrendPoint {
   topic_counts: Record<string, number>;
 }
 
+export interface ReviewJudgement {
+  review_id: string;
+  product_id: string;
+  site: SiteCode;
+  rating: number;
+  original_content: string;
+  translated_content: string | null;
+  display_content: string;
+  declared_language: string | null;
+  detected_language: string;
+  translation_status: string;
+  sentiment: "positive" | "neutral" | "negative";
+  topics: string[];
+  confidence: string;
+  origin: string;
+  source_created_at: string;
+  quality_flags: string[];
+}
+
 export interface ReviewAnalysisResult extends ReviewAnalysisCreated {
   product_id: string;
   site: SiteCode;
   progress: number;
   current_step: string | null;
   steps: Array<{ step_name: string; status: string; error_message: string | null }>;
-  quality: Record<string, unknown> | null;
+  quality: {
+    received_count: number;
+    included_count: number;
+    excluded_count: number;
+    flag_counts: Record<string, number>;
+    excluded_review_ids: string[];
+  } | null;
   sentiment: { positive: number; neutral: number; negative: number } | null;
   topics: TopicAggregate[];
   pain_points: PainPointAggregate[];
   keywords: KeywordAggregate[];
   trends: TrendPoint[];
-  judgements: Array<Record<string, unknown>>;
+  judgements: ReviewJudgement[];
   error_message: string | null;
   started_at: string | null;
   finished_at: string | null;

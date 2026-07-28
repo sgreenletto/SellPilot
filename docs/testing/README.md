@@ -9,7 +9,7 @@
 
 本目录用于后续维护测试策略、测试分层、测试数据规则和质量门槛。
 
-公共后端底座已建立 pytest、pytest-asyncio、httpx 和 Ruff 配置，详细说明见 `backend-foundation.md`。测试使用隔离 SQLite 与合成数据，不访问真实平台、模型或生产数据库。
+公共后端底座已建立 pytest、pytest-asyncio、httpx 和 Ruff 配置，详细说明见 `backend-foundation.md`。测试使用隔离 PostgreSQL 与合成数据，不访问真实平台、模型、开发数据库或生产数据库。
 
 成员二模拟业务数据的迁移、全量导入、幂等和拒绝非模拟数据测试见 `commerce-data-foundation.md`。
 

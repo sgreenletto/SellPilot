@@ -102,6 +102,7 @@ const exporting = ref(false);
 const message = ref("");
 const error = ref("");
 const errorCode = ref("");
+const errorOperation = ref<"candidates" | "analysis" | "compare" | "export">("candidates");
 
 const fieldErrors = computed(() => {
   const errors: Record<string, string> = {};
@@ -152,6 +153,18 @@ const compareIds = computed(() =>
     : [],
 );
 const backendDisconnected = computed(() => errorCode.value === "NETWORK_ERROR");
+const requestTimedOut = computed(
+  () => errorCode.value === "NETWORK_ERROR" && error.value === "请求超时",
+);
+const timeoutTitle = computed(
+  () =>
+    ({
+      candidates: "候选请求超时",
+      analysis: "选品分析超时",
+      compare: "商品对比超时",
+      export: "报告导出超时",
+    })[errorOperation.value],
+);
 const needsAuthentication = computed(() => errorCode.value === "UNAUTHENTICATED");
 const categoryOptions = computed(() => [
   { label: "全部类目", value: "__all__" },
@@ -190,7 +203,10 @@ function clearFeedback(): void {
   message.value = "";
 }
 
-function handleError(reason: unknown): void {
+function handleError(
+  reason: unknown,
+  operation: "candidates" | "analysis" | "compare" | "export",
+): void {
   const apiError =
     reason instanceof FrontendApiError
       ? reason
@@ -201,6 +217,7 @@ function handleError(reason: unknown): void {
         });
   error.value = apiError.message;
   errorCode.value = apiError.code;
+  errorOperation.value = operation;
 }
 
 function candidateQuery() {
@@ -253,7 +270,7 @@ async function loadCandidates(): Promise<void> {
     if (candidates.value.length === 0) message.value = "当前条件下没有候选商品，请调整条件。";
   } catch (reason) {
     candidates.value = [];
-    handleError(reason);
+    handleError(reason, "candidates");
   } finally {
     loadingCandidates.value = false;
   }
@@ -270,7 +287,7 @@ async function runAnalysis(): Promise<void> {
     selectedCandidateIds.value = [];
     message.value = `分析完成：${analysis.value.ranked_count} 个入选，${analysis.value.excluded_count} 个因利润条件排除。`;
   } catch (reason) {
-    handleError(reason);
+    handleError(reason, "analysis");
   } finally {
     analyzing.value = false;
   }
@@ -297,7 +314,7 @@ async function compareProducts(): Promise<void> {
   try {
     comparison.value = await compareSelectionProducts(analysis.value.task_id, compareIds.value);
   } catch (reason) {
-    handleError(reason);
+    handleError(reason, "compare");
   } finally {
     comparing.value = false;
   }
@@ -312,7 +329,7 @@ async function exportReport(): Promise<void> {
     const filename = downloadSelectionExport(report);
     message.value = `Markdown 报告已导出：${filename}`;
   } catch (reason) {
-    handleError(reason);
+    handleError(reason, "export");
   } finally {
     exporting.value = false;
   }
@@ -346,6 +363,9 @@ function metricLabel(key: string): string {
 }
 
 function localizedExplanation(result: SelectionResult): string {
+  if (result.explanation.generation_mode === "validated_generator") {
+    return result.explanation.summary;
+  }
   const strongest = Object.entries(result.metrics)
     .filter(([, metric]) => metric.score !== null)
     .sort(([, left], [, right]) => Number(right.score) - Number(left.score))[0];
@@ -454,7 +474,13 @@ onBeforeUnmount(() => document.removeEventListener("keydown", handleGlobalKeydow
       <AlertTriangle :size="19" />
       <div>
         <strong>{{
-          backendDisconnected ? "后端未连接" : needsAuthentication ? "需要登录" : "请求失败"
+          requestTimedOut
+            ? timeoutTitle
+            : backendDisconnected
+              ? "后端未连接"
+              : needsAuthentication
+                ? "需要登录"
+                : "请求失败"
         }}</strong>
         <p>{{ error }}</p>
       </div>

@@ -34,6 +34,16 @@ async def test_complete_mock_review_package_is_analyzable_and_evidence_bound():
     with REVIEWS_FILE.open(encoding="utf-8-sig", newline="") as handle:
         rows = list(csv.DictReader(handle))
 
+    originals = {row["content"] for row in rows}
+    translations = {row["content_zh"] for row in rows}
+    translation_sources: dict[str, set[str]] = {}
+    for row in rows:
+        assert row["content_zh"].strip()
+        translation_sources.setdefault(row["content_zh"], set()).add(row["content"])
+    assert len(originals) >= 800
+    assert len(translations) >= 800
+    assert max(len(items) for items in translation_sources.values()) <= 5
+
     inputs = [
         ReviewInput(
             review_id=row["review_id"],

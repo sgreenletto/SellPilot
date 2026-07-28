@@ -333,11 +333,28 @@ class ContentGenerationService:
         self, content_id: UUID, version_id: UUID, user_id: UUID
     ) -> ContentExportResponse:
         version = await self.get_version(content_id, version_id, user_id)
-        payload = version.model_dump(mode="json")
+        bullets = "\n".join(f"- {item}" for item in version.bullet_points.get("items", []))
+        faq = "\n\n".join(
+            f"### Q{index}. {item.get('question', '')}\n\n{item.get('answer', '')}"
+            for index, item in enumerate((version.faq or {}).get("items", []), start=1)
+        )
+        skus = "\n".join(
+            f"- **{item.get('sku', '')}**：{item.get('description', '')}"
+            for item in (version.sku_content or {}).get("items", [])
+        )
+        content = (
+            f"# {version.title}\n\n"
+            f"> SellPilot 内容版本 v{version.version} · {version.change_summary}\n\n"
+            f"## 核心卖点\n\n{bullets or '—'}\n\n"
+            f"## 商品详情\n\n{version.description}\n\n"
+            f"## 营销短文案\n\n{version.marketing_copy}\n\n"
+            f"## 常见问题\n\n{faq or '—'}\n\n"
+            f"## SKU 文案\n\n{skus or '—'}\n"
+        )
         return ContentExportResponse(
-            filename=f"sellpilot-content-v{version.version}.json",
-            media_type="application/json",
-            content=json.dumps(payload, ensure_ascii=False, indent=2),
+            filename=f"sellpilot-content-v{version.version}.md",
+            media_type="text/markdown",
+            content=content,
         )
 
     async def _confirmation(
