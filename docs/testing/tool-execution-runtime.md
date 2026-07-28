@@ -19,9 +19,9 @@ envelopes, request IDs and ToolCall pagination. MCP tests prove
 `system_health` creates a caller-type `mcp` ToolCall.
 
 Migration tests insert representative pre-runtime rows at `0002`, perform
-`0001 -> 0002 -> 0003`, downgrade from `0003` to `0002`, upgrade again, then
-downgrade to base, upgrade to head and run `alembic check` on a disposable
-SQLite database.
+`0001 -> 0002 -> 0003 (Commerce) -> 0004 (Tool Runtime)`, downgrade from
+`0004` to `0003`, upgrade again, then downgrade to base, upgrade to head and
+run `alembic check` on a disposable SQLite database.
 
 ## Commands
 

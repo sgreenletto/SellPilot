@@ -1,7 +1,7 @@
 """Add audited tool execution runtime fields.
 
-Revision ID: 20260728_0003
-Revises: 20260727_0002
+Revision ID: 20260728_0004
+Revises: 20260728_0003
 Create Date: 2026-07-28
 """
 
@@ -15,8 +15,8 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.engine import RowMapping
 from sqlalchemy.sql.sqltypes import Text
 
-revision: str = "20260728_0003"
-down_revision: str | Sequence[str] | None = "20260727_0002"
+revision: str = "20260728_0004"
+down_revision: str | Sequence[str] | None = "20260728_0003"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from alembic import command
 from alembic.config import Config
+from alembic.script import ScriptDirectory
 
 from sellpilot.core.config import clear_settings_cache
 
@@ -104,10 +105,37 @@ def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
     monkeypatch.setenv("JWT_SECRET_KEY", "test-only-jwt-secret-with-at-least-32-characters")
     clear_settings_cache()
     config = Config("alembic.ini")
+    script = ScriptDirectory.from_config(config)
+    revisions = list(script.walk_revisions())
+    revision_ids = [item.revision for item in revisions]
+    assert len(revision_ids) == len(set(revision_ids))
+    assert script.get_heads() == ["20260728_0004"]
+    assert all(
+        item.down_revision is None or script.get_revision(item.down_revision) is not None
+        for item in revisions
+    )
 
     command.upgrade(config, "20260727_0002")
     confirmation_id, tool_call_id = insert_pre_runtime_rows(database_path)
     command.upgrade(config, "20260728_0003")
+    assert {
+        "shops",
+        "products",
+        "skus",
+        "inventory_records",
+        "orders",
+        "order_items",
+        "reviews",
+        "logistics_records",
+        "logistics_tracks",
+        "customer_sessions",
+        "customer_messages",
+        "returns_refunds",
+        "category_trends",
+    }.issubset(table_names(database_path))
+    assert "idempotency_scope" not in column_names(database_path, "confirmation_tasks")
+
+    command.upgrade(config, "20260728_0004")
     assert {
         "users",
         "agent_tasks",
@@ -127,6 +155,19 @@ def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
         "prompt_versions",
         "model_invocations",
         "generated_reports",
+        "shops",
+        "products",
+        "skus",
+        "inventory_records",
+        "orders",
+        "order_items",
+        "reviews",
+        "logistics_records",
+        "logistics_tracks",
+        "customer_sessions",
+        "customer_messages",
+        "returns_refunds",
+        "category_trends",
     }.issubset(table_names(database_path))
     assert {
         "recommendation_reason",
@@ -249,6 +290,21 @@ def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
     )
     assert ("idempotency_scope",) in confirmation_unique_indexes
     assert ("idempotency_key",) not in confirmation_unique_indexes
+    assert {
+        "external_id",
+        "source_shop_external_id",
+        "source_type",
+        "is_mock_data",
+        "source_created_at",
+        "source_updated_at",
+    }.issubset(column_names(database_path, "products"))
+    assert {
+        "external_id",
+        "source_shop_external_id",
+        "buyer_external_id",
+        "order_status",
+        "payment_status",
+    }.issubset(column_names(database_path, "orders"))
     assert foreign_key_actions(
         database_path,
         {
@@ -267,14 +323,15 @@ def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
         },
     ) == {"RESTRICT"}
 
-    command.downgrade(config, "20260727_0002")
+    command.downgrade(config, "20260728_0003")
     assert "idempotency_scope" not in column_names(database_path, "confirmation_tasks")
     assert ("idempotency_key",) in unique_index_columns(
         database_path,
         "confirmation_tasks",
     )
+    assert "products" in table_names(database_path)
 
-    command.upgrade(config, "20260728_0003")
+    command.upgrade(config, "20260728_0004")
     assert "idempotency_scope" in column_names(database_path, "confirmation_tasks")
     command.check(config)
 
@@ -285,5 +342,7 @@ def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
     assert "operation_logs" in table_names(database_path)
     assert "product_selection_results" in table_names(database_path)
     assert "product_content_versions" in table_names(database_path)
+    assert "products" in table_names(database_path)
+    assert "category_trends" in table_names(database_path)
     command.check(config)
     clear_settings_cache()

@@ -13,4 +13,6 @@
 
 该目录中的业务记录全部是合成数据，并通过 `is_mock_data=true` 明确标识，不来自真实 Shopee 店铺、买家或生产接口。数据包的字段、关系、生成和验证说明见 `demo/shopee_mock/README.md`。
 
+完成后端迁移后，可在 `backend` 目录执行 `uv run sellpilot-import-mock-data` 导入全部数据。导入命令具有 Schema 校验、事务回滚和基于 `external_id` 的重复执行保护。
+
 禁止提交真实用户数据、店铺数据、个人信息、密钥或其他敏感内容。演示数据必须为合成数据或完成不可逆脱敏并经人工确认的数据。

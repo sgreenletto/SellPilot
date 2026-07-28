@@ -2,7 +2,10 @@
 
 SellPilot 公共后端架构底座，当前稳定版本为 **0.1.0**，属于 Foundation Milestone。该版本表示公共工程基线已建立，不代表完整业务已完成或已用于生产。
 
-本阶段在公共底座上增加成员三分析与内容持久化模型、Repository 和 Alembic 迁移。选品算法、评论分析、产品改良、内容生成、模型网关、业务 API、商品、订单、库存、物流、客服和 RAG 仍未实现。
+当前 `develop` 阶段在公共底座上增加成员三分析持久化与智能选品确定性计算内核，以及
+成员二商品、SKU、库存、订单、物流、售后、评论、客服实验数据和类目趋势的持久化与导入
+基础。选品 Service、API、Tool、工作流和页面，以及完整 Mock 平台操作、其他前端业务页面
+和 AI/RAG 流程仍未实现。
 
 v0.1.0 采用普通 Git Tag 标记，不创建 GitHub Release；当前不连接真实 Shopee。
 
@@ -45,6 +48,24 @@ uv run alembic downgrade base
 
 成员三持久化结构包括选品运行与结果、评论分析与证据、产品改良报告、商品内容版本、Prompt 版本、模型调用和生成报告。该结构使用稳定来源业务 ID 对接后续商品与评论服务，不直接依赖模拟 CSV；详细设计见 `../docs/architecture/analysis-persistence.md`。
 
+成员二迁移 `20260728_0003` 创建 13 张业务表，详细设计见 `../docs/architecture/commerce-data-foundation.md`。
+
+## 导入模拟业务数据
+
+完成数据库迁移后执行：
+
+```powershell
+uv run sellpilot-import-mock-data
+```
+
+默认读取仓库的 `data/demo/shopee_mock/`。也可显式指定目录：
+
+```powershell
+uv run sellpilot-import-mock-data --data-dir ../data/demo/shopee_mock
+```
+
+导入前会使用 Pydantic Schema 校验 12 个 CSV；任一文件失败则事务回滚。重复执行按 `external_id` 跳过已有记录，不重复插入。当前数据包导入 9,129 行数据并创建一个内部模拟店铺，共形成 9,130 条数据库记录。
+
 ## 创建管理员
 
 完成迁移后，通过交互式密码输入创建单用户管理员：
@@ -85,5 +106,6 @@ uv run ruff check .
 
 ## 平台边界
 
-- `MockShopeeAdapter` 的 ping 与公共契约状态可用；所有业务方法明确抛出未实现异常。
+- `MockShopeeAdapter` 已提供数据库驱动的商品、订单、物流和消息只读能力；商品上下架、SKU 改价和库存调整只可通过内部待确认任务执行。
 - `RealShopeeAdapterStub` 不发起网络请求、不读取真实密钥、不静默回退至 mock，且所有业务方法明确返回未配置错误。
+- 业务表和导入数据不等同于适配器业务方法已经实现；上层代码仍不得直接依赖 CSV 或 `MockShopeeAdapter` 具体类。

@@ -20,6 +20,7 @@ dependencies = [
 
 [project.scripts]
 sellpilot-create-admin = "sellpilot.cli.create_admin:main"
+sellpilot-import-mock-data = "sellpilot.cli.import_mock_data:main"
 sellpilot-mcp = "sellpilot.mcp_server.server:main"
 
 [build-system]
