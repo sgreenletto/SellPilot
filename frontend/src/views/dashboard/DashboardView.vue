@@ -16,18 +16,21 @@ import { storeToRefs } from "pinia";
 import { computed, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 
+import { listConfirmations } from "@/api/commerce";
 import { loadCommerceDashboardSnapshot } from "@/api/dashboard";
 import SpButton from "@/components/base/SpButton.vue";
+import SpEmptyState from "@/components/base/SpEmptyState.vue";
 import DashboardTrendChart from "@/components/charts/DashboardTrendChart.vue";
 import StatusBadge from "@/components/data-display/StatusBadge.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
-import {
-  alertItems,
-  recentActivities,
-  topMetrics as mockTopMetrics,
-  trendDatasets,
-} from "@/mocks/dashboard";
-import type { MetricCardData, TrendDataset, TrendType } from "@/types/dashboard";
+import { topMetrics as mockTopMetrics, trendDatasets } from "@/mocks/dashboard";
+import type {
+  AlertItem,
+  MetricCardData,
+  RecentActivity,
+  TrendDataset,
+  TrendType,
+} from "@/types/dashboard";
 import { useAppStore } from "@/stores/app";
 
 const router = useRouter();
@@ -49,8 +52,12 @@ const datasets = ref<Record<string, TrendDataset>>(
     ]),
   ),
 );
+datasets.value.sentiment = { categories: [], series: [] };
+datasets.value.service = { categories: [], series: [] };
 const dataStatus = ref<"loading" | "backend" | "fallback">("loading");
 const dataMessage = ref("正在读取后端经营数据…");
+const dashboardAlerts = ref<AlertItem[]>([]);
+const dashboardActivities = ref<RecentActivity[]>([]);
 
 const trendTabs: { key: TrendType; label: string }[] = [
   { key: "funnel", label: "商品运营漏斗" },
@@ -77,17 +84,55 @@ function orderTrend(orders: Awaited<ReturnType<typeof loadCommerceDashboardSnaps
   };
 }
 
-function storedCandidateIds(): Set<string> {
-  try {
-    const value = JSON.parse(
-      window.localStorage.getItem("sellpilot_market_candidate_product_ids") ?? "[]",
-    );
-    return new Set(
-      Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [],
-    );
-  } catch {
-    return new Set();
-  }
+function buildStoreOperationsFunnel(
+  snapshot: Awaited<ReturnType<typeof loadCommerceDashboardSnapshot>>,
+): TrendDataset {
+  const completeProductIds = new Set(
+    snapshot.products
+      .filter(
+        (product) =>
+          product.title.trim().length > 0 &&
+          product.category_name.trim().length > 0 &&
+          Number(product.price) > 0,
+      )
+      .map((product) => product.product_id),
+  );
+  const healthyStockProductIds = new Set(
+    snapshot.inventory
+      .filter(
+        (item) =>
+          completeProductIds.has(item.product_id) &&
+          item.stock_status !== "low_stock" &&
+          item.available_stock > item.safety_stock,
+      )
+      .map((item) => item.product_id),
+  );
+  const listedCount = snapshot.products.filter(
+    (product) => healthyStockProductIds.has(product.product_id) && product.status === "active",
+  ).length;
+
+  return {
+    categories: ["店铺商品", "资料完整", "库存健康", "健康且已上架"],
+    series: [
+      {
+        name: "当前店铺商品",
+        data: [
+          snapshot.products.length,
+          completeProductIds.size,
+          healthyStockProductIds.size,
+          listedCount,
+        ],
+        color: "blue",
+      },
+    ],
+  };
+}
+
+function backendTimestamp(value?: string | null): string {
+  if (!value) return "后端记录";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "后端记录";
+  return date.toLocaleString("zh-CN", { hour12: false });
 }
 
 async function loadBackendDashboard(): Promise<void> {
@@ -96,15 +141,101 @@ async function loadBackendDashboard(): Promise<void> {
     const lowStock = snapshot.inventory.filter(
       (item) => item.stock_status === "low_stock" || item.available_stock <= item.safety_stock,
     ).length;
-    const candidateIds = storedCandidateIds();
-    const candidateCount = snapshot.products.filter((product) =>
-      candidateIds.has(product.product_id),
-    ).length;
-    const draftCount = snapshot.products.filter((product) => product.status === "draft").length;
-    const activeCount = snapshot.products.filter((product) => product.status === "active").length;
     const popular = [...snapshot.products]
       .sort((left, right) => right.sales_count - left.sales_count)
       .slice(0, 6);
+    const productById = new Map(snapshot.products.map((product) => [product.product_id, product]));
+    const lowStockItems = snapshot.inventory
+      .filter(
+        (item) => item.stock_status === "low_stock" || item.available_stock <= item.safety_stock,
+      )
+      .sort(
+        (left, right) =>
+          left.available_stock - left.safety_stock - (right.available_stock - right.safety_stock),
+      );
+    const pendingPaymentOrders = snapshot.orders.filter(
+      (order) =>
+        order.payment_status.includes("pending") || order.order_status.includes("pending_payment"),
+    );
+    let shopConfirmations: Awaited<ReturnType<typeof listConfirmations>>["items"] = [];
+    try {
+      const confirmationPage = await listConfirmations();
+      const currentProductIds = new Set(snapshot.products.map((product) => product.product_id));
+      shopConfirmations = confirmationPage.items.filter(
+        (confirmation) =>
+          confirmation.target_id != null && currentProductIds.has(confirmation.target_id),
+      );
+    } catch {
+      shopConfirmations = [];
+    }
+    const pendingConfirmations = shopConfirmations.filter(
+      (confirmation) => confirmation.status === "pending",
+    );
+
+    const alerts: AlertItem[] = [];
+    const firstLowStock = lowStockItems[0];
+    if (firstLowStock) {
+      const product = productById.get(firstLowStock.product_id);
+      alerts.push({
+        id: `low-stock-${firstLowStock.inventory_id}`,
+        type: "danger",
+        title: "低库存预警",
+        description: `${product?.title ?? firstLowStock.product_id}（${firstLowStock.sku_id}）可用库存 ${firstLowStock.available_stock}，安全阈值 ${firstLowStock.safety_stock}；当前店铺共 ${lowStockItems.length} 条低库存记录。`,
+        linkTo: "/products/listing-inventory",
+        linkLabel: "前往补货",
+        timestamp: backendTimestamp(firstLowStock.updated_at),
+      });
+    }
+    const firstPendingOrder = pendingPaymentOrders[0];
+    if (firstPendingOrder) {
+      alerts.push({
+        id: `pending-order-${firstPendingOrder.order_id}`,
+        type: "warning",
+        title: "待支付订单",
+        description: `当前店铺共有 ${pendingPaymentOrders.length} 笔待支付订单，示例订单 ${firstPendingOrder.order_id}。`,
+        linkTo: "/orders",
+        linkLabel: "查看订单",
+        timestamp: backendTimestamp(firstPendingOrder.created_at),
+      });
+    }
+    const firstConfirmation = pendingConfirmations[0];
+    if (firstConfirmation) {
+      alerts.push({
+        id: `confirmation-${firstConfirmation.id}`,
+        type: "info",
+        title: "待确认 Mock 操作",
+        description: `当前店铺共有 ${pendingConfirmations.length} 个待确认任务，目标 ${firstConfirmation.target_id}，操作 ${firstConfirmation.operation_type}。`,
+        linkTo: "/tasks",
+        linkLabel: "查看任务",
+        timestamp: backendTimestamp(firstConfirmation.created_at),
+      });
+    }
+    dashboardAlerts.value = alerts;
+    dashboardActivities.value = [
+      ...shopConfirmations.slice(0, 4).map((confirmation): RecentActivity => ({
+        id: `confirmation-activity-${confirmation.id}`,
+        type: "task",
+        action: "Mock 操作确认",
+        target: `${confirmation.target_id} · ${confirmation.operation_type}`,
+        status:
+          confirmation.status === "succeeded"
+            ? "completed"
+            : confirmation.status === "pending"
+              ? "pending"
+              : confirmation.status === "failed"
+                ? "failed"
+                : "processing",
+        timestamp: backendTimestamp(confirmation.created_at),
+      })),
+      {
+        id: `backend-load-${selectedShopId.value}`,
+        type: "system",
+        action: "后端数据加载",
+        target: `${snapshot.products.length} 个商品、${snapshot.inventory.length} 条库存、${snapshot.orders.length} 笔订单`,
+        status: "completed",
+        timestamp: "刚刚",
+      },
+    ];
 
     metrics.value = [
       {
@@ -146,23 +277,14 @@ async function loadBackendDashboard(): Promise<void> {
       {
         id: "pending-tasks",
         label: "待确认任务",
-        value: 0,
-        suffix: "未接入",
+        value: pendingConfirmations.length,
+        suffix: "项",
         icon: "check",
         tone: "green",
         linkTo: "/tasks",
       },
     ];
-    datasets.value.funnel = {
-      categories: ["市场商品", "选品候选", "上架草稿", "模拟上架"],
-      series: [
-        {
-          name: "商品数量",
-          data: [snapshot.products.length, candidateCount, draftCount, activeCount],
-          color: "blue",
-        },
-      ],
-    };
+    datasets.value.funnel = buildStoreOperationsFunnel(snapshot);
     datasets.value.orders = orderTrend(snapshot.orders);
     datasets.value.popularity = {
       categories: popular.map((product) => product.title),
@@ -174,11 +296,17 @@ async function loadBackendDashboard(): Promise<void> {
         },
       ],
     };
+    datasets.value.sentiment = { categories: [], series: [] };
+    datasets.value.service = { categories: [], series: [] };
     dataStatus.value = "backend";
     const scopeLabel =
       selectedShopId.value === "all" ? "全部模拟店铺" : `来源店铺 ${selectedShopId.value}`;
-    dataMessage.value = `已连接后端：当前展示${scopeLabel}的商品、库存和订单数据；客服、任务及提醒尚未接入。`;
+    dataMessage.value = `已连接后端：当前展示${scopeLabel}的商品、库存、订单和待确认操作；客服仍未接入店铺关联。`;
   } catch {
+    dashboardAlerts.value = [];
+    dashboardActivities.value = [];
+    datasets.value.sentiment = { categories: [], series: [] };
+    datasets.value.service = { categories: [], series: [] };
     dataStatus.value = "fallback";
     dataMessage.value = "后端未连接，当前展示明确标识的合成 Mock 演示数据。";
   }
@@ -209,9 +337,11 @@ function formatTrend(v: number | undefined): string {
 
 // ---- 分区活动列表（避免模板中重复 filter） ----
 
-const taskActivities = computed(() => recentActivities.filter((a) => a.type === "task"));
+const taskActivities = computed(() => dashboardActivities.value.filter((a) => a.type === "task"));
 
-const systemActivities = computed(() => recentActivities.filter((a) => a.type === "system"));
+const systemActivities = computed(() =>
+  dashboardActivities.value.filter((a) => a.type === "system"),
+);
 
 onMounted(() => void loadBackendDashboard());
 
@@ -306,9 +436,14 @@ watch(selectedShopId, () => {
           <header class="dash-card__header">
             <h3 class="dash-card__title">异常提醒 &amp; 今日待办</h3>
           </header>
-          <ul class="alerts-list">
+          <SpEmptyState
+            v-if="dashboardAlerts.length === 0"
+            title="当前店铺暂无可展示提醒"
+            description="这里只展示后端可核验的库存、订单和待确认任务数据。"
+          />
+          <ul v-else class="alerts-list">
             <li
-              v-for="item in alertItems"
+              v-for="item in dashboardAlerts"
               :key="item.id"
               :class="['alert-item', `alert-item--${item.type}`]"
             >

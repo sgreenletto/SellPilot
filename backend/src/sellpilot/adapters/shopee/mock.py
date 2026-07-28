@@ -1,4 +1,6 @@
+from datetime import UTC, datetime
 from typing import Any, Never
+from uuid import uuid4
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +15,7 @@ from sellpilot.db.models.commerce import (
     Order,
     Product,
     Review,
+    Shop,
     Sku,
 )
 from sellpilot.schemas.platform import PlatformPingResult
@@ -40,6 +43,8 @@ class MockShopeeAdapter(PlatformAdapter):
             "system.ping",
             "platform.contracts",
             "products.read",
+            "products.create_draft",
+            "products.update_draft",
             "orders.read",
             "logistics.read",
             "reviews.read",
@@ -72,10 +77,71 @@ class MockShopeeAdapter(PlatformAdapter):
         return self._product(record) if record else {}
 
     async def create_product(self, payload: dict[str, Any]) -> dict[str, Any]:
-        self._not_implemented("create_product")
+        shop = await self._session().scalar(
+            select(Shop).where(Shop.external_id == payload["source_shop_id"])
+        )
+        if shop is None:
+            shop = await self._session().scalar(
+                select(Shop)
+                .join(Product, Product.shop_id == Shop.id)
+                .where(Product.source_shop_external_id == payload["source_shop_id"])
+            )
+        if shop is None:
+            return {}
+        now = datetime.now(UTC)
+        record = Product(
+            external_id=payload.get("product_id") or f"DRAFT-{uuid4().hex[:16].upper()}",
+            shop_id=shop.id,
+            source_shop_external_id=shop.external_id,
+            title=payload["title"],
+            category_external_id=payload["category_id"],
+            category_name=payload["category_name"],
+            description=payload.get("description", ""),
+            platform="shopee",
+            site=payload["site"],
+            currency=payload["currency"],
+            price=payload["price"],
+            cost=payload.get("cost", 0),
+            shipping_cost=payload.get("shipping_cost", 0),
+            sales_count=0,
+            rating=0,
+            review_count=0,
+            favorite_count=0,
+            status="draft",
+            source_type=payload.get("source_type", "manual_import"),
+            is_mock_data=True,
+            source_created_at=now,
+            collected_at=now,
+            source_updated_at=now,
+        )
+        self._session().add(record)
+        await self._session().flush()
+        return self._product(record)
 
     async def update_product(self, product_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-        self._not_implemented("update_product")
+        record = await self._session().scalar(
+            select(Product).where(Product.external_id == product_id)
+        )
+        if record is None:
+            return {}
+        mapping = {
+            "title": "title",
+            "category_id": "category_external_id",
+            "category_name": "category_name",
+            "description": "description",
+            "site": "site",
+            "currency": "currency",
+            "price": "price",
+            "cost": "cost",
+            "shipping_cost": "shipping_cost",
+        }
+        for source, target in mapping.items():
+            if source in payload:
+                setattr(record, target, payload[source])
+        record.status = "draft"
+        record.source_updated_at = datetime.now(UTC)
+        await self._session().flush()
+        return self._product(record)
 
     async def publish_product(self, product_id: str) -> dict[str, Any]:
         record = await self._session().scalar(

@@ -5,12 +5,19 @@ import * as XLSX from "xlsx";
 
 import defaultProductsCsv from "../../../../data/demo/shopee_mock/products.csv?raw";
 import defaultReviewsCsv from "../../../../data/demo/shopee_mock/reviews.csv?raw";
+import {
+  confirmCommerceOperation,
+  listSelectionCandidates,
+  requestProductImport,
+  requestSelectionCandidate,
+} from "@/api/commerce";
 import SpButton from "@/components/base/SpButton.vue";
 import SpCard from "@/components/base/SpCard.vue";
 import SpEmptyState from "@/components/base/SpEmptyState.vue";
 import SpInput from "@/components/base/SpInput.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
 import { sheetRows } from "@/utils/spreadsheet";
+import type { ProductDraftPayload } from "@/types/commerce";
 
 type MarketRow = Record<string, string | number | boolean>;
 
@@ -85,7 +92,6 @@ function loadWorkbook(workbook: XLSX.WorkBook, sourceName: string): "products" |
   rows.value = normalizedRows;
   source.value = sourceName;
   selected.value = null;
-  candidates.value.clear();
   currentPage.value = 1;
   return "products";
 }
@@ -107,11 +113,32 @@ async function importFile(event: Event): Promise<void> {
     for (const file of files) {
       const workbook = await readFileWorkbook(file);
       const kind = loadWorkbook(workbook, file.name);
+      if (
+        kind === "products" &&
+        window.confirm(`已校验 ${rows.value.length} 条市场商品，确认写入后端数据库吗？`)
+      ) {
+        const products: ProductDraftPayload[] = rows.value.map((row) => ({
+          product_id: row.product_id ? String(row.product_id) : undefined,
+          source_shop_id: String(row.shop_id ?? "SHOP001"),
+          title: String(row.title ?? row.product_name ?? "未命名商品"),
+          category_id: String(row.category_id ?? "MANUAL"),
+          category_name: String(row.category_name ?? "未分类"),
+          description: String(row.description ?? ""),
+          site: String(row.site ?? "Singapore"),
+          currency: String(row.currency ?? "SGD"),
+          price: Number(row.price ?? 0),
+          cost: Number(row.cost ?? 0),
+          shipping_cost: Number(row.shipping_cost ?? 0),
+          source_type: String(row.source_type ?? "manual_import"),
+        }));
+        const confirmation = await requestProductImport(products);
+        await confirmCommerceOperation(confirmation.id);
+      }
       results.push(
         `${file.name}（${kind === "reviews" ? reviews.value.length : rows.value.length} 条）`,
       );
     }
-    importMessage.value = `已在本地解析 ${results.join("、")}；商品与评论分别保留，尚未写入后端。`;
+    importMessage.value = `已解析 ${results.join("、")}；确认过的商品批次已写入后端，评论文件保留为关联预览。`;
   } catch (error) {
     importMessage.value = error instanceof Error ? error.message : "文件解析失败";
   } finally {
@@ -134,12 +161,34 @@ function rowKey(row: MarketRow): string {
   );
 }
 
-function toggleCandidate(row: MarketRow): void {
+async function loadCandidates(): Promise<void> {
+  try {
+    candidates.value = new Set((await listSelectionCandidates()).map((item) => item.product_id));
+  } catch {
+    importMessage.value = "候选清单读取失败，请确认已登录且后端迁移已执行。";
+  }
+}
+
+async function toggleCandidate(row: MarketRow): Promise<void> {
   const key = rowKey(row);
-  const next = new Set(candidates.value);
-  if (next.has(key)) next.delete(key);
-  else next.add(key);
-  candidates.value = next;
+  const shouldAdd = !candidates.value.has(key);
+  const verb = shouldAdd ? "加入" : "移出";
+  if (!window.confirm(`确认将“${value(row, "title", "product_name")}”${verb}持久化候选清单？`))
+    return;
+  try {
+    const confirmation = await requestSelectionCandidate(
+      key,
+      shouldAdd,
+      value(row, "title", "product_name"),
+      value(row, "source_type"),
+      Boolean(row.is_mock_data),
+    );
+    await confirmCommerceOperation(confirmation.id);
+    await loadCandidates();
+    importMessage.value = `已${verb}后端候选清单，其他模块和后续会话可继续读取。`;
+  } catch (error) {
+    importMessage.value = error instanceof Error ? error.message : `${verb}候选失败`;
+  }
 }
 
 function value(row: MarketRow, ...keys: string[]): string {
@@ -147,7 +196,10 @@ function value(row: MarketRow, ...keys: string[]): string {
   return key ? String(row[key]) : "—";
 }
 
-onMounted(loadProjectDemo);
+onMounted(() => {
+  loadProjectDemo();
+  void loadCandidates();
+});
 watch(
   [query, sourceFilter, siteFilter, categoryFilter, statusFilter, pageSize],
   () => (currentPage.value = 1),

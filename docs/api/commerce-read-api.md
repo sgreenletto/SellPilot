@@ -11,6 +11,21 @@
 - `GET /inventory`：库存列表；支持库存状态筛选和分页。
 - `GET /returns`：退货退款列表；支持状态筛选和分页。
 
+## 确认后写入
+
+商品草稿、批量导入和选品候选均属于业务写操作。客户端必须先请求
+`ConfirmationTask`，向用户展示影响范围并取得明确确认，再调用统一确认端点执行。
+
+- `POST /products/draft-request`：创建或更新内部 Mock 商品草稿。
+- `POST /products/import-request`：提交已在前端完成字段校验的商品批次，每批最多 500
+  条；确认后按 `product_id` 更新或新增。
+- `GET /selection-candidates`：读取当前用户持久化候选清单。
+- `POST /selection-candidates/{product_id}/add-request`：请求加入候选。
+- `POST /selection-candidates/{product_id}/remove-request`：请求移出候选。
+- `POST /api/v1/confirmations/{confirmation_id}/confirm`：明确确认并执行上述写操作。
+
+这些接口只修改本地业务数据库中的合成 Mock 数据，不表示真实 Shopee 写入能力。
+
 列表均设置上限，不允许无界返回。当前未开放创建商品、改价、库存调整、上下架或发送消息；这些写操作必须在后续通过内部 Service 创建待确认任务，确认成功后才能调用适配器执行。
 
 `RealShopeeAdapterStub` 仍不连接真实 Shopee，也不会回退到 Mock。
