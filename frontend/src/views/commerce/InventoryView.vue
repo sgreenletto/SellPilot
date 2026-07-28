@@ -296,12 +296,7 @@ onMounted(() => void loadCurrentShop());
 
 <template>
   <PageContainer>
-    <header class="heading">
-      <div>
-        <p class="eyebrow">MOCK SHOPEE · 上架与库存</p>
-        <h1>库存工作台</h1>
-        <p>检查 SKU 库存、预警阈值，预演单项与批量调整并查看流水。</p>
-      </div>
+    <header class="heading heading--actions">
       <SpButton variant="secondary" @click="loadCurrentShop"
         ><template #icon><RefreshCw :size="16" /></template>重新加载当前店铺</SpButton
       >
@@ -529,6 +524,10 @@ onMounted(() => void loadCurrentShop());
 }
 .heading {
   margin-bottom: var(--sp-space-6);
+}
+.heading--actions {
+  justify-content: flex-end;
+  margin-bottom: var(--sp-space-4);
 }
 .heading h1 {
   margin: 4px 0;

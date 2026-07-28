@@ -351,11 +351,6 @@ onMounted(() => void loadCurrentShop());
 <template>
   <PageContainer>
     <header class="heading">
-      <div>
-        <p class="eyebrow">MOCK SHOPEE · 商品运营</p>
-        <h1>商品管理</h1>
-        <p>管理商品资料、草稿、SKU、多语言内容与操作历史。</p>
-      </div>
       <div class="actions">
         <label class="file-button"
           ><FileSpreadsheet :size="16" />导入 CSV / Excel<input
@@ -569,6 +564,7 @@ onMounted(() => void loadCurrentShop());
   gap: var(--sp-space-3);
 }
 .heading {
+  justify-content: flex-end;
   margin-bottom: var(--sp-space-6);
 }
 .heading h1 {

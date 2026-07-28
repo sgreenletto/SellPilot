@@ -34,6 +34,8 @@ const source = ref("尚未导入");
 const reviewSource = ref("尚未导入");
 const selected = ref<MarketRow | null>(null);
 const candidates = ref(new Set<string>());
+const onlyCandidates = ref(false);
+const showCandidateList = ref(false);
 const importMessage = ref("");
 
 const filteredRows = computed(() => {
@@ -45,7 +47,8 @@ const filteredRows = computed(() => {
       (!sourceFilter.value || String(row.source_type) === sourceFilter.value) &&
       (!siteFilter.value || String(row.site) === siteFilter.value) &&
       (!categoryFilter.value || String(row.category_name) === categoryFilter.value) &&
-      (!statusFilter.value || String(row.status) === statusFilter.value),
+      (!statusFilter.value || String(row.status) === statusFilter.value) &&
+      (!onlyCandidates.value || candidates.value.has(rowKey(row))),
   );
 });
 const totalPages = computed(() =>
@@ -66,6 +69,7 @@ const selectedReviews = computed(() => {
   if (!productId) return [];
   return reviews.value.filter((review) => String(review.product_id) === String(productId));
 });
+const candidateRows = computed(() => rows.value.filter((row) => candidates.value.has(rowKey(row))));
 
 function normalizedRow(row: MarketRow): MarketRow {
   const isMock = String(row.is_mock_data).toLowerCase() === "true";
@@ -185,9 +189,13 @@ async function toggleCandidate(row: MarketRow): Promise<void> {
     );
     await confirmCommerceOperation(confirmation.id);
     await loadCandidates();
-    importMessage.value = `已${verb}后端候选清单，其他模块和后续会话可继续读取。`;
+    importMessage.value = `已${verb}后端候选清单。`;
   } catch (error) {
     importMessage.value = error instanceof Error ? error.message : `${verb}候选失败`;
+  }
+  if (candidates.value.size === 0) {
+    onlyCandidates.value = false;
+    showCandidateList.value = false;
   }
 }
 
@@ -201,7 +209,7 @@ onMounted(() => {
   void loadCandidates();
 });
 watch(
-  [query, sourceFilter, siteFilter, categoryFilter, statusFilter, pageSize],
+  [query, sourceFilter, siteFilter, categoryFilter, statusFilter, onlyCandidates, pageSize],
   () => (currentPage.value = 1),
 );
 watch(totalPages, (pages) => {
@@ -212,11 +220,6 @@ watch(totalPages, (pages) => {
 <template>
   <PageContainer>
     <header class="heading">
-      <div>
-        <p class="eyebrow">MOCK / 公开采集 / 手工导入</p>
-        <h1>市场数据</h1>
-        <p>导入市场商品或评论 CSV/Excel，并核对来源、指标和候选商品。</p>
-      </div>
       <div class="heading-actions">
         <SpButton variant="secondary" @click="loadProjectDemo">加载项目演示数据</SpButton>
         <label class="file-button">
@@ -236,10 +239,17 @@ watch(totalPages, (pages) => {
         ><strong>{{ reviews.length }}</strong
         ><span>关联评论</span></SpCard
       >
-      <SpCard padding="md"
-        ><strong>{{ candidates.size }}</strong
-        ><span>选品候选</span></SpCard
+      <button
+        class="candidate-metric"
+        type="button"
+        :aria-expanded="showCandidateList"
+        @click="showCandidateList = !showCandidateList"
       >
+        <SpCard padding="md"
+          ><strong>{{ candidates.size }}</strong
+          ><span>选品候选 · 点击查看</span></SpCard
+        >
+      </button>
       <SpCard padding="md"
         ><strong>{{ source }}</strong
         ><span>商品来源文件</span></SpCard
@@ -248,6 +258,32 @@ watch(totalPages, (pages) => {
     <p v-if="reviews.length" class="review-source">评论来源：{{ reviewSource }}</p>
 
     <p v-if="importMessage" class="message" role="status">{{ importMessage }}</p>
+
+    <SpCard v-if="showCandidateList" padding="lg" class="candidate-list">
+      <template #header>
+        <div class="candidate-list-header">
+          <div>
+            <strong>选品候选列表</strong>
+            <span>候选清单保存在后端，可跨会话和模块继续使用。</span>
+          </div>
+          <SpButton size="sm" variant="ghost" @click="showCandidateList = false">收起</SpButton>
+        </div>
+      </template>
+      <SpEmptyState
+        v-if="candidateRows.length === 0"
+        title="暂无候选商品"
+        description="在市场商品列表中点击“加入候选”。"
+      />
+      <ul v-else>
+        <li v-for="row in candidateRows" :key="rowKey(row)">
+          <button type="button" @click="selected = row">
+            <strong>{{ value(row, "title", "category_name") }}</strong>
+            <span>{{ rowKey(row) }} · {{ value(row, "site") }} · {{ value(row, "price") }}</span>
+          </button>
+          <SpButton size="sm" variant="ghost" @click="toggleCandidate(row)">移出</SpButton>
+        </li>
+      </ul>
+    </SpCard>
 
     <SpCard padding="lg">
       <template #header>
@@ -274,6 +310,10 @@ watch(totalPages, (pages) => {
             <option value="">全部状态</option>
             <option v-for="item in statusOptions" :key="item" :value="item">{{ item }}</option>
           </select>
+          <label class="candidate-filter">
+            <input v-model="onlyCandidates" type="checkbox" />
+            只看候选
+          </label>
         </div>
       </template>
 
@@ -414,7 +454,7 @@ watch(totalPages, (pages) => {
 }
 .filters {
   display: grid;
-  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  grid-template-columns: repeat(4, minmax(120px, 1fr)) auto;
   gap: var(--sp-space-3);
   margin-top: var(--sp-space-4);
 }
@@ -444,6 +484,7 @@ watch(totalPages, (pages) => {
 }
 .heading {
   margin-bottom: var(--sp-space-6);
+  justify-content: flex-end;
 }
 .heading h1 {
   margin: 4px 0;
@@ -488,6 +529,87 @@ watch(totalPages, (pages) => {
 .metrics :deep(.sp-card__body) {
   display: grid;
   gap: var(--sp-space-1);
+}
+.candidate-metric {
+  padding: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+.candidate-metric :deep(.sp-card) {
+  height: 100%;
+}
+.candidate-metric:focus-visible {
+  outline: 3px solid var(--sp-color-accent-blue);
+  outline-offset: 2px;
+  border-radius: var(--sp-radius-card);
+}
+.candidate-list {
+  margin-bottom: var(--sp-space-4);
+}
+.candidate-list-header,
+.candidate-list-header > div {
+  display: flex;
+  gap: var(--sp-space-3);
+}
+.candidate-list-header {
+  align-items: center;
+  justify-content: space-between;
+}
+.candidate-list-header > div {
+  flex-direction: column;
+  gap: var(--sp-space-1);
+}
+.candidate-list-header span {
+  color: var(--sp-color-text-secondary);
+  font-size: var(--sp-font-xs);
+}
+.candidate-list ul {
+  display: grid;
+  gap: var(--sp-space-2);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.candidate-list li {
+  display: flex;
+  gap: var(--sp-space-3);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-space-3);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-control);
+}
+.candidate-list li > button {
+  display: grid;
+  flex: 1;
+  gap: var(--sp-space-1);
+  padding: 0;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+.candidate-list li span {
+  color: var(--sp-color-text-secondary);
+  font-size: var(--sp-font-xs);
+}
+.candidate-filter {
+  display: flex;
+  gap: var(--sp-space-2);
+  align-items: center;
+  min-height: 38px;
+  padding: 0 var(--sp-space-3);
+  white-space: nowrap;
+  border: 1px solid var(--sp-border-strong);
+  border-radius: var(--sp-radius-control);
+}
+.candidate-filter input {
+  width: 16px;
+  height: 16px;
 }
 .metrics strong {
   overflow: hidden;

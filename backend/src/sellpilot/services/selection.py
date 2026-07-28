@@ -95,15 +95,23 @@ class SelectionService:
         ]
 
     async def analyze(
-        self, request: SelectionAnalysisRequest, created_by: UUID
+        self,
+        request: SelectionAnalysisRequest,
+        created_by: UUID,
+        *,
+        agent_task_id: UUID | None = None,
+        manage_agent_task: bool = True,
     ) -> SelectionAnalysisResponse:
         formula_config = SELECTION_CONFIGS[request.risk_preference]
-        agent_task = await self.tasks.create_internal_task(
-            task_type=TaskType.SELECTION,
-            user_input=request.model_dump_json(),
-            created_by=created_by,
-        )
-        await self.tasks.start(agent_task.id)
+        if agent_task_id is None:
+            agent_task = await self.tasks.create_internal_task(
+                task_type=TaskType.SELECTION,
+                user_input=request.model_dump_json(),
+                created_by=created_by,
+            )
+            await self.tasks.start(agent_task.id)
+        else:
+            agent_task = await self.tasks.get(agent_task_id, user_id=created_by)
         selection_task = await self.selection.add_task(
             ProductSelectionTask(
                 created_by=created_by,
@@ -125,9 +133,10 @@ class SelectionService:
             selection_task.status = AnalysisStatus.FAILED
             selection_task.error_message = "No candidates matched the criteria"
             selection_task.finished_at = datetime.now(UTC)
-            await self.tasks.fail(
-                agent_task.id, "SELECTION_NO_CANDIDATES", selection_task.error_message
-            )
+            if manage_agent_task:
+                await self.tasks.fail(
+                    agent_task.id, "SELECTION_NO_CANDIDATES", selection_task.error_message
+                )
             raise ResourceNotFoundError("No selection candidates matched the criteria")
         candidates = [self._domain_candidate(product, trend, request) for product, trend in rows]
         batch = score_candidates(
@@ -176,14 +185,15 @@ class SelectionService:
             responses.append(self._result_response(model))
         selection_task.status = AnalysisStatus.SUCCEEDED
         selection_task.finished_at = datetime.now(UTC)
-        await self.tasks.complete(
-            agent_task.id,
-            {
-                "selection_task_id": str(selection_task.id),
-                "ranked_count": len(responses),
-                "excluded_count": len(batch.excluded),
-            },
-        )
+        if manage_agent_task:
+            await self.tasks.complete(
+                agent_task.id,
+                {
+                    "selection_task_id": str(selection_task.id),
+                    "ranked_count": len(responses),
+                    "excluded_count": len(batch.excluded),
+                },
+            )
         return SelectionAnalysisResponse(
             task_id=selection_task.id,
             agent_task_id=agent_task.id,

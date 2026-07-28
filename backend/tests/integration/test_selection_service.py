@@ -1,15 +1,26 @@
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from uuid import uuid4
 
 import pytest
+from sqlalchemy import select
 
 from sellpilot.db.models.commerce import CategoryTrend, Product, Shop
+from sellpilot.db.models.tool_call import ToolCall
 from sellpilot.schemas.selection import SelectionAnalysisRequest, SelectionCandidateQuery
 from sellpilot.services.selection import SelectionService
+from sellpilot.services.task import TaskService
+from sellpilot.tools.runtime import build_tool_registry
+from sellpilot.workflows.runner import TaskRunner
+from sellpilot.workflows.runtime import build_workflow_registry
 
 
 @pytest.mark.asyncio
-async def test_selection_service_persists_explainable_mock_results(session, admin_user) -> None:
+async def test_selection_service_persists_explainable_mock_results(
+    session,
+    admin_user,
+    test_settings,
+) -> None:
     now = datetime.now(UTC)
     shop = Shop(
         external_id="SHOP-SEL",
@@ -97,6 +108,32 @@ async def test_selection_service_persists_explainable_mock_results(session, admi
     exported = await SelectionService(session).export(result.task_id, admin_user.id)
     assert exported.filename.endswith(".json")
     assert len(exported.checksum_sha256) == 64
+
+    workflow_registry = build_workflow_registry(test_settings)
+    workflow_request = SelectionAnalysisRequest(
+        site="sg",
+        category_id="CAT-SEL",
+        platform_fee_rate=Decimal("0.10"),
+    )
+    workflow_task = await TaskService(session, test_settings).create_workflow_task(
+        workflow_registry.get("selection"),
+        workflow_input=workflow_request.model_dump(mode="json"),
+        created_by=admin_user.id,
+        request_id=str(uuid4()),
+    )
+    workflow_result = await TaskRunner(
+        workflow_registry,
+        build_tool_registry(test_settings),
+        session,
+        test_settings,
+    ).run(workflow_task.id, user_id=admin_user.id)
+    assert workflow_result.status == "succeeded"
+    assert workflow_result.result["analysis"]["ranked_count"] == result.ranked_count
+    workflow_call = await session.scalar(
+        select(ToolCall).where(ToolCall.task_id == workflow_task.id)
+    )
+    assert workflow_call is not None
+    assert workflow_call.task_step_id is not None
 
     second_page = await SelectionService(session).list_candidates(
         SelectionCandidateQuery(site="sg", category_id="CAT-SEL", offset=1, limit=1)

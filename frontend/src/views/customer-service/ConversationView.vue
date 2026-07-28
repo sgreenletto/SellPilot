@@ -13,27 +13,26 @@ import {
   Truck,
   UserCheck,
   X,
-} from "@lucide/vue"
-import { ElMessage } from "element-plus"
-import { computed, ref, watch } from "vue"
+} from "@lucide/vue";
+import { ElMessage } from "element-plus";
+import { computed, ref, watch } from "vue";
 
-import SpAvatar from "@/components/base/SpAvatar.vue"
-import SpBadge from "@/components/base/SpBadge.vue"
-import SpButton from "@/components/base/SpButton.vue"
-import SpIconButton from "@/components/base/SpIconButton.vue"
-import SpInput from "@/components/base/SpInput.vue"
-import SpSelect from "@/components/base/SpSelect.vue"
-import PageContainer from "@/components/layout/PageContainer.vue"
-import {
-  chatMessages,
-  conversationContexts,
-  conversations,
-} from "@/mocks/customer-service"
+import { fetchLogistics, fetchOrder, fetchProduct } from "@/api/customer-service";
+import SpAvatar from "@/components/base/SpAvatar.vue";
+import SpBadge from "@/components/base/SpBadge.vue";
+import SpButton from "@/components/base/SpButton.vue";
+import SpIconButton from "@/components/base/SpIconButton.vue";
+import SpInput from "@/components/base/SpInput.vue";
+import SpSelect from "@/components/base/SpSelect.vue";
+import PageContainer from "@/components/layout/PageContainer.vue";
+import { chatMessages, conversations } from "@/mocks/customer-service";
+import type { Logistics, Order, Product } from "@/types/commerce";
 import type {
   BuyerLanguage,
-  Conversation,
+  ConversationContext,
   ConversationTab,
-} from "@/types/customer-service"
+  RiskLevel,
+} from "@/types/customer-service";
 
 // ==================== 页签筛选 ====================
 
@@ -42,104 +41,172 @@ const tabs: { key: ConversationTab; label: string; count?: number }[] = [
   { key: "pending_reply", label: "待回复" },
   { key: "pending_human", label: "待人工" },
   { key: "resolved", label: "已解决" },
-]
+];
 
-const activeTab = ref<ConversationTab>("all")
+const activeTab = ref<ConversationTab>("all");
 
 const filteredConversations = computed(() => {
-  if (activeTab.value === "all") return conversations
-  return conversations.filter((c) => c.status === activeTab.value)
-})
+  if (activeTab.value === "all") return conversations;
+  return conversations.filter((c) => c.status === activeTab.value);
+});
 
 // 每个页签下的会话数
 function tabCount(key: ConversationTab): number {
-  if (key === "all") return conversations.length
-  return conversations.filter((c) => c.status === key).length
+  if (key === "all") return conversations.length;
+  return conversations.filter((c) => c.status === key).length;
 }
 
 // ==================== 选中会话 ====================
 
-const selectedId = ref<string>(conversations[0]?.id ?? "")
-const selectedConversation = computed(() =>
-  conversations.find((c) => c.id === selectedId.value) ?? null,
-)
-const activeMessages = computed(() => chatMessages[selectedId.value] ?? [])
-const activeContext = computed(() => conversationContexts[selectedId.value] ?? null)
+const selectedId = ref<string>(conversations[0]?.id ?? "");
+const selectedConversation = computed(
+  () => conversations.find((c) => c.id === selectedId.value) ?? null,
+);
+const activeMessages = computed(() => chatMessages[selectedId.value] ?? []);
+const activeContext = ref<ConversationContext | null>(null);
+const contextLoading = ref(false);
+const contextError = ref("");
+
+// 选中会话时从后端拉取上下文数据
+watch(
+  selectedId,
+  async (id) => {
+    const conv = conversations.find((item) => item.id === id);
+    activeContext.value = null;
+    contextError.value = "";
+    if (!conv) return;
+    contextLoading.value = true;
+    try {
+      const [product, order, logistics] = await Promise.all([
+        fetchProduct(conv.productId),
+        fetchOrder(conv.orderId),
+        fetchLogistics(conv.orderId),
+      ]);
+      activeContext.value = buildContext(conv, product, order, logistics);
+    } catch (error: unknown) {
+      contextError.value = error instanceof Error ? error.message : "会话关联数据加载失败";
+    } finally {
+      contextLoading.value = false;
+    }
+  },
+  { immediate: true },
+);
+
+function buildContext(
+  conv: (typeof conversations)[number],
+  product: Product | null,
+  order: Order | null,
+  logistics: Logistics | null,
+): ConversationContext {
+  return {
+    product: {
+      id: product?.product_id ?? conv.productId,
+      name: product?.title ?? "加载中…",
+      imageInitials: (product?.title ?? "??").slice(0, 2),
+      price: Number(product?.price ?? 0),
+      currency: product?.currency ?? "CNY",
+      category: product?.category_name ?? "",
+      status: product?.status === "inactive" ? "inactive" : "active",
+      shopName: "Shopee 模拟店铺",
+    },
+    skus: [],
+    order: {
+      id: order?.order_id ?? conv.orderId,
+      status: order?.order_status ?? "unknown",
+      statusLabel: order?.order_status ?? "加载中…",
+      amount: Number(order?.total_amount ?? 0),
+      currency: order?.currency ?? "CNY",
+      placedAt: order?.created_at ?? "",
+      items: [product?.title ?? "加载中…"],
+      buyerName: conv.buyerName,
+    },
+    logistics: logistics
+      ? {
+          id: logistics.logistics_id,
+          carrier: logistics.carrier,
+          trackingNumber: logistics.tracking_number,
+          status: logistics.status,
+          statusLabel: logistics.status,
+          events: logistics.tracks.map((t) => ({
+            time: t.event_time?.slice(5, 16) ?? "",
+            description: t.description,
+            location: t.location,
+          })),
+        }
+      : null,
+  };
+}
 
 // 移动端：是否展示对话区（而非列表）
-const showChat = ref(false)
+const showChat = ref(false);
 
 function selectConversation(id: string) {
-  selectedId.value = id
-  showChat.value = true
+  selectedId.value = id;
+  showChat.value = true;
 }
 
 function backToList() {
-  showChat.value = false
+  showChat.value = false;
 }
 
 // 切换页签时重置首条选中
 watch(activeTab, (tab) => {
-  const first = conversations.find((c) => (tab === "all" ? true : c.status === tab))
+  const first = conversations.find((c) => (tab === "all" ? true : c.status === tab));
   if (first) {
-    selectedId.value = first.id
+    selectedId.value = first.id;
   }
-})
+});
 
 // ==================== 人工回复编辑器 ====================
 
-const replyText = ref("")
-const transferNote = ref("")
-const showTransferInput = ref(false)
+const replyText = ref("");
+const transferNote = ref("");
+const showTransferInput = ref(false);
 
 function sendReply() {
-  const trimmed = replyText.value.trim()
+  const trimmed = replyText.value.trim();
   if (!trimmed) {
-    ElMessage.warning("请输入回复内容")
-    return
+    ElMessage.warning("请输入回复内容");
+    return;
   }
-  ElMessage.success("模拟回复已发送，系统将生成待确认任务")
-  replyText.value = ""
+  ElMessage.success("模拟回复已发送，系统将生成待确认任务");
+  replyText.value = "";
 }
 
 function transferToHuman() {
-  const note = transferNote.value.trim()
-  ElMessage.success(
-    note
-      ? `已转人工处理，备注：${note}`
-      : "已转人工处理，客服将在 5 分钟内接手",
-  )
-  transferNote.value = ""
-  showTransferInput.value = false
+  const note = transferNote.value.trim();
+  ElMessage.success(note ? `已转人工处理，备注：${note}` : "已转人工处理，客服将在 5 分钟内接手");
+  transferNote.value = "";
+  showTransferInput.value = false;
 }
 
 // ==================== 快捷筛选 ====================
 
-const searchQuery = ref("")
-const langFilter = ref("all")
+const searchQuery = ref("");
+const langFilter = ref("all");
 const langOptions = [
   { label: "全部语种", value: "all" },
   { label: "印尼语", value: "id" },
   { label: "泰语", value: "th" },
   { label: "越南语", value: "vi" },
-]
+];
 
 const displayConversations = computed(() => {
-  let list = filteredConversations.value
+  let list = filteredConversations.value;
   if (searchQuery.value.trim()) {
-    const q = searchQuery.value.trim().toLowerCase()
+    const q = searchQuery.value.trim().toLowerCase();
     list = list.filter(
       (c) =>
         c.buyerName.toLowerCase().includes(q) ||
         c.lastMessage.toLowerCase().includes(q) ||
         c.intentLabel.includes(q),
-    )
+    );
   }
   if (langFilter.value !== "all") {
-    list = list.filter((c) => c.language === langFilter.value)
+    list = list.filter((c) => c.language === langFilter.value);
   }
-  return list
-})
+  return list;
+});
 
 // ==================== 工具函数 ====================
 
@@ -149,33 +216,36 @@ const langFlag: Record<BuyerLanguage, string> = {
   vi: "🇻🇳",
   en: "🇬🇧",
   zh: "🇨🇳",
-}
+};
 
-const riskBadge: Record<string, { tone: "danger" | "warning" | "neutral" | "success"; label: string }> = {
+const riskBadge: Record<
+  RiskLevel,
+  { tone: "danger" | "warning" | "neutral" | "success"; label: string }
+> = {
   critical: { tone: "danger", label: "高危" },
   high: { tone: "danger", label: "高风险" },
   medium: { tone: "warning", label: "中等" },
   low: { tone: "success", label: "低风险" },
-}
+};
 
 const statusLabel: Record<ConversationTab, string> = {
   all: "",
   pending_reply: "待回复",
   pending_human: "待人工",
   resolved: "已解决",
-}
+};
 
 const skuStatusLabel: Record<string, string> = {
   sufficient: "充足",
   low: "偏低",
   out: "售罄",
-}
+};
 
 const skuStatusTone: Record<string, "success" | "warning" | "danger"> = {
   sufficient: "success",
   low: "warning",
   out: "danger",
-}
+};
 </script>
 
 <template>
@@ -186,22 +256,13 @@ const skuStatusTone: Record<string, "success" | "warning" | "danger"> = {
         <div class="cs-left__header">
           <h2 class="cs-left__title">会话工作台</h2>
           <div class="cs-left__tools">
-            <SpSelect
-              v-model="langFilter"
-              :options="langOptions"
-              placeholder="语种"
-            />
+            <SpSelect v-model="langFilter" :options="langOptions" placeholder="语种" />
           </div>
         </div>
 
         <!-- 搜索 -->
         <div class="cs-left__search">
-          <SpInput
-            v-model="searchQuery"
-            placeholder="搜索买家或消息…"
-            type="search"
-            clearable
-          >
+          <SpInput v-model="searchQuery" placeholder="搜索买家或消息…" type="search" clearable>
             <template #prefix><Search :size="16" /></template>
           </SpInput>
         </div>
@@ -228,12 +289,21 @@ const skuStatusTone: Record<string, "success" | "warning" | "danger"> = {
             type="button"
             :class="[
               'cs-conv-item',
-              { 'cs-conv-item--active': selectedId === conv.id, 'cs-conv-item--unread': conv.unread },
+              {
+                'cs-conv-item--active': selectedId === conv.id,
+                'cs-conv-item--unread': conv.unread,
+              },
             ]"
             @click="selectConversation(conv.id)"
           >
             <div class="cs-conv-item__avatar">
-              <SpAvatar :initials="conv.buyerInitials" :gradient="conv.riskLevel === 'critical' || conv.riskLevel === 'high' ? 'pink' : 'blue'" size="md" />
+              <SpAvatar
+                :initials="conv.buyerInitials"
+                :gradient="
+                  conv.riskLevel === 'critical' || conv.riskLevel === 'high' ? 'pink' : 'blue'
+                "
+                size="md"
+              />
               <span v-if="conv.unread" class="cs-conv-item__dot" aria-label="未读"></span>
             </div>
             <div class="cs-conv-item__body">
@@ -288,8 +358,16 @@ const skuStatusTone: Record<string, "success" | "warning" | "danger"> = {
                 </SpBadge>
               </div>
               <p class="cs-chat-header__summary">
-                订单 {{ selectedConversation.orderId }} · 意图：{{ selectedConversation.intentLabel }}
-                <span v-if="selectedConversation.riskLevel === 'critical' || selectedConversation.riskLevel === 'high'" class="cs-chat-header__risk">
+                订单 {{ selectedConversation.orderId }} · 意图：{{
+                  selectedConversation.intentLabel
+                }}
+                <span
+                  v-if="
+                    selectedConversation.riskLevel === 'critical' ||
+                    selectedConversation.riskLevel === 'high'
+                  "
+                  class="cs-chat-header__risk"
+                >
                   · ⚠️ 高风险会话，建议优先处理
                 </span>
               </p>
@@ -326,7 +404,7 @@ const skuStatusTone: Record<string, "success" | "warning" | "danger"> = {
                 <div class="cs-msg__bubble cs-msg__bubble--buyer">
                   <div v-if="msg.originalContent" class="cs-msg__original">
                     <span class="cs-msg__lang-tag">
-                      {{ langFlag[msg.language ?? 'id'] }} 原文
+                      {{ langFlag[msg.language ?? "id"] }} 原文
                     </span>
                     <p>{{ msg.originalContent }}</p>
                   </div>
@@ -334,7 +412,10 @@ const skuStatusTone: Record<string, "success" | "warning" | "danger"> = {
                     <span class="cs-msg__lang-tag cs-msg__lang-tag--zh">中文翻译</span>
                     <p>{{ msg.translatedContent }}</p>
                   </div>
-                  <div v-if="!msg.originalContent && !msg.translatedContent" class="cs-msg__original">
+                  <div
+                    v-if="!msg.originalContent && !msg.translatedContent"
+                    class="cs-msg__original"
+                  >
                     <p>{{ msg.content }}</p>
                   </div>
                   <span class="cs-msg__time">{{ msg.timestamp }}</span>
@@ -367,7 +448,11 @@ const skuStatusTone: Record<string, "success" | "warning" | "danger"> = {
                     <strong>{{ msg.aiSuggestion.knowledgeSource }}</strong>
                     <p>"{{ msg.aiSuggestion.knowledgeExcerpt }}"</p>
                   </div>
-                  <SpButton size="sm" variant="secondary" @click="replyText = msg.aiSuggestion?.reply ?? ''">
+                  <SpButton
+                    size="sm"
+                    variant="secondary"
+                    @click="replyText = msg.aiSuggestion?.reply ?? ''"
+                  >
                     <template #icon><CheckCircle2 :size="15" /></template>
                     采用此建议
                   </SpButton>
@@ -405,12 +490,16 @@ const skuStatusTone: Record<string, "success" | "warning" | "danger"> = {
       </main>
 
       <!-- ==================== 右栏：上下文面板 ==================== -->
-      <aside v-if="activeContext" :class="['cs-right', { 'cs-right--hidden': showChat }]">
+      <aside v-if="contextLoading" :class="['cs-right', { 'cs-right--hidden': showChat }]">
+        <section class="cs-ctx-card">正在加载会话关联数据…</section>
+      </aside>
+      <aside v-else-if="contextError" :class="['cs-right', { 'cs-right--hidden': showChat }]">
+        <section class="cs-ctx-card">{{ contextError }}</section>
+      </aside>
+      <aside v-else-if="activeContext" :class="['cs-right', { 'cs-right--hidden': showChat }]">
         <!-- 关联商品 -->
         <section class="cs-ctx-card">
-          <h4 class="cs-ctx-card__title">
-            <Package :size="15" /> 关联商品
-          </h4>
+          <h4 class="cs-ctx-card__title"><Package :size="15" /> 关联商品</h4>
           <div class="cs-ctx-product">
             <SpAvatar :initials="activeContext.product.imageInitials" gradient="blue" size="lg" />
             <div>
@@ -425,16 +514,10 @@ const skuStatusTone: Record<string, "success" | "warning" | "danger"> = {
         </section>
 
         <!-- SKU 库存 -->
-        <section class="cs-ctx-card">
-          <h4 class="cs-ctx-card__title">
-            <Package :size="15" /> SKU 库存状态
-          </h4>
+        <section v-if="activeContext.skus.length > 0" class="cs-ctx-card">
+          <h4 class="cs-ctx-card__title"><Package :size="15" /> SKU 库存状态</h4>
           <div class="cs-sku-list">
-            <div
-              v-for="sku in activeContext.skus"
-              :key="sku.sku"
-              class="cs-sku-item"
-            >
+            <div v-for="sku in activeContext.skus" :key="sku.sku" class="cs-sku-item">
               <div class="cs-sku-item__info">
                 <code>{{ sku.sku }}</code>
                 <span>{{ sku.variant }}</span>
@@ -452,13 +535,20 @@ const skuStatusTone: Record<string, "success" | "warning" | "danger"> = {
 
         <!-- 关联订单 -->
         <section class="cs-ctx-card">
-          <h4 class="cs-ctx-card__title">
-            <Truck :size="15" /> 关联订单
-          </h4>
+          <h4 class="cs-ctx-card__title"><Truck :size="15" /> 关联订单</h4>
           <div class="cs-ctx-order">
             <div class="cs-ctx-order__head">
               <strong>{{ activeContext.order.id }}</strong>
-              <SpBadge :tone="activeContext.order.status === 'delivered' ? 'success' : activeContext.order.status === 'shipped' ? 'info' : 'warning'">
+              <SpBadge
+                :tone="
+                  activeContext.order.status === 'delivered' ||
+                  activeContext.order.status === 'completed'
+                    ? 'success'
+                    : activeContext.order.status === 'shipped'
+                      ? 'info'
+                      : 'warning'
+                "
+              >
                 {{ activeContext.order.statusLabel }}
               </SpBadge>
             </div>
@@ -475,9 +565,7 @@ const skuStatusTone: Record<string, "success" | "warning" | "danger"> = {
 
         <!-- 物流轨迹 -->
         <section v-if="activeContext.logistics" class="cs-ctx-card">
-          <h4 class="cs-ctx-card__title">
-            <Globe :size="15" /> 物流轨迹
-          </h4>
+          <h4 class="cs-ctx-card__title"><Globe :size="15" /> 物流轨迹</h4>
           <div class="cs-logistics">
             <p class="cs-logistics__carrier">
               {{ activeContext.logistics.carrier }}
@@ -489,7 +577,10 @@ const skuStatusTone: Record<string, "success" | "warning" | "danger"> = {
                 :key="idx"
                 :class="[
                   'cs-logistics__event',
-                  { 'cs-logistics__event--active': idx === activeContext.logistics.events.length - 1 },
+                  {
+                    'cs-logistics__event--active':
+                      idx === activeContext.logistics.events.length - 1,
+                  },
                 ]"
               >
                 <span class="cs-logistics__dot" aria-hidden="true"></span>
@@ -579,7 +670,9 @@ const skuStatusTone: Record<string, "success" | "warning" | "danger"> = {
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--sp-radius-pill);
-  transition: color var(--sp-transition-fast), background var(--sp-transition-fast);
+  transition:
+    color var(--sp-transition-fast),
+    background var(--sp-transition-fast);
   white-space: nowrap;
 }
 
