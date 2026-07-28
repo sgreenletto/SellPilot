@@ -9,6 +9,7 @@ const ProductsView = () => import("@/views/commerce/ProductsView.vue");
 const InventoryView = () => import("@/views/commerce/InventoryView.vue");
 const OrdersView = () => import("@/views/commerce/OrdersView.vue");
 const MarketDataView = () => import("@/views/commerce/MarketDataView.vue");
+const SelectionWorkbenchView = () => import("@/views/selection/SelectionWorkbenchView.vue");
 
 const placeholderRoutes: RouteRecordRaw[] = [
   {
@@ -34,7 +35,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
   {
     path: "/market/selection",
     name: "market-selection",
-    component: ModulePlaceholderView,
+    component: SelectionWorkbenchView,
     meta: {
       title: "智能选品",
       module: "市场与选品",
