@@ -148,10 +148,13 @@ class ReviewAnalysisRepository:
         page_size: int,
         *,
         evidence_type: str | None = None,
+        label: str | None = None,
     ) -> tuple[list[ReviewAnalysisEvidence], int]:
         predicates = [ReviewAnalysisEvidence.result_id == result_id]
         if evidence_type is not None:
             predicates.append(ReviewAnalysisEvidence.evidence_type == evidence_type)
+        if label is not None:
+            predicates.append(ReviewAnalysisEvidence.label == label)
         total = await self.session.scalar(
             select(func.count()).select_from(ReviewAnalysisEvidence).where(*predicates)
         )

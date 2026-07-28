@@ -236,6 +236,7 @@ class ReviewAnalysisService:
         page: int,
         page_size: int,
         evidence_type: str | None = None,
+        label: str | None = None,
     ) -> ReviewEvidencePage:
         await self._owned_result(analysis_id, user_id)
         rows, total = await self.analysis.list_evidence(
@@ -243,6 +244,7 @@ class ReviewAnalysisService:
             page,
             page_size,
             evidence_type=evidence_type,
+            label=label,
         )
         return ReviewEvidencePage(
             items=[self._evidence_response(item) for item in rows],

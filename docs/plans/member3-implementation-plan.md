@@ -673,6 +673,9 @@ docs: document review analysis api
 
 ## Step 7：评论分析前端
 
+> **实现状态**：已在 `feature/review-analysis-workbench` 完成评论筛选、分析概览、
+> 趋势、证据分页与定位、任务错误状态及 Step 8 入口，待审核合并。
+
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 完成负责人表第 37—40 项，并为第 41—43 项提供入口 |

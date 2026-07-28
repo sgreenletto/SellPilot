@@ -14,6 +14,7 @@ const InventoryView = () => import("@/views/commerce/InventoryView.vue");
 const OrdersView = () => import("@/views/commerce/OrdersView.vue");
 const MarketDataView = () => import("@/views/commerce/MarketDataView.vue");
 const SelectionWorkbenchView = () => import("@/views/selection/SelectionWorkbenchView.vue");
+const ReviewAnalysisView = () => import("@/views/reviews/ReviewAnalysisView.vue");
 
 const placeholderRoutes: RouteRecordRaw[] = [
   {
@@ -49,7 +50,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
   {
     path: "/market/reviews",
     name: "market-reviews",
-    component: ModulePlaceholderView,
+    component: ReviewAnalysisView,
     meta: {
       title: "评论与产品改良",
       module: "市场与选品",
@@ -176,19 +177,19 @@ export const router = createRouter({
 });
 
 router.beforeEach((to, _from, next) => {
-  const authStore = useAuthStore()
+  const authStore = useAuthStore();
 
   if (to.meta.requiresAuth === false) {
     // 已登录用户访问登录页 → 直接进入看板
     if (authStore.isAuthenticated && to.name === "login") {
-      return next("/dashboard")
+      return next("/dashboard");
     }
-    return next()
+    return next();
   }
 
   if (!authStore.isAuthenticated) {
-    return next("/login")
+    return next("/login");
   }
 
-  return next()
-})
+  return next();
+});

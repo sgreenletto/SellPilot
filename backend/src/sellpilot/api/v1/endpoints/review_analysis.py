@@ -116,6 +116,7 @@ async def list_evidence(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
     evidence_type: str | None = None,
+    label: str | None = None,
 ) -> ApiResponse[ReviewEvidencePage]:
     data = await ReviewAnalysisService(session, settings).list_evidence(
         analysis_id,
@@ -123,5 +124,6 @@ async def list_evidence(
         page=page,
         page_size=page_size,
         evidence_type=evidence_type,
+        label=label,
     )
     return success_response(data, get_request_id(request))

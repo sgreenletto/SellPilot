@@ -8,7 +8,8 @@
 - `POST /analyses`：创建 `PENDING` 分析任务，返回 202。
 - `POST /analyses/{analysis_id}/run`：运行待处理任务。
 - `GET /analyses/{analysis_id}`：查询进度、当前步骤、步骤列表、失败原因和结构化结果。
-- `GET /analyses/{analysis_id}/evidence`：分页读取完整证据。
+- `GET /analyses/{analysis_id}/evidence`：分页读取完整证据；可使用
+  `evidence_type` 与 `label` 精确筛选证据类型和主题标签。
 
 创建和执行分离，避免创建长任务时请求一直无反馈。调用方应展示 `PENDING`、`RUNNING`、`SUCCEEDED` 和 `FAILED`。
 
