@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from sellpilot.schemas.common import ContractModel, PaginationParams
 
@@ -54,6 +54,8 @@ class KnowledgeDocumentUpdate(ContractModel):
 
 
 class KnowledgeDocumentResponse(ContractModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     title: str
     file_type: str
@@ -80,6 +82,8 @@ class KnowledgeDocumentListParams(PaginationParams):
 # ---- Chunk Schemas ----
 
 class KnowledgeChunkResponse(ContractModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     document_id: UUID
     chunk_index: int

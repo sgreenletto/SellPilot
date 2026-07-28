@@ -5,6 +5,7 @@ from sellpilot.api.v1.endpoints import (
     commerce,
     confirmations,
     health,
+    knowledge_base,
     platform,
     product_improvement,
     review_analysis,
@@ -16,6 +17,9 @@ from sellpilot.api.v1.endpoints import (
 
 router = APIRouter()
 router.include_router(health.router, prefix="/health", tags=["health"])
+router.include_router(
+    knowledge_base.router, prefix="/knowledge", tags=["knowledge"]
+)
 router.include_router(auth.router, prefix="/auth", tags=["auth"])
 router.include_router(platform.router, prefix="/platform", tags=["platform"])
 router.include_router(commerce.router, prefix="/commerce", tags=["commerce"])
