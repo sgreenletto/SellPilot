@@ -45,6 +45,7 @@ class ConfirmationService:
         self,
         *,
         agent_task_id: UUID,
+        task_step_id: UUID | None = None,
         operation_type: str,
         target_type: str,
         target_id: str | None,
@@ -92,6 +93,7 @@ class ConfirmationService:
             return existing
         confirmation = ConfirmationTask(
             agent_task_id=agent_task_id,
+            task_step_id=task_step_id,
             operation_type=operation_type,
             target_type=target_type,
             target_id=target_id,

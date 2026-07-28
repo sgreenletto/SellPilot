@@ -233,6 +233,7 @@ class ToolExecutor:
             request_id=confirmation.request_id,
             user_id=confirmation.created_by,
             task_id=confirmation.agent_task_id,
+            task_step_id=tool_call.task_step_id,
             confirmation_id=confirmation.id,
             idempotency_key=confirmation.idempotency_key,
             caller_type=ToolCallerType(tool_call.caller_type),
@@ -318,6 +319,7 @@ class ToolExecutor:
         safe_after = self._confirmation_snapshot(after_snapshot, definition)
         confirmation = await ConfirmationService(self.session).create(
             agent_task_id=context.task_id,  # validated by _validate_context
+            task_step_id=context.task_step_id,
             operation_type=TOOL_CONFIRMATION_OPERATION,
             target_type=target_type,
             target_id=target_id,
@@ -636,6 +638,7 @@ class ToolExecutor:
                 target_id=target_id or definition.name,
                 request_id=context.request_id,
                 agent_task_id=context.task_id,
+                task_step_id=context.task_step_id,
                 confirmation_task_id=tool_call.confirmation_id,
                 tool_call_id=tool_call.id,
                 risk_level=definition.risk_level,

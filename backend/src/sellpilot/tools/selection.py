@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from sellpilot.core.enums import SiteCode, ToolRiskLevel
+from sellpilot.core.enums import SiteCode, ToolCallerType, ToolRiskLevel
 from sellpilot.core.exceptions import ParameterError, UnauthenticatedError
 from sellpilot.domain.selection.models import SelectionCandidate
 from sellpilot.domain.selection.scoring import calculate_profit
@@ -108,7 +108,12 @@ async def _profit(payload: CalculateProductProfitInput, _context: ToolExecutionC
 
 
 async def _score(payload: ScoreProductOpportunityInput, context: ToolExecutionContext):
-    result = await _service(context).analyze(payload, _user_id(context))
+    result = await _service(context).analyze(
+        payload,
+        _user_id(context),
+        agent_task_id=(context.task_id if context.caller_type is ToolCallerType.WORKFLOW else None),
+        manage_agent_task=context.caller_type is not ToolCallerType.WORKFLOW,
+    )
     return ScoreProductOpportunityOutput(analysis=result.model_dump(mode="json"))
 
 
