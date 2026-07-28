@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { Copy, FileSpreadsheet, Plus, Search } from "@lucide/vue";
+import { computed, ref, watch } from "vue";
+import { Copy, FileSpreadsheet, Image as ImageIcon, Plus, Search } from "@lucide/vue";
 import * as XLSX from "xlsx";
 
 import inventoryCsv from "../../../../data/demo/shopee_mock/inventory.csv?raw";
@@ -10,15 +10,15 @@ import SpButton from "@/components/base/SpButton.vue";
 import SpCard from "@/components/base/SpCard.vue";
 import SpEmptyState from "@/components/base/SpEmptyState.vue";
 import SpInput from "@/components/base/SpInput.vue";
+import CommercePagination from "@/components/commerce/CommercePagination.vue";
 import StatusBadge from "@/components/data-display/StatusBadge.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
+import { csvRows, sheetRows } from "@/utils/spreadsheet";
 
 type Row = Record<string, string | number>;
 
 function readCsv(csv: string): Row[] {
-  const workbook = XLSX.read(csv, { type: "string" });
-  const sheet = workbook.Sheets[workbook.SheetNames[0] ?? ""];
-  return sheet ? XLSX.utils.sheet_to_json<Row>(sheet, { defval: "" }) : [];
+  return csvRows(csv) as Row[];
 }
 
 const products = ref<Row[]>(readCsv(productsCsv));
@@ -26,8 +26,16 @@ const skus = readCsv(skusCsv);
 const inventory = readCsv(inventoryCsv);
 const query = ref("");
 const status = ref("");
+const currentPage = ref(1);
+const pageSize = ref(10);
 const selected = ref<Row | null>(products.value[0] ?? null);
 const editing = ref(false);
+const activeLanguage = ref("en");
+interface LocalizedVersion {
+  title?: string;
+  description?: string;
+}
+const localizedByProduct = ref<Record<string, Record<string, LocalizedVersion>>>({});
 const notice = ref("");
 const history = ref<string[]>(["已从项目 Mock 数据包载入商品"]);
 
@@ -42,6 +50,10 @@ const filtered = computed(() => {
     return matchesKeyword && (!status.value || product.status === status.value);
   });
 });
+const paginated = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  return filtered.value.slice(start, start + pageSize.value);
+});
 
 const selectedSku = computed(() =>
   skus.find((sku) => sku.product_id === selected.value?.product_id),
@@ -50,14 +62,58 @@ const selectedInventory = computed(() =>
   inventory.find((item) => item.sku_id === selectedSku.value?.sku_id),
 );
 
+function defaultLocalizedTitle(language: string): string {
+  const title = String(selected.value?.title ?? "未命名商品");
+  if (language === "zh-CN") return `【Mock 中文】${title}`;
+  if (language === "ms") return `[Mock Bahasa Melayu] ${title}`;
+  return title;
+}
+
+function defaultLocalizedDescription(language: string): string {
+  const title = String(selected.value?.title ?? "未命名商品");
+  const category = String(selected.value?.category_name ?? "未分类");
+  const description = String(selected.value?.description ?? "");
+  if (language === "en") return description;
+  if (language === "zh-CN") {
+    return `【Mock 中文】${title}。这是 ${category} 类目的合成多语言演示内容，可在编辑模式下修改。`;
+  }
+  return `[Mock Bahasa Melayu] ${title}. Ini ialah kandungan demo sintetik untuk kategori ${category} dan boleh disunting.`;
+}
+
+function localizedField(field: keyof LocalizedVersion, fallback: () => string) {
+  return computed({
+    get: () => {
+      const productId = String(selected.value?.product_id ?? "");
+      return localizedByProduct.value[productId]?.[activeLanguage.value]?.[field] ?? fallback();
+    },
+    set: (text: string) => {
+      const productId = String(selected.value?.product_id ?? "");
+      if (!productId) return;
+      localizedByProduct.value[productId] = {
+        ...localizedByProduct.value[productId],
+        [activeLanguage.value]: {
+          ...localizedByProduct.value[productId]?.[activeLanguage.value],
+          [field]: text,
+        },
+      };
+      if (activeLanguage.value === "en" && selected.value) selected.value[field] = text;
+    },
+  });
+}
+
+const localizedTitle = localizedField("title", () => defaultLocalizedTitle(activeLanguage.value));
+const localizedDescription = localizedField("description", () =>
+  defaultLocalizedDescription(activeLanguage.value),
+);
+
 async function importProducts(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
   if (!file) return;
   const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
-  const sheet = workbook.Sheets[workbook.SheetNames[0] ?? ""];
-  if (!sheet) return;
-  products.value = XLSX.utils.sheet_to_json<Row>(sheet, { defval: "" });
+  const importedRows = sheetRows(workbook) as Row[];
+  if (!importedRows.length) return;
+  products.value = importedRows;
   selected.value = products.value[0] ?? null;
   notice.value = `已在前端导入 ${products.value.length} 条商品，尚未写入后端。`;
   history.value.unshift(`导入文件 ${file.name}`);
@@ -108,6 +164,8 @@ function badge(value: unknown): "active" | "pending" | "failed" {
   if (text.includes("draft") || text.includes("pending")) return "pending";
   return "active";
 }
+
+watch([query, status, pageSize], () => (currentPage.value = 1));
 </script>
 
 <template>
@@ -161,7 +219,7 @@ function badge(value: unknown): "active" | "pending" | "failed" {
             </thead>
             <tbody>
               <tr
-                v-for="product in filtered"
+                v-for="product in paginated"
                 :key="String(product.product_id)"
                 :class="{ selected: selected?.product_id === product.product_id }"
                 @click="selected = product"
@@ -188,6 +246,13 @@ function badge(value: unknown): "active" | "pending" | "failed" {
             </tbody>
           </table>
         </div>
+        <template #footer>
+          <CommercePagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :total="filtered.length"
+          />
+        </template>
       </SpCard>
 
       <SpCard v-if="selected" padding="lg" class="detail">
@@ -204,12 +269,20 @@ function badge(value: unknown): "active" | "pending" | "failed" {
           </div></template
         >
         <div class="form-grid">
-          <label>商品名称<input v-model="selected.title" :disabled="!editing" /></label>
+          <label class="wide">
+            当前内容语言
+            <select v-model="activeLanguage">
+              <option value="en">English</option>
+              <option value="zh-CN">简体中文</option>
+              <option value="ms">Bahasa Melayu</option>
+            </select>
+          </label>
+          <label>商品名称<input v-model="localizedTitle" :disabled="!editing" /></label>
           <label>类目<input v-model="selected.category_name" :disabled="!editing" /></label>
           <label>价格<input v-model="selected.price" :disabled="!editing" type="number" /></label>
           <label>状态<input v-model="selected.status" disabled /></label>
           <label class="wide"
-            >商品描述<textarea v-model="selected.description" :disabled="!editing" />
+            >商品描述<textarea v-model="localizedDescription" :disabled="!editing" />
           </label>
         </div>
         <SpButton v-if="editing" block @click="saveDraft">保存为草稿</SpButton>
@@ -234,15 +307,15 @@ function badge(value: unknown): "active" | "pending" | "failed" {
             {{ selectedInventory?.safety_stock ?? 0 }}
           </dd>
           <dt>图片</dt>
-          <dd>Mock 数据未提供图片地址</dd>
+          <dd>以下为合成 Mock 占位图，不代表真实商品素材</dd>
         </dl>
 
-        <h3>多语言内容</h3>
-        <div class="language">
-          <span>EN</span>
-          <p>{{ selected.description || "暂无英文描述" }}</p>
-          <span>ZH-CN</span>
-          <p>尚未生成中文翻译</p>
+        <div class="mock-gallery" aria-label="Mock 商品图片预览">
+          <div v-for="index in 3" :key="index" class="mock-image">
+            <ImageIcon :size="28" />
+            <strong>{{ selected.category_name }}</strong>
+            <span>Mock 视图 {{ index }}</span>
+          </div>
         </div>
 
         <h3>操作历史</h3>
@@ -385,13 +458,29 @@ dd {
 dt {
   color: var(--sp-color-text-muted);
 }
-.language {
+.mock-gallery {
   display: grid;
-  grid-template-columns: 70px 1fr;
-  gap: var(--sp-space-2);
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-space-3);
+  margin-top: var(--sp-space-4);
 }
-.language p {
-  margin: 0;
+.mock-image {
+  display: grid;
+  gap: var(--sp-space-2);
+  place-items: center;
+  min-height: 130px;
+  padding: var(--sp-space-4);
+  color: var(--sp-color-text-secondary);
+  text-align: center;
+  background:
+    radial-gradient(circle at top, var(--sp-color-accent-blue-soft), transparent 65%),
+    var(--sp-color-surface);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-control);
+}
+.mock-image span {
+  color: var(--sp-color-text-muted);
+  font-size: var(--sp-font-xs);
 }
 ol {
   padding-left: var(--sp-space-5);
