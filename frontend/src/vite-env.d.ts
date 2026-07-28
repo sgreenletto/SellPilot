@@ -16,6 +16,7 @@ declare module "vue-router" {
     title: string;
     module: string;
     description: string;
+    requiresAuth?: boolean;
   }
 }
 

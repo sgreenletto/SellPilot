@@ -89,3 +89,6 @@ ehthumbs.db
 /data/processed/*
 !/data/processed/.gitkeep
 CLAUDE.md
+HEAD
+backend/chroma_data/
+origin/develop

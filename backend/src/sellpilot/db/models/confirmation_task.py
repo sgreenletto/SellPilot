@@ -10,6 +10,7 @@ from sellpilot.db.base import JSON_TYPE, Base, UUIDPrimaryKeyMixin, utc_now
 
 if TYPE_CHECKING:
     from sellpilot.db.models.agent_task import AgentTask
+    from sellpilot.db.models.agent_task_step import AgentTaskStep
     from sellpilot.db.models.operation_log import OperationLog
     from sellpilot.db.models.user import User
 
@@ -24,10 +25,14 @@ class ConfirmationTask(UUIDPrimaryKeyMixin, Base):
             "execution_started_at",
         ),
         Index("ix_confirmation_tasks_agent_task_id", "agent_task_id"),
+        Index("ix_confirmation_tasks_task_step_id", "task_step_id"),
     )
 
     agent_task_id: Mapped[UUID] = mapped_column(
         ForeignKey("agent_tasks.id", ondelete="RESTRICT"), nullable=False
+    )
+    task_step_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("agent_task_steps.id", ondelete="SET NULL")
     )
     operation_type: Mapped[str] = mapped_column(String(100), nullable=False)
     target_type: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -60,6 +65,7 @@ class ConfirmationTask(UUIDPrimaryKeyMixin, Base):
     error_message: Mapped[str | None] = mapped_column(Text)
 
     agent_task: Mapped["AgentTask"] = relationship(back_populates="confirmation_tasks")
+    task_step: Mapped["AgentTaskStep | None"] = relationship(foreign_keys=[task_step_id])
     creator: Mapped["User"] = relationship(
         back_populates="created_confirmations", foreign_keys=[created_by]
     )

@@ -1,11 +1,37 @@
 import { mount } from "@vue/test-utils";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as XLSX from "xlsx";
 
 import MarketDataView from "@/views/commerce/MarketDataView.vue";
 
+const selectedIds = new Set<string>();
+vi.mock("@/api/commerce", () => ({
+  listSelectionCandidates: vi.fn(async () =>
+    [...selectedIds].map((product_id) => ({
+      product_id,
+      title: product_id,
+      source_type: "simulated_experiment",
+      is_mock_data: true,
+      created_at: "2026-07-28T00:00:00Z",
+    })),
+  ),
+  requestSelectionCandidate: vi.fn(async (productId: string, selected: boolean) => {
+    if (selected) selectedIds.add(productId);
+    else selectedIds.delete(productId);
+    return { id: "CONFIRM-1", status: "pending" };
+  }),
+  requestProductImport: vi.fn(async () => ({ id: "IMPORT-1", status: "pending" })),
+  confirmCommerceOperation: vi.fn(async () => ({ id: "CONFIRM-1", status: "succeeded" })),
+}));
+
 describe("市场数据页面", () => {
-  beforeEach(() => window.localStorage.clear());
+  beforeEach(() => {
+    selectedIds.clear();
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => true),
+    );
+  });
 
   it("对项目商品执行筛选和分页", async () => {
     const wrapper = mount(MarketDataView);
@@ -45,14 +71,14 @@ describe("市场数据页面", () => {
     expect(wrapper.text()).toContain("USB-C Hub");
     expect(wrapper.text()).toContain("simulated_experiment");
     expect(wrapper.text()).toContain("products.csv（1 条）");
-    expect(wrapper.text()).toContain("商品与评论分别保留");
+    expect(wrapper.text()).toContain("确认过的商品批次已写入后端");
 
     await wrapper.get(".actions .sp-button--ghost").trigger("click");
     await wrapper.vm.$nextTick();
     expect(wrapper.get(".detail-drawer").text()).toContain("USB-C Hub");
 
     await wrapper.get(".actions .sp-button--secondary").trigger("click");
-    expect(wrapper.text()).toContain("移出候选");
+    await vi.waitFor(() => expect(wrapper.text()).toContain("移出候选"));
     wrapper.unmount();
   });
 
@@ -112,32 +138,5 @@ describe("市场数据页面", () => {
 
     expect(wrapper.text()).toContain("Home");
     expect(wrapper.text()).toContain("market.xlsx");
-  });
-
-  it("展示、筛选并持久化选品候选", async () => {
-    const wrapper = mount(MarketDataView);
-    await wrapper.vm.$nextTick();
-
-    const firstRow = wrapper.get("tbody tr");
-    const productTitle = firstRow.get("td").text();
-    await firstRow.get(".actions .sp-button--secondary").trigger("click");
-
-    expect(wrapper.text()).toContain("1选品候选");
-    expect(window.localStorage.getItem("sellpilot_market_candidate_product_ids")).toContain(
-      "PROD0001",
-    );
-
-    await wrapper.get(".candidate-metric").trigger("click");
-    expect(wrapper.get(".candidate-list").text()).toContain("选品候选列表");
-    expect(wrapper.get(".candidate-list").text()).toContain("PROD0001");
-
-    await wrapper.get(".candidate-filter input").setValue(true);
-    expect(wrapper.findAll("tbody tr")).toHaveLength(1);
-    expect(wrapper.get("tbody tr").text()).toContain(productTitle);
-
-    wrapper.unmount();
-    const restored = mount(MarketDataView);
-    await restored.vm.$nextTick();
-    expect(restored.text()).toContain("1选品候选");
   });
 });

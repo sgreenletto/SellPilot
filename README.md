@@ -31,7 +31,7 @@ v0.1.0 表示 SellPilot 的公共后端、前端框架和工程质量基线已�
 - `PlatformAdapter`、基础状态可用的 `MockShopeeAdapter` 和非联网 `RealShopeeAdapterStub`。
 - 结构化 `ToolRegistry`、风险确认阻断、超时与可选 ToolCall 记录。
 - 官方 Python MCP SDK 的只读 `system_health`。
-- LangGraph 公共 State、工作流注册器和不调用 LLM 的 diagnostic 工作流。
+- 持久化 TaskWorkflowRuntime、强类型工作流注册器、原子执行权、Step 历史，以及不调用 LLM 的 diagnostic、system health 和 Selection 适配工作流。
 - Task 和 Confirmation 状态流转、幂等确认及自动化测试。
 
 ### 前端
@@ -175,7 +175,15 @@ npm run build
 - `POST /api/v1/auth/change-password`
 - `GET /api/v1/platform/status`
 - `GET /api/v1/tasks`
+- `POST /api/v1/tasks`
+- `GET /api/v1/tasks/workflows`
 - `GET /api/v1/tasks/{task_id}`
+- `GET /api/v1/tasks/{task_id}/steps`
+- `POST /api/v1/tasks/{task_id}/run`
+- `POST /api/v1/tasks/{task_id}/resume`
+- `POST /api/v1/tasks/{task_id}/retry`
+- `POST /api/v1/tasks/{task_id}/rerun`
+- `POST /api/v1/tasks/{task_id}/cancel`
 - `GET /api/v1/confirmations`
 - `GET /api/v1/confirmations/{confirmation_id}`
 - `POST /api/v1/confirmations/{confirmation_id}/confirm`
@@ -186,7 +194,8 @@ npm run build
 - `GET /api/v1/tool-calls`
 - `GET /api/v1/tool-calls/{tool_call_id}`
 
-Task 和 Confirmation 只能由内部 Service 创建，不提供公共创建 API。
+Task 创建 API 只接受已注册工作流和结构化输入，实际创建仍由内部
+`TaskService` 完成；Confirmation 仍只能由内部 Service 创建。
 
 ## Git 工作流
 
@@ -212,6 +221,7 @@ Task 和 Confirmation 只能由内部 Service 创建，不提供公共创建 API
 - `backend/README.md`：后端安装、迁移、运行与边界。
 - `frontend/README.md`：前端命令、路由、组件和设计系统约束。
 - `docs/architecture/backend-foundation.md`：后端分层与安全设计。
+- `docs/architecture/task-workflow-runtime.md`：统一任务与工作流执行运行时。
 - `docs/architecture/frontend-foundation.md`：前端分层与响应式设计。
 - `docs/api/foundation-api.md`：公共 API 契约。
 - `docs/frontend/design-system.md`：设计变量和公共组件规范。

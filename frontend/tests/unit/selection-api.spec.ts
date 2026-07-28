@@ -33,7 +33,7 @@ describe("selection API client", () => {
   });
 
   it("uses authenticated formal endpoints and converts compare ids", async () => {
-    window.localStorage.setItem("sellpilot_access_token", "test-token");
+    window.localStorage.setItem("sellpilot_token", "test-token");
     const fetchMock = vi.spyOn(window, "fetch").mockImplementation(async () => {
       return new Response(JSON.stringify({ code: 0, message: "ok", data: [] }), {
         status: 200,

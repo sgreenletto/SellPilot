@@ -20,6 +20,7 @@ from sellpilot.db.models.commerce import (
     Product,
     ReturnRefund,
     Review,
+    SelectionCandidate,
     Shop,
     Sku,
 )
@@ -29,6 +30,7 @@ from sellpilot.db.models.content import (
     ProductContent,
     ProductContentVersion,
 )
+from sellpilot.db.models.knowledge_base import KnowledgeChunk, KnowledgeDocument
 from sellpilot.db.models.model_management import ModelInvocation, PromptTemplate, PromptVersion
 from sellpilot.db.models.operation_log import OperationLog
 from sellpilot.db.models.tool_call import ToolCall
@@ -43,6 +45,8 @@ __all__ = [
     "CustomerSession",
     "GeneratedReport",
     "InventoryRecord",
+    "KnowledgeChunk",
+    "KnowledgeDocument",
     "LogisticsRecord",
     "LogisticsTrack",
     "ModelInvocation",
@@ -62,6 +66,7 @@ __all__ = [
     "ReviewAnalysisResult",
     "ReturnRefund",
     "Review",
+    "SelectionCandidate",
     "Shop",
     "Sku",
     "ToolCall",

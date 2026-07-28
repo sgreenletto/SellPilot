@@ -43,13 +43,23 @@ def unique_index_columns(database_path, table_name: str) -> set[tuple[str, ...]]
         }
 
 
-def insert_pre_runtime_rows(database_path) -> tuple[str, str]:
+def insert_pre_runtime_rows(database_path) -> tuple[str, str, str, str]:
     user_id = uuid4().hex
     task_id = uuid4().hex
     confirmation_id = uuid4().hex
     tool_call_id = uuid4().hex
+    step_id = uuid4().hex
+    operation_log_id = uuid4().hex
     now = datetime.now(UTC).isoformat()
     with sqlite3.connect(database_path) as connection:
+        connection.execute(
+            """
+            INSERT INTO agent_task_steps
+                (task_id, step_name, status, started_at, id)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (task_id, "legacy-step", "SUCCEEDED", now, step_id),
+        )
         connection.execute(
             """
             INSERT INTO users
@@ -95,7 +105,24 @@ def insert_pre_runtime_rows(database_path) -> tuple[str, str]:
             """,
             (task_id, "legacy_tool", "READ", "SUCCEEDED", now, tool_call_id),
         )
-    return confirmation_id, tool_call_id
+        connection.execute(
+            """
+            INSERT INTO operation_logs
+                (actor_id, action, target_type, request_id, agent_task_id, status, created_at, id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                user_id,
+                "legacy.action",
+                "legacy-target",
+                "00000000-0000-0000-0000-000000000000",
+                task_id,
+                "SUCCEEDED",
+                now,
+                operation_log_id,
+            ),
+        )
+    return confirmation_id, tool_call_id, step_id, operation_log_id
 
 
 def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
@@ -109,14 +136,16 @@ def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
     revisions = list(script.walk_revisions())
     revision_ids = [item.revision for item in revisions]
     assert len(revision_ids) == len(set(revision_ids))
-    assert script.get_heads() == ["20260728_0004"]
+    assert script.get_heads() == ["20260728_0007"]
     assert all(
         item.down_revision is None or script.get_revision(item.down_revision) is not None
         for item in revisions
     )
 
     command.upgrade(config, "20260727_0002")
-    confirmation_id, tool_call_id = insert_pre_runtime_rows(database_path)
+    confirmation_id, tool_call_id, step_id, operation_log_id = insert_pre_runtime_rows(
+        database_path
+    )
     command.upgrade(config, "20260728_0003")
     assert {
         "shops",
@@ -323,6 +352,75 @@ def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
         },
     ) == {"RESTRICT"}
 
+    command.upgrade(config, "20260728_0006")
+    assert {
+        "workflow_name",
+        "workflow_version",
+        "workflow_input",
+        "parent_task_id",
+        "current_node",
+        "serialized_state",
+        "task_attempt",
+        "request_id",
+        "execution_token",
+        "runner_id",
+        "execution_started_at",
+        "heartbeat_at",
+        "lease_expires_at",
+    }.issubset(column_names(database_path, "agent_tasks"))
+    assert {
+        "sequence",
+        "node_type",
+        "attempt_count",
+        "error_code",
+        "tool_call_id",
+        "confirmation_id",
+        "metadata",
+    }.issubset(column_names(database_path, "agent_task_steps"))
+    assert "task_step_id" in column_names(database_path, "confirmation_tasks")
+    assert "task_step_id" in column_names(database_path, "operation_logs")
+    assert ("task_id", "sequence") in unique_index_columns(
+        database_path,
+        "agent_task_steps",
+    )
+    with sqlite3.connect(database_path) as connection:
+        migrated_task = connection.execute(
+            """
+            SELECT workflow_name, workflow_version, task_attempt, request_id
+            FROM agent_tasks
+            WHERE id = (SELECT task_id FROM tool_calls WHERE id = ?)
+            """,
+            (tool_call_id,),
+        ).fetchone()
+        migrated_step = connection.execute(
+            """
+            SELECT sequence, node_type, attempt_count
+            FROM agent_task_steps
+            WHERE id = ?
+            """,
+            (step_id,),
+        ).fetchone()
+        migrated_log = connection.execute(
+            "SELECT task_step_id FROM operation_logs WHERE id = ?",
+            (operation_log_id,),
+        ).fetchone()
+    assert migrated_task == (
+        "diagnostic",
+        "1.0.0",
+        0,
+        "00000000-0000-0000-0000-000000000000",
+    )
+    assert migrated_step == (1, "action", 0)
+    assert migrated_log == (None,)
+
+    command.downgrade(config, "20260728_0004")
+    assert "workflow_name" not in column_names(database_path, "agent_tasks")
+    assert "sequence" not in column_names(database_path, "agent_task_steps")
+    assert "task_step_id" not in column_names(database_path, "operation_logs")
+
+    command.upgrade(config, "20260728_0006")
+    assert "workflow_name" in column_names(database_path, "agent_tasks")
+
     command.downgrade(config, "20260728_0003")
     assert "idempotency_scope" not in column_names(database_path, "confirmation_tasks")
     assert ("idempotency_key",) in unique_index_columns(
@@ -331,7 +429,7 @@ def test_alembic_upgrade_downgrade_upgrade(monkeypatch, tmp_path):
     )
     assert "products" in table_names(database_path)
 
-    command.upgrade(config, "20260728_0004")
+    command.upgrade(config, "20260728_0007")
     assert "idempotency_scope" in column_names(database_path, "confirmation_tasks")
     command.check(config)
 

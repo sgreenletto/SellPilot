@@ -13,6 +13,7 @@ from sellpilot.core.logging import configure_logging
 from sellpilot.core.middleware import RequestIdMiddleware, get_request_id
 from sellpilot.core.response import ApiResponse, ValidationIssue
 from sellpilot.tools.runtime import build_tool_registry
+from sellpilot.workflows.runtime import build_workflow_registry
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         debug=current_settings.debug,
     )
     application.state.tool_registry = build_tool_registry(current_settings)
+    application.state.workflow_registry = build_workflow_registry(current_settings)
     application.add_middleware(
         CORSMiddleware,
         allow_origins=current_settings.cors_origins,

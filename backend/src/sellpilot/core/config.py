@@ -98,6 +98,42 @@ class Settings(BaseSettings):
         le=1_048_576,
         validation_alias="TOOL_AUDIT_PAYLOAD_MAX_BYTES",
     )
+    task_max_steps: int = Field(
+        default=50,
+        ge=1,
+        le=200,
+        validation_alias="TASK_MAX_STEPS",
+    )
+    task_default_node_timeout_seconds: float = Field(
+        default=60,
+        gt=0,
+        le=300,
+        validation_alias="TASK_DEFAULT_NODE_TIMEOUT_SECONDS",
+    )
+    task_max_node_timeout_seconds: float = Field(
+        default=300,
+        gt=0,
+        le=900,
+        validation_alias="TASK_MAX_NODE_TIMEOUT_SECONDS",
+    )
+    task_max_attempts: int = Field(
+        default=3,
+        ge=1,
+        le=5,
+        validation_alias="TASK_MAX_ATTEMPTS",
+    )
+    task_state_max_bytes: int = Field(
+        default=65_536,
+        ge=1024,
+        le=1_048_576,
+        validation_alias="TASK_STATE_MAX_BYTES",
+    )
+    task_stale_execution_seconds: int = Field(
+        default=600,
+        ge=30,
+        le=86_400,
+        validation_alias="TASK_STALE_EXECUTION_SECONDS",
+    )
 
     shopee_partner_id: str | None = Field(default=None, validation_alias="SHOPEE_PARTNER_ID")
     shopee_partner_key: SecretStr | None = Field(
@@ -130,6 +166,8 @@ class Settings(BaseSettings):
             raise ValueError("Tool default timeout must not exceed the maximum timeout")
         if self.tool_retry_initial_delay_ms > self.tool_retry_max_delay_ms:
             raise ValueError("Tool retry initial delay must not exceed the maximum delay")
+        if self.task_default_node_timeout_seconds > self.task_max_node_timeout_seconds:
+            raise ValueError("Task default node timeout must not exceed the maximum timeout")
 
         jwt_secret = self.jwt_secret_key.get_secret_value()
         if self.app_env == "production" and (

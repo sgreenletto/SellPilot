@@ -2,7 +2,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-from sellpilot.core.enums import ToolRiskLevel
+from sellpilot.core.enums import ToolCallerType, ToolRiskLevel
 from sellpilot.core.exceptions import ParameterError, UnauthenticatedError
 from sellpilot.schemas.review_analysis import (
     ReviewAnalysisCreateRequest,
@@ -66,11 +66,17 @@ async def _analyze(
     context: ToolExecutionContext,
 ):
     service = _service(context)
+    workflow_owned = context.caller_type is ToolCallerType.WORKFLOW and context.task_id is not None
     created = await service.create(
         ReviewAnalysisCreateRequest.model_validate(payload.model_dump()),
         _user_id(context),
+        agent_task_id=context.task_id if workflow_owned else None,
     )
-    result = await service.run(created.analysis_id, _user_id(context))
+    result = await service.run(
+        created.analysis_id,
+        _user_id(context),
+        manage_agent_task=not (workflow_owned and created.agent_task_id == context.task_id),
+    )
     return AnalyzeProductReviewsOutput(analysis=result.model_dump(mode="json"))
 
 

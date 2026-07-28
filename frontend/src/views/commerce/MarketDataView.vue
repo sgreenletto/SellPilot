@@ -5,15 +5,21 @@ import * as XLSX from "xlsx";
 
 import defaultProductsCsv from "../../../../data/demo/shopee_mock/products.csv?raw";
 import defaultReviewsCsv from "../../../../data/demo/shopee_mock/reviews.csv?raw";
+import {
+  confirmCommerceOperation,
+  listSelectionCandidates,
+  requestProductImport,
+  requestSelectionCandidate,
+} from "@/api/commerce";
 import SpButton from "@/components/base/SpButton.vue";
 import SpCard from "@/components/base/SpCard.vue";
 import SpEmptyState from "@/components/base/SpEmptyState.vue";
 import SpInput from "@/components/base/SpInput.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
 import { sheetRows } from "@/utils/spreadsheet";
+import type { ProductDraftPayload } from "@/types/commerce";
 
 type MarketRow = Record<string, string | number | boolean>;
-const CANDIDATE_STORAGE_KEY = "sellpilot_market_candidate_product_ids";
 
 const rows = ref<MarketRow[]>([]);
 const reviews = ref<MarketRow[]>([]);
@@ -90,7 +96,6 @@ function loadWorkbook(workbook: XLSX.WorkBook, sourceName: string): "products" |
   rows.value = normalizedRows;
   source.value = sourceName;
   selected.value = null;
-  reconcileCandidates();
   currentPage.value = 1;
   return "products";
 }
@@ -112,11 +117,32 @@ async function importFile(event: Event): Promise<void> {
     for (const file of files) {
       const workbook = await readFileWorkbook(file);
       const kind = loadWorkbook(workbook, file.name);
+      if (
+        kind === "products" &&
+        window.confirm(`已校验 ${rows.value.length} 条市场商品，确认写入后端数据库吗？`)
+      ) {
+        const products: ProductDraftPayload[] = rows.value.map((row) => ({
+          product_id: row.product_id ? String(row.product_id) : undefined,
+          source_shop_id: String(row.shop_id ?? "SHOP001"),
+          title: String(row.title ?? row.product_name ?? "未命名商品"),
+          category_id: String(row.category_id ?? "MANUAL"),
+          category_name: String(row.category_name ?? "未分类"),
+          description: String(row.description ?? ""),
+          site: String(row.site ?? "Singapore"),
+          currency: String(row.currency ?? "SGD"),
+          price: Number(row.price ?? 0),
+          cost: Number(row.cost ?? 0),
+          shipping_cost: Number(row.shipping_cost ?? 0),
+          source_type: String(row.source_type ?? "manual_import"),
+        }));
+        const confirmation = await requestProductImport(products);
+        await confirmCommerceOperation(confirmation.id);
+      }
       results.push(
         `${file.name}（${kind === "reviews" ? reviews.value.length : rows.value.length} 条）`,
       );
     }
-    importMessage.value = `已在本地解析 ${results.join("、")}；商品与评论分别保留，尚未写入后端。`;
+    importMessage.value = `已解析 ${results.join("、")}；确认过的商品批次已写入后端，评论文件保留为关联预览。`;
   } catch (error) {
     importMessage.value = error instanceof Error ? error.message : "文件解析失败";
   } finally {
@@ -139,36 +165,34 @@ function rowKey(row: MarketRow): string {
   );
 }
 
-function persistCandidates(): void {
-  window.localStorage.setItem(CANDIDATE_STORAGE_KEY, JSON.stringify([...candidates.value]));
-}
-
-function restoreCandidates(): void {
+async function loadCandidates(): Promise<void> {
   try {
-    const stored = JSON.parse(window.localStorage.getItem(CANDIDATE_STORAGE_KEY) ?? "[]");
-    candidates.value = new Set(
-      Array.isArray(stored)
-        ? stored.filter((item): item is string => typeof item === "string")
-        : [],
-    );
+    candidates.value = new Set((await listSelectionCandidates()).map((item) => item.product_id));
   } catch {
-    candidates.value = new Set();
+    importMessage.value = "候选清单读取失败，请确认已登录且后端迁移已执行。";
   }
 }
 
-function reconcileCandidates(): void {
-  const available = new Set(rows.value.map(rowKey));
-  candidates.value = new Set([...candidates.value].filter((key) => available.has(key)));
-  persistCandidates();
-}
-
-function toggleCandidate(row: MarketRow): void {
+async function toggleCandidate(row: MarketRow): Promise<void> {
   const key = rowKey(row);
-  const next = new Set(candidates.value);
-  if (next.has(key)) next.delete(key);
-  else next.add(key);
-  candidates.value = next;
-  persistCandidates();
+  const shouldAdd = !candidates.value.has(key);
+  const verb = shouldAdd ? "加入" : "移出";
+  if (!window.confirm(`确认将“${value(row, "title", "product_name")}”${verb}持久化候选清单？`))
+    return;
+  try {
+    const confirmation = await requestSelectionCandidate(
+      key,
+      shouldAdd,
+      value(row, "title", "product_name"),
+      value(row, "source_type"),
+      Boolean(row.is_mock_data),
+    );
+    await confirmCommerceOperation(confirmation.id);
+    await loadCandidates();
+    importMessage.value = `已${verb}后端候选清单。`;
+  } catch (error) {
+    importMessage.value = error instanceof Error ? error.message : `${verb}候选失败`;
+  }
   if (candidates.value.size === 0) {
     onlyCandidates.value = false;
     showCandidateList.value = false;
@@ -181,8 +205,8 @@ function value(row: MarketRow, ...keys: string[]): string {
 }
 
 onMounted(() => {
-  restoreCandidates();
   loadProjectDemo();
+  void loadCandidates();
 });
 watch(
   [query, sourceFilter, siteFilter, categoryFilter, statusFilter, onlyCandidates, pageSize],
@@ -196,11 +220,6 @@ watch(totalPages, (pages) => {
 <template>
   <PageContainer>
     <header class="heading">
-      <div>
-        <p class="eyebrow">MOCK / 公开采集 / 手工导入</p>
-        <h1>市场数据</h1>
-        <p>导入市场商品或评论 CSV/Excel，并核对来源、指标和候选商品。</p>
-      </div>
       <div class="heading-actions">
         <SpButton variant="secondary" @click="loadProjectDemo">加载项目演示数据</SpButton>
         <label class="file-button">
@@ -245,7 +264,7 @@ watch(totalPages, (pages) => {
         <div class="candidate-list-header">
           <div>
             <strong>选品候选列表</strong>
-            <span>候选ID保存在当前浏览器，后续可传给智能选品模块。</span>
+            <span>候选清单保存在后端，可跨会话和模块继续使用。</span>
           </div>
           <SpButton size="sm" variant="ghost" @click="showCandidateList = false">收起</SpButton>
         </div>
@@ -465,6 +484,7 @@ watch(totalPages, (pages) => {
 }
 .heading {
   margin-bottom: var(--sp-space-6);
+  justify-content: flex-end;
 }
 .heading h1 {
   margin: 4px 0;

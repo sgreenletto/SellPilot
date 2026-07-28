@@ -9,7 +9,7 @@ import type {
   SelectionTask,
 } from "@/types/selection";
 
-const TOKEN_KEY = "sellpilot_access_token";
+const TOKEN_KEY = "sellpilot_token";
 
 function authInit(method = "GET", body?: unknown): RequestInit {
   const token = window.localStorage.getItem(TOKEN_KEY);

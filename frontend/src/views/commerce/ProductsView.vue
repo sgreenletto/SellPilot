@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { Copy, FileSpreadsheet, Image as ImageIcon, Plus, Search } from "@lucide/vue";
+import { storeToRefs } from "pinia";
 import * as XLSX from "xlsx";
 
-import inventoryCsv from "../../../../data/demo/shopee_mock/inventory.csv?raw";
 import productsCsv from "../../../../data/demo/shopee_mock/products.csv?raw";
 import skusCsv from "../../../../data/demo/shopee_mock/skus.csv?raw";
+import {
+  confirmCommerceOperation,
+  requestProductDraft,
+  requestProductImport,
+} from "@/api/commerce";
+import { loadCommerceDashboardSnapshot } from "@/api/dashboard";
 import SpButton from "@/components/base/SpButton.vue";
 import SpCard from "@/components/base/SpCard.vue";
 import SpEmptyState from "@/components/base/SpEmptyState.vue";
@@ -13,22 +19,27 @@ import SpInput from "@/components/base/SpInput.vue";
 import CommercePagination from "@/components/commerce/CommercePagination.vue";
 import StatusBadge from "@/components/data-display/StatusBadge.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
+import { useAppStore } from "@/stores/app";
 import { csvRows, sheetRows } from "@/utils/spreadsheet";
+import type { ProductDraftPayload } from "@/types/commerce";
 
-type Row = Record<string, string | number>;
+type Row = Record<string, string | number | boolean | null>;
 
 function readCsv(csv: string): Row[] {
   return csvRows(csv) as Row[];
 }
 
-const products = ref<Row[]>(readCsv(productsCsv));
+const appStore = useAppStore();
+const { selectedShopId } = storeToRefs(appStore);
+const productReference = readCsv(productsCsv);
+const products = ref<Row[]>([]);
 const skus = readCsv(skusCsv);
-const inventory = readCsv(inventoryCsv);
+const inventory = ref<Row[]>([]);
 const query = ref("");
 const status = ref("");
 const currentPage = ref(1);
 const pageSize = ref(10);
-const selected = ref<Row | null>(products.value[0] ?? null);
+const selected = ref<Row | null>(null);
 const editing = ref(false);
 const activeLanguage = ref("en");
 const languageOptions = [
@@ -45,10 +56,13 @@ const languageOptions = [
 interface LocalizedVersion {
   title?: string;
   description?: string;
+  category_name?: string;
 }
 const localizedByProduct = ref<Record<string, Record<string, LocalizedVersion>>>({});
 const notice = ref("");
-const history = ref<string[]>(["已从项目 Mock 数据包载入商品"]);
+const history = ref<string[]>([]);
+const dataStatus = ref<"loading" | "backend" | "error">("loading");
+const dataMessage = ref("正在读取当前店铺后端商品…");
 
 const filtered = computed(() => {
   const keyword = query.value.trim().toLowerCase();
@@ -70,8 +84,39 @@ const selectedSku = computed(() =>
   skus.find((sku) => sku.product_id === selected.value?.product_id),
 );
 const selectedInventory = computed(() =>
-  inventory.find((item) => item.sku_id === selectedSku.value?.sku_id),
+  inventory.value.find((item) => item.sku_id === selectedSku.value?.sku_id),
 );
+
+async function loadCurrentShop(): Promise<void> {
+  dataStatus.value = "loading";
+  dataMessage.value = "正在读取当前店铺后端商品…";
+  try {
+    const snapshot = await loadCommerceDashboardSnapshot(selectedShopId.value);
+    products.value = snapshot.products.map((product) => {
+      const reference = productReference.find(
+        (candidate) => candidate.product_id === product.product_id,
+      );
+      return { ...reference, ...product };
+    });
+    inventory.value = snapshot.inventory.map((item) => ({ ...item }));
+    selected.value =
+      products.value.find((product) => product.product_id === selected.value?.product_id) ??
+      products.value[0] ??
+      null;
+    currentPage.value = 1;
+    const scope =
+      selectedShopId.value === "all" ? "全部模拟店铺" : `来源店铺 ${selectedShopId.value}`;
+    dataStatus.value = "backend";
+    dataMessage.value = `已连接后端：当前展示${scope}的 ${products.value.length} 个商品。`;
+    history.value.unshift(`从后端加载${scope}商品`);
+  } catch {
+    products.value = [];
+    inventory.value = [];
+    selected.value = null;
+    dataStatus.value = "error";
+    dataMessage.value = "后端商品读取失败，未使用本地全量 CSV 冒充当前店铺数据。";
+  }
+}
 
 function defaultLocalizedTitle(language: string): string {
   const title = String(selected.value?.title ?? "未命名商品");
@@ -81,6 +126,11 @@ function defaultLocalizedTitle(language: string): string {
 function defaultLocalizedDescription(language: string): string {
   const description = String(selected.value?.description ?? "");
   return language === "en" ? description : "";
+}
+
+function defaultLocalizedCategory(language: string): string {
+  const category = String(selected.value?.category_name ?? "未分类");
+  return language === "en" ? category : "";
 }
 
 function localizedField(field: keyof LocalizedVersion, fallback: () => string) {
@@ -108,14 +158,113 @@ const localizedTitle = localizedField("title", () => defaultLocalizedTitle(activ
 const localizedDescription = localizedField("description", () =>
   defaultLocalizedDescription(activeLanguage.value),
 );
+const localizedCategory = localizedField("category_name", () =>
+  defaultLocalizedCategory(activeLanguage.value),
+);
 const activeLanguageLabel = computed(
   () =>
     languageOptions.find((language) => language.code === activeLanguage.value)?.label ??
     activeLanguage.value,
 );
 const hasLocalizedContent = computed(
-  () => Boolean(localizedTitle.value.trim()) && Boolean(localizedDescription.value.trim()),
+  () =>
+    Boolean(localizedTitle.value.trim()) &&
+    Boolean(localizedDescription.value.trim()) &&
+    Boolean(localizedCategory.value.trim()),
 );
+const statusLabels: Record<string, Record<string, string>> = {
+  en: {
+    active: "Active",
+    draft: "Draft",
+    inactive: "Inactive",
+    pending: "Pending",
+    failed: "Failed",
+  },
+  "zh-CN": {
+    active: "在售",
+    draft: "草稿",
+    inactive: "已下架",
+    pending: "待处理",
+    failed: "失败",
+  },
+  "zh-TW": {
+    active: "上架中",
+    draft: "草稿",
+    inactive: "已下架",
+    pending: "待處理",
+    failed: "失敗",
+  },
+  ms: {
+    active: "Aktif",
+    draft: "Draf",
+    inactive: "Tidak aktif",
+    pending: "Menunggu",
+    failed: "Gagal",
+  },
+  id: {
+    active: "Aktif",
+    draft: "Draf",
+    inactive: "Tidak aktif",
+    pending: "Menunggu",
+    failed: "Gagal",
+  },
+  th: {
+    active: "เปิดใช้งาน",
+    draft: "ฉบับร่าง",
+    inactive: "ปิดใช้งาน",
+    pending: "รอดำเนินการ",
+    failed: "ล้มเหลว",
+  },
+  vi: {
+    active: "Đang hoạt động",
+    draft: "Bản nháp",
+    inactive: "Ngừng hoạt động",
+    pending: "Đang chờ",
+    failed: "Thất bại",
+  },
+  tl: {
+    active: "Aktibo",
+    draft: "Draft",
+    inactive: "Hindi aktibo",
+    pending: "Nakabinbin",
+    failed: "Nabigo",
+  },
+  "pt-BR": {
+    active: "Ativo",
+    draft: "Rascunho",
+    inactive: "Inativo",
+    pending: "Pendente",
+    failed: "Falhou",
+  },
+};
+const localizedStatus = computed(() => {
+  const statusCode = String(selected.value?.status ?? "");
+  return (statusLabels[activeLanguage.value]?.[statusCode] ?? statusCode) || "—";
+});
+
+function draftPayload(row: Row): ProductDraftPayload {
+  const productId = String(row.product_id ?? "");
+  return {
+    product_id:
+      productId && !productId.startsWith("LOCAL-") && !productId.startsWith("COPY-")
+        ? productId
+        : undefined,
+    source_shop_id:
+      selectedShopId.value === "all"
+        ? String(row.source_shop_id ?? "SHOP001")
+        : selectedShopId.value,
+    title: String(row.title ?? "未命名商品"),
+    category_id: String(row.category_id ?? row.category_external_id ?? "MANUAL"),
+    category_name: String(row.category_name ?? "未分类"),
+    description: String(row.description ?? ""),
+    site: String(row.site ?? "Singapore"),
+    currency: String(row.currency ?? "SGD"),
+    price: Number(row.price ?? 0),
+    cost: Number(row.cost ?? 0),
+    shipping_cost: Number(row.shipping_cost ?? 0),
+    source_type: String(row.source_type ?? "manual_import"),
+  };
+}
 
 async function importProducts(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement;
@@ -126,8 +275,18 @@ async function importProducts(event: Event): Promise<void> {
   if (!importedRows.length) return;
   products.value = importedRows;
   selected.value = products.value[0] ?? null;
-  notice.value = `已在前端导入 ${products.value.length} 条商品，尚未写入后端。`;
-  history.value.unshift(`导入文件 ${file.name}`);
+  notice.value = `已校验并预览 ${products.value.length} 条商品，确认后才会写入后端。`;
+  if (window.confirm(`字段校验通过。确认将 ${products.value.length} 条商品写入数据库吗？`)) {
+    try {
+      const confirmation = await requestProductImport(importedRows.map(draftPayload));
+      await confirmCommerceOperation(confirmation.id);
+      await loadCurrentShop();
+      notice.value = `已确认导入 ${importedRows.length} 条商品并重新读取后端数据。`;
+      history.value.unshift(`确认导入文件 ${file.name}`);
+    } catch (error) {
+      notice.value = error instanceof Error ? error.message : "商品导入失败";
+    }
+  }
   input.value = "";
 }
 
@@ -163,10 +322,18 @@ function copyProduct(): void {
   history.value.unshift(`复制商品 ${copy.product_id}`);
 }
 
-function saveDraft(): void {
-  editing.value = false;
-  notice.value = "草稿已保存在当前浏览器会话；后端商品写入接口尚未开放。";
-  history.value.unshift(`保存草稿 ${selected.value?.product_id}`);
+async function saveDraft(): Promise<void> {
+  if (!selected.value || !window.confirm("确认将当前商品保存为后端草稿吗？")) return;
+  try {
+    const confirmation = await requestProductDraft(draftPayload(selected.value));
+    await confirmCommerceOperation(confirmation.id);
+    editing.value = false;
+    await loadCurrentShop();
+    notice.value = "商品草稿已通过确认流程持久化，刷新页面后仍会保留。";
+    history.value.unshift(`保存后端草稿 ${selected.value?.product_id}`);
+  } catch (error) {
+    notice.value = error instanceof Error ? error.message : "保存草稿失败";
+  }
 }
 
 function badge(value: unknown): "active" | "pending" | "failed" {
@@ -177,16 +344,13 @@ function badge(value: unknown): "active" | "pending" | "failed" {
 }
 
 watch([query, status, pageSize], () => (currentPage.value = 1));
+watch(selectedShopId, () => void loadCurrentShop());
+onMounted(() => void loadCurrentShop());
 </script>
 
 <template>
   <PageContainer>
     <header class="heading">
-      <div>
-        <p class="eyebrow">MOCK SHOPEE · 商品运营</p>
-        <h1>商品管理</h1>
-        <p>管理商品资料、草稿、SKU、多语言内容与操作历史。</p>
-      </div>
       <div class="actions">
         <label class="file-button"
           ><FileSpreadsheet :size="16" />导入 CSV / Excel<input
@@ -200,6 +364,9 @@ watch([query, status, pageSize], () => (currentPage.value = 1));
       </div>
     </header>
 
+    <p :class="['data-status', `data-status--${dataStatus}`]" role="status">
+      {{ dataMessage }}
+    </p>
     <p v-if="notice" class="notice" role="status">{{ notice }}</p>
 
     <div class="workspace">
@@ -314,9 +481,25 @@ watch([query, status, pageSize], () => (currentPage.value = 1));
                 activeLanguage === 'en' ? '商品名称' : `待补充${activeLanguageLabel}名称`
               "
           /></label>
-          <label>类目<input v-model="selected.category_name" :disabled="!editing" /></label>
-          <label>价格<input v-model="selected.price" :disabled="!editing" type="number" /></label>
-          <label>状态<input v-model="selected.status" disabled /></label>
+          <label
+            >类目<input
+              v-model="localizedCategory"
+              :disabled="!editing"
+              :placeholder="
+                activeLanguage === 'en' ? '商品类目' : `待补充${activeLanguageLabel}类目`
+              "
+          /></label>
+          <label
+            >价格（{{ selected.currency }}）<input
+              v-model="selected.price"
+              :disabled="!editing"
+              type="number"
+          /></label>
+          <label
+            >状态<input :value="localizedStatus" disabled /><small
+              >系统状态代码：{{ selected.status }}</small
+            ></label
+          >
           <label class="wide"
             >商品描述<textarea
               v-model="localizedDescription"
@@ -355,7 +538,7 @@ watch([query, status, pageSize], () => (currentPage.value = 1));
         <div class="mock-gallery" aria-label="Mock 商品图片预览">
           <div v-for="index in 3" :key="index" class="mock-image">
             <ImageIcon :size="28" />
-            <strong>{{ selected.category_name }}</strong>
+            <strong>{{ localizedCategory || "待翻译类目" }}</strong>
             <span>Mock 视图 {{ index }}</span>
           </div>
         </div>
@@ -381,6 +564,7 @@ watch([query, status, pageSize], () => (currentPage.value = 1));
   gap: var(--sp-space-3);
 }
 .heading {
+  justify-content: flex-end;
   margin-bottom: var(--sp-space-6);
 }
 .heading h1 {
@@ -426,6 +610,22 @@ small {
   color: var(--sp-color-primary);
   background: var(--sp-color-accent-blue-soft);
   border-radius: var(--sp-radius-control);
+}
+.data-status {
+  padding: var(--sp-space-3) var(--sp-space-4);
+  margin: 0 0 var(--sp-space-4);
+  color: var(--sp-color-text-secondary);
+  background: var(--sp-color-surface);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-control);
+}
+.data-status--backend {
+  color: var(--sp-color-success);
+  background: var(--sp-color-success-soft);
+}
+.data-status--error {
+  color: var(--sp-color-danger);
+  background: var(--sp-color-danger-soft);
 }
 .translation-status {
   display: flex;

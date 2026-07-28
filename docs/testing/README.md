@@ -4,6 +4,8 @@
 - `member3-ai-evaluation-report.md`：由评估命令实际生成的最新报告。
 - `member3-integration-verification.md`：成员三两条核心业务闭环的联调验收。
 - `tool-execution-runtime.md`: unified runtime, confirmation, MCP and migration tests.
+- `task-workflow-runtime.md`: TaskRunner, step, confirmation recovery, concurrency,
+  Selection/Review Analysis compatibility and migration tests.
 
 本目录用于后续维护测试策略、测试分层、测试数据规则和质量门槛。
 

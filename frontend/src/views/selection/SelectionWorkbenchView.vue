@@ -846,6 +846,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", handleGlobalKeydow
   justify-content: space-between;
 }
 .page-heading {
+  justify-content: space-between;
   margin-bottom: var(--sp-space-6);
 }
 .page-context {
