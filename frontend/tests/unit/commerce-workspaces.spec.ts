@@ -20,6 +20,7 @@ const confirmCommerceOperation = vi.fn();
 const cancelCommerceOperation = vi.fn();
 const requestProductDraft = vi.fn();
 const requestProductImport = vi.fn();
+const getProductTranslationProviderStatus = vi.fn();
 
 vi.mock("@/api/dashboard", () => ({
   loadCommerceDashboardSnapshot: (...args: unknown[]) => loadCommerceDashboardSnapshot(...args),
@@ -32,6 +33,12 @@ vi.mock("@/api/commerce", async (importOriginal) => ({
   cancelCommerceOperation: (...args: unknown[]) => cancelCommerceOperation(...args),
   requestProductDraft: (...args: unknown[]) => requestProductDraft(...args),
   requestProductImport: (...args: unknown[]) => requestProductImport(...args),
+}));
+vi.mock("@/api/product-translation", () => ({
+  getProductTranslationProviderStatus: (...args: unknown[]) =>
+    getProductTranslationProviderStatus(...args),
+  requestProductTranslation: vi.fn(),
+  getProductTranslationTask: vi.fn(),
 }));
 
 const dashboardOrders: Order[] = [
@@ -148,6 +155,12 @@ describe("成员二业务工作台", () => {
     cancelCommerceOperation.mockReset();
     requestProductDraft.mockReset();
     requestProductImport.mockReset();
+    getProductTranslationProviderStatus.mockReset();
+    getProductTranslationProviderStatus.mockResolvedValue({
+      provider: "offline_template",
+      configured: false,
+      supported_languages: [],
+    });
     vi.stubGlobal(
       "confirm",
       vi.fn(() => true),

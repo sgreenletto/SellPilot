@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
-from sqlalchemy import delete, text
+from sqlalchemy import delete
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -456,7 +456,6 @@ async def test_selection_evidence_chain_restricts_parent_delete(
     session: AsyncSession,
     admin_user: User,
 ) -> None:
-    await session.execute(text("PRAGMA foreign_keys = ON"))
     repository = SelectionRepository(session)
     task = await repository.add_task(
         ProductSelectionTask(

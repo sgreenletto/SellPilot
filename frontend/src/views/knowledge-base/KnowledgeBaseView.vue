@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { BookOpen, Search, Trash2, Zap } from "@lucide/vue"
-import { ElMessage, ElMessageBox } from "element-plus"
-import { computed, onMounted, ref, watch } from "vue"
+import { BookOpen, Search, Trash2, Zap } from "@lucide/vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { computed, onMounted, ref, watch } from "vue";
 import {
   fetchDocuments,
   deleteDocument,
   retrieveKnowledge,
   type KnowledgeDocumentItem,
   type RetrievalItem,
-} from "@/api/knowledge-base"
-import SpBadge from "@/components/base/SpBadge.vue"
-import SpButton from "@/components/base/SpButton.vue"
-import SpInput from "@/components/base/SpInput.vue"
-import PageContainer from "@/components/layout/PageContainer.vue"
+} from "@/api/knowledge-base";
+import SpBadge from "@/components/base/SpBadge.vue";
+import SpButton from "@/components/base/SpButton.vue";
+import SpInput from "@/components/base/SpInput.vue";
+import PageContainer from "@/components/layout/PageContainer.vue";
 
 // ==================== 文档列表 ====================
 
@@ -21,54 +21,55 @@ const categoryTabs = [
   { key: "product", label: "商品知识" },
   { key: "faq", label: "客服FAQ" },
   { key: "review", label: "用户评论" },
-]
+];
 
-const activeCategory = ref("")
-const searchQuery = ref("")
-const documents = ref<KnowledgeDocumentItem[]>([])
-const docTotal = ref(0)
-const docLoading = ref(false)
+const activeCategory = ref("");
+const searchQuery = ref("");
+const documents = ref<KnowledgeDocumentItem[]>([]);
+const docTotal = ref(0);
+const docLoading = ref(false);
 
 const categoryLabels: Record<string, string> = {
-  product: "商品知识", faq: "客服FAQ", review: "用户评论",
-}
+  product: "商品知识",
+  faq: "客服FAQ",
+  review: "用户评论",
+};
 
-const statusTone = (s: string) => s === "indexed" ? "success" : s === "failed" ? "danger" : "warning"
+const statusTone = (s: string) =>
+  s === "indexed" ? "success" : s === "failed" ? "danger" : "warning";
 
 async function loadDocuments() {
-  docLoading.value = true
+  docLoading.value = true;
   try {
     const res = await fetchDocuments({
       page_size: 100,
       category: activeCategory.value || undefined,
-    })
-    documents.value = res.items
-    docTotal.value = res.total
+    });
+    documents.value = res.items;
+    docTotal.value = res.total;
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "未知错误"
-    ElMessage.error(`加载文档失败：${msg}`)
+    const msg = e instanceof Error ? e.message : "未知错误";
+    ElMessage.error(`加载文档失败：${msg}`);
   } finally {
-    docLoading.value = false
+    docLoading.value = false;
   }
 }
 
 const filteredDocs = computed(() => {
-  if (!searchQuery.value.trim()) return documents.value
-  const q = searchQuery.value.trim().toLowerCase()
+  if (!searchQuery.value.trim()) return documents.value;
+  const q = searchQuery.value.trim().toLowerCase();
   return documents.value.filter(
-    (d) =>
-      d.title.toLowerCase().includes(q) ||
-      (d.source ?? "").toLowerCase().includes(q),
-  )
-})
+    (d) => d.title.toLowerCase().includes(q) || (d.source ?? "").toLowerCase().includes(q),
+  );
+});
 
 const categoryCounts = computed(() => {
-  const m: Record<string, number> = { "": docTotal.value }
+  const m: Record<string, number> = { "": docTotal.value };
   documents.value.forEach((d) => {
-    m[d.category] = (m[d.category] ?? 0) + 1
-  })
-  return m
-})
+    m[d.category] = (m[d.category] ?? 0) + 1;
+  });
+  return m;
+});
 
 async function handleDelete(doc: KnowledgeDocumentItem) {
   try {
@@ -76,53 +77,53 @@ async function handleDelete(doc: KnowledgeDocumentItem) {
       confirmButtonText: "删除",
       cancelButtonText: "取消",
       type: "warning",
-    })
-    await deleteDocument(doc.id)
-    documents.value = documents.value.filter((d) => d.id !== doc.id)
-    docTotal.value = Math.max(0, docTotal.value - 1)
-    ElMessage.success("已删除")
+    });
+    await deleteDocument(doc.id);
+    documents.value = documents.value.filter((d) => d.id !== doc.id);
+    docTotal.value = Math.max(0, docTotal.value - 1);
+    ElMessage.success("已删除");
   } catch {
     // 用户取消
   }
 }
 
-onMounted(loadDocuments)
-watch(activeCategory, () => loadDocuments())
+onMounted(loadDocuments);
+watch(activeCategory, () => loadDocuments());
 
 // ==================== 检索测试 ====================
 
-const queryText = ref("")
-const searching = ref(false)
-const retrievalResults = ref<RetrievalItem[]>([])
+const queryText = ref("");
+const searching = ref(false);
+const retrievalResults = ref<RetrievalItem[]>([]);
 
 async function handleSearch() {
-  const q = queryText.value.trim()
+  const q = queryText.value.trim();
   if (!q) {
-    ElMessage.warning("请输入检索问题")
-    return
+    ElMessage.warning("请输入检索问题");
+    return;
   }
-  searching.value = true
-  retrievalResults.value = []
+  searching.value = true;
+  retrievalResults.value = [];
   try {
-    const results = await retrieveKnowledge({ query: q, top_k: 5 })
-    retrievalResults.value = results
+    const results = await retrieveKnowledge({ query: q, top_k: 5 });
+    retrievalResults.value = results;
     if (results.length === 0) {
-      ElMessage.info("未找到匹配片段")
+      ElMessage.info("未找到匹配片段");
     } else {
-      ElMessage.success(`返回 ${results.length} 条匹配片段`)
+      ElMessage.success(`返回 ${results.length} 条匹配片段`);
     }
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "未知错误"
-    ElMessage.error(`检索失败：${msg}`)
+    const msg = e instanceof Error ? e.message : "未知错误";
+    ElMessage.error(`检索失败：${msg}`);
   } finally {
-    searching.value = false
+    searching.value = false;
   }
 }
 
 function scoreClass(s: number) {
-  if (s >= 0.5) return "success"
-  if (s >= 0.3) return "warning"
-  return "danger"
+  if (s >= 0.5) return "success";
+  if (s >= 0.3) return "warning";
+  return "danger";
 }
 </script>
 
@@ -150,12 +151,7 @@ function scoreClass(s: number) {
               <span class="kb-tab__count">{{ categoryCounts[tab.key] ?? 0 }}</span>
             </button>
           </div>
-          <SpInput
-            v-model="searchQuery"
-            placeholder="搜索标题或来源…"
-            class="kb-search"
-            clearable
-          >
+          <SpInput v-model="searchQuery" placeholder="搜索标题或来源…" class="kb-search" clearable>
             <template #prefix><Search :size="14" /></template>
           </SpInput>
         </div>
@@ -178,7 +174,9 @@ function scoreClass(s: number) {
                 <td>
                   <div class="kb-cell-title">
                     <strong>{{ doc.title }}</strong>
-                    <small>{{ doc.file_type }} · {{ (doc.file_size_bytes / 1024).toFixed(1) }} KB</small>
+                    <small
+                      >{{ doc.file_type }} · {{ (doc.file_size_bytes / 1024).toFixed(1) }} KB</small
+                    >
                   </div>
                 </td>
                 <td>
@@ -225,11 +223,7 @@ function scoreClass(s: number) {
 
         <!-- 检索结果 -->
         <div v-if="retrievalResults.length > 0" class="kb-results">
-          <div
-            v-for="(item, idx) in retrievalResults"
-            :key="idx"
-            class="kb-result"
-          >
+          <div v-for="(item, idx) in retrievalResults" :key="idx" class="kb-result">
             <div class="kb-result__head">
               <strong>#{{ idx + 1 }}</strong>
               <span :class="['kb-score', `kb-score--${scoreClass(item.score)}`]">
@@ -258,7 +252,7 @@ function scoreClass(s: number) {
   border: 1px solid #eee;
   border-radius: 20px;
   padding: 24px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, .04);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 .kb-card__head {
   display: flex;
@@ -305,7 +299,7 @@ function scoreClass(s: number) {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all .15s;
+  transition: all 0.15s;
 }
 .kb-tab:hover {
   border-color: #0b234a;

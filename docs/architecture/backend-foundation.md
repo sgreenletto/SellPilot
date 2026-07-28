@@ -21,7 +21,9 @@ API 路由不承载业务状态机。AgentTask 与 ConfirmationTask 只能由内
 
 ## 配置与安全
 
-`Settings` 从环境变量、根目录 `.env` 或 `backend/.env` 读取配置，并通过缓存工厂提供。测试可用环境变量覆盖并清理缓存。
+`Settings` 从环境变量或仓库根目录 `.env` 读取配置，并通过缓存工厂提供。
+团队不得创建或分发 `backend/.env`；百炼、数据库和后端安全配置统一以根目录
+`.env.example` 为模板写入本地根目录 `.env`。测试可用环境变量覆盖并清理缓存。
 
 - `PLATFORM_ADAPTER` 只允许 `mock` 或 `real`。
 - real 模式缺少明确配置时启动校验失败，不会回退到 mock。
@@ -30,9 +32,12 @@ API 路由不承载业务状态机。AgentTask 与 ConfirmationTask 只能由内
 
 ## 数据库
 
-SQLAlchemy 使用 `AsyncEngine` 与 `async_sessionmaker`。模型使用应用侧 UUID、带时区时间字段和 Alembic 命名约定。通用 `Uuid` 与 JSON 类型在 SQLite 和 PostgreSQL 间保持兼容，PostgreSQL 模型映射使用 JSONB 变体。
+SQLAlchemy 使用 `AsyncEngine` 与 `async_sessionmaker`。模型使用应用侧 UUID、带时区时间字段和 Alembic 命名约定。结构化字段在 PostgreSQL 中使用 JSONB。
 
 正式数据库结构只通过 Alembic 迁移。应用启动不调用 `create_all`。测试中的 `create_all` 仅用于隔离 API/Service 测试；迁移测试独立执行完整的 upgrade、downgrade、upgrade。
+
+应用启动、团队联调和自动化测试统一使用 `postgresql+asyncpg`。测试只操作独立的
+`sellpilot_test` 数据库，不得使用开发数据库或其他数据库引擎。
 
 ## 写操作确认
 

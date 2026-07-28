@@ -2,7 +2,7 @@ from datetime import UTC, datetime
 from typing import Any, Never
 from uuid import uuid4
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sellpilot.adapters.base import PlatformAdapter
@@ -344,6 +344,15 @@ class MockShopeeAdapter(PlatformAdapter):
             statement = statement.where(Review.source_created_at >= created_from)
         if created_to := filters.get("created_to"):
             statement = statement.where(Review.source_created_at <= created_to)
+        if keyword := filters.get("keyword"):
+            escaped = str(keyword).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            pattern = f"%{escaped}%"
+            statement = statement.where(
+                or_(
+                    Review.content.ilike(pattern, escape="\\"),
+                    Review.content_zh.ilike(pattern, escape="\\"),
+                )
+            )
         offset = max(int(filters.get("offset", 0)), 0)
         limit = min(max(int(filters.get("limit", 20)), 1), 100)
         rows = (await self._session().execute(statement.offset(offset).limit(limit))).all()

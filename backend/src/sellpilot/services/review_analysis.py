@@ -19,7 +19,12 @@ from sellpilot.core.exceptions import (
     StateConflictError,
 )
 from sellpilot.db.models.analysis import ReviewAnalysisEvidence, ReviewAnalysisResult
-from sellpilot.domain.review_analysis import ReviewAnalysisReport, ReviewInput
+from sellpilot.domain.review_analysis import (
+    ReviewAnalysisReport,
+    ReviewInput,
+    ReviewTopic,
+    classify_review_preview,
+)
 from sellpilot.repositories.analysis import ReviewAnalysisRepository
 from sellpilot.schemas.common import SourceMetadata
 from sellpilot.schemas.review_analysis import (
@@ -278,6 +283,7 @@ class ReviewAnalysisService:
         page_size: int,
         evidence_type: str | None = None,
         label: str | None = None,
+        sentiment: str | None = None,
     ) -> ReviewEvidencePage:
         await self._owned_result(analysis_id, user_id)
         rows, total = await self.analysis.list_evidence(
@@ -286,6 +292,7 @@ class ReviewAnalysisService:
             page_size,
             evidence_type=evidence_type,
             label=label,
+            sentiment=sentiment,
         )
         return ReviewEvidencePage(
             items=[self._evidence_response(item) for item in rows],
@@ -305,6 +312,7 @@ class ReviewAnalysisService:
             filters = self._review_filters(
                 ReviewQuery(
                     product_id=request.product_id,
+                    keyword=request.keyword,
                     site=request.site,
                     min_rating=request.min_rating,
                     max_rating=request.max_rating,
@@ -478,6 +486,7 @@ class ReviewAnalysisService:
     def _review_filters(query: ReviewQuery, *, include_paging: bool) -> dict[str, object]:
         filters: dict[str, object] = {
             "product_id": query.product_id,
+            "keyword": query.keyword,
             "site": SITE_NAMES[query.site] if query.site else None,
             "language": query.language,
             "min_rating": query.min_rating,
@@ -491,6 +500,15 @@ class ReviewAnalysisService:
 
     @staticmethod
     def _review_response(row: dict[str, object]) -> ReviewResponse:
+        sentiment, topics = classify_review_preview(ReviewAnalysisService._domain_review(row))
+        primary_topic = next(
+            (
+                topic
+                for topic in topics
+                if topic not in {ReviewTopic.NO_CLEAR_ISSUE, ReviewTopic.OTHER}
+            ),
+            topics[0],
+        )
         return ReviewResponse(
             review_id=row["review_id"],
             product_id=row["product_id"],
@@ -499,8 +517,8 @@ class ReviewAnalysisService:
             content=row["content"],
             translated_content=row["translated_content"],
             language=row["language"],
-            sentiment_hint=row["sentiment_hint"],
-            issue_type=row["issue_type"],
+            sentiment_hint=sentiment,
+            issue_type=primary_topic,
             created_at=row["created_at"],
             source_type=row["source_type"],
             is_mock_data=row["is_mock_data"],
@@ -508,24 +526,23 @@ class ReviewAnalysisService:
 
     @classmethod
     def _domain_review(cls, row: dict[str, object]) -> ReviewInput:
-        response = cls._review_response(row)
         return ReviewInput(
-            review_id=response.review_id,
-            product_id=response.product_id,
-            site=response.site,
-            rating=response.rating,
-            content=response.content,
-            translated_content=response.translated_content,
-            declared_language=response.language,
-            source_created_at=response.created_at,
+            review_id=row["review_id"],
+            product_id=row["product_id"],
+            site=SITE_CODES[row["site"]],
+            rating=row["rating"],
+            content=row["content"],
+            translated_content=row["translated_content"],
+            declared_language=row["language"],
+            source_created_at=row["created_at"],
             source=SourceMetadata(
                 source_type=DataSource.MOCK,
-                source_name=response.source_type,
-                source_reference=response.product_id,
-                is_mock=response.is_mock_data,
+                source_name=row["source_type"],
+                source_reference=row["product_id"],
+                is_mock=row["is_mock_data"],
             ),
-            source_sentiment_hint=response.sentiment_hint,
-            source_issue_hint=response.issue_type,
+            source_sentiment_hint=row["sentiment_hint"],
+            source_issue_hint=row["issue_type"],
         )
 
     @staticmethod

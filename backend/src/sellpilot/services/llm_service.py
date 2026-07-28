@@ -30,11 +30,20 @@ class LLMService:
             )
         return self._client
 
-    def chat(self, messages: list[dict[str, str]], *, temperature: float = 0.3, max_tokens: int = 1024) -> str:
+    def chat(
+        self, messages: list[dict[str, str]], *, temperature: float = 0.3, max_tokens: int = 1024
+    ) -> str:
         model = self._settings.llm_model or "qwen-plus"
         response = self.client.chat.completions.create(
-            model=model, messages=messages, temperature=temperature, max_tokens=max_tokens,
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
         )
         content = response.choices[0].message.content or ""
-        logger.info("LLM response: model=%s tokens=%d", model, response.usage.total_tokens if response.usage else 0)
+        logger.info(
+            "LLM response: model=%s tokens=%d",
+            model,
+            response.usage.total_tokens if response.usage else 0,
+        )
         return content

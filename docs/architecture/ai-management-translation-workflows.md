@@ -12,9 +12,9 @@
 - 评论缺少已有译文时，百炼模式会分批执行忠实翻译；离线模式明确保留“无翻译”状态。
 - 内容质量循环由 LangGraph 执行生成、Schema 校验、事实检查、合规检查和有界重试。
 
-## Prompt 和模型审计
+## Prompt 和模型管理与审计
 
-`/api/v1/ai-management` 提供只读审计接口：
+`/api/v1/ai-management` 提供审计查询：
 
 - `GET /prompts`
 - `GET /prompts/{template_id}/versions`
@@ -22,7 +22,18 @@
 - `GET /model-invocations`
 - `GET /evaluation/member3`
 
-接口绝不返回 API Key。Prompt 变更属于业务写操作，后续如开放编辑必须接入 ConfirmationTask；当前页面只读展示版本，避免绕过确认边界。
+Prompt 管理写接口：
+
+- `POST /prompts/{template_id}/versions`：请求创建不可变的新版本。
+- `POST /prompts/{template_id}/status`：请求启用、停用或归档模板。
+
+两个写接口只创建 `AgentTask` 与 `ConfirmationTask`。用户通过公共确认接口确认后，
+Service 才写入新版本或状态，并记录 `OperationLog`。历史 Prompt 版本不被覆盖，
+幂等键不能用于不同载荷。Prompt、Schema 和模型参数不得包含密钥。
+
+接口绝不返回或修改 API Key。模型提供方、Base URL 和密钥仍由服务端根目录
+`.env` 管理，不能从浏览器写入。页面可以管理 Prompt 版本中的非敏感模型参数，
+查看运行状态、调用耗时、Token 和费用估算。
 
 ## 内容补充接口
 
@@ -55,4 +66,7 @@
 
 ## 评估边界
 
-AI 管理页面每次请求都会实际运行固定成员三评估集，而不是读取手写通过率。默认离线评估用于回归，不代表百炼线上质量；配置真实模型后仍应另外记录延迟、Token、成本、限流和失败案例。
+成员三评估接口每次请求都会实际运行固定评估集，而不是读取手写通过率。默认离线评估
+用于回归，不代表百炼线上质量；配置真实模型后仍应另外记录延迟、Token、成本、限流
+和失败案例。首版不提供独立 AI 管理页面，这些能力通过后端 API、CLI、测试报告和任务
+审计记录使用。

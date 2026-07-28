@@ -118,7 +118,9 @@ uv run ruff format --check .
 uv run ruff check .
 ```
 
-测试使用逐测试隔离的 SQLite 异步数据库，不访问本机 PostgreSQL、外网、真实 Shopee 或真实 LLM。SQLite 用于快速验证公共逻辑和迁移可逆性；PostgreSQL 仍是目标运行数据库，上线前必须在受控 PostgreSQL 环境补充兼容性验证。
+测试使用独立的 PostgreSQL `sellpilot_test` 数据库，不访问开发数据库、外网、真实
+Shopee 或真实 LLM。测试启动时自动创建测试数据库，并在用例之间重建表结构；迁移测试
+在同一隔离数据库中验证真实 PostgreSQL 升降级。
 
 ## 平台边界
 

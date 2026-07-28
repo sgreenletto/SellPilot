@@ -70,11 +70,11 @@ AgentTask
 
 - 主键使用应用侧 UUID，与公共模型保持一致。
 - 时间使用带时区 `DateTime`，由应用生成 UTC 时间。
-- 结构化字段使用公共 `JSON_TYPE`：SQLite 测试映射为 JSON，PostgreSQL 映射为 JSONB。
+- 结构化字段使用公共 `JSON_TYPE`，在 PostgreSQL 中映射为 JSONB。
 - 评分、严重度和置信度使用定点 `NUMERIC`，不使用二进制浮点保存业务结果。
 - 表、索引、主键、外键和检查约束遵循公共 Alembic 命名规则。
 
-SQLite 用于自动化隔离测试，PostgreSQL 仍是目标运行数据库。上线或最终部署前必须在受控 PostgreSQL 环境执行迁移与关键查询验证。
+自动化测试、迁移验证和运行环境统一使用 PostgreSQL；测试使用独立数据库，不连接开发数据。
 
 ## Repository 边界
 

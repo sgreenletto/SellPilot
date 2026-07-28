@@ -222,6 +222,15 @@ def _rule_label(item: PreparedReview) -> ModelReviewLabel:
     )
 
 
+def classify_review_preview(
+    review: ReviewInput,
+    config: ReviewAnalysisConfig = DEFAULT_REVIEW_ANALYSIS_CONFIG,
+) -> tuple[ReviewSentiment, tuple[ReviewTopic, ...]]:
+    """Return the same deterministic sentiment and topics used by full analysis."""
+    label = _rule_label(prepare_reviews((review,), config)[0])
+    return label.sentiment, label.topics
+
+
 def _parse_model_output(
     raw: str | dict[str, object],
     expected_ids: set[str],

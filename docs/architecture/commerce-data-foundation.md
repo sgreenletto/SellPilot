@@ -12,7 +12,7 @@ data/demo/shopee_mock/*.csv
   → CommerceImportService
   → CommerceImportRepository
   → SQLAlchemy commerce models
-  → PostgreSQL / isolated SQLite tests
+→ PostgreSQL / isolated `sellpilot_test`
 ```
 
 路由和上层 Agent 不读取 CSV。后续业务能力通过 Repository、Service 和 `PlatformAdapter` 使用统一实体。

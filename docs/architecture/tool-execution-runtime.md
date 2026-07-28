@@ -78,11 +78,9 @@ constraint prevents duplicate rows, including races. Confirmation claiming uses
 a conditional database update, in addition to PostgreSQL transaction semantics,
 so only one claim can progress.
 
-SQLite tests use independent sessions to verify constraints, simultaneous
-same-key creation and conditional confirmation claiming. SQLite does not model
-PostgreSQL row-lock scheduling exactly. PostgreSQL remains the production target;
-deployment verification must exercise simultaneous requests at the configured
-isolation level.
+PostgreSQL tests use independent sessions to verify constraints, simultaneous
+same-key creation and conditional confirmation claiming. Deployment verification
+must also exercise simultaneous requests at the configured production isolation level.
 
 An interruption after the durable claim leaves the confirmation as `executing`
 with an execution start timestamp and its ToolCall as `running`. These rows are

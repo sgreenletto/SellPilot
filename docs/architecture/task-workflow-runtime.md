@@ -54,8 +54,8 @@ after node execution so a late result cannot overwrite cancellation. `heartbeat_
 and `lease_expires_at` identify stale running work. This release provides stale
 detection, not automatic takeover; recovery policy belongs to a later supervised job.
 
-SQLite tests verify conditional-update uniqueness. PostgreSQL remains the deployment
-target and requires real concurrent-load validation before production use.
+PostgreSQL tests verify conditional-update uniqueness. Production deployment still
+requires real concurrent-load validation.
 
 ## Status rules
 

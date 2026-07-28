@@ -4,6 +4,8 @@ export interface QualityResult {
   keyword_coverage: number;
   fact_issues: string[];
   compliance_issues: string[];
+  seo_issues?: string[];
+  localization_issues?: string[];
   completeness_issues: string[];
   attempts: number;
 }
@@ -15,6 +17,7 @@ export interface LocalizedListing {
   faq: Array<{ question: string; answer: string }>;
   sku_content: Array<{ sku: string; description: string }>;
   keywords: string[];
+  keyword_suggestions_zh?: string[];
   target_language: string;
   generation_mode: string;
 }

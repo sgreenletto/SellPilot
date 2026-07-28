@@ -64,6 +64,10 @@ const languageOptions = ["en", "zh-CN", "zh-TW", "ms", "id", "th", "vi", "tl", "
 );
 const content = computed(() => generation.value?.result.content);
 const quality = computed(() => generation.value?.result.quality);
+const qualityRunLabel = computed(() => {
+  const attempts = quality.value?.attempts ?? 1;
+  return attempts === 1 ? "已检查 1 次" : `模型已自动修正 ${attempts - 1} 次`;
+});
 const compared = computed(() =>
   versions.value.filter((item) => compareIds.value.includes(item.id)),
 );
@@ -114,6 +118,8 @@ async function runGeneration(): Promise<void> {
           [
             ...generation.value.result.quality.fact_issues,
             ...generation.value.result.quality.compliance_issues,
+            ...(generation.value.result.quality.seo_issues ?? []),
+            ...(generation.value.result.quality.localization_issues ?? []),
             ...generation.value.result.quality.completeness_issues,
           ].length
         } 项需要调整`;
@@ -200,13 +206,49 @@ async function exportVersion(version: ContentVersion): Promise<void> {
   }
 }
 
+function confirmationStatusLabel(status: string): string {
+  return (
+    {
+      pending: "等待确认",
+      succeeded: "已保存",
+      cancelled: "已取消",
+      failed: "保存失败",
+    }[status] ?? status
+  );
+}
+
+function formatVersionTime(value: string): string {
+  return new Intl.DateTimeFormat("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+function formatChangeSummary(value: string): string {
+  if (value.includes("aliyun_bailian")) return "AI 多语言内容生成";
+  if (value.includes("offline_template")) return "离线模板内容生成";
+  if (value.startsWith("Restore version")) return "基于历史版本新建草稿";
+  return value;
+}
+
 function formatQualityIssue(issue: string): string {
   const mappings: Array<[RegExp, string]> = [
     [/^missing protected fact: (.+)$/, "缺少商品事实：$1"],
     [/^missing requested keyword: (.+)$/, "未覆盖指定关键词：$1"],
+    [/^unsupported factual keyword: (.+)$/, "关键词缺少商品事实支持：$1"],
     [/^unsupported claim: (.+)$/, "存在未经商品事实支持的宣称：$1"],
     [/^unsupported technical fact: (.+)$/, "存在未经商品事实支持的技术参数：$1"],
     [/^forbidden claim: (.+)$/, "包含禁用或夸大表述：$1"],
+    [/^title exceeds site limit: (.+)$/, "标题超过当前模拟站点限制：$1 个字符"],
+    [/^duplicate generated keywords$/, "生成关键词存在重复"],
+    [/^title does not contain a requested keyword$/, "标题未自然包含任一指定关键词"],
+    [/^title does not contain a target-market keyword$/, "标题未自然包含目标市场关键词"],
+    [/^keyword stuffing: (.+)$/, "关键词疑似堆砌：$1"],
+    [/^content is not localized to Chinese$/, "正文未有效本地化为中文"],
+    [/^content is not localized to Thai$/, "正文未有效本地化为泰语"],
+    [/^keyword not localized: (.+)$/, "建议关键词未使用目标语言：$1"],
     [/^missing SKU content: (.+)$/, "缺少 SKU 文案：$1"],
     [/^target language does not match the request$/, "输出语言与目标语言不一致"],
     [/^requested keywords are not fully covered$/, "指定关键词未完全覆盖"],
@@ -215,6 +257,31 @@ function formatQualityIssue(issue: string): string {
     if (pattern.test(issue)) return issue.replace(pattern, replacement);
   }
   return issue;
+}
+
+function qualitySuggestion(issue: string): string {
+  if (issue.startsWith("unsupported factual keyword:")) {
+    return "请删除该词，或先在商品资料中补充可核验参数；不要让模型自行推断。";
+  }
+  if (issue.startsWith("keyword not localized:")) {
+    return "这是最终投放关键词；除品牌、型号和 USB-C 等技术标准外，应使用目标市场语言。";
+  }
+  if (issue.startsWith("missing requested keyword:")) {
+    return "确认关键词与商品相关后，可重新生成或在文案中自然补充。";
+  }
+  if (
+    issue === "title does not contain a requested keyword" ||
+    issue === "title does not contain a target-market keyword"
+  ) {
+    return "将一个最重要且相关的关键词自然写入标题。";
+  }
+  if (issue.startsWith("unsupported claim:") || issue.startsWith("unsupported technical fact:")) {
+    return "删除该表述，或先补充能够证明它的商品事实。";
+  }
+  if (issue.startsWith("missing protected fact:")) {
+    return "把这项已核验规格补充到卖点、详情、FAQ 或 SKU 文案中。";
+  }
+  return "修改对应内容后，再创建草稿；服务端会重新检查。";
 }
 </script>
 
@@ -276,8 +343,8 @@ function formatQualityIssue(issue: string): string {
         <SpBadge :tone="quality.passed ? 'success' : 'danger'">{{
           quality.passed ? "质量检查通过" : "质量检查失败"
         }}</SpBadge>
-        <SpBadge tone="info">{{ content.generation_mode }}</SpBadge>
-        <span>循环 {{ quality.attempts }}/3</span><span v-if="dirty">人工编辑待服务端复核</span>
+        <span>{{ qualityRunLabel }}</span>
+        <span v-if="dirty" class="dirty-status">内容已修改，保存时将重新检查</span>
       </section>
       <section class="result-layout">
         <div class="editor-surface">
@@ -368,6 +435,23 @@ function formatQualityIssue(issue: string): string {
             >
             <textarea v-model="content.marketing_copy" rows="3" @input="dirty = true"></textarea>
           </label>
+          <label class="editor-field">
+            <span
+              ><strong>目标市场关键词</strong
+              ><small>跟随目标语言；逗号分隔，保存前检查覆盖与堆砌</small></span
+            >
+            <textarea
+              :value="content.keywords.join('，')"
+              rows="2"
+              @input="
+                content.keywords = ($event.target as HTMLTextAreaElement).value
+                  .split(/[,，]/)
+                  .map((item) => item.trim())
+                  .filter(Boolean);
+                dirty = true;
+              "
+            ></textarea>
+          </label>
 
           <div class="structured-grid">
             <section class="structured-block">
@@ -385,15 +469,24 @@ function formatQualityIssue(issue: string): string {
               </div>
               <div v-if="content.faq.length" class="faq-list">
                 <article v-for="(item, index) in content.faq" :key="index">
-                  <b>Q{{ index + 1 }}</b>
+                  <header>
+                    <b>Q{{ index + 1 }}</b>
+                    <span>常见问题 {{ index + 1 }}</span>
+                  </header>
                   <div>
-                    <input v-model="item.question" aria-label="FAQ 问题" @input="dirty = true" />
-                    <textarea
-                      v-model="item.answer"
-                      rows="2"
-                      aria-label="FAQ 答案"
-                      @input="dirty = true"
-                    ></textarea>
+                    <label>
+                      <span>问题</span>
+                      <input v-model="item.question" aria-label="FAQ 问题" @input="dirty = true" />
+                    </label>
+                    <label>
+                      <span>回答</span>
+                      <textarea
+                        v-model="item.answer"
+                        rows="3"
+                        aria-label="FAQ 答案"
+                        @input="dirty = true"
+                      ></textarea>
+                    </label>
                   </div>
                 </article>
               </div>
@@ -405,7 +498,10 @@ function formatQualityIssue(issue: string): string {
               </div>
               <div v-if="content.sku_content.length" class="sku-list">
                 <article v-for="(item, index) in content.sku_content" :key="index">
-                  <strong>{{ item.sku || `SKU ${index + 1}` }}</strong>
+                  <header>
+                    <span>SKU {{ index + 1 }}</span>
+                    <strong>{{ item.sku || `SKU ${index + 1}` }}</strong>
+                  </header>
                   <textarea
                     v-model="item.description"
                     rows="4"
@@ -456,6 +552,20 @@ function formatQualityIssue(issue: string): string {
                 quality.compliance_issues.length ? `${quality.compliance_issues.length} 项` : "通过"
               }}</strong>
             </div>
+            <div :class="{ issue: quality.seo_issues?.length }">
+              <span>站内关键词</span
+              ><strong>{{
+                quality.seo_issues?.length ? `${quality.seo_issues.length} 项` : "通过"
+              }}</strong>
+            </div>
+            <div :class="{ issue: quality.localization_issues?.length }">
+              <span>语言本地化</span
+              ><strong>{{
+                quality.localization_issues?.length
+                  ? `${quality.localization_issues.length} 项`
+                  : "通过"
+              }}</strong>
+            </div>
             <div :class="{ issue: quality.completeness_issues.length }">
               <span>内容完整度</span
               ><strong>{{
@@ -469,25 +579,47 @@ function formatQualityIssue(issue: string): string {
             v-if="
               quality.fact_issues.length ||
               quality.compliance_issues.length ||
+              quality.seo_issues?.length ||
+              quality.localization_issues?.length ||
               quality.completeness_issues.length
             "
             class="issue-details"
           >
-            <p v-for="issue in quality.fact_issues" :key="`fact-${issue}`">
-              {{ formatQualityIssue(issue) }}
-            </p>
-            <p v-for="issue in quality.compliance_issues" :key="`compliance-${issue}`">
-              {{ formatQualityIssue(issue) }}
-            </p>
-            <p v-for="issue in quality.completeness_issues" :key="`complete-${issue}`">
-              {{ formatQualityIssue(issue) }}
-            </p>
+            <article
+              v-for="issue in [
+                ...quality.fact_issues,
+                ...quality.compliance_issues,
+                ...(quality.seo_issues ?? []),
+                ...(quality.localization_issues ?? []),
+                ...quality.completeness_issues,
+              ]"
+              :key="issue"
+            >
+              <strong>{{ formatQualityIssue(issue) }}</strong>
+              <span>{{ qualitySuggestion(issue) }}</span>
+            </article>
           </div>
           <div class="keyword-notes">
-            <p v-if="generation.keywords.length">
-              指定关键词：{{ generation.keywords.join("、") }}
-            </p>
-            <p v-if="content.keywords.length">生成建议词：{{ content.keywords.join("、") }}</p>
+            <section v-if="generation.keywords.length">
+              <strong>用户指定词</strong>
+              <div class="keyword-chips">
+                <span v-for="item in generation.keywords" :key="`request-${item}`">{{ item }}</span>
+              </div>
+            </section>
+            <section v-if="content.keywords.length">
+              <strong>目标市场关键词 · {{ content.target_language }}</strong>
+              <div class="keyword-chips">
+                <span v-for="item in content.keywords" :key="`market-${item}`">{{ item }}</span>
+              </div>
+            </section>
+            <section v-if="content.keyword_suggestions_zh?.length">
+              <strong>中文选词建议</strong>
+              <div class="keyword-chips suggestion">
+                <span v-for="item in content.keyword_suggestions_zh" :key="`zh-${item}`">{{
+                  item
+                }}</span>
+              </div>
+            </section>
           </div>
           <div class="result-actions">
             <SpButton :disabled="!quality.passed" :loading="actionLoading" @click="requestDraft">
@@ -504,32 +636,51 @@ function formatQualityIssue(issue: string): string {
           </div>
         </aside>
       </section>
-      <SpCard v-if="confirmation" class="confirmation"
-        ><h3>确认任务：{{ confirmation.status }}</h3>
-        <p>{{ confirmation.risk_warning }}</p>
-        <SpButton v-if="confirmation.status === 'pending'" @click="confirmDraft"
-          >确认保存版本</SpButton
-        ><SpButton v-if="confirmation.status === 'pending'" variant="secondary" @click="cancelDraft"
-          >取消</SpButton
-        ></SpCard
-      >
+      <SpCard v-if="confirmation" class="confirmation">
+        <div class="confirmation-copy">
+          <div class="confirmation-icon"><Save :size="19" /></div>
+          <div>
+            <span class="confirmation-kicker">草稿保存确认</span>
+            <h3>{{ confirmationStatusLabel(confirmation.status) }}</h3>
+            <p>{{ confirmation.risk_warning }}</p>
+          </div>
+        </div>
+        <div v-if="confirmation.status === 'pending'" class="confirmation-actions">
+          <SpButton @click="confirmDraft"><Save :size="16" />确认保存新版本</SpButton>
+          <SpButton variant="secondary" @click="cancelDraft">暂不保存</SpButton>
+        </div>
+        <SpBadge v-else :tone="confirmation.status === 'succeeded' ? 'success' : 'warning'">
+          {{ confirmationStatusLabel(confirmation.status) }}
+        </SpBadge>
+      </SpCard>
       <SpCard v-if="versions.length" class="versions-card"
         ><div class="versions-heading">
           <div><History :size="18" /><strong>版本历史</strong></div>
-          <span>勾选两个版本查看字段差异</span>
+          <span>勾选两个版本可对比；历史版本可复制为新的待确认草稿</span>
         </div>
         <article v-for="version in versions" :key="version.id" class="version">
-          <label
+          <label class="version-selector"
             ><input
               v-model="compareIds"
               type="checkbox"
               :value="version.id"
               :disabled="compareIds.length >= 2 && !compareIds.includes(version.id)"
-            />v{{ version.version }}</label
-          ><span>{{ version.title }}</span>
+            /><span>v{{ version.version }}</span></label
+          >
+          <div class="version-summary">
+            <strong>{{ version.title }}</strong>
+            <span
+              >{{ formatVersionTime(version.created_at) }} ·
+              {{ formatChangeSummary(version.change_summary) }}</span
+            >
+          </div>
           <div class="version-actions">
-            <SpButton size="sm" variant="ghost" @click="exportVersion(version)">导出</SpButton>
-            <SpButton size="sm" variant="ghost" @click="restore(version)">恢复为新版本</SpButton>
+            <SpButton size="sm" variant="ghost" @click="exportVersion(version)"
+              >导出 Markdown</SpButton
+            >
+            <SpButton size="sm" variant="ghost" @click="restore(version)"
+              >以此版本新建草稿</SpButton
+            >
           </div>
         </article>
         <div v-if="compared.length === 2" class="comparison">
@@ -552,6 +703,38 @@ function formatQualityIssue(issue: string): string {
                 <dt>营销文案</dt>
                 <dd>{{ version.marketing_copy }}</dd>
               </div>
+              <div>
+                <dt>FAQ</dt>
+                <dd>
+                  {{
+                    version.faq?.items
+                      .map((item) => `${item.question ?? ""}：${item.answer ?? ""}`)
+                      .join("\n") || "—"
+                  }}
+                </dd>
+              </div>
+              <div>
+                <dt>SKU 文案</dt>
+                <dd>
+                  {{
+                    version.sku_content?.items
+                      .map((item) => `${item.sku ?? ""}：${item.description ?? ""}`)
+                      .join("\n") || "—"
+                  }}
+                </dd>
+              </div>
+              <div>
+                <dt>关键词</dt>
+                <dd>{{ version.keywords?.items.join("、") || "—" }}</dd>
+              </div>
+              <div>
+                <dt>事实检查</dt>
+                <dd>{{ JSON.stringify(version.fact_check_result) }}</dd>
+              </div>
+              <div>
+                <dt>合规检查</dt>
+                <dd>{{ JSON.stringify(version.compliance_result) }}</dd>
+              </div>
             </dl>
           </article>
         </div></SpCard
@@ -569,9 +752,7 @@ function formatQualityIssue(issue: string): string {
 
 <style scoped>
 .status-row,
-.actions,
-.confirmation,
-.version {
+.actions {
   display: flex;
   align-items: center;
   gap: var(--sp-space-4);
@@ -658,10 +839,13 @@ textarea:focus {
   font-size: 12px;
 }
 .result-status {
-  padding: 14px 18px;
+  padding: 12px 16px;
   border: 1px solid var(--sp-border-strong);
   border-radius: 16px;
   background: var(--sp-color-surface);
+}
+.dirty-status {
+  color: var(--sp-color-warning);
 }
 .status-row {
   margin: var(--sp-space-5) 0;
@@ -670,7 +854,10 @@ textarea:focus {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 330px;
   gap: var(--sp-space-5);
-  align-items: start;
+  align-items: stretch;
+  height: min(820px, calc(100vh - 150px));
+  min-height: 560px;
+  overflow: hidden;
 }
 .editor-surface,
 .quality-panel {
@@ -681,6 +868,8 @@ textarea:focus {
 }
 .editor-surface {
   padding: 26px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 .editor-header {
   display: flex;
@@ -767,7 +956,7 @@ textarea:focus {
   gap: 16px;
 }
 .structured-block {
-  min-height: 150px;
+  min-height: 0;
   padding: 18px;
   border: 1px solid var(--sp-border-strong);
   border-radius: 17px;
@@ -792,23 +981,46 @@ textarea:focus {
   gap: 10px;
 }
 .faq-list article {
+  display: grid;
+  gap: var(--sp-space-3);
+  padding: var(--sp-space-3);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-control);
+  background: var(--sp-color-surface);
+}
+.faq-list article header,
+.sku-list article header {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
 }
 .faq-list b {
   display: grid;
-  flex: 0 0 30px;
-  height: 30px;
+  width: 30px;
+  height: 26px;
   place-items: center;
   color: var(--sp-color-info);
   font-size: 11px;
   border-radius: 9px;
   background: var(--sp-color-accent-blue-soft);
 }
+.faq-list header span,
+.sku-list header span {
+  color: var(--sp-color-text-muted);
+  font-size: var(--sp-font-xs);
+}
 .faq-list article > div {
   display: grid;
-  flex: 1;
-  gap: var(--sp-space-2);
+  gap: var(--sp-space-3);
+}
+.faq-list label {
+  display: grid;
+  gap: 6px;
+}
+.faq-list label > span {
+  color: var(--sp-color-text-secondary);
+  font-size: var(--sp-font-xs);
+  font-weight: 700;
 }
 .faq-list input,
 .faq-list textarea,
@@ -827,15 +1039,16 @@ textarea:focus {
   border-color: var(--sp-color-accent-blue);
 }
 .sku-list textarea {
-  min-height: 104px;
+  min-height: 116px;
   line-height: 1.65;
   resize: vertical;
 }
 .sku-list article {
   display: grid;
-  gap: 3px;
-  padding: 10px 12px;
-  border-radius: 11px;
+  gap: var(--sp-space-3);
+  padding: var(--sp-space-3);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-control);
   background: var(--sp-color-surface);
 }
 .sku-list strong {
@@ -847,9 +1060,10 @@ textarea:focus {
   font-size: 12px;
 }
 .quality-panel {
-  position: sticky;
-  top: 18px;
-  padding: 22px;
+  position: relative;
+  padding: 20px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 .quality-heading {
   display: flex;
@@ -859,6 +1073,13 @@ textarea:focus {
   padding-bottom: var(--sp-space-4);
   margin-bottom: var(--sp-space-4);
   border-bottom: 1px solid var(--sp-border-soft);
+}
+.quality-heading > div {
+  min-width: 0;
+}
+.quality-heading :deep(.sp-badge) {
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 .quality-heading span,
 .quality-heading small {
@@ -909,7 +1130,7 @@ textarea:focus {
 .check-list > div {
   display: flex;
   justify-content: space-between;
-  padding: var(--sp-space-3);
+  padding: 10px 12px;
   color: var(--sp-color-text-secondary);
   font-size: 12px;
   border: 1px solid var(--sp-border-soft);
@@ -931,24 +1152,55 @@ textarea:focus {
   border-radius: var(--sp-radius-control);
   background: color-mix(in srgb, var(--sp-color-danger) 7%, var(--sp-color-surface));
 }
-.issue-details p {
+.issue-details article,
+.issue-details strong,
+.issue-details span {
+  display: block;
+}
+.issue-details article {
   margin: 0;
   line-height: 1.5;
 }
-.issue-details p + p {
-  margin-top: var(--sp-space-1);
+.issue-details article + article {
+  padding-top: var(--sp-space-2);
+  margin-top: var(--sp-space-2);
+  border-top: 1px solid color-mix(in srgb, var(--sp-color-danger) 16%, transparent);
+}
+.issue-details span {
+  margin-top: 2px;
+  color: var(--sp-color-text-secondary);
 }
 .keyword-notes {
-  margin: var(--sp-space-3) 0 0;
-  color: var(--sp-color-text-muted);
+  display: grid;
+  gap: var(--sp-space-3);
+  margin: var(--sp-space-4) 0 0;
+}
+.keyword-notes section {
+  display: grid;
+  gap: 7px;
+}
+.keyword-notes section > strong {
+  color: var(--sp-color-text-secondary);
   font-size: var(--sp-font-xs);
-  line-height: 1.5;
 }
-.keyword-notes p {
-  margin: 0;
+.keyword-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
-.keyword-notes p + p {
-  margin-top: var(--sp-space-1);
+.keyword-chips span {
+  padding: 5px 8px;
+  color: var(--sp-color-text-secondary);
+  font-size: 11px;
+  line-height: 1.2;
+  border: 1px solid var(--sp-border-soft);
+  border-radius: 999px;
+  background: var(--sp-color-surface-strong);
+}
+.keyword-chips.suggestion span {
+  color: var(--sp-color-info);
+  border-color: color-mix(in srgb, var(--sp-color-info) 20%, transparent);
+  background: var(--sp-color-accent-blue-soft);
 }
 .result-actions {
   display: grid;
@@ -972,15 +1224,96 @@ textarea:focus {
 }
 .confirmation {
   margin-top: var(--sp-space-4);
+  padding: var(--sp-space-5);
+}
+.confirmation :deep(.sp-card__body) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-space-5);
+}
+.confirmation-copy {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-space-3);
+}
+.confirmation-icon {
+  display: grid;
+  flex: 0 0 42px;
+  height: 42px;
+  place-items: center;
+  color: var(--sp-color-info);
+  border-radius: var(--sp-radius-control);
+  background: var(--sp-color-accent-blue-soft);
+}
+.confirmation-kicker {
+  color: var(--sp-color-info);
+  font-size: var(--sp-font-xs);
+  font-weight: 750;
+}
+.confirmation h3 {
+  margin: 2px 0 var(--sp-space-1);
+}
+.confirmation p {
+  margin: 0;
+  color: var(--sp-color-text-secondary);
+}
+.confirmation-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--sp-space-2);
+}
+.confirmation-actions :deep(.sp-button > span),
+.version-actions :deep(.sp-button > span) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+.confirmation-actions :deep(svg),
+.version-actions :deep(svg) {
+  flex: 0 0 auto;
+}
+.versions-card {
+  margin-top: var(--sp-space-6);
 }
 .actions {
   justify-content: flex-end;
   margin: var(--sp-space-4) 0;
 }
 .version {
-  justify-content: space-between;
-  border-bottom: 1px solid var(--sp-color-border);
-  padding: var(--sp-space-3);
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  gap: var(--sp-space-4);
+  align-items: center;
+  padding: var(--sp-space-4);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-card-small);
+  background: var(--sp-color-surface-strong);
+}
+.version + .version {
+  margin-top: var(--sp-space-2);
+}
+.version-selector {
+  display: inline-flex;
+  gap: var(--sp-space-2);
+  align-items: center;
+  font-weight: 750;
+}
+.version-summary {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.version-summary strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.version-summary span {
+  color: var(--sp-color-text-muted);
+  font-size: var(--sp-font-xs);
 }
 .versions-heading {
   display: flex;
@@ -1038,10 +1371,6 @@ textarea:focus {
   white-space: pre-wrap;
 }
 .error {
-  position: fixed;
-  top: var(--sp-space-8);
-  right: var(--sp-space-8);
-  z-index: 1000;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1051,6 +1380,7 @@ textarea:focus {
   border: 1px solid color-mix(in srgb, var(--sp-color-danger) 30%, transparent);
   border-radius: 15px;
   background: color-mix(in srgb, var(--sp-color-danger) 8%, var(--sp-color-surface));
+  margin: 0 0 var(--sp-space-4) auto;
 }
 .error strong,
 .error span {
@@ -1061,10 +1391,6 @@ textarea:focus {
   font-size: 13px;
 }
 .notice {
-  position: fixed;
-  right: var(--sp-space-8);
-  bottom: var(--sp-space-8);
-  z-index: 1000;
   display: flex;
   gap: var(--sp-space-2);
   align-items: center;
@@ -1076,6 +1402,7 @@ textarea:focus {
   border-radius: var(--sp-radius-control);
   background: color-mix(in srgb, var(--sp-color-info) 7%, var(--sp-color-surface));
   box-shadow: var(--sp-shadow-card);
+  margin: 0 0 var(--sp-space-4) auto;
 }
 .notice-spinner {
   animation: sp-content-spin 0.85s linear infinite;
@@ -1117,6 +1444,26 @@ textarea:focus {
   }
   .quality-panel {
     position: static;
+  }
+  .result-layout {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+  .editor-surface,
+  .quality-panel {
+    overflow: visible;
+  }
+  .confirmation :deep(.sp-card__body) {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .confirmation-actions,
+  .confirmation-actions :deep(button) {
+    width: 100%;
+  }
+  .version {
+    grid-template-columns: 1fr;
   }
 }
 </style>
