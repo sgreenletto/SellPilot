@@ -50,7 +50,11 @@ Dashboard 的“异常提醒与今日待办”不使用固定商品名称。当�
 
 ## 路由与加载
 
-公共路由使用 `DefaultLayout`。业务模块在当前阶段复用 `ModulePlaceholderView`，页面名称、模块和说明来自路由元数据。`/dev/design-system` 仅在开发构建中注册。
+公共路由使用 `DefaultLayout`。未实现业务模块复用 `ModulePlaceholderView`，页面名称、模块和说明来自路由元数据。`/tasks` 已替换为真实 `TaskCenterView`，复用现有 Sp 组件与语义变量：列表只取任务摘要，选中任务后并行按需读取详情、Step、ToolCall、Confirmation 和 OperationLog。操作按钮只渲染后端 `available_actions`，危险确认使用显式二次确认，成功后刷新列表与详情，并通过查询参数恢复选中任务。`/dev/design-system` 仅在开发构建中注册。
+
+`api/tasks.ts` 复用统一认证 HTTP Client 和响应包络，过滤空查询参数，并将 404、409、
+422 转换为任务中心的安全提示；401 继续由统一客户端处理登录失效。页面不展示内部运行字段，
+不使用硬编码任务或结果数据，也不引入新的 Drawer、Dialog 或表格设计系统。
 
 ## 响应式
 
