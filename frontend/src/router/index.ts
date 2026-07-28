@@ -197,8 +197,9 @@ export const router = createRouter({
   scrollBehavior: () => ({ top: 0 }),
 });
 
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore();
+  await authStore.restoreSession();
 
   if (to.meta.requiresAuth === false) {
     // 已登录用户访问登录页 → 直接进入看板

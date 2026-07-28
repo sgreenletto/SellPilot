@@ -84,7 +84,7 @@ async function handleLogin(): Promise<void> {
         </el-form-item>
       </el-form>
 
-      <p class="login-hint">预置账号：admin / admin123</p>
+      <p class="login-hint">预置账号：admin / admin123admin</p>
     </div>
   </div>
 </template>

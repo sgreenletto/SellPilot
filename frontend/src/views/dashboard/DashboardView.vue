@@ -1,28 +1,56 @@
 <script setup lang="ts">
 import {
-  AlertTriangle,
   ArrowDown,
   ArrowUp,
-  BarChart3,
   CheckCircle2,
   ChevronRight,
   Clock,
-  MessageCircleMore,
   Minus,
   PackageCheck,
   TrendingUp,
 } from "@lucide/vue";
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
+import {
+  fetchFunnelData,
+  fetchInventory,
+  fetchOrders,
+  fetchProducts,
+  fetchTasks,
+} from "@/api/dashboard";
 import SpButton from "@/components/base/SpButton.vue";
 import DashboardTrendChart from "@/components/charts/DashboardTrendChart.vue";
 import StatusBadge from "@/components/data-display/StatusBadge.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
-import { alertItems, recentActivities, topMetrics, trendDatasets } from "@/mocks/dashboard";
-import type { TrendType } from "@/types/dashboard";
+import { trendDatasets as fallbackTrendDatasets } from "@/mocks/dashboard";
+import type { InventoryItem, Order, Product } from "@/types/commerce";
+import type { MetricCardData, TrendDataset, TrendType } from "@/types/dashboard";
 
 const router = useRouter();
+
+// ---- 加载状态 ----
+
+const loading = ref(true);
+
+// ---- 动态数据 ----
+
+const products = ref<Product[]>([]);
+const orders = ref<Order[]>([]);
+const inventory = ref<InventoryItem[]>([]);
+const metricCards = ref<MetricCardData[]>([]);
+const taskTotal = ref(0);
+const alertItems = ref<
+  {
+    id: string;
+    type: "danger" | "warning" | "info";
+    title: string;
+    description: string;
+    linkTo: string;
+    linkLabel: string;
+    timestamp: string;
+  }[]
+>([]);
 
 // ---- 趋势切换 ----
 
@@ -36,15 +64,167 @@ const trendTabs: { key: TrendType; label: string }[] = [
   { key: "service", label: "客服问题趋势" },
 ];
 
-const currentDataset = computed(() => trendDatasets[trendType.value]);
+const trendDatasets = ref<Record<TrendType, TrendDataset>>({
+  funnel: { categories: [], series: [] },
+  orders: { categories: [], series: [] },
+  popularity: { categories: [], series: [] },
+  sentiment: fallbackTrendDatasets.sentiment,
+  service: fallbackTrendDatasets.service,
+});
+
+const currentDataset = computed(
+  () =>
+    trendDatasets.value[trendType.value] ?? {
+      categories: [],
+      series: [],
+    },
+);
+
+// ---- 加载全部数据 ----
+
+const loadError = ref("");
+
+async function loadAll() {
+  loading.value = true;
+  loadError.value = "";
+  try {
+    const [prods, ords, inv, tasks] = await Promise.all([
+      fetchProducts({ limit: 100 }),
+      fetchOrders({ limit: 100 }),
+      fetchInventory({ limit: 200 }),
+      fetchTasks({ page_size: 1 }),
+    ]);
+    products.value = prods;
+    orders.value = ords;
+    inventory.value = inv;
+    taskTotal.value = tasks.total;
+
+    // 构建指标卡
+    const lowStock = inv.filter((i) => i.stock_status === "low_stock").length;
+    metricCards.value = [
+      {
+        id: "total-products",
+        label: "商品总数",
+        value: prods.length,
+        suffix: "SKU",
+        trend: undefined,
+        icon: "package",
+        tone: "navy",
+        linkTo: "/products",
+      },
+      {
+        id: "low-stock",
+        label: "低库存 SKU",
+        value: lowStock,
+        suffix: "项",
+        trend: undefined,
+        icon: "alert",
+        tone: "pink",
+        linkTo: "/products/listing-inventory",
+      },
+      {
+        id: "total-orders",
+        label: "模拟订单数",
+        value: ords.length,
+        suffix: "单",
+        trend: undefined,
+        icon: "trend",
+        tone: "blue",
+        linkTo: "/orders",
+      },
+      {
+        id: "active-products",
+        label: "激活商品",
+        value: prods.filter((p) => p.status === "active").length,
+        suffix: "SKU",
+        trend: undefined,
+        icon: "check",
+        tone: "green",
+        linkTo: "/products",
+      },
+      {
+        id: "pending-tasks",
+        label: "任务总数",
+        value: tasks.total,
+        suffix: "项",
+        trend: undefined,
+        icon: "check",
+        tone: "purple",
+        linkTo: "/tasks",
+      },
+    ];
+
+    // 漏斗数据
+    const funnel = await fetchFunnelData();
+    trendDatasets.value.funnel = {
+      categories: funnel.map((f) => f.label),
+      series: [{ name: "商品数量", data: funnel.map((f) => f.count), color: "blue" }],
+    };
+
+    // 订单趋势（按状态分组）
+    const statusCounts: Record<string, number> = {};
+    ords.forEach((o) => {
+      statusCounts[o.order_status] = (statusCounts[o.order_status] ?? 0) + 1;
+    });
+    trendDatasets.value.orders = {
+      categories: Object.keys(statusCounts),
+      series: [{ name: "订单数", data: Object.values(statusCounts), color: "blue" }],
+    };
+
+    // 商品热度（按销量 Top 6）
+    const topProducts = [...prods].sort((a, b) => b.sales_count - a.sales_count).slice(0, 6);
+    trendDatasets.value.popularity = {
+      categories: topProducts.map((p) => p.title.slice(0, 8)),
+      series: [
+        { name: "销量", data: topProducts.map((p) => p.sales_count), color: "blue" },
+        { name: "评论数", data: topProducts.map((p) => p.review_count), color: "pink" },
+      ],
+    };
+
+    // 异常提醒
+    const alerts: typeof alertItems.value = [];
+    inv
+      .filter((i) => i.stock_status === "low_stock" || i.stock_status === "out_of_stock")
+      .slice(0, 2)
+      .forEach((i) => {
+        alerts.push({
+          id: `alert-inv-${i.inventory_id}`,
+          type: "danger",
+          title: "低库存预警",
+          description: `SKU ${i.sku_id} 库存状态: ${i.stock_status}，可用 ${i.available_stock}，预留 ${i.reserved_stock}`,
+          linkTo: "/products/listing-inventory",
+          linkLabel: "前往补货",
+          timestamp: "实时",
+        });
+      });
+    if (tasks.total > 0) {
+      alerts.push({
+        id: "alert-tasks",
+        type: "warning",
+        title: "待处理任务",
+        description: `当前共有 ${tasks.total} 个任务待处理`,
+        linkTo: "/tasks",
+        linkLabel: "查看任务",
+        timestamp: "实时",
+      });
+    }
+    alertItems.value = alerts;
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "未知错误";
+    loadError.value = `数据加载失败：${msg}`;
+  } finally {
+    loading.value = false;
+  }
+}
+
+onMounted(loadAll);
 
 // ---- 指标卡图标 ----
 
 const iconMap: Record<string, typeof TrendingUp> = {
   trend: TrendingUp,
-  message: MessageCircleMore,
   package: PackageCheck,
-  alert: AlertTriangle,
+  alert: TrendingUp,
   check: CheckCircle2,
 };
 
@@ -54,27 +234,77 @@ function goTo(path: string) {
   void router.push(path);
 }
 
-// ---- 格式化趋势数字 ----
-
-function formatTrend(v: number | undefined): string {
-  if (v == null || v === 0) return "";
-  return `${v > 0 ? "+" : ""}${v.toFixed(1)}%`;
+function formatTrend(value: number | undefined): string {
+  if (value == null || value === 0) return "";
+  return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
 }
 
-// ---- 分区活动列表（避免模板中重复 filter） ----
+// ---- 分区活动列表（基于 API 数据） ----
 
-const taskActivities = computed(() => recentActivities.filter((a) => a.type === "task"));
+interface ActivityItem {
+  id: string;
+  action: string;
+  target: string;
+  status: "completed" | "pending";
+  timestamp: string;
+}
 
-const systemActivities = computed(() => recentActivities.filter((a) => a.type === "system"));
+const taskActivities = computed<ActivityItem[]>(() => {
+  const items: ActivityItem[] = [];
+  const lowStockItems = inventory.value.filter((i) => i.stock_status === "low_stock");
+  if (lowStockItems.length > 0) {
+    items.push({
+      id: "task-low-stock",
+      action: "库存预警",
+      target: `${lowStockItems.length} 个 SKU 库存偏低`,
+      status: "pending",
+      timestamp: "实时",
+    });
+  }
+  if (taskTotal.value > 0) {
+    items.push({
+      id: "task-pending",
+      action: "待处理",
+      target: `${taskTotal.value} 个任务`,
+      status: "pending",
+      timestamp: "实时",
+    });
+  }
+  return items;
+});
+
+const systemActivities = computed<ActivityItem[]>(() => [
+  {
+    id: "sys-products",
+    action: "数据加载",
+    target: `${products.value.length} 个商品已同步`,
+    status: "completed",
+    timestamp: "实时",
+  },
+  {
+    id: "sys-orders",
+    action: "数据加载",
+    target: `${orders.value.length} 个订单已同步`,
+    status: "completed",
+    timestamp: "实时",
+  },
+]);
 </script>
 
 <template>
   <PageContainer>
     <div class="dashboard">
+      <div v-if="loading" class="dash-error">正在加载经营数据…</div>
+      <!-- 错误提示 -->
+      <div v-if="loadError" class="dash-error">
+        <span>⚠️ {{ loadError }}</span>
+        <SpButton size="sm" variant="secondary" @click="loadAll">重试</SpButton>
+      </div>
+
       <!-- ==================== 1. 顶部指标卡 ==================== -->
       <section class="metrics-row" aria-label="核心指标">
         <button
-          v-for="metric in topMetrics"
+          v-for="metric in metricCards"
           :key="metric.id"
           type="button"
           :class="['metric-card', `metric-card--${metric.tone}`]"
@@ -185,30 +415,15 @@ const systemActivities = computed(() => recentActivities.filter((a) => a.type ==
             <ul class="activity-list">
               <li v-for="act in taskActivities" :key="act.id" class="activity-item">
                 <span class="activity-item__icon">
-                  <BarChart3 v-if="act.status === 'completed'" :size="15" />
-                  <Clock v-else :size="15" />
+                  <Clock :size="15" />
                 </span>
                 <div class="activity-item__body">
                   <span class="activity-item__action">{{ act.action }}</span>
                   <span class="activity-item__target">{{ act.target }}</span>
                 </div>
                 <StatusBadge
-                  :status="
-                    act.status === 'completed'
-                      ? 'active'
-                      : act.status === 'pending'
-                        ? 'pending'
-                        : 'failed'
-                  "
-                  :label="
-                    act.status === 'completed'
-                      ? '已完成'
-                      : act.status === 'pending'
-                        ? '待处理'
-                        : act.status === 'processing'
-                          ? '处理中'
-                          : '失败'
-                  "
+                  :status="act.status === 'completed' ? 'active' : 'pending'"
+                  :label="act.status === 'completed' ? '已完成' : '待处理'"
                 />
                 <span class="activity-item__time">{{ act.timestamp }}</span>
               </li>
@@ -220,17 +435,13 @@ const systemActivities = computed(() => recentActivities.filter((a) => a.type ==
             <ul class="activity-list">
               <li v-for="act in systemActivities" :key="act.id" class="activity-item">
                 <span class="activity-item__icon activity-item__icon--system">
-                  <CheckCircle2 v-if="act.status === 'completed'" :size="15" />
-                  <Clock v-else :size="15" />
+                  <CheckCircle2 :size="15" />
                 </span>
                 <div class="activity-item__body">
                   <span class="activity-item__action">{{ act.action }}</span>
                   <span class="activity-item__target">{{ act.target }}</span>
                 </div>
-                <StatusBadge
-                  :status="act.status === 'completed' ? 'active' : 'pending'"
-                  :label="act.status === 'completed' ? '成功' : '处理中'"
-                />
+                <StatusBadge status="active" label="成功" />
                 <span class="activity-item__time">{{ act.timestamp }}</span>
               </li>
             </ul>
@@ -248,6 +459,20 @@ const systemActivities = computed(() => recentActivities.filter((a) => a.type ==
   display: grid;
   gap: var(--sp-space-6);
   min-width: 0;
+}
+
+.dash-error {
+  display: flex;
+  gap: var(--sp-space-4);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-space-4) var(--sp-space-5);
+  background: color-mix(in srgb, var(--sp-color-danger) 8%, #ffffff);
+  border: 1px solid color-mix(in srgb, var(--sp-color-danger) 22%, transparent);
+  border-radius: 16px;
+  font-size: var(--sp-font-sm);
+  color: var(--sp-color-danger);
+  font-weight: 600;
 }
 
 /* ==================== Shared Card ==================== */

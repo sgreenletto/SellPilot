@@ -1,27 +1,20 @@
-import type { LoginRequest, LoginResponse } from "@/types/auth";
+import { request } from "@/api/http";
+import type { AuthUser, ChangePasswordRequest, LoginRequest, LoginResponse } from "@/types/auth";
 
-const MOCK_USER = {
-  id: "u_001",
-  username: "admin",
-  displayName: "运营管理员",
-};
+export function login(payload: LoginRequest): Promise<LoginResponse> {
+  return request<LoginResponse>("/v1/auth/login", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
 
-const MOCK_TOKEN = "mock_token_sellpilot_2026";
+export function me(): Promise<AuthUser> {
+  return request<AuthUser>("/v1/auth/me");
+}
 
-/**
- * 模拟登录 API —— 后端未就绪时使用 mock 数据。
- * 接入真实后端时，替换为 `request<LoginResponse>("/v1/auth/login", { method: "POST", body: JSON.stringify(payload) })`。
- */
-export async function login(payload: LoginRequest): Promise<LoginResponse> {
-  // -- 模拟网络延迟 --
-  await new Promise((resolve) => setTimeout(resolve, 600 + Math.random() * 400));
-
-  if (payload.username !== MOCK_USER.username || payload.password !== "admin123") {
-    throw new Error("用户名或密码错误");
-  }
-
-  return {
-    token: MOCK_TOKEN,
-    user: MOCK_USER,
-  };
+export function changePassword(payload: ChangePasswordRequest): Promise<AuthUser> {
+  return request<AuthUser>("/v1/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }

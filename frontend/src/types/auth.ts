@@ -3,14 +3,19 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface UserInfo {
-  id: string;
-  username: string;
-  displayName: string;
-  avatar?: string;
+export interface LoginResponse {
+  access_token: string;
+  token_type: string;
 }
 
-export interface LoginResponse {
-  token: string;
-  user: UserInfo;
+export interface AuthUser {
+  id: string;
+  username: string;
+  role: string;
+  is_active: boolean;
+}
+
+export interface ChangePasswordRequest {
+  old_password: string;
+  new_password: string;
 }
