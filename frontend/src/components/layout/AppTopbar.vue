@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ListTodo, Menu, Search } from "@lucide/vue";
+import { Filter, ListTodo, Menu, Search } from "@lucide/vue";
 import { storeToRefs } from "pinia";
 import { ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -58,6 +58,9 @@ watch(
       >
         <template #prefix><Search :size="17" /></template>
       </SpInput>
+      <SpIconButton ariaLabel="筛选" tooltip="筛选">
+        <Filter :size="17" />
+      </SpIconButton>
       <SpIconButton ariaLabel="前往任务中心" tooltip="任务中心" @click="router.push('/tasks')">
         <ListTodo :size="19" />
       </SpIconButton>
@@ -103,6 +106,23 @@ watch(
 
 .app-topbar__search {
   width: min(240px, 22vw);
+}
+
+.app-topbar__search :deep(.sp-input-field__control) {
+  background: var(--sp-color-surface);
+  border: 1px solid transparent;
+  border-radius: var(--sp-radius-control);
+  box-shadow: none;
+  transition:
+    background var(--sp-transition-fast),
+    border-color var(--sp-transition-fast),
+    box-shadow var(--sp-transition-fast);
+}
+
+.app-topbar__search :deep(.sp-input-field__control:focus-within) {
+  background: var(--sp-color-surface-strong);
+  border-color: var(--sp-color-accent-blue);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sp-color-accent-blue) 14%, transparent);
 }
 
 @media (max-width: 1279px) {

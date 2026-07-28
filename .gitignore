@@ -88,3 +88,4 @@ ehthumbs.db
 !/data/raw/.gitkeep
 /data/processed/*
 !/data/processed/.gitkeep
+CLAUDE.md
