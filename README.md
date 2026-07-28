@@ -4,9 +4,9 @@ SellPilot 是面向跨境电商卖家的 AI 运营辅助平台，首版以 Shope
 
 ## 当前版本
 
-**v0.1.0 — Foundation Milestone**
+**develop — v0.3.0 业务能力候选基线**
 
-v0.1.0 表示 SellPilot 的公共后端、前端框架和工程质量基线已经建立，可用于后续业务分支开发；它不是最终项目版本，不表示完整跨境电商业务已经完成，也不代表系统已用于生产环境。
+当前 `develop` 已在公共底座上集成 Mock 商业数据、智能选品、评论分析、产品改良、多语言内容生成、Prompt/模型审计和成员三 AI 评估能力。它仍是课程实验候选版本，不代表系统已用于生产环境。
 
 该里程碑采用普通 Git Tag 标记，不创建 GitHub Release。本仓库当前仍保持单用户、单模拟店铺和 Mock Shopee 模式，不连接真实 Shopee 账号。
 
@@ -33,6 +33,13 @@ v0.1.0 表示 SellPilot 的公共后端、前端框架和工程质量基线已�
 - 官方 Python MCP SDK 的只读 `system_health`。
 - 持久化 TaskWorkflowRuntime、强类型工作流注册器、原子执行权、Step 历史，以及不调用 LLM 的 diagnostic、system health 和 Selection 适配工作流。
 - Task 和 Confirmation 状态流转、幂等确认及自动化测试。
+- Mock Shopee 商品、SKU、订单、库存、物流、评论和客服数据查询能力。
+- 可解释智能选品评分、利润计算、商品对比和报告导出。
+- 多语言评论过滤、情感/主题/痛点分析、证据追溯和报告导出。
+- 产品改良建议、人工编辑、报告导出和待确认草稿任务。
+- 阿里云百炼兼容内容网关、离线模板降级、结构化内容生成和 LangGraph 质量循环。
+- 内容版本、版本对比、恢复确认、单字段重生成和 JSON 导出。
+- Prompt 版本、模型调用指标和成员三固定评估集 API。
 
 ### 前端
 
@@ -41,21 +48,19 @@ v0.1.0 表示 SellPilot 的公共后端、前端框架和工程质量基线已�
 - 大圆角应用 Shell、侧边栏、顶部栏和响应式独立滚动布局。
 - 使用 ECharts 的经营看板和原创本地 SVG/CSS AI Orb。
 - 开发环境设计系统展示页。
-- 业务模块统一占位路由。
+- 智能选品、评论分析、产品改良、内容工坊和 AI 评估/Prompt 审计页面。
 - 平台状态 API 客户端；后端不可达时明确显示“后端未连接”。
 - Vitest、Vue Test Utils、ESLint、Prettier 和严格 TypeScript 检查。
 
-Dashboard 使用带稳定 ID 的合成 Mock 数据，不是实际店铺、商品、订单或用户数据。除 Dashboard 和开发环境设计系统页外，当前业务页面主要是占位页面。
+Dashboard 和所有业务页面均使用带稳定 ID 的合成 Mock 数据，不是实际店铺、商品、订单或用户数据。
 
 ## 当前未实现
 
-- 完整市场数据业务和正式智能选品算法。
-- 评论分析、产品改良和正式商品内容生成。
-- 商品、SKU、库存、订单、物流和客服完整业务。
-- RAG 知识库和正式业务 Agent。
-- 完整 Mock Shopee 商品、订单、库存、物流和消息数据。
-- 真实 Shopee 认证、密钥读取或网络调用。
+- 真实 Shopee 联网适配器。
 - 多用户、多角色和多店铺。
+- 生产级模型费用结算和云端监控。
+- 自动发布或自动修改真实平台商品。
+- RAG 知识库和正式业务 Agent。
 - Docker Compose、CI/CD 和生产部署。
 
 ## 系统分层
@@ -157,8 +162,10 @@ npm run build
 
 - `/dashboard`：经营看板。
 - `/assistant`：AI 运营助手占位页。
-- `/market/data`、`/market/selection`、`/market/reviews`：市场与选品占位页。
-- `/products`、`/products/content`、`/products/listing-inventory`：商品运营占位页。
+- `/market/data`、`/market/selection`、`/market/reviews`：市场数据、智能选品和评论分析。
+- `/market/reviews/improvement`：产品改良报告与确认任务。
+- `/products`、`/products/content`、`/products/listing-inventory`：商品、内容工坊和库存。
+- `/ai/management`：Prompt、模型运行状态和成员三 AI 评估。
 - `/customer-service/conversations`、`/customer-service/knowledge`：智能客服占位页。
 - `/orders`：订单与履约占位页。
 - `/tasks`：真实任务中心；支持筛选、分页、按需详情、确认处理、任务操作和安全审计时间线。

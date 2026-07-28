@@ -69,6 +69,9 @@ TOPIC_KEYWORDS: dict[ReviewTopic, tuple[str, ...]] = {
     ),
     ReviewTopic.DESCRIPTION_MISMATCH: (
         "not as described",
+        "does not match the product description",
+        "doesn't match the product description",
+        "does not match description",
         "different from",
         "tidak sesuai",
         "tak sama",

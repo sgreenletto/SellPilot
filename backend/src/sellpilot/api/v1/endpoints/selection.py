@@ -4,7 +4,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, Request
 
-from sellpilot.api.dependencies import CurrentUserDependency, SessionDependency
+from sellpilot.api.dependencies import (
+    CurrentUserDependency,
+    SessionDependency,
+    SettingsDependency,
+)
 from sellpilot.core.enums import SiteCode
 from sellpilot.core.middleware import get_request_id
 from sellpilot.core.response import ApiResponse, success_response
@@ -18,6 +22,7 @@ from sellpilot.schemas.selection import (
     SelectionSortField,
     SelectionTaskResponse,
 )
+from sellpilot.services.model_gateway import build_selection_explanation_generator
 from sellpilot.services.selection import SelectionService
 
 router = APIRouter()
@@ -57,8 +62,12 @@ async def create_analysis(
     request: Request,
     user: CurrentUserDependency,
     session: SessionDependency,
+    settings: SettingsDependency,
 ) -> ApiResponse[SelectionAnalysisResponse]:
-    data = await SelectionService(session).analyze(payload, user.id)
+    data = await SelectionService(
+        session,
+        explanation_generator=build_selection_explanation_generator(settings),
+    ).analyze(payload, user.id)
     return success_response(data, get_request_id(request))
 
 

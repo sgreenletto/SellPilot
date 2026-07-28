@@ -18,8 +18,19 @@ const ReviewAnalysisView = () => import("@/views/reviews/ReviewAnalysisView.vue"
 const ProductImprovementView = () => import("@/views/reviews/ProductImprovementView.vue");
 const ContentWorkshopView = () => import("@/views/content/ContentWorkshopView.vue");
 const TaskCenterView = () => import("@/views/tasks/TaskCenterView.vue");
+const AIManagementView = () => import("@/views/ai/AIManagementView.vue");
 
 const placeholderRoutes: RouteRecordRaw[] = [
+  {
+    path: "/ai/management",
+    name: "ai-management",
+    component: AIManagementView,
+    meta: {
+      title: "AI 评估与 Prompt",
+      module: "AI 工程",
+      description: "审计 Prompt 版本、模型调用和成员三评估结果。",
+    },
+  },
   {
     path: "/assistant",
     name: "assistant",

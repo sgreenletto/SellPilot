@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Bot,
+  BrainCircuit,
   Boxes,
   ClipboardList,
   Database,
@@ -22,6 +23,12 @@ import type { NavigationEntry } from "@/types/navigation";
 export const navigationEntries: NavigationEntry[] = [
   { id: "dashboard", label: "经营看板", path: "/dashboard", icon: LayoutDashboard },
   { id: "assistant", label: "AI 运营助手", path: "/assistant", icon: Bot },
+  {
+    id: "ai-management",
+    label: "AI 评估与 Prompt",
+    path: "/ai/management",
+    icon: BrainCircuit,
+  },
   {
     id: "market",
     label: "市场与选品",

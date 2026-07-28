@@ -306,3 +306,118 @@ def build_model_gateway(settings: Settings) -> OfflineTemplateGateway | BailianM
     if settings.content_model_provider == "aliyun_bailian":
         return BailianModelGateway(settings)
     return OfflineTemplateGateway()
+
+
+async def translate_review_batch(
+    settings: Settings,
+    reviews: list[tuple[str, str]],
+    *,
+    target_language: str = "zh-CN",
+) -> dict[str, str]:
+    """Translate review text with Bailian; never invent a translation in offline mode."""
+    if settings.content_model_provider != "aliyun_bailian" or not reviews:
+        return {}
+    api_key = settings.bailian_api_key.get_secret_value() if settings.bailian_api_key else ""
+    if not api_key or not settings.bailian_base_url:
+        return {}
+    payload = {
+        "model": settings.bailian_model,
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "Translate ecommerce reviews faithfully. Return JSON only as "
+                    '{"translations":[{"review_id":"...","text":"..."}]}. '
+                    "Do not summarize, classify, add facts, or remove complaints."
+                ),
+            },
+            {
+                "role": "user",
+                "content": json.dumps(
+                    {
+                        "target_language": target_language,
+                        "reviews": [
+                            {"review_id": review_id, "text": text} for review_id, text in reviews
+                        ],
+                    },
+                    ensure_ascii=False,
+                ),
+            },
+        ],
+        "temperature": 0,
+        "response_format": {"type": "json_object"},
+    }
+    for attempt in range(2):
+        try:
+            async with httpx.AsyncClient(timeout=settings.bailian_timeout_seconds) as client:
+                response = await client.post(
+                    f"{settings.bailian_base_url.rstrip('/')}/chat/completions",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    json=payload,
+                )
+                response.raise_for_status()
+                body = response.json()
+            parsed = json.loads(body["choices"][0]["message"]["content"])
+            allowed = {review_id for review_id, _ in reviews}
+            return {
+                str(item["review_id"]): str(item["text"]).strip()
+                for item in parsed.get("translations", [])
+                if str(item.get("review_id")) in allowed and str(item.get("text", "")).strip()
+            }
+        except (httpx.HTTPError, KeyError, IndexError, TypeError, json.JSONDecodeError):
+            if attempt == 1:
+                return {}
+    return {}
+
+
+def build_selection_explanation_generator(settings: Settings):
+    if settings.content_model_provider != "aliyun_bailian":
+        return None
+
+    async def generate(score: dict[str, object]) -> dict[str, object]:
+        api_key = settings.bailian_api_key.get_secret_value() if settings.bailian_api_key else ""
+        expected = {
+            "total_score": str(score["total_score"]),
+            "profit": str(score["profit"]["profit"]),
+            "margin": str(score["profit"]["margin"]),
+            "data_completeness": str(score["data_completeness"]),
+        }
+        payload = {
+            "model": settings.bailian_model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": (
+                        "Explain deterministic product selection results. Return JSON only "
+                        "with summary, evidence, risks and generation_mode. Evidence must "
+                        "contain exactly the supplied metric values; never change a score."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": json.dumps(
+                        {
+                            "expected_evidence": expected,
+                            "recommendation_facts": score["recommendation_facts"],
+                            "risk_warnings": score["risk_warnings"],
+                        },
+                        ensure_ascii=False,
+                    ),
+                },
+            ],
+            "temperature": 0,
+            "response_format": {"type": "json_object"},
+        }
+        try:
+            async with httpx.AsyncClient(timeout=settings.bailian_timeout_seconds) as client:
+                response = await client.post(
+                    f"{settings.bailian_base_url.rstrip('/')}/chat/completions",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    json=payload,
+                )
+                response.raise_for_status()
+            return json.loads(response.json()["choices"][0]["message"]["content"])
+        except (httpx.HTTPError, KeyError, IndexError, TypeError, json.JSONDecodeError):
+            return {}
+
+    return generate

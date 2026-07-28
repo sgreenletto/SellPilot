@@ -5,6 +5,7 @@ import { AlertTriangle, RefreshCw, Search, Sparkles } from "@lucide/vue";
 import { FrontendApiError } from "@/api/http";
 import {
   createReviewAnalysis,
+  exportReviewAnalysis,
   listProductReviews,
   listReviewEvidence,
   runReviewAnalysis,
@@ -47,6 +48,7 @@ const evidenceLabel = ref("");
 const selectedReviewId = ref("");
 const loading = ref(false);
 const analyzing = ref(false);
+const exporting = ref(false);
 const error = ref("");
 const errorCode = ref("");
 
@@ -214,6 +216,26 @@ async function analyze(): Promise<void> {
     analyzing.value = false;
   }
 }
+async function exportReport(): Promise<void> {
+  if (!result.value) return;
+  exporting.value = true;
+  try {
+    const exported = await exportReviewAnalysis(result.value.analysis_id);
+    const blob = new Blob([exported.content], {
+      type: `${exported.media_type};charset=utf-8`,
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = exported.filename;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  } catch (reason) {
+    handleError(reason);
+  } finally {
+    exporting.value = false;
+  }
+}
 async function changeEvidenceTopic(value: string): Promise<void> {
   evidenceLabel.value = value;
   if (!result.value) return;
@@ -311,16 +333,21 @@ onMounted(loadReviews);
           <small>评论分析结果</small>
           <h2>{{ result.product_id }} 评论概览</h2>
         </div>
-        <SpButton
-          variant="secondary"
-          @click="
-            router.push({
-              path: '/market/reviews/improvement',
-              query: { analysis_id: result.analysis_id },
-            })
-          "
-          >生成产品改良报告</SpButton
-        >
+        <div class="result-heading__actions">
+          <SpButton :loading="exporting" variant="secondary" @click="exportReport">
+            导出分析报告
+          </SpButton>
+          <SpButton
+            variant="secondary"
+            @click="
+              router.push({
+                path: '/market/reviews/improvement',
+                query: { analysis_id: result.analysis_id },
+              })
+            "
+            >生成产品改良报告</SpButton
+          >
+        </div>
       </section>
       <section class="metric-grid">
         <SpCard variant="solid"
@@ -604,6 +631,11 @@ onMounted(loadReviews);
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
   gap: var(--sp-space-4);
+}
+.result-heading__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 .issue-table {
   display: grid;

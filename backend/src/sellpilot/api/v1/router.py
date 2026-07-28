@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from sellpilot.api.v1.endpoints import (
+    ai_management,
     auth,
     commerce,
     confirmations,
@@ -9,6 +10,7 @@ from sellpilot.api.v1.endpoints import (
     knowledge_base,
     platform,
     product_improvement,
+    product_translation,
     review_analysis,
     selection,
     tasks,
@@ -18,6 +20,7 @@ from sellpilot.api.v1.endpoints import (
 
 router = APIRouter()
 router.include_router(health.router, prefix="/health", tags=["health"])
+router.include_router(ai_management.router, prefix="/ai-management", tags=["ai-management"])
 router.include_router(knowledge_base.router, prefix="/knowledge", tags=["knowledge"])
 router.include_router(auth.router, prefix="/auth", tags=["auth"])
 router.include_router(platform.router, prefix="/platform", tags=["platform"])
@@ -26,6 +29,11 @@ router.include_router(
     content_generation.router,
     prefix="/content-generation",
     tags=["content-generation"],
+)
+router.include_router(
+    product_translation.router,
+    prefix="/product-translations",
+    tags=["product-translations"],
 )
 router.include_router(selection.router, prefix="/selection", tags=["selection"])
 router.include_router(

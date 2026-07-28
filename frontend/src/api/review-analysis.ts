@@ -49,6 +49,12 @@ export const getReviewAnalysis = (analysisId: string) =>
     authInit(),
   );
 
+export const exportReviewAnalysis = (analysisId: string) =>
+  request<{ filename: string; media_type: string; content: string }>(
+    `/v1/review-analysis/analyses/${encodeURIComponent(analysisId)}/export`,
+    authInit(),
+  );
+
 export const listReviewEvidence = (
   analysisId: string,
   page: number,

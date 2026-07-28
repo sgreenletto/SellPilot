@@ -15,6 +15,7 @@ from sellpilot.services.commerce_operations import CommerceOperationService
 from sellpilot.services.confirmation import ConfirmationService
 from sellpilot.services.content_generation import ContentGenerationService
 from sellpilot.services.product_improvement import ProductImprovementService
+from sellpilot.services.product_translation import ProductTranslationService
 from sellpilot.tools.runtime import build_confirmation_service
 
 router = APIRouter()
@@ -86,6 +87,7 @@ async def confirm_confirmation(
     CommerceOperationService(session, settings).register_executors(confirmations)
     ContentGenerationService(session, settings).register_executors(confirmations)
     ProductImprovementService(session).register_executors(confirmations)
+    ProductTranslationService(session, settings).register_executor(confirmations)
     confirmation = await confirmations.confirm(confirmation_id, current_user.id)
     return success_response(
         ConfirmationTaskResponse.from_confirmation(
