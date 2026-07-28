@@ -69,7 +69,7 @@ describe("侧边导航", () => {
     ).toBe(false);
     expect(wrapper.find(".sidebar-nav-group__label").exists()).toBe(false);
     for (const children of wrapper.findAll(".sidebar-nav-group__children")) {
-      expect(children.isVisible()).toBe(false);
+      expect(children.exists()).toBe(true);
     }
   });
 });

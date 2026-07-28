@@ -65,10 +65,10 @@ export const useAuthStore = defineStore("auth", {
       this.loading = true
       try {
         const res = await loginApi({ username, password })
-        this.token = res.token
-        this.user = res.user
-        persistToken(res.token)
-        persistUser(res.user)
+        this.token = res.access_token
+        this.user = { id: "", username, displayName: username }
+        persistToken(res.access_token)
+        persistUser(this.user)
       } finally {
         this.loading = false
       }

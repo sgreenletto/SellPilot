@@ -10,7 +10,8 @@ export interface UserInfo {
   avatar?: string
 }
 
+/** 后端 POST /api/v1/auth/login 响应 */
 export interface LoginResponse {
-  token: string
-  user: UserInfo
+  access_token: string
+  token_type: string
 }

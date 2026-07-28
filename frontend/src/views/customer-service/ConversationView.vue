@@ -17,6 +17,7 @@ import {
 import { ElMessage } from "element-plus"
 import { computed, ref, watch } from "vue"
 
+import { fetchLogistics, fetchOrder, fetchProduct } from "@/api/customer-service"
 import SpAvatar from "@/components/base/SpAvatar.vue"
 import SpBadge from "@/components/base/SpBadge.vue"
 import SpButton from "@/components/base/SpButton.vue"
@@ -26,9 +27,10 @@ import SpSelect from "@/components/base/SpSelect.vue"
 import PageContainer from "@/components/layout/PageContainer.vue"
 import {
   chatMessages,
-  conversationContexts,
   conversations,
 } from "@/mocks/customer-service"
+import type { ConversationContext } from "@/types/customer-service"
+import type { InventoryItem, Logistics, Order, Product } from "@/types/commerce"
 import type {
   BuyerLanguage,
   Conversation,
@@ -64,7 +66,68 @@ const selectedConversation = computed(() =>
   conversations.find((c) => c.id === selectedId.value) ?? null,
 )
 const activeMessages = computed(() => chatMessages[selectedId.value] ?? [])
-const activeContext = computed(() => conversationContexts[selectedId.value] ?? null)
+const activeContext = ref<ConversationContext | null>(null)
+
+// 选中会话时从后端拉取上下文数据
+watch(selectedId, async (id) => {
+  const conv = conversations.find((c) => c.id === id)
+  if (!conv) { activeContext.value = null; return }
+  try {
+    const [product, order, logistics] = await Promise.all([
+      fetchProduct(conv.productId).catch(() => null),
+      fetchOrder(conv.orderId).catch(() => null),
+      fetchLogistics(conv.orderId).catch(() => null as Logistics | null),
+    ])
+    activeContext.value = buildContext(conv, product, order, logistics)
+  } catch {
+    activeContext.value = null
+  }
+}, { immediate: true })
+
+function buildContext(
+  conv: (typeof conversations)[number],
+  product: Product | null,
+  order: Order | null,
+  logistics: Logistics | null,
+): ConversationContext {
+  return {
+    product: {
+      id: product?.product_id ?? conv.productId,
+      name: product?.title ?? "加载中…",
+      imageInitials: (product?.title ?? "??").slice(0, 2),
+      price: Number(product?.price ?? 0),
+      currency: product?.currency ?? "CNY",
+      category: product?.category_name ?? "",
+      status: (product?.status as "active") ?? "active",
+      shopName: "Shopee 模拟店铺",
+    },
+    skus: [],
+    order: {
+      id: order?.order_id ?? conv.orderId,
+      status: order?.order_status ?? "unknown",
+      statusLabel: order?.order_status ?? "加载中…",
+      amount: Number(order?.total_amount ?? 0),
+      currency: order?.currency ?? "CNY",
+      placedAt: order?.created_at ?? "",
+      items: [product?.title ?? "加载中…"],
+      buyerName: conv.buyerName,
+    },
+    logistics: logistics
+      ? {
+          id: logistics.logistics_id,
+          carrier: logistics.carrier,
+          trackingNumber: logistics.tracking_number,
+          status: logistics.status,
+          statusLabel: logistics.status,
+          events: logistics.tracks.map((t) => ({
+            time: t.event_time?.slice(5, 16) ?? "",
+            description: t.description,
+            location: t.location,
+          })),
+        }
+      : null,
+  }
+}
 
 // 移动端：是否展示对话区（而非列表）
 const showChat = ref(false)
@@ -425,7 +488,7 @@ const skuStatusTone: Record<string, "success" | "warning" | "danger"> = {
         </section>
 
         <!-- SKU 库存 -->
-        <section class="cs-ctx-card">
+        <section v-if="activeContext.skus.length > 0" class="cs-ctx-card">
           <h4 class="cs-ctx-card__title">
             <Package :size="15" /> SKU 库存状态
           </h4>
@@ -458,8 +521,8 @@ const skuStatusTone: Record<string, "success" | "warning" | "danger"> = {
           <div class="cs-ctx-order">
             <div class="cs-ctx-order__head">
               <strong>{{ activeContext.order.id }}</strong>
-              <SpBadge :tone="activeContext.order.status === 'delivered' ? 'success' : activeContext.order.status === 'shipped' ? 'info' : 'warning'">
-                {{ activeContext.order.statusLabel }}
+              <SpBadge :tone="activeContext.order.status === 'delivered' || activeContext.order.status === 'completed' ? 'success' : activeContext.order.status === 'shipped' ? 'info' : 'warning'">
+                {{ activeContext.order.status }}
               </SpBadge>
             </div>
             <p class="cs-ctx-order__amount">
