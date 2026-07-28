@@ -170,6 +170,69 @@ async def test_review_analysis_api_create_run_query_and_evidence(client_bundle):
         for item in filtered_evidence.json()["data"]["items"]
     )
 
+    improvement = await client.post(
+        "/api/v1/product-improvement/reports",
+        json={"analysis_id": payload["analysis_id"]},
+        headers=headers,
+    )
+    assert improvement.status_code == 200
+    report = improvement.json()["data"]
+    assert report["source_product_id"] == "REV-API-P1"
+    assert report["algorithm_version"] == "product-improvement-rule-v1.0.0"
+    assert report["suggestions"]
+    suggestion = report["suggestions"][0]
+    assert suggestion["evidence_review_ids"]["items"] == ["REV-API-1"]
+
+    accepted = await client.patch(
+        f"/api/v1/product-improvement/suggestions/{suggestion['id']}",
+        json={"status": "ACCEPTED", "title": "Accepted evidence-based improvement"},
+        headers=headers,
+    )
+    assert accepted.status_code == 200
+    assert accepted.json()["data"]["status"] == "ACCEPTED"
+
+    exported = await client.get(
+        f"/api/v1/product-improvement/reports/{report['id']}/export",
+        headers=headers,
+    )
+    assert exported.status_code == 200
+    assert exported.json()["data"]["format"] == "json"
+
+    draft_request = await client.post(
+        f"/api/v1/product-improvement/reports/{report['id']}/draft-confirmations",
+        json={
+            "idempotency_key": "review-api-improvement-draft-001",
+            "site": "sg",
+            "target_language": "en",
+            "suggestion_ids": [suggestion["id"]],
+        },
+        headers=headers,
+    )
+    assert draft_request.status_code == 200
+    confirmation = draft_request.json()["data"]
+    assert confirmation["status"] == "pending"
+    assert confirmation["execution_result"] is None
+    repeated_request = await client.post(
+        f"/api/v1/product-improvement/reports/{report['id']}/draft-confirmations",
+        json={
+            "idempotency_key": "review-api-improvement-draft-001",
+            "site": "sg",
+            "target_language": "en",
+            "suggestion_ids": [suggestion["id"]],
+        },
+        headers=headers,
+    )
+    assert repeated_request.status_code == 200
+    assert repeated_request.json()["data"]["id"] == confirmation["id"]
+
+    confirmed = await client.post(
+        f"/api/v1/confirmations/{confirmation['id']}/confirm",
+        headers=headers,
+    )
+    assert confirmed.status_code == 200
+    assert confirmed.json()["data"]["status"] == "succeeded"
+    assert confirmed.json()["data"]["execution_result"]["status"] == "DRAFT"
+
 
 async def test_review_analysis_api_validates_schema_and_missing_resources(client_bundle):
     client, _, session_factory, _ = client_bundle

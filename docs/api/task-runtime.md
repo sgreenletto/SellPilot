@@ -85,6 +85,11 @@ explicitly marked as Mock. No real Shopee or LLM call is made.
 the registered `analyze_product_reviews` tool. It reuses the workflow AgentTask while
 the original `/review-analysis` API remains compatible.
 
+`product_improvement` accepts an `analysis_id` UUID and runs the registered
+`generate_product_improvement_plan` READ tool. It only generates or reuses the
+evidence-bound report. Creating a product-content draft remains a separate HIGH_RISK
+Confirmation request under `/api/v1/product-improvement`.
+
 ## Errors
 
 Stable workflow/task codes include `WORKFLOW_NOT_FOUND`, `WORKFLOW_DISABLED`,

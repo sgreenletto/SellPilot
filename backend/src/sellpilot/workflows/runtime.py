@@ -4,6 +4,7 @@ from sellpilot.core.config import Settings
 from sellpilot.core.enums import TaskStepStatus, TaskType, WorkflowNodeType
 from sellpilot.schemas.review_analysis import ReviewAnalysisCreateRequest
 from sellpilot.schemas.selection import SelectionAnalysisRequest
+from sellpilot.tools.product_improvement import GenerateImprovementInput, ImprovementToolOutput
 from sellpilot.tools.review_analysis import AnalyzeProductReviewsOutput
 from sellpilot.tools.selection import ScoreProductOpportunityOutput
 from sellpilot.tools.system import SystemHealthOutput
@@ -151,10 +152,39 @@ def build_review_analysis_definition(settings: Settings) -> WorkflowDefinition:
     )
 
 
+def build_product_improvement_definition(settings: Settings) -> WorkflowDefinition:
+    return WorkflowDefinition(
+        name="product_improvement",
+        version="1.0.0",
+        description=(
+            "Generate an evidence-bound product improvement report through the unified "
+            "ToolExecutor."
+        ),
+        task_type=TaskType.PRODUCT_IMPROVEMENT,
+        input_schema=GenerateImprovementInput,
+        output_schema=ImprovementToolOutput,
+        nodes=(
+            NodeDefinition(
+                name="generate_product_improvement_plan",
+                node_type=WorkflowNodeType.TOOL,
+                tool_name="generate_product_improvement_plan",
+                timeout_seconds=min(
+                    30,
+                    settings.task_max_node_timeout_seconds,
+                ),
+            ),
+        ),
+        entry_node="generate_product_improvement_plan",
+        max_steps=1,
+        max_task_attempts=1,
+    )
+
+
 def build_workflow_registry(settings: Settings) -> WorkflowRegistry:
     registry = WorkflowRegistry(settings)
     registry.register(build_diagnostic_definition(settings))
     registry.register(build_system_health_definition(settings))
     registry.register(build_selection_definition(settings))
     registry.register(build_review_analysis_definition(settings))
+    registry.register(build_product_improvement_definition(settings))
     return registry

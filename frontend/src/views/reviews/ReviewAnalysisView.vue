@@ -355,7 +355,12 @@ onMounted(loadReviews);
             <SpButton
               size="sm"
               variant="secondary"
-              @click="router.push({ path: '/market/reviews', query: { panel: 'improvement' } })"
+              @click="
+                router.push({
+                  path: '/market/reviews/improvement',
+                  query: { analysis_id: result.analysis_id },
+                })
+              "
               >进入产品改良（Step 8）</SpButton
             >
           </div>

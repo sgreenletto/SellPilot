@@ -1,10 +1,12 @@
 import { mount } from "@vue/test-utils";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import * as XLSX from "xlsx";
 
 import MarketDataView from "@/views/commerce/MarketDataView.vue";
 
 describe("市场数据页面", () => {
+  beforeEach(() => window.localStorage.clear());
+
   it("对项目商品执行筛选和分页", async () => {
     const wrapper = mount(MarketDataView);
     await wrapper.vm.$nextTick();
@@ -110,5 +112,32 @@ describe("市场数据页面", () => {
 
     expect(wrapper.text()).toContain("Home");
     expect(wrapper.text()).toContain("market.xlsx");
+  });
+
+  it("展示、筛选并持久化选品候选", async () => {
+    const wrapper = mount(MarketDataView);
+    await wrapper.vm.$nextTick();
+
+    const firstRow = wrapper.get("tbody tr");
+    const productTitle = firstRow.get("td").text();
+    await firstRow.get(".actions .sp-button--secondary").trigger("click");
+
+    expect(wrapper.text()).toContain("1选品候选");
+    expect(window.localStorage.getItem("sellpilot_market_candidate_product_ids")).toContain(
+      "PROD0001",
+    );
+
+    await wrapper.get(".candidate-metric").trigger("click");
+    expect(wrapper.get(".candidate-list").text()).toContain("选品候选列表");
+    expect(wrapper.get(".candidate-list").text()).toContain("PROD0001");
+
+    await wrapper.get(".candidate-filter input").setValue(true);
+    expect(wrapper.findAll("tbody tr")).toHaveLength(1);
+    expect(wrapper.get("tbody tr").text()).toContain(productTitle);
+
+    wrapper.unmount();
+    const restored = mount(MarketDataView);
+    await restored.vm.$nextTick();
+    expect(restored.text()).toContain("1选品候选");
   });
 });

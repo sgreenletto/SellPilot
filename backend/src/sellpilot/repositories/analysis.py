@@ -186,6 +186,9 @@ class ImprovementRepository:
     async def get_report(self, report_id: UUID) -> ProductImprovementReport | None:
         return await self.session.get(ProductImprovementReport, report_id)
 
+    async def get_suggestion(self, suggestion_id: UUID) -> ProductImprovementSuggestion | None:
+        return await self.session.get(ProductImprovementSuggestion, suggestion_id)
+
     async def list_reports(
         self,
         page: int,

@@ -129,6 +129,9 @@ not persisted or returned.
 - `review_analysis`: adapts the registered READ `analyze_product_reviews` tool,
   reuses the current AgentTask, and preserves the existing Review Analysis API,
   domain core and evidence persistence.
+- `product_improvement`: adapts the registered READ
+  `generate_product_improvement_plan` tool. Creating a product-content draft remains
+  a separate HIGH_RISK Confirmation operation and never runs during report generation.
 
 LangGraph remains available for the existing bounded explanation graph. It is not a
 second persistence runtime. A future graph adapter must still delegate task state,

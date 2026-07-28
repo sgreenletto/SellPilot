@@ -16,6 +16,7 @@ from sellpilot.schemas.common import SourceMetadata
 from sellpilot.tools.contracts import ToolExecutionContext
 from sellpilot.tools.executor import ToolExecutor
 from sellpilot.tools.runtime import build_tool_registry
+from sellpilot.tools.selection import ExportProductAnalysisReportInput
 from sellpilot.workflows.selection import generate_validated_explanation
 
 
@@ -28,6 +29,19 @@ def _score_payload() -> dict[str, object]:
         "recommendation_facts": ["综合评分 82.1000", "单件利润 12.00"],
         "risk_warnings": ["factory_fit data missing"],
     }
+
+
+def test_export_report_tool_requires_exactly_one_source() -> None:
+    source_id = uuid4()
+    assert ExportProductAnalysisReportInput(task_id=source_id).task_id == source_id
+    assert (
+        ExportProductAnalysisReportInput(improvement_report_id=source_id).improvement_report_id
+        == source_id
+    )
+    with pytest.raises(ValueError):
+        ExportProductAnalysisReportInput()
+    with pytest.raises(ValueError):
+        ExportProductAnalysisReportInput(task_id=source_id, improvement_report_id=source_id)
 
 
 @pytest.mark.asyncio
@@ -73,7 +87,7 @@ async def test_profit_tool_is_schema_validated_and_read_only(session, test_setti
     definition = registry.get("calculate_product_profit")
     assert definition.risk_level is ToolRiskLevel.READ
     assert definition.confirmation_required is False
-    assert len(registry.list()) == 8
+    assert len(registry.list()) == 9
 
     candidate = SelectionCandidate(
         product_id="P001",

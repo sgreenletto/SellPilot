@@ -3,7 +3,8 @@
 - `tool-execution-runtime.md`: unified ToolRegistry, ToolExecutor, confirmation,
   audit, retry and MCP runtime.
 - `task-workflow-runtime.md`: persistent TaskRunner, steps, confirmation pause/resume,
-  concurrency, retry/rerun/cancel and Selection workflow adapter.
+  concurrency, retry/rerun/cancel, and Selection, Review Analysis, and Product
+  Improvement workflow adapters.
 
 本目录用于记录系统上下文、模块边界、数据流、部署视图和架构决策。
 
@@ -27,4 +28,5 @@
 成员二/成员三持久化结构、模拟数据导入、选品确定性计算、后端应用层和选品工作台，
 评论分析领域内核及 Service、分阶段 API、统一 Tool 与 AgentTask 工作流已经实现，
 详见 `review-analysis-core.md` 和 `review-analysis-service.md`；评论分析页面见
-`review-analysis-workbench.md`，内容生成仍属于后续阶段。
+`review-analysis-workbench.md`，产品改良报告与确认草稿闭环见
+`product-improvement-workflow.md`。商品内容生成仍属于后续阶段。

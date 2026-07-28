@@ -6,7 +6,9 @@ The suite covers typed definition validation, registry isolation, stable orderin
 diagnostic and system-health execution, Step sequence and persistence, linked
 ToolCalls, task audit events, safe input rejection, retry-in-place, API ownership and
 pagination, confirmation pause/confirm/resume, rerun/cancel, and Selection/Review
-Analysis adapter compatibility.
+Analysis/Product Improvement adapter compatibility. The Product Improvement test
+proves report generation uses the shared TaskRunner and ToolExecutor; draft creation
+remains behind the shared HIGH_RISK Confirmation boundary.
 
 Concurrency tests use separate SQLAlchemy sessions. A blocked test node lets one
 request commit the execution claim before a second run/retry request attempts to

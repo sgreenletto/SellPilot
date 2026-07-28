@@ -22,3 +22,6 @@
 
 评论分析 Service、API、Tool、工作流、幂等、批处理和失败状态测试见
 `review-analysis-service.md`。
+
+产品改良报告、证据、人工状态、导出、确认幂等和确认后草稿测试见
+`product-improvement-workflow.md`。

@@ -1,13 +1,14 @@
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from sellpilot.core.enums import SiteCode, ToolCallerType, ToolRiskLevel
 from sellpilot.core.exceptions import ParameterError, UnauthenticatedError
 from sellpilot.domain.selection.models import SelectionCandidate
 from sellpilot.domain.selection.scoring import calculate_profit
 from sellpilot.schemas.selection import SelectionAnalysisRequest, SelectionCandidateQuery
+from sellpilot.services.product_improvement import ProductImprovementService
 from sellpilot.services.selection import SelectionService
 from sellpilot.tools.contracts import (
     RetryPolicy,
@@ -70,7 +71,14 @@ class CompareProductsOutput(ToolModel):
 
 
 class ExportProductAnalysisReportInput(ToolModel):
-    task_id: UUID
+    task_id: UUID | None = None
+    improvement_report_id: UUID | None = None
+
+    @model_validator(mode="after")
+    def require_one_report_source(self):
+        if (self.task_id is None) == (self.improvement_report_id is None):
+            raise ValueError("provide exactly one of task_id or improvement_report_id")
+        return self
 
 
 class ExportProductAnalysisReportOutput(ToolModel):
@@ -125,6 +133,13 @@ async def _compare(payload: CompareProductsInput, context: ToolExecutionContext)
 
 
 async def _export(payload: ExportProductAnalysisReportInput, context: ToolExecutionContext):
+    if payload.improvement_report_id is not None:
+        if context.session is None:
+            raise ParameterError("product improvement export requires a database session")
+        result = await ProductImprovementService(context.session).export(
+            payload.improvement_report_id, _user_id(context)
+        )
+        return ExportProductAnalysisReportOutput(report=result)
     result = await _service(context).export(payload.task_id, _user_id(context))
     return ExportProductAnalysisReportOutput(report=result.model_dump(mode="json"))
 
@@ -191,8 +206,11 @@ def build_selection_tools() -> tuple[ToolDefinition, ...]:
         ),
         ToolDefinition(
             name="export_product_analysis_report",
-            version="1.0.0",
-            description="Serialize an existing selection report without writing a server file.",
+            version="1.1.0",
+            description=(
+                "Serialize an existing selection or product-improvement report "
+                "without writing a server file."
+            ),
             input_schema=ExportProductAnalysisReportInput,
             output_schema=ExportProductAnalysisReportOutput,
             risk_level=ToolRiskLevel.READ,

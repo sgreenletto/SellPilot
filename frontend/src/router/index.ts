@@ -15,6 +15,7 @@ const OrdersView = () => import("@/views/commerce/OrdersView.vue");
 const MarketDataView = () => import("@/views/commerce/MarketDataView.vue");
 const SelectionWorkbenchView = () => import("@/views/selection/SelectionWorkbenchView.vue");
 const ReviewAnalysisView = () => import("@/views/reviews/ReviewAnalysisView.vue");
+const ProductImprovementView = () => import("@/views/reviews/ProductImprovementView.vue");
 
 const placeholderRoutes: RouteRecordRaw[] = [
   {
@@ -55,6 +56,16 @@ const placeholderRoutes: RouteRecordRaw[] = [
       title: "评论与产品改良",
       module: "市场与选品",
       description: "从评论信号提炼产品改良方向。",
+    },
+  },
+  {
+    path: "/market/reviews/improvement",
+    name: "product-improvement",
+    component: ProductImprovementView,
+    meta: {
+      title: "产品改良报告",
+      module: "市场与选品",
+      description: "审查评论证据并通过确认流程创建商品内容草稿。",
     },
   },
   {

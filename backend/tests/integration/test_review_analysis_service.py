@@ -364,3 +364,42 @@ async def test_review_analysis_uses_task_workflow_runtime_without_nested_task(
     ]
     assert all(TaskStepStatus(step.status) is TaskStepStatus.SUCCEEDED for step in steps)
     assert steps[0].tool_call_id is not None
+
+
+async def test_product_improvement_report_uses_task_workflow_runtime(
+    session,
+    admin_user,
+    test_settings,
+):
+    await seed_reviews(session)
+    review_service = ReviewAnalysisService(session, test_settings)
+    review = await review_service.create(
+        ReviewAnalysisCreateRequest(
+            idempotency_key="review-for-improvement-workflow-001",
+            product_id="REV-P1",
+            maximum_reviews=4,
+        ),
+        admin_user.id,
+    )
+    await review_service.run(review.analysis_id, admin_user.id)
+
+    workflows = build_workflow_registry(test_settings)
+    task = await TaskService(session, test_settings).create_workflow_task(
+        workflows.get("product_improvement"),
+        workflow_input={"analysis_id": str(review.analysis_id)},
+        created_by=admin_user.id,
+        request_id=str(uuid4()),
+    )
+    result = await TaskRunner(
+        workflows,
+        build_tool_registry(test_settings),
+        session,
+        test_settings,
+    ).run(task.id, user_id=admin_user.id)
+
+    assert result.status is TaskStatus.SUCCEEDED
+    assert result.result["report"]["algorithm_version"] == "product-improvement-rule-v1.0.0"
+    steps = await TaskRepository(session).list_steps(task.id)
+    assert [step.step_name for step in steps] == ["generate_product_improvement_plan"]
+    assert TaskStepStatus(steps[0].status) is TaskStepStatus.SUCCEEDED
+    assert steps[0].tool_call_id is not None
