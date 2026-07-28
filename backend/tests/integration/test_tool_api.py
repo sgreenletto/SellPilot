@@ -40,6 +40,7 @@ async def test_tool_routes_require_authentication(client_bundle):
         ("GET", "/api/v1/tools/system_health"),
         ("POST", "/api/v1/tools/system_health/execute"),
         ("GET", "/api/v1/tool-calls"),
+        ("GET", f"/api/v1/tool-calls/{uuid4()}"),
     ]:
         response = await client.request(method, path, json={"input": {}})
         assert response.status_code == 401

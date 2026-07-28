@@ -13,7 +13,12 @@ from sellpilot.core.enums import (
     ToolCallStatus,
     ToolRiskLevel,
 )
-from sellpilot.core.exceptions import ErrorCode, ExternalServiceUnavailableError
+from sellpilot.core.exceptions import (
+    ErrorCode,
+    ExternalServiceUnavailableError,
+    ParameterError,
+    ResourceNotFoundError,
+)
 from sellpilot.db.models.confirmation_task import ConfirmationTask
 from sellpilot.db.models.operation_log import OperationLog
 from sellpilot.db.models.tool_call import ToolCall
@@ -61,6 +66,7 @@ def context(
     *,
     user_id=None,
     task_id=None,
+    task_step_id=None,
     caller_type=ToolCallerType.TEST,
     idempotency_key=None,
 ):
@@ -68,6 +74,7 @@ def context(
         request_id=str(uuid4()),
         user_id=user_id,
         task_id=task_id,
+        task_step_id=task_step_id,
         idempotency_key=idempotency_key,
         caller_type=caller_type,
         caller_name="pytest",
@@ -150,6 +157,43 @@ async def test_read_execution_validates_and_persists_safe_audit(session, test_se
     assert logs[0].is_mock is True
     assert "input-secret" not in str(tool_call.input_summary)
     assert "output-secret" not in str(tool_call.output_summary)
+
+
+async def test_task_context_rejects_cross_user_and_mismatched_step(session, test_settings):
+    owner, owner_task = await create_user_and_task(session)
+    other, other_task = await create_user_and_task(session)
+    owner_step = (await TaskService(session).create_steps(owner_task.id, ["owner-step"]))[0]
+    other_step = (await TaskService(session).create_steps(other_task.id, ["other-step"]))[0]
+
+    async def handler(payload, _context):
+        return {"result": payload.value}
+
+    runtime, _ = executor(session, test_settings, definition(handler))
+    with pytest.raises(ResourceNotFoundError):
+        await runtime.execute(
+            "runtime_tool",
+            {"value": 1},
+            context(user_id=other.id, task_id=owner_task.id),
+        )
+    with pytest.raises(ParameterError):
+        await runtime.execute(
+            "runtime_tool",
+            {"value": 1},
+            context(
+                user_id=owner.id,
+                task_id=owner_task.id,
+                task_step_id=other_step.id,
+            ),
+        )
+    derived = await runtime.execute(
+        "runtime_tool",
+        {"value": 2},
+        context(user_id=owner.id, task_step_id=owner_step.id),
+    )
+    assert derived.task_id == owner_task.id
+    assert derived.status is ToolCallStatus.SUCCEEDED
+    calls = (await session.scalars(select(ToolCall))).all()
+    assert len(calls) == 1
 
 
 async def test_input_and_output_schema_failures_are_safe(session, test_settings):
