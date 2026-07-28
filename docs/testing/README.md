@@ -7,3 +7,5 @@
 成员二模拟业务数据的迁移、全量导入、幂等和拒绝非模拟数据测试见 `commerce-data-foundation.md`。
 
 成员三分析、评论、改良、内容、Prompt、模型调用和报告持久化测试见 `analysis-persistence.md`。
+
+智能选品利润、评分、缺失数据和稳定排序单元测试见 `selection-scoring.md`。
