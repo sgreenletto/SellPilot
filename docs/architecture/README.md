@@ -16,6 +16,6 @@
 公共后端底座详细设计见 `backend-foundation.md`；跨模块实体、枚举、状态和依赖方向见
 `domain-contracts.md`；成员三的分析与内容持久化设计见 `analysis-persistence.md`；
 智能选品确定性计算内核见 `selection-scoring.md`；成员二的数据表、单店铺映射和模拟数据
-导入设计见 `commerce-data-foundation.md`。当前已建立公共契约、成员二/成员三持久化结构、
-模拟数据导入和选品纯计算能力，但尚未接入选品 Service、API、Tool、工作流或页面；
-持久化结构也不表示对应业务 API、适配器操作、评论分析或内容生成已经可运行。
+导入设计见 `commerce-data-foundation.md`；选品 Service、API、Tool 和解释工作流见
+`selection-api-tools.md`。当前已建立公共契约、成员二/成员三持久化结构、模拟数据导入、
+选品确定性计算和后端应用层能力，但尚未实现选品前端页面、评论分析或内容生成。
