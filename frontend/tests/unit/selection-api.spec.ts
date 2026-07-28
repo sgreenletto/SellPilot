@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   compareSelectionProducts,
   createSelectionAnalysis,
+  downloadSelectionExport,
   listSelectionCandidates,
   selectionQueryString,
 } from "@/api/selection";
@@ -97,5 +98,30 @@ describe("selection API client", () => {
       shipping_cost_override: 4,
       risk_preference: "conservative",
     });
+  });
+
+  it("downloads the structured export as a readable Markdown report", () => {
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const createObjectURL = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:selection");
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+
+    const filename = downloadSelectionExport({
+      filename: "selection-task-1.json",
+      content_type: "application/json",
+      checksum_sha256: "a".repeat(64),
+      task: {
+        task_id: "task-1",
+        agent_task_id: "agent-1",
+        status: "SUCCEEDED",
+        criteria: {},
+        formula_version: "selection-v1.0.0",
+        is_mock_data: true,
+        results: [],
+      },
+    });
+
+    expect(filename).toBe("selection-task-1.md");
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(click).toHaveBeenCalledOnce();
   });
 });

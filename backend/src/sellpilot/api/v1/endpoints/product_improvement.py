@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Request
 
-from sellpilot.api.dependencies import CurrentUserDependency, SessionDependency
+from sellpilot.api.dependencies import CurrentUserDependency, SessionDependency, SettingsDependency
 from sellpilot.core.middleware import get_request_id
 from sellpilot.core.response import ApiResponse, success_response
 from sellpilot.schemas.confirmation import ConfirmationTaskResponse
@@ -23,9 +23,12 @@ async def generate_report(
     payload: ImprovementGenerateRequest,
     request: Request,
     session: SessionDependency,
+    settings: SettingsDependency,
     user: CurrentUserDependency,
 ) -> ApiResponse[ImprovementReportResponse]:
-    result = await ProductImprovementService(session).generate(payload.analysis_id, user.id)
+    result = await ProductImprovementService(session, settings).generate(
+        payload.analysis_id, user.id
+    )
     return success_response(result, get_request_id(request))
 
 

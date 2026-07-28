@@ -110,7 +110,7 @@ class ReviewAnalysisService:
                     "request_digest": digest,
                 },
                 status=AnalysisStatus.PENDING,
-                analyzer_version="review-analysis-v1.0.0",
+                analyzer_version="review-analysis-v1.1.0",
                 source_type="simulated_experiment",
                 source_snapshot_version="shopee_mock",
                 summary=None,

@@ -16,6 +16,7 @@ const MarketDataView = () => import("@/views/commerce/MarketDataView.vue");
 const SelectionWorkbenchView = () => import("@/views/selection/SelectionWorkbenchView.vue");
 const ReviewAnalysisView = () => import("@/views/reviews/ReviewAnalysisView.vue");
 const ProductImprovementView = () => import("@/views/reviews/ProductImprovementView.vue");
+const ContentWorkshopView = () => import("@/views/content/ContentWorkshopView.vue");
 
 const placeholderRoutes: RouteRecordRaw[] = [
   {
@@ -81,7 +82,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
   {
     path: "/products/content",
     name: "product-content",
-    component: ModulePlaceholderView,
+    component: ContentWorkshopView,
     meta: {
       title: "内容工坊",
       module: "商品运营",
@@ -174,13 +175,23 @@ export const router = createRouter({
       path: "/login",
       name: "login",
       component: LoginView,
-      meta: { title: "登录", requiresAuth: false },
+      meta: {
+        title: "登录",
+        module: "身份认证",
+        description: "登录 SellPilot 工作台。",
+        requiresAuth: false,
+      },
     },
     {
       path: "/",
       component: DefaultLayout,
       children: childRoutes,
-      meta: { requiresAuth: true },
+      meta: {
+        title: "SellPilot",
+        module: "工作台",
+        description: "SellPilot 受保护的业务工作区。",
+        requiresAuth: true,
+      },
     },
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" },
   ],

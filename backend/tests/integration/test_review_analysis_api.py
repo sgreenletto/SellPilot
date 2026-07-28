@@ -178,7 +178,7 @@ async def test_review_analysis_api_create_run_query_and_evidence(client_bundle):
     assert improvement.status_code == 200
     report = improvement.json()["data"]
     assert report["source_product_id"] == "REV-API-P1"
-    assert report["algorithm_version"] == "product-improvement-rule-v1.0.0"
+    assert report["algorithm_version"] == "product-improvement-rule-v1.2.0"
     assert report["suggestions"]
     suggestion = report["suggestions"][0]
     assert suggestion["evidence_review_ids"]["items"] == ["REV-API-1"]
@@ -196,7 +196,10 @@ async def test_review_analysis_api_create_run_query_and_evidence(client_bundle):
         headers=headers,
     )
     assert exported.status_code == 200
-    assert exported.json()["data"]["format"] == "json"
+    export_data = exported.json()["data"]
+    assert export_data["format"] == "markdown"
+    assert export_data["filename"].endswith(".md")
+    assert "# REV-API-P1 产品改良报告" in export_data["content"]
 
     draft_request = await client.post(
         f"/api/v1/product-improvement/reports/{report['id']}/draft-confirmations",

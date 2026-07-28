@@ -7,6 +7,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from sellpilot.core.config import Settings
 from sellpilot.core.enums import (
     ImprovementReportStatus,
     ImprovementSuggestionStatus,
@@ -37,23 +38,46 @@ from sellpilot.schemas.product_improvement import (
     SuggestionUpdateRequest,
 )
 from sellpilot.services.confirmation import ConfirmationService
+from sellpilot.services.product_improvement_gateway import ProductImprovementGateway
 from sellpilot.services.task import TaskService
 
 CREATE_DRAFT = "product_improvement.create_content_draft"
-ALGORITHM_VERSION = "product-improvement-rule-v1.0.0"
+RULE_ALGORITHM_VERSION = "product-improvement-rule-v1.2.0"
+LLM_ALGORITHM_VERSION = "product-improvement-aliyun-bailian-v1.0.0"
 
 ACTION_BY_CATEGORY = {
-    "product_quality": "复核材料、结构和质检标准，并安排小批量验证。",
-    "packaging": "优化内外包装防护、封装方式和运输跌落测试。",
-    "description_mismatch": "校正规格、尺寸和使用边界，确保页面描述与实物一致。",
-    "logistics": "复核包装体积、承运方式和履约时效提示。",
-    "service": "补充使用说明、FAQ 与售后处理指引。",
+    "product_quality": (
+        "复核材料与结构失效点，定义关键质检项目和抽检标准；"
+        "先用小批量样品完成耐用性验证，再决定是否调整量产工艺。"
+    ),
+    "packaging": (
+        "按证据中的破损场景复核内衬、缓冲和封装方式；"
+        "补充跌落与挤压测试，并记录改版前后的破损率用于验收。"
+    ),
+    "description_mismatch": (
+        "逐项核对实物规格、尺寸、颜色和使用边界；"
+        "修正商品页不一致信息，并用样品照片与规格表完成发布前复核。"
+    ),
+    "logistics": (
+        "区分商品包装问题与承运时效问题，复核包装体积、承运方案和时效承诺；"
+        "先在目标站点小范围验证后再扩大调整。"
+    ),
+    "service": "根据高频疑问补充使用说明、FAQ 和售后处理边界，并将新指引交由客服人工审核后使用。",
+}
+
+TITLE_BY_CATEGORY = {
+    "product_quality": "降低产品质量相关差评",
+    "packaging": "提升运输包装防护",
+    "description_mismatch": "消除商品描述与实物偏差",
+    "logistics": "改善物流与履约体验",
+    "service": "完善使用说明与售后指引",
 }
 
 
 class ProductImprovementService:
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: AsyncSession, settings: Settings | None = None) -> None:
         self.session = session
+        self.settings = settings
         self.reports = ImprovementRepository(session)
         self.analyses = ReviewAnalysisRepository(session)
         self.contents = ProductContentRepository(session)
@@ -66,24 +90,56 @@ class ProductImprovementService:
             raise ResourceNotFoundError("Review analysis not found")
         if str(analysis.status) != "SUCCEEDED":
             raise ParameterError("Review analysis must be completed before improvement planning")
+        use_llm = (
+            self.settings is not None and self.settings.content_model_provider == "aliyun_bailian"
+        )
+        algorithm_version = LLM_ALGORITHM_VERSION if use_llm else RULE_ALGORITHM_VERSION
         existing, _ = await self.reports.list_reports(
             1, 100, source_product_id=analysis.source_product_id
         )
         same_analysis = [item for item in existing if item.review_analysis_result_id == analysis_id]
-        if same_analysis:
-            return await self.get_report(same_analysis[0].id, user_id)
+        current = next(
+            (item for item in same_analysis if item.algorithm_version == algorithm_version),
+            None,
+        )
+        if current is not None:
+            return await self.get_report(current.id, user_id)
 
         evidence, total = await self.analyses.list_evidence(analysis_id, 1, 5000)
         by_topic: dict[str, list] = {}
         for item in evidence:
-            by_topic.setdefault(item.label, []).append(item)
+            topic = self._effective_topic(item)
+            if topic is not None:
+                by_topic.setdefault(topic, []).append(item)
         summary = analysis.summary or {}
-        sample_size = int(summary.get("quality", {}).get("sample_size") or total)
+        sample_size = int(summary.get("quality", {}).get("included_count") or 0)
+        negative_by_topic = {
+            topic: [item for item in items if item.sentiment == "negative"]
+            for topic, items in by_topic.items()
+        }
+        negative_by_topic = {topic: items for topic, items in negative_by_topic.items() if items}
+        generated = {}
+        if use_llm and negative_by_topic:
+            gateway = ProductImprovementGateway(self.settings)
+            generated = await gateway.generate(
+                analysis.source_product_id,
+                [
+                    {
+                        "category": topic,
+                        "reviews": [
+                            {
+                                "review_id": item.source_review_id,
+                                "original": item.excerpt,
+                                "translation": item.translated_excerpt,
+                            }
+                            for item in items
+                        ],
+                    }
+                    for topic, items in negative_by_topic.items()
+                ],
+            )
         suggestions: list[ProductImprovementSuggestion] = []
-        for topic, items in by_topic.items():
-            negative = [item for item in items if item.sentiment == "negative"]
-            if not negative:
-                continue
+        for topic, negative in negative_by_topic.items():
             frequency = Decimal(len(negative)) / Decimal(max(sample_size, 1))
             avg_confidence = sum((item.confidence for item in negative), Decimal("0")) / Decimal(
                 len(negative)
@@ -94,9 +150,18 @@ class ProductImprovementService:
                 ProductImprovementSuggestion(
                     suggestion_key=topic,
                     category=topic,
-                    title=f"改进{topic}",
-                    description=ACTION_BY_CATEGORY.get(
-                        topic, "基于代表评论复核该问题，并在改变商品前完成事实与样品验证。"
+                    title=(
+                        generated[topic].title
+                        if topic in generated
+                        else TITLE_BY_CATEGORY.get(topic, "复核高频评论问题")
+                    ),
+                    description=(
+                        generated[topic].description
+                        if topic in generated
+                        else ACTION_BY_CATEGORY.get(
+                            topic,
+                            "基于代表评论复核该问题，并在改变商品前完成事实与样品验证。",
+                        )
                     ),
                     priority=priority,
                     severity=severity.quantize(Decimal("0.0001")),
@@ -118,8 +183,8 @@ class ProductImprovementService:
         report = ProductImprovementReport(
             review_analysis_result_id=analysis_id,
             source_product_id=analysis.source_product_id,
-            version=1,
-            algorithm_version=ALGORITHM_VERSION,
+            version=max((item.version for item in same_analysis), default=0) + 1,
+            algorithm_version=algorithm_version,
             status=ImprovementReportStatus.READY,
             source_type=analysis.source_type,
             is_mock_data=analysis.is_mock_data,
@@ -134,7 +199,11 @@ class ProductImprovementService:
                 "suggestion_count": len(suggestions),
                 "limitations": [
                     "Mock Shopee 模拟数据",
-                    "规则算法生成，未调用真实 LLM",
+                    (
+                        f"由 {self.settings.bailian_model} 基于限定证据生成"
+                        if use_llm
+                        else "未配置模型时使用确定性规则生成"
+                    ),
                     "工厂实施前必须核对商品事实与成本",
                 ],
             },
@@ -146,6 +215,26 @@ class ProductImprovementService:
         await self.reports.add_suggestions(suggestions)
         await self.session.commit()
         return await self.get_report(report.id, user_id)
+
+    @staticmethod
+    def _effective_topic(item) -> str | None:
+        text = f"{item.excerpt or ''} {item.translated_excerpt or ''}".casefold()
+        if item.label != "description_mismatch":
+            return item.label
+        aligned = any(
+            phrase in text
+            for phrase in (
+                "matches the photo",
+                "works as described",
+                "与图片一致",
+                "符合描述",
+            )
+        )
+        if not aligned:
+            return item.label
+        if any(phrase in text for phrase in ("finish", "basic", "工艺", "做工")):
+            return "product_quality"
+        return None
 
     async def get_report(self, report_id: UUID, user_id: UUID) -> ImprovementReportResponse:
         report = await self.reports.get_report(report_id)
@@ -170,10 +259,36 @@ class ProductImprovementService:
 
     async def export(self, report_id: UUID, user_id: UUID) -> dict[str, Any]:
         report = await self.get_report(report_id, user_id)
+        lines = [
+            f"# {report.source_product_id} 产品改良报告",
+            "",
+            f"- 报告版本：v{report.version}",
+            f"- 分析方式：{report.algorithm_version}",
+            f"- 有效评论：{report.summary.get('sample_size', 0)}",
+            f"- 改良建议：{len(report.suggestions)}",
+            "- 数据边界：Mock Shopee 模拟数据，实施前需人工核对",
+            "",
+            "## 改良建议",
+            "",
+        ]
+        if not report.suggestions:
+            lines.append("当前分析没有低评分或含明确缺点的评论证据，因此未生成改良建议。")
+        for index, suggestion in enumerate(report.suggestions, start=1):
+            lines.extend(
+                [
+                    f"### {index}. {suggestion.title}",
+                    "",
+                    f"- 优先级：P{suggestion.priority}",
+                    f"- 依据：{suggestion.evidence_count} 条相关评论",
+                    "",
+                    suggestion.description,
+                    "",
+                ]
+            )
         return {
-            "format": "json",
-            "filename": f"product-improvement-{report.source_product_id}-v{report.version}.json",
-            "content": report.model_dump(mode="json"),
+            "format": "markdown",
+            "filename": f"product-improvement-{report.source_product_id}-v{report.version}.md",
+            "content": "\n".join(lines),
         }
 
     async def request_draft(
@@ -304,6 +419,10 @@ class ProductImprovementService:
 
     @staticmethod
     def _response(report, suggestions) -> ImprovementReportResponse:
+        summary = dict(report.summary or {})
+        unique_review_ids = (report.data_sources or {}).get("evidence_review_ids", [])
+        if isinstance(unique_review_ids, list):
+            summary["sample_size"] = len(set(unique_review_ids))
         return ImprovementReportResponse(
             id=report.id,
             review_analysis_result_id=report.review_analysis_result_id,
@@ -315,7 +434,7 @@ class ProductImprovementService:
             is_mock_data=report.is_mock_data,
             data_sources=report.data_sources,
             input_conditions=report.input_conditions,
-            summary=report.summary,
+            summary=summary,
             created_at=report.created_at,
             suggestions=[
                 ImprovementSuggestionResponse.model_validate(item) for item in suggestions

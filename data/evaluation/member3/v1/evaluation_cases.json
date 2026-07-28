@@ -1,0 +1,139 @@
+{
+  "dataset_version": "member3-eval-v1.0.0",
+  "description": "Fixed synthetic evaluation cases for member three capabilities.",
+  "selection": [
+    {
+      "id": "SEL-REG-001",
+      "split": "regression",
+      "candidate": {
+        "product_id": "EVAL-PROD-A",
+        "site": "sg",
+        "currency": "SGD",
+        "price": "100.00",
+        "cost": "40.00",
+        "shipping_cost": "10.00",
+        "platform_fee_rate": "0.10",
+        "other_costs": "5.00",
+        "sales_count": 120,
+        "competition_index": "20",
+        "rating": "4.6",
+        "review_count": 80
+      },
+      "expected": {
+        "profit": "35.00",
+        "margin": "0.3500"
+      }
+    },
+    {
+      "id": "SEL-DEMO-001",
+      "split": "demo",
+      "candidate": {
+        "product_id": "EVAL-PROD-B",
+        "site": "sg",
+        "currency": "SGD",
+        "price": "80.00",
+        "cost": "42.00",
+        "shipping_cost": "8.00",
+        "platform_fee_rate": "0.08",
+        "other_costs": "2.00",
+        "sales_count": 90,
+        "competition_index": "45",
+        "rating": "4.2",
+        "review_count": 35
+      },
+      "expected": {
+        "profit": "21.60",
+        "margin": "0.2700"
+      }
+    }
+  ],
+  "reviews": [
+    {
+      "id": "REV-REG-001",
+      "split": "regression",
+      "rating": 1,
+      "content": "The package was damaged and the item arrived broken.",
+      "expected_sentiment": "negative",
+      "expected_topic": "packaging"
+    },
+    {
+      "id": "REV-DEV-001",
+      "split": "development",
+      "rating": 5,
+      "content": "Excellent quality and easy to use.",
+      "expected_sentiment": "positive",
+      "expected_topic": "product_quality"
+    },
+    {
+      "id": "REV-DEMO-001",
+      "split": "demo",
+      "rating": 2,
+      "content": "The size does not match the product description.",
+      "expected_sentiment": "negative",
+      "expected_topic": "description_mismatch"
+    }
+  ],
+  "content": [
+    {
+      "id": "CNT-REG-001",
+      "split": "regression",
+      "facts": {
+        "product_id": "EVAL-PROD-A",
+        "title": "Compact USB-C Hub",
+        "description": "A multi-port hub for laptop and tablet workflows.",
+        "category_name": "Consumer Electronics",
+        "site": "sg",
+        "target_language": "en",
+        "audience": "remote workers",
+        "selling_points": ["compact design", "easy to carry"],
+        "requested_keywords": ["USB-C", "compact"],
+        "specifications": {
+          "ports": "6",
+          "connector": "USB-C"
+        },
+        "sku_facts": []
+      },
+      "expected": {
+        "quality_passed": true,
+        "generation_mode": "offline_template"
+      }
+    },
+    {
+      "id": "CNT-DEMO-001",
+      "split": "demo",
+      "facts": {
+        "product_id": "EVAL-PROD-B",
+        "title": "便携榨汁杯",
+        "description": "适合通勤携带的便携式榨汁杯。",
+        "category_name": "Kitchen Appliances",
+        "site": "sg",
+        "target_language": "zh-CN",
+        "audience": "通勤人群",
+        "selling_points": ["便于清洁", "轻巧便携"],
+        "requested_keywords": ["便携", "榨汁杯"],
+        "specifications": {
+          "容量": "350ml"
+        },
+        "sku_facts": []
+      },
+      "expected": {
+        "quality_passed": true,
+        "generation_mode": "offline_template"
+      }
+    }
+  ],
+  "compliance": [
+    {
+      "id": "CMP-REG-001",
+      "split": "regression",
+      "claim": "This is the best ever product.",
+      "expected_detected": true
+    },
+    {
+      "id": "CMP-DEV-001",
+      "split": "development",
+      "claim": "Specifications are based on verified product facts.",
+      "expected_detected": false
+    }
+  ]
+}

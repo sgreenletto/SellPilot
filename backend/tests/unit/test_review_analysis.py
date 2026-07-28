@@ -351,3 +351,39 @@ async def test_source_hints_do_not_override_rating_or_evidence_rules():
     judgement = result.judgements[0]
     assert judgement.sentiment == ReviewSentiment.NEGATIVE
     assert judgement.origin == AnalysisOrigin.RULE
+
+
+@pytest.mark.asyncio
+async def test_positive_description_matches_are_not_mislabeled_as_mismatch():
+    result = await analyze_reviews(
+        [
+            review(
+                "REV-POSITIVE-MATCH",
+                rating=5,
+                content="The color matches the photos and it works as described.",
+                translated_content="颜色与图片一致，功能符合描述。",
+                source_issue_hint="description_mismatch",
+            )
+        ]
+    )
+
+    assert ReviewTopic.DESCRIPTION_MISMATCH not in result.judgements[0].topics
+    assert result.judgements[0].sentiment == ReviewSentiment.POSITIVE
+
+
+@pytest.mark.asyncio
+async def test_three_star_review_with_explicit_drawback_is_negative_evidence():
+    result = await analyze_reviews(
+        [
+            review(
+                "REV-MIXED",
+                rating=3,
+                content="Delivery took the usual time; I hope the next batch improves.",
+            )
+        ]
+    )
+
+    judgement = result.judgements[0]
+    assert judgement.sentiment == ReviewSentiment.NEGATIVE
+    assert ReviewTopic.LOGISTICS in judgement.topics
+    assert result.pain_points[0].pain_point == ReviewTopic.LOGISTICS

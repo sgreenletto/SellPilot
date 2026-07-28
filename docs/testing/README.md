@@ -1,5 +1,8 @@
 # Testing
 
+- `member3-ai-evaluation.md`：成员三固定合成数据、指标与失败案例评估方法。
+- `member3-ai-evaluation-report.md`：由评估命令实际生成的最新报告。
+- `member3-integration-verification.md`：成员三两条核心业务闭环的联调验收。
 - `tool-execution-runtime.md`: unified runtime, confirmation, MCP and migration tests.
 
 本目录用于后续维护测试策略、测试分层、测试数据规则和质量门槛。
@@ -23,3 +26,6 @@
 
 产品改良报告、证据、人工状态、导出、确认幂等和确认后草稿测试见
 `product-improvement-workflow.md`。
+
+商品内容生成 Schema、质量循环、工具注册、统一认证客户端和确认写入边界测试见
+`content-generation-workflow.md`。

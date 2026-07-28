@@ -67,7 +67,42 @@ class MockShopeeAdapter(PlatformAdapter):
         record = await self._session().scalar(
             select(Product).where(Product.external_id == product_id)
         )
-        return self._product(record) if record else {}
+        if record is None:
+            return {}
+        payload = self._product(record)
+        skus = (
+            (
+                await self._session().execute(
+                    select(Sku).where(Sku.product_id == record.id).order_by(Sku.seller_sku)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        payload["skus"] = [
+            {
+                "external_id": item.external_id,
+                "seller_sku": item.seller_sku,
+                "name": f"{item.variation_name}: {item.variation_value}",
+                "variation_name": item.variation_name,
+                "variation_value": item.variation_value,
+            }
+            for item in skus
+        ]
+        payload["specifications"] = [
+            {"name": name, "value": " / ".join(values)}
+            for name, values in self._sku_specifications(skus).items()
+        ]
+        return payload
+
+    @staticmethod
+    def _sku_specifications(skus: list[Sku]) -> dict[str, list[str]]:
+        result: dict[str, list[str]] = {}
+        for sku in skus:
+            values = result.setdefault(sku.variation_name, [])
+            if sku.variation_value not in values:
+                values.append(sku.variation_value)
+        return result
 
     async def create_product(self, payload: dict[str, Any]) -> dict[str, Any]:
         self._not_implemented("create_product")
@@ -268,6 +303,7 @@ class MockShopeeAdapter(PlatformAdapter):
         return {
             "product_id": record.external_id,
             "title": record.title,
+            "description": record.description,
             "site": record.site,
             "category_id": record.category_external_id,
             "category_name": record.category_name,

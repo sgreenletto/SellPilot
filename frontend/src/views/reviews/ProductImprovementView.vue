@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Download, FileCheck2, RefreshCw, ShieldCheck } from "@lucide/vue";
 import { FrontendApiError } from "@/api/http";
@@ -29,10 +29,33 @@ const report = ref<ImprovementReport | null>(null);
 const confirmation = ref<ConfirmationResult | null>(null);
 const selected = ref<string[]>([]);
 const loading = ref(false);
+const action = ref("");
 const error = ref("");
+const notice = ref("");
 const accepted = computed(
   () => report.value?.suggestions.filter((item) => item.status === "ACCEPTED") ?? [],
 );
+const confirmationStatus = computed(() => confirmation.value?.status.toUpperCase() ?? "");
+const canRequestDraft = computed(
+  () =>
+    !action.value &&
+    selected.value.some((id) => accepted.value.some((suggestion) => suggestion.id === id)),
+);
+const categoryLabels: Record<string, string> = {
+  product_quality: "产品质量",
+  packaging: "包装",
+  description_mismatch: "描述不符",
+  logistics: "物流履约",
+  service: "服务与说明",
+  material: "材料",
+  size_specification: "尺寸规格",
+  wrong_or_missing_item: "错发漏发",
+};
+const statusLabels = { PROPOSED: "待审查", ACCEPTED: "已采纳", IGNORED: "已忽略" };
+
+function handleError(reason: unknown, fallback: string): void {
+  error.value = reason instanceof FrontendApiError ? reason.message : fallback;
+}
 
 async function generate(): Promise<void> {
   if (!analysisId.value.trim()) {
@@ -41,11 +64,15 @@ async function generate(): Promise<void> {
   }
   loading.value = true;
   error.value = "";
+  notice.value = "";
+  confirmation.value = null;
   try {
     report.value = await generateImprovementReport(analysisId.value.trim());
-    selected.value = report.value.suggestions.map((item) => item.id);
+    selected.value = report.value.suggestions
+      .filter((item) => item.status === "ACCEPTED")
+      .map((item) => item.id);
   } catch (reason) {
-    error.value = reason instanceof FrontendApiError ? reason.message : "产品改良报告生成失败";
+    handleError(reason, "产品改良报告生成失败");
   } finally {
     loading.value = false;
   }
@@ -55,132 +82,239 @@ async function setStatus(
   suggestion: ImprovementSuggestion,
   status: ImprovementSuggestion["status"],
 ): Promise<void> {
-  const updated = await updateImprovementSuggestion(suggestion.id, { status });
-  Object.assign(suggestion, updated);
+  action.value = `status:${suggestion.id}`;
+  error.value = "";
+  notice.value = "";
+  try {
+    const updated = await updateImprovementSuggestion(suggestion.id, { status });
+    Object.assign(suggestion, updated);
+    if (status === "ACCEPTED" && !selected.value.includes(suggestion.id)) {
+      selected.value.push(suggestion.id);
+    }
+    if (status === "IGNORED") {
+      selected.value = selected.value.filter((id) => id !== suggestion.id);
+    }
+    notice.value = status === "ACCEPTED" ? "建议已采纳并加入草稿范围。" : "建议已忽略。";
+  } catch (reason) {
+    handleError(reason, "建议状态更新失败");
+  } finally {
+    action.value = "";
+  }
 }
 
 async function saveEdit(suggestion: ImprovementSuggestion): Promise<void> {
-  const updated = await updateImprovementSuggestion(suggestion.id, {
-    title: suggestion.title,
-    description: suggestion.description,
-  });
-  Object.assign(suggestion, updated);
+  action.value = `edit:${suggestion.id}`;
+  error.value = "";
+  notice.value = "";
+  try {
+    const updated = await updateImprovementSuggestion(suggestion.id, {
+      title: suggestion.title,
+      description: suggestion.description,
+    });
+    Object.assign(suggestion, updated);
+    notice.value = "建议编辑已保存。";
+  } catch (reason) {
+    handleError(reason, "建议保存失败");
+  } finally {
+    action.value = "";
+  }
 }
 
 async function exportReport(): Promise<void> {
   if (!report.value) return;
-  const payload = await exportImprovementReport(report.value.id);
-  const blob = new Blob([JSON.stringify(payload.content, null, 2)], {
-    type: "application/json;charset=utf-8",
-  });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = payload.filename;
-  link.click();
-  URL.revokeObjectURL(link.href);
+  action.value = "export";
+  error.value = "";
+  try {
+    const payload = await exportImprovementReport(report.value.id);
+    const blob = new Blob([payload.content], {
+      type: "text/markdown;charset=utf-8",
+    });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = payload.filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  } catch (reason) {
+    handleError(reason, "报告导出失败");
+  } finally {
+    action.value = "";
+  }
 }
 
 async function requestDraft(): Promise<void> {
   if (!report.value) return;
   const ids = selected.value.filter((id) =>
-    report.value?.suggestions.some((item) => item.id === id && item.status !== "IGNORED"),
+    report.value?.suggestions.some((item) => item.id === id && item.status === "ACCEPTED"),
   );
   if (!ids.length) {
-    error.value = "请至少选择一条未忽略的建议。";
+    error.value = "请先采纳并选择至少一条建议。";
     return;
   }
-  confirmation.value = await requestImprovementDraft(
-    report.value.id,
-    ids,
-    `improvement-${report.value.id}-${Date.now()}`,
-  );
+  action.value = "request";
+  error.value = "";
+  notice.value = "";
+  try {
+    confirmation.value = await requestImprovementDraft(
+      report.value.id,
+      ids,
+      `improvement-${report.value.id}-${Date.now()}`,
+    );
+    notice.value = "已创建待确认任务，尚未生成任何商品内容草稿。";
+  } catch (reason) {
+    handleError(reason, "待确认任务创建失败");
+  } finally {
+    action.value = "";
+  }
 }
 
 async function confirmDraft(): Promise<void> {
   if (!confirmation.value) return;
-  confirmation.value = await confirmImprovementDraft(confirmation.value.id);
+  action.value = "confirm";
+  error.value = "";
+  try {
+    confirmation.value = await confirmImprovementDraft(confirmation.value.id);
+    notice.value = "确认已执行；仅创建 Mock 商品内容草稿，未发布商品。";
+  } catch (reason) {
+    handleError(reason, "确认执行失败");
+  } finally {
+    action.value = "";
+  }
 }
 
 async function cancelDraft(): Promise<void> {
   if (!confirmation.value) return;
-  confirmation.value = await cancelImprovementDraft(confirmation.value.id);
+  action.value = "cancel";
+  error.value = "";
+  try {
+    confirmation.value = await cancelImprovementDraft(confirmation.value.id);
+    notice.value = "待确认任务已取消，未创建草稿。";
+  } catch (reason) {
+    handleError(reason, "取消失败");
+  } finally {
+    action.value = "";
+  }
 }
+
+onMounted(() => {
+  if (analysisId.value) void generate();
+});
 </script>
 
 <template>
   <PageContainer
-    eyebrow="PRODUCT IMPROVEMENT · MOCK SHOPEE"
+    eyebrow="市场与选品 / 产品改良"
     title="产品改良报告"
     description="把评论证据转为可审查、可编辑、需确认后才能生成草稿的改良方案。"
   >
-    <div v-if="error" class="error" role="alert">{{ error }}</div>
-    <SpCard class="generator">
-      <label>
-        评论分析 ID
-        <input v-model="analysisId" placeholder="从评论分析结果进入" />
-      </label>
+    <div v-if="error" class="message message--error" role="alert">{{ error }}</div>
+    <div v-if="notice" class="message message--success" role="status">{{ notice }}</div>
+    <SpCard v-if="!report" class="generator" variant="solid">
+      <div>
+        <small>报告来源</small>
+        <h2>已完成的评论分析</h2>
+        <p>仅根据低评分或含明确缺点表达的评论生成改良建议。</p>
+      </div>
+      <label>评论分析 ID<input v-model="analysisId" placeholder="从评论分析结果进入" /></label>
       <SpButton :loading="loading" @click="generate">
-        <RefreshCw :size="17" />生成改良报告
+        <template #icon><RefreshCw :size="17" /></template>加载报告
       </SpButton>
-      <SpBadge variant="info">规则算法 · Mock 数据</SpBadge>
     </SpCard>
 
     <template v-if="report">
+      <section class="report-heading">
+        <div>
+          <SpBadge variant="info">
+            {{ report.algorithm_version.includes("aliyun-bailian") ? "AI 生成" : "规则生成" }}
+          </SpBadge>
+          <h2>{{ report.source_product_id }} 改良报告</h2>
+        </div>
+        <div class="toolbar">
+          <SpButton variant="secondary" :loading="action === 'export'" @click="exportReport">
+            <template #icon><Download :size="17" /></template>导出 Markdown
+          </SpButton>
+          <SpButton
+            :loading="action === 'request'"
+            :disabled="!canRequestDraft"
+            @click="requestDraft"
+          >
+            <template #icon><FileCheck2 :size="17" /></template>提交草稿确认
+          </SpButton>
+        </div>
+      </section>
       <section class="summary">
-        <SpCard>
+        <SpCard variant="solid">
           <strong>{{ report.summary.sample_size ?? 0 }}</strong>
-          <span>评论样本</span>
+          <span>有效评论</span>
         </SpCard>
-        <SpCard>
+        <SpCard variant="solid">
           <strong>{{ report.suggestions.length }}</strong>
           <span>改良建议</span>
         </SpCard>
-        <SpCard>
+        <SpCard variant="solid">
           <strong>{{ accepted.length }}</strong>
           <span>已采纳</span>
         </SpCard>
-        <SpCard>
-          <strong>v{{ report.version }}</strong>
-          <span>{{ report.algorithm_version }}</span>
-        </SpCard>
       </section>
 
-      <div class="toolbar">
-        <SpButton variant="secondary" @click="exportReport">
-          <Download :size="17" />导出 JSON 报告
-        </SpButton>
-        <SpButton @click="requestDraft"> <FileCheck2 :size="17" />创建改良内容草稿 </SpButton>
-      </div>
-
-      <section class="suggestions">
-        <SpCard v-for="suggestion in report.suggestions" :key="suggestion.id" class="suggestion">
+      <SpCard v-if="!report.suggestions.length" class="no-suggestions" variant="solid">
+        <div class="no-suggestions__mark">0</div>
+        <div>
+          <h3>当前分析没有可生成的改良建议</h3>
+          <p>当前评论中没有识别到具体改进信号。可调整评论范围后重新分析。</p>
+        </div>
+        <SpButton variant="secondary" @click="router.push('/market/reviews')"
+          >返回评论分析</SpButton
+        >
+      </SpCard>
+      <section v-else class="suggestions">
+        <SpCard
+          v-for="suggestion in report.suggestions"
+          :key="suggestion.id"
+          class="suggestion"
+          variant="solid"
+        >
           <header>
-            <label class="select">
-              <input v-model="selected" type="checkbox" :value="suggestion.id" />
-              选择
-            </label>
             <SpBadge :variant="suggestion.priority <= 2 ? 'warning' : 'info'">
-              P{{ suggestion.priority }}
+              优先级 P{{ suggestion.priority }}
             </SpBadge>
-            <span>频率 {{ Number(suggestion.frequency_rate) * 100 }}%</span>
-            <span>置信度 {{ Number(suggestion.confidence) * 100 }}%</span>
+            <strong>{{ categoryLabels[suggestion.category] ?? suggestion.category }}</strong>
+            <span>{{ suggestion.evidence_count }} 条评论提及</span>
+            <span class="suggestion__status">{{ statusLabels[suggestion.status] }}</span>
           </header>
-          <input v-model="suggestion.title" class="title-input" />
-          <textarea v-model="suggestion.description" rows="3"></textarea>
-          <p>
-            证据（{{ suggestion.evidence_count }}）：
-            {{ suggestion.evidence_review_ids.items?.join("、") || "无" }}
-          </p>
-          <small>{{ suggestion.expected_impact?.limitations }}</small>
+          <div class="suggestion__body">
+            <div class="suggestion__editor">
+              <label>建议标题<input v-model="suggestion.title" class="title-input" /></label>
+              <label>改良方案<textarea v-model="suggestion.description" rows="4"></textarea></label>
+            </div>
+          </div>
           <footer>
-            <SpButton size="sm" variant="secondary" @click="saveEdit(suggestion)">
+            <SpButton
+              size="sm"
+              variant="secondary"
+              :loading="action === `edit:${suggestion.id}`"
+              @click="saveEdit(suggestion)"
+            >
               保存编辑
             </SpButton>
-            <SpButton size="sm" @click="setStatus(suggestion, 'ACCEPTED')"> 采纳 </SpButton>
-            <SpButton size="sm" variant="ghost" @click="setStatus(suggestion, 'IGNORED')">
+            <SpButton
+              size="sm"
+              :loading="action === `status:${suggestion.id}`"
+              @click="setStatus(suggestion, 'ACCEPTED')"
+            >
+              采纳
+            </SpButton>
+            <SpButton
+              size="sm"
+              variant="ghost"
+              :disabled="Boolean(action)"
+              @click="setStatus(suggestion, 'IGNORED')"
+            >
               忽略
             </SpButton>
-            <strong>{{ suggestion.status }}</strong>
+            <label v-if="suggestion.status === 'ACCEPTED'" class="select">
+              <input v-model="selected" type="checkbox" :value="suggestion.id" />
+              纳入草稿范围
+            </label>
           </footer>
         </SpCard>
       </section>
@@ -192,10 +326,19 @@ async function cancelDraft(): Promise<void> {
           <p>{{ confirmation.risk_warning }}</p>
           <p v-if="confirmation.execution_result">执行结果：{{ confirmation.execution_result }}</p>
         </div>
-        <SpButton v-if="confirmation.status === 'pending'" @click="confirmDraft">
+        <SpButton
+          v-if="confirmationStatus === 'PENDING'"
+          :loading="action === 'confirm'"
+          @click="confirmDraft"
+        >
           明确确认并创建草稿
         </SpButton>
-        <SpButton v-if="confirmation.status === 'pending'" variant="secondary" @click="cancelDraft">
+        <SpButton
+          v-if="confirmationStatus === 'PENDING'"
+          variant="secondary"
+          :loading="action === 'cancel'"
+          @click="cancelDraft"
+        >
           取消
         </SpButton>
         <SpButton variant="ghost" @click="router.push('/tasks')"> 前往任务中心 </SpButton>
@@ -221,16 +364,22 @@ async function cancelDraft(): Promise<void> {
   gap: var(--sp-space-4);
 }
 .generator {
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(320px, 1.2fr) auto;
+  margin-bottom: var(--sp-space-6);
 }
-.generator label {
-  flex: 1;
-  min-width: 240px;
+.generator h2,
+.generator p {
+  margin: var(--sp-space-1) 0 0;
+}
+.generator p,
+.report-heading p {
+  color: var(--sp-color-text-muted);
 }
 input,
 textarea {
   width: 100%;
-  border: 1px solid var(--sp-color-border);
+  border: 1px solid var(--sp-border-strong);
   border-radius: var(--sp-radius-control);
   padding: var(--sp-space-3);
   background: var(--sp-color-surface);
@@ -238,7 +387,7 @@ textarea {
 }
 .summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin: var(--sp-space-5) 0;
 }
 .summary strong,
@@ -248,23 +397,54 @@ textarea {
 .summary strong {
   font-size: 1.7rem;
 }
+.report-heading {
+  display: flex;
+  gap: var(--sp-space-5);
+  align-items: end;
+  justify-content: space-between;
+}
+.report-heading h2 {
+  margin: var(--sp-space-3) 0 0;
+}
 .toolbar {
   justify-content: flex-end;
-  margin-bottom: var(--sp-space-4);
 }
 .suggestions {
   display: grid;
   gap: var(--sp-space-4);
+  margin-top: var(--sp-space-5);
 }
 .suggestion header,
 .suggestion footer {
   flex-wrap: wrap;
 }
+.suggestion header {
+  padding-bottom: var(--sp-space-4);
+  border-bottom: 1px solid var(--sp-border-soft);
+}
+.suggestion__status {
+  margin-left: auto;
+  font-weight: 700;
+}
+.suggestion__body {
+  margin: var(--sp-space-5) 0;
+}
+.suggestion__editor {
+  display: grid;
+  gap: var(--sp-space-4);
+}
+.suggestion__editor label,
+.generator label {
+  display: grid;
+  gap: var(--sp-space-2);
+  color: var(--sp-color-text-secondary);
+  font-size: var(--sp-font-xs);
+  font-weight: 650;
+}
 .suggestion p {
   color: var(--sp-color-text-secondary);
 }
 .title-input {
-  margin: var(--sp-space-3) 0;
   font-size: 1.05rem;
   font-weight: 700;
 }
@@ -276,6 +456,30 @@ textarea {
 .select input {
   width: auto;
 }
+.no-suggestions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--sp-space-5);
+  align-items: center;
+}
+.no-suggestions h3 {
+  margin: 0;
+}
+.no-suggestions p {
+  max-width: 760px;
+  color: var(--sp-color-text-secondary);
+}
+.no-suggestions__mark {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  color: var(--sp-color-text-muted);
+  font-size: var(--sp-font-2xl);
+  font-weight: 750;
+  place-items: center;
+  background: var(--sp-color-surface-muted);
+  border-radius: 50%;
+}
 .confirmation {
   margin-top: var(--sp-space-5);
   flex-wrap: wrap;
@@ -283,13 +487,48 @@ textarea {
 .confirmation div {
   flex: 1;
 }
-.error {
-  color: var(--sp-color-danger);
+.message {
+  padding: var(--sp-space-3) var(--sp-space-4);
   margin-bottom: var(--sp-space-4);
+  border-radius: var(--sp-radius-control);
+}
+.message--error {
+  color: var(--sp-color-danger);
+  background: var(--sp-color-surface);
+  border: 1px solid var(--sp-color-danger);
+}
+.message--success {
+  color: var(--sp-color-success);
+  background: var(--sp-color-surface);
+  border: 1px solid var(--sp-color-success);
 }
 @media (max-width: 900px) {
+  .generator,
+  .suggestion__body {
+    grid-template-columns: 1fr;
+  }
+  .report-heading,
+  .no-suggestions {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
   .summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .summary {
+    grid-template-columns: 1fr;
+  }
+  .toolbar,
+  .confirmation,
+  .report-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .toolbar :deep(.sp-button),
+  .confirmation :deep(.sp-button) {
+    width: 100%;
   }
 }
 </style>

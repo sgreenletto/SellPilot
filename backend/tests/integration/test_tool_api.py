@@ -56,8 +56,10 @@ async def test_tool_metadata_and_not_found_are_safe(client_bundle):
     assert [item["name"] for item in tools] == [
         "analyze_product_reviews",
         "calculate_product_profit",
+        "check_listing_compliance",
         "compare_products",
         "export_product_analysis_report",
+        "generate_localized_listing",
         "generate_product_improvement_plan",
         "get_product_reviews",
         "score_product_opportunity",

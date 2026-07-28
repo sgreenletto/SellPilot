@@ -14,3 +14,5 @@ Mock 商业数据和智能选品分析。
 评论查询、分阶段分析、结果和证据分页接口见 `review-analysis-api.md`。
 
 产品改良报告、建议编辑、导出和草稿待确认接口见 `product-improvement-api.md`。
+
+结构化商品内容生成、草稿确认和版本恢复接口见 `content-generation-api.md`。

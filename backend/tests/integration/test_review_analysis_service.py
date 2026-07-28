@@ -132,7 +132,7 @@ async def test_review_service_creates_runs_persists_steps_and_evidence(
     assert result.pain_points
     assert result.keywords
     assert result.judgements
-    assert result.analyzer_version == "review-analysis-v1.0.0"
+    assert result.analyzer_version == "review-analysis-v1.1.0"
     assert result.analysis_mode == "rule"
     assert result.progress == 100
     assert result.current_step == "persist_results"
