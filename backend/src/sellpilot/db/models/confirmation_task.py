@@ -18,6 +18,11 @@ class ConfirmationTask(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "confirmation_tasks"
     __table_args__ = (
         Index("ix_confirmation_tasks_status_created_at", "status", "created_at"),
+        Index(
+            "ix_confirmation_tasks_status_execution_started_at",
+            "status",
+            "execution_started_at",
+        ),
         Index("ix_confirmation_tasks_agent_task_id", "agent_task_id"),
     )
 
@@ -28,12 +33,19 @@ class ConfirmationTask(UUIDPrimaryKeyMixin, Base):
     target_type: Mapped[str] = mapped_column(String(100), nullable=False)
     target_id: Mapped[str | None] = mapped_column(String(255))
     risk_level: Mapped[str] = mapped_column(String(32), default=ToolRiskLevel.WRITE, nullable=False)
+    tool_name: Mapped[str | None] = mapped_column(String(100))
+    tool_version: Mapped[str | None] = mapped_column(String(32))
+    tool_input: Mapped[dict[str, Any] | None] = mapped_column(JSON_TYPE)
+    input_digest: Mapped[str | None] = mapped_column(String(64))
+    request_id: Mapped[str | None] = mapped_column(String(64))
+    risk_warning: Mapped[str | None] = mapped_column(Text)
     before_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON_TYPE)
     after_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON_TYPE)
     status: Mapped[str] = mapped_column(
         String(32), default=ConfirmationStatus.PENDING, nullable=False
     )
-    idempotency_key: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    idempotency_scope: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     created_by: Mapped[UUID] = mapped_column(
         ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
     )
@@ -42,6 +54,7 @@ class ConfirmationTask(UUIDPrimaryKeyMixin, Base):
         DateTime(timezone=True), default=utc_now, nullable=False
     )
     confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    execution_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     executed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     execution_result: Mapped[dict[str, Any] | None] = mapped_column(JSON_TYPE)
     error_message: Mapped[str | None] = mapped_column(Text)

@@ -46,7 +46,11 @@ def test_expired_jwt_is_rejected(test_settings):
 
 
 def test_sensitive_values_are_redacted_from_log_messages():
-    message = redact_sensitive("password=secret token:abc API_KEY=value")
+    message = redact_sensitive(
+        "password=secret token:abc API_KEY=value cookie=session partner_key=partner"
+    )
     assert "secret" not in message
     assert "token:abc" not in message
     assert "API_KEY=value" not in message
+    assert "cookie=session" not in message
+    assert "partner_key=partner" not in message

@@ -31,7 +31,8 @@ FastAPI selection endpoint
 
 ## Tool
 
-`build_selection_tool_registry()` 注册五个结构化工具：
+`register_selection_tools()` 将五个结构化工具注册到应用现有的生产
+`ToolRegistry`：
 
 - `search_market_products`
 - `calculate_product_profit`
@@ -40,6 +41,12 @@ FastAPI selection endpoint
 - `export_product_analysis_report`
 
 工具输入和输出均由 Pydantic Schema 校验，并复用公共 `ToolRegistry` 的超时、脱敏摘要、耗时和 `ToolCall` 留痕。工具不会直接调用平台适配器或执行平台写操作。
+
+生产环境不创建 Selection 专用 Registry。API、Workflow 或其他调用方如需按工具
+语义调用这些能力，必须通过应用的 `ToolExecutor`；执行器在调用 handler 时注入当前
+请求的受信数据库会话，handler 只将其交给 `SelectionService`。当前解释工作流本身是
+Service 内部的有界 LangGraph，不调用 Tool handler，也不复制 ToolExecutor、
+AgentTask 或 Confirmation 状态机。
 
 ## 解释可靠性
 

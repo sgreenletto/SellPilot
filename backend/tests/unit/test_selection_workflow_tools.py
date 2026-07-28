@@ -1,12 +1,21 @@
 from decimal import Decimal
+from uuid import uuid4
 
 import pytest
 
-from sellpilot.core.enums import CurrencyCode, DataSource, SiteCode, ToolRiskLevel
+from sellpilot.core.enums import (
+    CurrencyCode,
+    DataSource,
+    SiteCode,
+    ToolCallerType,
+    ToolCallStatus,
+    ToolRiskLevel,
+)
 from sellpilot.domain.selection.models import SelectionCandidate
 from sellpilot.schemas.common import SourceMetadata
-from sellpilot.tools.contracts import ToolContext
-from sellpilot.tools.selection import build_selection_tool_registry
+from sellpilot.tools.contracts import ToolExecutionContext
+from sellpilot.tools.executor import ToolExecutor
+from sellpilot.tools.runtime import build_tool_registry
 from sellpilot.workflows.selection import generate_validated_explanation
 
 
@@ -59,12 +68,12 @@ async def test_explanation_rejects_mismatched_generated_metrics_and_falls_back()
 
 
 @pytest.mark.asyncio
-async def test_profit_tool_is_schema_validated_and_read_only() -> None:
-    registry = build_selection_tool_registry()
+async def test_profit_tool_is_schema_validated_and_read_only(session, test_settings) -> None:
+    registry = build_tool_registry(test_settings)
     definition = registry.get("calculate_product_profit")
     assert definition.risk_level is ToolRiskLevel.READ
-    assert definition.requires_confirmation is False
-    assert len(registry.list()) == 5
+    assert definition.confirmation_required is False
+    assert len(registry.list()) == 6
 
     candidate = SelectionCandidate(
         product_id="P001",
@@ -81,11 +90,15 @@ async def test_profit_tool_is_schema_validated_and_read_only() -> None:
         shipping_cost=Decimal("5"),
         platform_fee_rate=Decimal("0.10"),
     )
-    result = await registry.invoke(
+    result = await ToolExecutor(registry, session, test_settings).execute(
         "calculate_product_profit",
         {"candidate": candidate.model_dump(mode="json")},
-        ToolContext(),
+        ToolExecutionContext(
+            request_id=str(uuid4()),
+            caller_type=ToolCallerType.TEST,
+            caller_name="selection_tool_test",
+        ),
     )
 
-    assert result.success is True
+    assert result.status is ToolCallStatus.SUCCEEDED
     assert result.data["profit"]["profit"] == "20.00"

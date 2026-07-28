@@ -24,6 +24,7 @@ class ConfirmationTaskResponse(BaseModel):
     confirmed_by: UUID | None
     created_at: ApiDateTime
     confirmed_at: ApiDateTime | None
+    execution_started_at: ApiDateTime | None
     executed_at: ApiDateTime | None
     execution_result: dict[str, Any] | None
     error_message: str | None

@@ -1,3 +1,5 @@
+import hashlib
+import json
 from typing import Any
 from uuid import UUID
 
@@ -8,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sellpilot.adapters.factory import create_platform_adapter
 from sellpilot.core.config import Settings
 from sellpilot.core.enums import OperationStatus, ToolRiskLevel
-from sellpilot.core.exceptions import ResourceNotFoundError
+from sellpilot.core.exceptions import IdempotencyConflictError, ResourceNotFoundError
 from sellpilot.db.models.commerce import InventoryRecord, Product, Sku
 from sellpilot.db.models.confirmation_task import ConfirmationTask
 from sellpilot.db.models.operation_log import OperationLog
@@ -127,8 +129,22 @@ class CommerceOperationService:
         created_by: UUID,
     ) -> ConfirmationTask:
         confirmations = ConfirmationService(self.session)
-        existing = await confirmations.confirmations.get_by_idempotency_key(idempotency_key)
+        before_snapshot = jsonable_encoder(before)
+        after_snapshot = jsonable_encoder(after)
+        input_digest = self._operation_digest(before_snapshot, after_snapshot)
+        idempotency_scope = confirmations.build_idempotency_scope(
+            created_by=created_by,
+            operation_type=operation,
+            tool_name=None,
+            tool_version=None,
+            target_type=target_type,
+            target_id=target_id,
+            idempotency_key=idempotency_key,
+        )
+        existing = await confirmations.confirmations.get_by_idempotency_scope(idempotency_scope)
         if existing is not None:
+            if existing.input_digest != input_digest:
+                raise IdempotencyConflictError()
             return existing
         task = await self.tasks.create_internal_task(
             task_type=operation,
@@ -145,9 +161,27 @@ class CommerceOperationService:
             risk_level=ToolRiskLevel.HIGH_RISK,
             idempotency_key=idempotency_key,
             created_by=created_by,
-            before_snapshot=jsonable_encoder(before),
-            after_snapshot=jsonable_encoder(after),
+            before_snapshot=before_snapshot,
+            after_snapshot=after_snapshot,
+            input_digest=input_digest,
+            risk_warning=f"Confirm high-risk Mock commerce operation: {operation}",
         )
+
+    @staticmethod
+    def _operation_digest(
+        before_snapshot: dict[str, Any],
+        after_snapshot: dict[str, Any],
+    ) -> str:
+        canonical = json.dumps(
+            {
+                "before": before_snapshot,
+                "after": after_snapshot,
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
     def register_executors(self, confirmations: ConfirmationService) -> None:
         confirmations.register_executor(PUBLISH, self._execute)

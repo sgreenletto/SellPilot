@@ -62,6 +62,42 @@ class Settings(BaseSettings):
         le=100 * 1024 * 1024,
         validation_alias="FILE_MAX_SIZE_BYTES",
     )
+    tool_default_timeout_seconds: float = Field(
+        default=30,
+        gt=0,
+        le=120,
+        validation_alias="TOOL_DEFAULT_TIMEOUT_SECONDS",
+    )
+    tool_max_timeout_seconds: float = Field(
+        default=120,
+        gt=0,
+        le=600,
+        validation_alias="TOOL_MAX_TIMEOUT_SECONDS",
+    )
+    tool_read_max_attempts: int = Field(
+        default=2,
+        ge=1,
+        le=3,
+        validation_alias="TOOL_READ_MAX_ATTEMPTS",
+    )
+    tool_retry_initial_delay_ms: int = Field(
+        default=100,
+        ge=0,
+        le=60_000,
+        validation_alias="TOOL_RETRY_INITIAL_DELAY_MS",
+    )
+    tool_retry_max_delay_ms: int = Field(
+        default=1000,
+        ge=0,
+        le=60_000,
+        validation_alias="TOOL_RETRY_MAX_DELAY_MS",
+    )
+    tool_audit_payload_max_bytes: int = Field(
+        default=16_384,
+        ge=1024,
+        le=1_048_576,
+        validation_alias="TOOL_AUDIT_PAYLOAD_MAX_BYTES",
+    )
 
     shopee_partner_id: str | None = Field(default=None, validation_alias="SHOPEE_PARTNER_ID")
     shopee_partner_key: SecretStr | None = Field(
@@ -78,6 +114,11 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_security_and_platform(self) -> "Settings":
+        if self.tool_default_timeout_seconds > self.tool_max_timeout_seconds:
+            raise ValueError("Tool default timeout must not exceed the maximum timeout")
+        if self.tool_retry_initial_delay_ms > self.tool_retry_max_delay_ms:
+            raise ValueError("Tool retry initial delay must not exceed the maximum delay")
+
         jwt_secret = self.jwt_secret_key.get_secret_value()
         if self.app_env == "production" and (
             jwt_secret in EXAMPLE_JWT_SECRETS or len(jwt_secret) < 32

@@ -7,7 +7,9 @@ from sellpilot.core.config import Settings
 from sellpilot.core.middleware import request_id_context
 
 SENSITIVE_PATTERN = re.compile(
-    r"(?i)(password|token|authorization|api[_-]?key|jwt)\s*[:=]\s*([^\s,;]+)"
+    r"(?i)(password|passwd|secret|api[_-]?key|apikey|access[_-]?token|"
+    r"refresh[_-]?token|token|authorization|cookie|partner[_-]?key|jwt|credential)"
+    r"\s*[:=]\s*([^\s,;]+)"
 )
 
 

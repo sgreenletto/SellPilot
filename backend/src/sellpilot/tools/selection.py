@@ -9,7 +9,11 @@ from sellpilot.domain.selection.models import SelectionCandidate
 from sellpilot.domain.selection.scoring import calculate_profit
 from sellpilot.schemas.selection import SelectionAnalysisRequest, SelectionCandidateQuery
 from sellpilot.services.selection import SelectionService
-from sellpilot.tools.contracts import ToolContext, ToolDefinition
+from sellpilot.tools.contracts import (
+    RetryPolicy,
+    ToolDefinition,
+    ToolExecutionContext,
+)
 from sellpilot.tools.registry import ToolRegistry
 
 
@@ -73,19 +77,19 @@ class ExportProductAnalysisReportOutput(ToolModel):
     report: dict[str, object]
 
 
-def _service(context: ToolContext) -> SelectionService:
+def _service(context: ToolExecutionContext) -> SelectionService:
     if context.session is None:
         raise ParameterError("selection tools require a database session")
     return SelectionService(context.session)
 
 
-def _user_id(context: ToolContext) -> UUID:
+def _user_id(context: ToolExecutionContext) -> UUID:
     if context.user_id is None:
         raise UnauthenticatedError()
     return context.user_id
 
 
-async def _search(payload: SearchMarketProductsInput, context: ToolContext):
+async def _search(payload: SearchMarketProductsInput, context: ToolExecutionContext):
     products = await _service(context).list_candidates(
         SelectionCandidateQuery.model_validate(payload.model_dump())
     )
@@ -95,7 +99,7 @@ async def _search(payload: SearchMarketProductsInput, context: ToolContext):
     )
 
 
-async def _profit(payload: CalculateProductProfitInput, _context: ToolContext):
+async def _profit(payload: CalculateProductProfitInput, _context: ToolExecutionContext):
     profit = calculate_profit(payload.candidate)
     return CalculateProductProfitOutput(
         profit=profit.model_dump(mode="json"),
@@ -103,77 +107,99 @@ async def _profit(payload: CalculateProductProfitInput, _context: ToolContext):
     )
 
 
-async def _score(payload: ScoreProductOpportunityInput, context: ToolContext):
+async def _score(payload: ScoreProductOpportunityInput, context: ToolExecutionContext):
     result = await _service(context).analyze(payload, _user_id(context))
     return ScoreProductOpportunityOutput(analysis=result.model_dump(mode="json"))
 
 
-async def _compare(payload: CompareProductsInput, context: ToolContext):
+async def _compare(payload: CompareProductsInput, context: ToolExecutionContext):
     result = await _service(context).compare(
         payload.task_id, payload.product_ids, _user_id(context)
     )
     return CompareProductsOutput(products=[item.model_dump(mode="json") for item in result])
 
 
-async def _export(payload: ExportProductAnalysisReportInput, context: ToolContext):
+async def _export(payload: ExportProductAnalysisReportInput, context: ToolExecutionContext):
     result = await _service(context).export(payload.task_id, _user_id(context))
     return ExportProductAnalysisReportOutput(report=result.model_dump(mode="json"))
 
 
-def build_selection_tool_registry() -> ToolRegistry:
-    registry = ToolRegistry()
-    definitions = [
+def build_selection_tools() -> tuple[ToolDefinition, ...]:
+    retry_policy = RetryPolicy(
+        max_attempts=1,
+        initial_delay_ms=0,
+        max_delay_ms=0,
+        backoff_multiplier=1,
+    )
+    return (
         ToolDefinition(
             name="search_market_products",
+            version="1.0.0",
             description="Search validated Mock Shopee candidate products.",
             input_schema=SearchMarketProductsInput,
             output_schema=SearchMarketProductsOutput,
             risk_level=ToolRiskLevel.READ,
-            requires_confirmation=False,
             timeout_seconds=10,
+            retry_policy=retry_policy,
+            idempotent=True,
+            expose_to_mcp=False,
             handler=_search,
         ),
         ToolDefinition(
             name="calculate_product_profit",
+            version="1.0.0",
             description="Calculate deterministic product profit and margin.",
             input_schema=CalculateProductProfitInput,
             output_schema=CalculateProductProfitOutput,
             risk_level=ToolRiskLevel.READ,
-            requires_confirmation=False,
             timeout_seconds=5,
+            retry_policy=retry_policy,
+            idempotent=True,
+            expose_to_mcp=False,
             handler=_profit,
         ),
         ToolDefinition(
             name="score_product_opportunity",
+            version="1.0.0",
             description="Run and persist an internally traceable deterministic selection analysis.",
             input_schema=ScoreProductOpportunityInput,
             output_schema=ScoreProductOpportunityOutput,
             risk_level=ToolRiskLevel.READ,
-            requires_confirmation=False,
             timeout_seconds=30,
+            retry_policy=retry_policy,
+            idempotent=False,
+            expose_to_mcp=False,
             handler=_score,
         ),
         ToolDefinition(
             name="compare_products",
+            version="1.0.0",
             description="Compare persisted results from one owned selection task.",
             input_schema=CompareProductsInput,
             output_schema=CompareProductsOutput,
             risk_level=ToolRiskLevel.READ,
-            requires_confirmation=False,
             timeout_seconds=10,
+            retry_policy=retry_policy,
+            idempotent=True,
+            expose_to_mcp=False,
             handler=_compare,
         ),
         ToolDefinition(
             name="export_product_analysis_report",
+            version="1.0.0",
             description="Serialize an existing selection report without writing a server file.",
             input_schema=ExportProductAnalysisReportInput,
             output_schema=ExportProductAnalysisReportOutput,
             risk_level=ToolRiskLevel.READ,
-            requires_confirmation=False,
             timeout_seconds=10,
+            retry_policy=retry_policy,
+            idempotent=True,
+            expose_to_mcp=False,
             handler=_export,
         ),
-    ]
-    for definition in definitions:
+    )
+
+
+def register_selection_tools(registry: ToolRegistry) -> None:
+    for definition in build_selection_tools():
         registry.register(definition)
-    return registry

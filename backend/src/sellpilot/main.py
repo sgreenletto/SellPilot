@@ -12,6 +12,7 @@ from sellpilot.core.exceptions import AppException, ErrorCode
 from sellpilot.core.logging import configure_logging
 from sellpilot.core.middleware import RequestIdMiddleware, get_request_id
 from sellpilot.core.response import ApiResponse, ValidationIssue
+from sellpilot.tools.runtime import build_tool_registry
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         version=current_settings.app_version,
         debug=current_settings.debug,
     )
+    application.state.tool_registry = build_tool_registry(current_settings)
     application.add_middleware(
         CORSMiddleware,
         allow_origins=current_settings.cors_origins,

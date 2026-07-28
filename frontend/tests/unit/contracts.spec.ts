@@ -8,6 +8,8 @@ import {
   PRODUCT_STATUSES,
   SITE_CODES,
   TASK_STATUSES,
+  TOOL_CALLER_TYPES,
+  TOOL_CALL_STATUSES,
   TOOL_RISK_LEVELS,
 } from "@/types/contracts";
 
@@ -38,6 +40,16 @@ describe("公共领域契约", () => {
       "cancelled",
     ]);
     expect(TOOL_RISK_LEVELS).toEqual(["read", "write", "high_risk"]);
+    expect(TOOL_CALL_STATUSES).toEqual([
+      "pending",
+      "running",
+      "waiting_confirmation",
+      "succeeded",
+      "failed",
+      "blocked",
+      "timed_out",
+    ]);
+    expect(TOOL_CALLER_TYPES).toEqual(["api", "agent", "workflow", "mcp", "system", "test"]);
   });
 
   it("保持站点、语言、币种和来源代码稳定", () => {
