@@ -9,6 +9,7 @@ import SpCard from "@/components/base/SpCard.vue";
 import SpEmptyState from "@/components/base/SpEmptyState.vue";
 import SpInput from "@/components/base/SpInput.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
+import { sheetRows } from "@/utils/spreadsheet";
 
 type MarketRow = Record<string, string | number | boolean>;
 
@@ -52,17 +53,18 @@ const categoryOptions = computed(() => optionValues("category_name"));
 const statusOptions = computed(() => optionValues("status"));
 
 function normalizedRow(row: MarketRow): MarketRow {
+  const isMock = String(row.is_mock_data).toLowerCase() === "true";
   return {
     ...row,
-    source_type: row.source_type || "manual_import",
-    is_mock_data: String(row.is_mock_data).toLowerCase() === "true",
+    source_type: row.source_type || (isMock ? "simulated_experiment" : "manual_import"),
+    is_mock_data: isMock,
   };
 }
 
 function loadWorkbook(workbook: XLSX.WorkBook, sourceName: string): void {
-  const sheet = workbook.Sheets[workbook.SheetNames[0] ?? ""];
-  if (!sheet) throw new Error("文件中没有可读取的工作表");
-  rows.value = XLSX.utils.sheet_to_json<MarketRow>(sheet, { defval: "" }).map(normalizedRow);
+  const importedRows = sheetRows(workbook);
+  if (!importedRows.length) throw new Error("文件中没有可读取的工作表或数据");
+  rows.value = importedRows.map(normalizedRow);
   source.value = sourceName;
   selected.value = null;
   candidates.value.clear();
@@ -264,20 +266,27 @@ watch(totalPages, (pages) => {
       </template>
     </SpCard>
 
-    <SpCard v-if="selected" class="detail" padding="lg">
-      <template #header>
-        <div class="toolbar">
-          <strong>市场商品详情抽屉</strong
-          ><SpButton variant="ghost" @click="selected = null">关闭</SpButton>
-        </div>
-      </template>
-      <dl>
-        <template v-for="(fieldValue, key) in selected" :key="key">
-          <dt>{{ key }}</dt>
-          <dd>{{ fieldValue }}</dd>
-        </template>
-      </dl>
-    </SpCard>
+    <Teleport to="body">
+      <div
+        v-if="selected"
+        class="drawer-backdrop"
+        role="presentation"
+        @click.self="selected = null"
+      >
+        <aside class="detail-drawer" role="dialog" aria-modal="true" aria-label="市场商品详情">
+          <header class="drawer-header">
+            <div><span>MARKET RECORD</span><strong>市场商品详情</strong></div>
+            <SpButton variant="ghost" @click="selected = null">关闭</SpButton>
+          </header>
+          <dl>
+            <template v-for="(fieldValue, key) in selected" :key="key">
+              <dt>{{ key }}</dt>
+              <dd>{{ fieldValue }}</dd>
+            </template>
+          </dl>
+        </aside>
+      </div>
+    </Teleport>
   </PageContainer>
 </template>
 
@@ -396,8 +405,51 @@ th {
   color: var(--sp-color-text-muted);
   font-size: var(--sp-font-xs);
 }
-.detail {
-  margin-top: var(--sp-space-5);
+.drawer-backdrop {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+  background: color-mix(in srgb, var(--sp-color-text) 28%, transparent);
+  inset: 0;
+}
+.detail-drawer {
+  width: min(560px, 92vw);
+  height: 100%;
+  padding: var(--sp-space-6);
+  overflow-y: auto;
+  background: var(--sp-color-surface-strong);
+  box-shadow: -24px 0 60px color-mix(in srgb, var(--sp-color-text) 16%, transparent);
+  animation: drawer-enter 180ms ease-out;
+}
+.drawer-header {
+  position: sticky;
+  top: calc(var(--sp-space-6) * -1);
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-space-4) 0;
+  margin-bottom: var(--sp-space-4);
+  background: var(--sp-color-surface-strong);
+}
+.drawer-header > div {
+  display: grid;
+  gap: var(--sp-space-1);
+}
+.drawer-header span {
+  color: var(--sp-color-accent-blue);
+  font-size: var(--sp-font-xs);
+  font-weight: 750;
+  letter-spacing: 0.1em;
+}
+@keyframes drawer-enter {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 dl {
   display: grid;

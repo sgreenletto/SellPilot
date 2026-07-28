@@ -1,27 +1,40 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { AlertTriangle, Boxes, RefreshCw } from "@lucide/vue";
-import * as XLSX from "xlsx";
 
 import inventoryCsv from "../../../../data/demo/shopee_mock/inventory.csv?raw";
 import productsCsv from "../../../../data/demo/shopee_mock/products.csv?raw";
 import skusCsv from "../../../../data/demo/shopee_mock/skus.csv?raw";
 import SpButton from "@/components/base/SpButton.vue";
 import SpCard from "@/components/base/SpCard.vue";
+import CommercePagination from "@/components/commerce/CommercePagination.vue";
 import StatusBadge from "@/components/data-display/StatusBadge.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
+import { csvRows } from "@/utils/spreadsheet";
 
 type Row = Record<string, string | number>;
 const parse = (csv: string): Row[] => {
-  const book = XLSX.read(csv, { type: "string" });
-  const sheet = book.Sheets[book.SheetNames[0] ?? ""];
-  return sheet ? XLSX.utils.sheet_to_json<Row>(sheet, { defval: "" }) : [];
+  return csvRows(csv) as Row[];
 };
 
 const rows = ref(parse(inventoryCsv));
-const listingDrafts = ref(parse(productsCsv).slice(0, 5));
+const listingDrafts = ref([
+  ...parse(productsCsv).slice(0, 4),
+  {
+    product_id: "DRAFT-INCOMPLETE",
+    title: "字段缺失演示草稿",
+    category_name: "待补充类目",
+    currency: "SGD",
+    price: "",
+    status: "draft",
+  },
+]);
 const skus = parse(skusCsv);
 const lowOnly = ref(false);
+const draftPage = ref(1);
+const draftPageSize = ref(10);
+const inventoryPage = ref(1);
+const inventoryPageSize = ref(10);
 const selected = ref(new Set<string>());
 const amount = ref(10);
 const notice = ref("");
@@ -32,6 +45,14 @@ const visible = computed(() =>
     (row) => !lowOnly.value || Number(row.available_stock) <= Number(row.safety_stock),
   ),
 );
+const paginatedDrafts = computed(() => {
+  const start = (draftPage.value - 1) * draftPageSize.value;
+  return listingDrafts.value.slice(start, start + draftPageSize.value);
+});
+const paginatedInventory = computed(() => {
+  const start = (inventoryPage.value - 1) * inventoryPageSize.value;
+  return visible.value.slice(start, start + inventoryPageSize.value);
+});
 const lowCount = computed(
   () => rows.value.filter((row) => Number(row.available_stock) <= Number(row.safety_stock)).length,
 );
@@ -72,6 +93,9 @@ function simulateListing(row: Row, publish: boolean): void {
   row.listing_result = !publish ? "模拟下架成功" : complete ? "模拟上架成功" : "模拟上架失败";
   notice.value = `${row.product_id}：${row.listing_result}。这只是 Mock 结果展示，未修改平台数据。`;
 }
+
+watch([lowOnly, inventoryPageSize], () => (inventoryPage.value = 1));
+watch(draftPageSize, () => (draftPage.value = 1));
 </script>
 
 <template>
@@ -115,7 +139,7 @@ function simulateListing(row: Row, publish: boolean): void {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="draft in listingDrafts" :key="String(draft.product_id)">
+            <tr v-for="draft in paginatedDrafts" :key="String(draft.product_id)">
               <td>
                 <strong>{{ draft.title }}</strong
                 ><small>{{ draft.category_name }}</small>
@@ -143,6 +167,13 @@ function simulateListing(row: Row, publish: boolean): void {
           </tbody>
         </table>
       </div>
+      <template #footer>
+        <CommercePagination
+          v-model:current-page="draftPage"
+          v-model:page-size="draftPageSize"
+          :total="listingDrafts.length"
+        />
+      </template>
     </SpCard>
     <SpCard padding="lg">
       <template #header
@@ -174,7 +205,7 @@ function simulateListing(row: Row, publish: boolean): void {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in visible" :key="String(row.inventory_id)">
+            <tr v-for="row in paginatedInventory" :key="String(row.inventory_id)">
               <td>
                 <input
                   type="checkbox"
@@ -208,6 +239,13 @@ function simulateListing(row: Row, publish: boolean): void {
           </tbody>
         </table>
       </div>
+      <template #footer>
+        <CommercePagination
+          v-model:current-page="inventoryPage"
+          v-model:page-size="inventoryPageSize"
+          :total="visible.length"
+        />
+      </template>
     </SpCard>
     <SpCard class="ledger" padding="lg"
       ><template #header
