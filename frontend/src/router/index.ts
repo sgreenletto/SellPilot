@@ -5,10 +5,10 @@ import { useAuthStore } from "@/stores/auth";
 
 const LoginView = () => import("@/views/login/LoginView.vue");
 const DashboardView = () => import("@/views/dashboard/DashboardView.vue");
+const AssistantView = () => import("@/views/assistant/AssistantView.vue");
 const ConversationView = () => import("@/views/customer-service/ConversationView.vue");
 const KnowledgeBaseView = () => import("@/views/knowledge-base/KnowledgeBaseView.vue");
 const DesignSystemView = () => import("@/views/dev/DesignSystemView.vue");
-const ModulePlaceholderView = () => import("@/views/placeholder/ModulePlaceholderView.vue");
 const ProductsView = () => import("@/views/commerce/ProductsView.vue");
 const InventoryView = () => import("@/views/commerce/InventoryView.vue");
 const OrdersView = () => import("@/views/commerce/OrdersView.vue");
@@ -34,7 +34,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
   {
     path: "/assistant",
     name: "assistant",
-    component: ModulePlaceholderView,
+    component: AssistantView,
     meta: {
       title: "AI 运营助手",
       module: "AI 运营",
