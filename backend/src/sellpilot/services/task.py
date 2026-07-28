@@ -44,7 +44,12 @@ class TaskService:
     async def start(self, task_id: UUID) -> AgentTask:
         task = await self.get(task_id)
         self._transition(task, TaskStatus.RUNNING)
-        task.started_at = datetime.now(UTC)
+        task.started_at = task.started_at or datetime.now(UTC)
+        return task
+
+    async def wait_for_confirmation(self, task_id: UUID) -> AgentTask:
+        task = await self.get(task_id)
+        self._transition(task, TaskStatus.WAITING_CONFIRMATION)
         return task
 
     async def update_current_step(self, task_id: UUID, step_name: str) -> AgentTask:

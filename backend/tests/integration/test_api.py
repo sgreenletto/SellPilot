@@ -1,3 +1,4 @@
+from pathlib import Path
 from uuid import UUID, uuid4
 
 from fastapi import Request
@@ -6,9 +7,12 @@ from sellpilot.core.enums import ConfirmationStatus, ToolRiskLevel
 from sellpilot.core.response import ApiResponse
 from sellpilot.core.security import create_access_token, hash_password
 from sellpilot.db.models.user import User
+from sellpilot.services.commerce_import import CommerceImportService
 from sellpilot.services.confirmation import ConfirmationService
 from sellpilot.services.task import TaskService
 from tests.conftest import TEST_PASSWORD
+
+COMMERCE_DATA_DIR = Path(__file__).resolve().parents[3] / "data" / "demo" / "shopee_mock"
 
 
 async def add_user(session_factory, *, active: bool = True) -> User:
@@ -30,6 +34,37 @@ async def login(client, user: User, password: str = TEST_PASSWORD):
         "/api/v1/auth/login",
         json={"username": user.username, "password": password},
     )
+
+
+async def test_commerce_read_api_is_authenticated_and_structured(client_bundle):
+    client, _, session_factory, _ = client_bundle
+    assert (await client.get("/api/v1/commerce/products")).status_code == 401
+
+    user = await add_user(session_factory)
+    async with session_factory() as session:
+        await CommerceImportService(session).import_package(COMMERCE_DATA_DIR)
+        await session.commit()
+    token = (await login(client, user)).json()["data"]["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = await client.get("/api/v1/commerce/products?limit=2&site=Singapore", headers=headers)
+    assert response.status_code == 200
+    products = response.json()["data"]
+    assert len(products) <= 2
+    assert all(product["site"] == "Singapore" for product in products)
+    assert all(product["is_mock_data"] is True for product in products)
+
+    inventory = await client.get("/api/v1/commerce/inventory?limit=2", headers=headers)
+    assert inventory.status_code == 200
+    assert len(inventory.json()["data"]) == 2
+    assert all(item["is_mock_data"] is True for item in inventory.json()["data"])
+
+    returns = await client.get("/api/v1/commerce/returns?limit=2", headers=headers)
+    assert returns.status_code == 200
+    assert len(returns.json()["data"]) == 2
+
+    missing = await client.get("/api/v1/commerce/products/missing", headers=headers)
+    assert missing.status_code == 404
 
 
 async def test_live_health_does_not_need_database(client_bundle):
@@ -142,7 +177,14 @@ async def test_platform_status_reports_mock_boundary(client_bundle):
         "configured": True,
         "reachable": True,
         "message": "Mock adapter foundation is available",
-        "capabilities": ["system.ping", "platform.contracts"],
+        "capabilities": [
+            "system.ping",
+            "platform.contracts",
+            "products.read",
+            "orders.read",
+            "logistics.read",
+            "messages.read",
+        ],
     }
 
 
