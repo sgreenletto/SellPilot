@@ -13,3 +13,5 @@
 智能选品利润、评分、缺失数据和稳定排序单元测试见 `selection-scoring.md`。
 
 智能选品 Service、持久化、结构化 Tool、解释校验与导出测试见 `selection-api-tools.md`。
+
+智能选品前端 API、工作台状态、表单边界和错误状态测试见 `selection-workbench.md`。

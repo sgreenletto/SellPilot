@@ -8,7 +8,8 @@ SellPilot 前端公共框架采用 Vue 3、TypeScript 与 Vite，当前版本为
 
 ## 当前边界
 
-当前仅实现公共布局、设计系统、可复用组件、API 客户端和使用合成 Mock 数据的经营看板。未实现商品、选品、评论、订单、库存、客服、RAG、正式 Agent 调用或真实 Shopee 连接。
+当前已实现公共布局、设计系统、可复用组件、API 客户端、经营看板、Mock 商品/订单/库存页面和
+智能选品工作台。尚未实现评论分析、客服、RAG、完整 Agent 页面或真实 Shopee 连接。
 
 v0.1.0 采用普通 Git Tag 标记，不创建 GitHub Release；当前不连接真实 Shopee。
 
@@ -84,7 +85,7 @@ VITE_PROXY_TARGET=http://127.0.0.1:8000
 - `/dashboard`：完整经营看板。
 - `/assistant`
 - `/market/data`
-- `/market/selection`
+- `/market/selection`：正式智能选品工作台。
 - `/market/reviews`
 - `/products`
 - `/products/content`
@@ -95,7 +96,7 @@ VITE_PROXY_TARGET=http://127.0.0.1:8000
 - `/tasks`
 - `/dev/design-system`：仅开发环境注册，不在生产导航中显示。
 
-除 Dashboard 和开发设计系统外，当前路由复用统一占位页，不表示业务已完成。
+未列为已实现的业务路由仍复用统一占位页，不表示对应业务已完成。
 
 ## 设计变量与组件原则
 
@@ -118,6 +119,6 @@ VITE_PROXY_TARGET=http://127.0.0.1:8000
 
 - 真实登录和复杂权限。
 - 真实商品、订单、库存、物流、客服或知识库页面。
-- 正式选品、评论分析、内容生成与 Agent 工作流。
+- 评论分析、内容生成与完整 Agent 页面。
 - 全局搜索、正式报告生成和真实 Shopee 连接。
 - Docker Compose、CI/CD 与生产部署。
