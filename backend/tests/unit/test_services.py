@@ -121,13 +121,23 @@ async def test_legacy_uppercase_confirmation_status_executes_once(session):
     task = await TaskService(session).create_internal_task(
         task_type="diagnostic", user_input="legacy row", created_by=user.id
     )
+    idempotency_key = str(uuid4())
     confirmation = ConfirmationTask(
         agent_task_id=task.id,
         operation_type="test.legacy-write",
         target_type="test-target",
         target_id="target-1",
         risk_level="WRITE",
-        idempotency_key=str(uuid4()),
+        idempotency_key=idempotency_key,
+        idempotency_scope=ConfirmationService.build_idempotency_scope(
+            created_by=user.id,
+            operation_type="test.legacy-write",
+            tool_name=None,
+            tool_version=None,
+            target_type="test-target",
+            target_id="target-1",
+            idempotency_key=idempotency_key,
+        ),
         created_by=user.id,
         status="PENDING",
     )
@@ -187,7 +197,7 @@ async def test_confirmation_executor_failure_is_saved_and_idempotent(session):
     second = await service.confirm(confirmation.id, user.id)
     assert first is second
     assert first.status == ConfirmationStatus.FAILED
-    assert first.error_message == "expected executor failure"
+    assert first.error_message == "Confirmation execution failed"
     assert calls == 1
 
 

@@ -24,6 +24,23 @@ def test_real_mode_requires_explicit_configuration():
         Settings(_env_file=None, PLATFORM_ADAPTER="real")
 
 
+def test_tool_timeout_and_retry_settings_validate_cross_field_limits():
+    with pytest.raises(ValidationError, match="default timeout"):
+        Settings(
+            _env_file=None,
+            TOOL_DEFAULT_TIMEOUT_SECONDS=31,
+            TOOL_MAX_TIMEOUT_SECONDS=30,
+        )
+    with pytest.raises(ValidationError, match="initial delay"):
+        Settings(
+            _env_file=None,
+            TOOL_RETRY_INITIAL_DELAY_MS=1001,
+            TOOL_RETRY_MAX_DELAY_MS=1000,
+        )
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, TOOL_READ_MAX_ATTEMPTS=4)
+
+
 @pytest.mark.parametrize("secret", ["replace_me", "replace_with_at_least_32_random_characters"])
 def test_production_rejects_example_jwt_secret(secret):
     with pytest.raises(ValidationError, match="Production requires"):
