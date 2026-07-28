@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, Index, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from sellpilot.core.enums import OperationStatus
@@ -33,6 +33,13 @@ class OperationLog(UUIDPrimaryKeyMixin, Base):
     confirmation_task_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("confirmation_tasks.id", ondelete="SET NULL")
     )
+    tool_call_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("tool_calls.id", ondelete="SET NULL")
+    )
+    risk_level: Mapped[str | None] = mapped_column(String(32))
+    caller_type: Mapped[str | None] = mapped_column(String(32))
+    is_mock: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    details: Mapped[dict[str, Any] | None] = mapped_column(JSON_TYPE)
     before_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON_TYPE)
     after_snapshot: Mapped[dict[str, Any] | None] = mapped_column(JSON_TYPE)
     status: Mapped[str] = mapped_column(
