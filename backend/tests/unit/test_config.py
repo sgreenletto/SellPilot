@@ -41,6 +41,21 @@ def test_tool_timeout_and_retry_settings_validate_cross_field_limits():
         Settings(_env_file=None, TOOL_READ_MAX_ATTEMPTS=4)
 
 
+def test_task_runtime_settings_enforce_hard_limits():
+    with pytest.raises(ValidationError, match="Task default node timeout"):
+        Settings(
+            _env_file=None,
+            TASK_DEFAULT_NODE_TIMEOUT_SECONDS=61,
+            TASK_MAX_NODE_TIMEOUT_SECONDS=60,
+        )
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, TASK_MAX_STEPS=201)
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, TASK_MAX_ATTEMPTS=6)
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, TASK_STATE_MAX_BYTES=100)
+
+
 @pytest.mark.parametrize("secret", ["replace_me", "replace_with_at_least_32_random_characters"])
 def test_production_rejects_example_jwt_secret(secret):
     with pytest.raises(ValidationError, match="Production requires"):

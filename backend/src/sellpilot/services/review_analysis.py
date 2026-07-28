@@ -74,6 +74,8 @@ class ReviewAnalysisService:
         self,
         request: ReviewAnalysisCreateRequest,
         created_by: UUID,
+        *,
+        agent_task_id: UUID | None = None,
     ) -> ReviewAnalysisCreatedResponse:
         product = await self.commerce.get_product(request.product_id)
         if not product:
@@ -92,11 +94,14 @@ class ReviewAnalysisService:
                 raise IdempotencyConflictError()
             return self._created_response(existing, duplicate=True)
 
-        agent_task = await self.tasks.create_internal_task(
-            task_type=TaskType.REVIEW_ANALYSIS,
-            user_input=self._safe_user_input(request),
-            created_by=created_by,
-        )
+        if agent_task_id is None:
+            agent_task = await self.tasks.create_internal_task(
+                task_type=TaskType.REVIEW_ANALYSIS,
+                user_input=self._safe_user_input(request),
+                created_by=created_by,
+            )
+        else:
+            agent_task = await self.tasks.get(agent_task_id, user_id=created_by)
         await self.tasks.create_steps(agent_task.id, list(STEP_NAMES))
         result = await self.analysis.add_result(
             ReviewAnalysisResult(
@@ -123,6 +128,8 @@ class ReviewAnalysisService:
         self,
         analysis_id: UUID,
         user_id: UUID,
+        *,
+        manage_agent_task: bool = True,
     ) -> ReviewAnalysisResultResponse:
         result = await self._owned_result(analysis_id, user_id)
         if AnalysisStatus(result.status) is AnalysisStatus.SUCCEEDED:
@@ -142,7 +149,11 @@ class ReviewAnalysisService:
         steps = {
             step.step_name: step for step in await self.tasks.tasks.list_steps(result.agent_task_id)
         }
-        agent_task = await self.tasks.start(result.agent_task_id)
+        agent_task = await self.tasks.get(result.agent_task_id, user_id=user_id)
+        if manage_agent_task:
+            agent_task = await self.tasks.start(result.agent_task_id)
+        elif TaskStatus(agent_task.status) is not TaskStatus.RUNNING:
+            raise StateConflictError("Workflow-owned review analysis task must be running")
         result.status = AnalysisStatus.RUNNING
         result.started_at = datetime.now(UTC)
         try:
@@ -201,21 +212,23 @@ class ReviewAnalysisService:
             )
             result.status = AnalysisStatus.SUCCEEDED
             result.finished_at = datetime.now(UTC)
-            await self.tasks.complete(
-                result.agent_task_id,
-                {
-                    "analysis_id": str(result.id),
-                    "included_count": report.quality.included_count,
-                    "analyzer_version": report.analyzer_version,
-                    "analysis_mode": "rule",
-                },
-            )
+            if manage_agent_task:
+                await self.tasks.complete(
+                    result.agent_task_id,
+                    {
+                        "analysis_id": str(result.id),
+                        "included_count": report.quality.included_count,
+                        "analyzer_version": report.analyzer_version,
+                        "analysis_mode": "rule",
+                    },
+                )
         except Exception as exc:
             await self._mark_failed(
                 result,
                 steps,
                 error_code="REVIEW_ANALYSIS_FAILED",
                 error_message=self._safe_error(exc),
+                manage_agent_task=manage_agent_task,
             )
             await self.session.commit()
             raise
@@ -332,6 +345,7 @@ class ReviewAnalysisService:
         *,
         error_code: str,
         error_message: str,
+        manage_agent_task: bool,
     ) -> None:
         result.status = AnalysisStatus.FAILED
         result.error_message = error_message
@@ -347,7 +361,8 @@ class ReviewAnalysisService:
                     int(result.input_conditions.get("max_attempts", 1)) - 1,
                     0,
                 )
-                await self.tasks.fail(result.agent_task_id, error_code, error_message)
+                if manage_agent_task:
+                    await self.tasks.fail(result.agent_task_id, error_code, error_message)
 
     async def _owned_result(
         self,

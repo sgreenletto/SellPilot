@@ -7,42 +7,42 @@ import {
   ElMessage,
   type FormInstance,
   type FormRules,
-} from "element-plus"
-import { reactive, ref } from "vue"
-import { useRouter } from "vue-router"
+} from "element-plus";
+import { reactive, ref } from "vue";
+import { useRouter } from "vue-router";
 
-import { useAuthStore } from "@/stores/auth"
+import { useAuthStore } from "@/stores/auth";
 
-const router = useRouter()
-const authStore = useAuthStore()
+const router = useRouter();
+const authStore = useAuthStore();
 
-const formRef = ref<FormInstance>()
-const loading = ref(false)
+const formRef = ref<FormInstance>();
+const loading = ref(false);
 
 const form = reactive({
   username: "",
   password: "",
-})
+});
 
 const rules: FormRules = {
   username: [{ required: true, message: "请输入用户名", trigger: "blur" }],
   password: [{ required: true, message: "请输入密码", trigger: "blur" }],
-}
+};
 
 async function handleLogin(): Promise<void> {
-  const valid = await formRef.value?.validate().catch(() => false)
-  if (!valid) return
+  const valid = await formRef.value?.validate().catch(() => false);
+  if (!valid) return;
 
-  loading.value = true
+  loading.value = true;
   try {
-    await authStore.login(form.username, form.password)
-    ElMessage.success("登录成功")
-    await router.push("/dashboard")
+    await authStore.login(form.username, form.password);
+    ElMessage.success("登录成功");
+    await router.push("/dashboard");
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "登录失败，请稍后重试"
-    ElMessage.error(message)
+    const message = error instanceof Error ? error.message : "登录失败，请稍后重试";
+    ElMessage.error(message);
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 </script>
@@ -64,12 +64,7 @@ async function handleLogin(): Promise<void> {
         @submit.prevent="handleLogin"
       >
         <el-form-item prop="username">
-          <el-input
-            v-model="form.username"
-            placeholder="用户名"
-            :prefix-icon="null"
-            autocomplete="username"
-          />
+          <el-input v-model="form.username" placeholder="用户名" autocomplete="username" />
         </el-form-item>
 
         <el-form-item prop="password">
@@ -83,12 +78,7 @@ async function handleLogin(): Promise<void> {
         </el-form-item>
 
         <el-form-item class="submit-item">
-          <el-button
-            type="primary"
-            :loading="loading"
-            class="login-button"
-            @click="handleLogin"
-          >
+          <el-button type="primary" :loading="loading" class="login-button" @click="handleLogin">
             登 录
           </el-button>
         </el-form-item>

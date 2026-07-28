@@ -1,8 +1,4 @@
-import type {
-  KnowledgeEntry,
-  RetrievalResult,
-  UploadedDocument,
-} from "@/types/knowledge-base"
+import type { KnowledgeEntry, RetrievalResult, UploadedDocument } from "@/types/knowledge-base";
 
 // ==================== 知识条目 ====================
 
@@ -117,7 +113,7 @@ export const knowledgeEntries: KnowledgeEntry[] = [
     updatedAt: "2026-07-08",
     tags: ["发票", "收据", "税务"],
   },
-]
+];
 
 // ==================== 上传文档状态 ====================
 
@@ -161,7 +157,7 @@ export const uploadedDocuments: UploadedDocument[] = [
     uploadedAt: "2026-07-27 11:45",
     errorMessage: "文档编码格式不支持，请转换为 UTF-8 后重试",
   },
-]
+];
 
 // ==================== 检索测试结果 ====================
 
@@ -211,4 +207,4 @@ export const mockRetrievalResults: RetrievalResult[] = [
     sourceCategory: "logistics",
     chunkIndex: 18,
   },
-]
+];

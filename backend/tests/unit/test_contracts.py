@@ -101,7 +101,15 @@ EXPECTED_ENUM_VALUES = {
         "failed",
         "cancelled",
     ],
-    TaskStepStatus: ["pending", "running", "succeeded", "failed", "cancelled"],
+    TaskStepStatus: [
+        "pending",
+        "running",
+        "waiting_confirmation",
+        "succeeded",
+        "failed",
+        "skipped",
+        "cancelled",
+    ],
     ConfirmationStatus: [
         "pending",
         "confirmed",

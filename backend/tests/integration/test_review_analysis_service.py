@@ -3,6 +3,7 @@ from decimal import Decimal
 from uuid import uuid4
 
 import pytest
+from sqlalchemy import func, select
 
 from sellpilot.core.enums import (
     AnalysisStatus,
@@ -15,6 +16,7 @@ from sellpilot.core.exceptions import (
     IdempotencyConflictError,
     ResourceNotFoundError,
 )
+from sellpilot.db.models.agent_task import AgentTask
 from sellpilot.db.models.commerce import Product, Review, Shop
 from sellpilot.domain.review_analysis import analyze_reviews
 from sellpilot.repositories.task import TaskRepository
@@ -23,9 +25,12 @@ from sellpilot.schemas.review_analysis import (
     ReviewQuery,
 )
 from sellpilot.services.review_analysis import ReviewAnalysisService
+from sellpilot.services.task import TaskService
 from sellpilot.tools.contracts import ToolExecutionContext
 from sellpilot.tools.executor import ToolExecutor
 from sellpilot.tools.runtime import build_tool_registry
+from sellpilot.workflows.runner import TaskRunner
+from sellpilot.workflows.runtime import build_workflow_registry
 
 
 async def seed_reviews(session, *, review_count: int = 4) -> Product:
@@ -315,3 +320,86 @@ async def test_review_tools_use_unified_executor_and_persist_traceable_analysis(
     assert analysis.data["analysis"]["status"] == "SUCCEEDED"
     assert analysis.data["analysis"]["analysis_mode"] == "rule"
     assert analysis.attempt_count == 1
+
+
+async def test_review_analysis_uses_task_workflow_runtime_without_nested_task(
+    session,
+    admin_user,
+    test_settings,
+):
+    await seed_reviews(session)
+    workflows = build_workflow_registry(test_settings)
+    tools = build_tool_registry(test_settings)
+    definition = workflows.get("review_analysis")
+    task = await TaskService(session, test_settings).create_workflow_task(
+        definition,
+        workflow_input={
+            "idempotency_key": "review-workflow-analysis-001",
+            "product_id": "REV-P1",
+            "site": "sg",
+            "batch_size": 2,
+            "maximum_reviews": 4,
+            "max_attempts": 2,
+        },
+        created_by=admin_user.id,
+        request_id=str(uuid4()),
+    )
+
+    result = await TaskRunner(
+        workflows,
+        tools,
+        session,
+        test_settings,
+    ).run(task.id, user_id=admin_user.id)
+
+    assert result.status is TaskStatus.SUCCEEDED
+    assert result.result["analysis"]["status"] == "SUCCEEDED"
+    assert await session.scalar(select(func.count()).select_from(AgentTask)) == 1
+    steps = await TaskRepository(session).list_steps(task.id)
+    assert [step.step_name for step in steps] == [
+        "analyze_product_reviews",
+        "load_reviews",
+        "analyze_reviews",
+        "persist_results",
+    ]
+    assert all(TaskStepStatus(step.status) is TaskStepStatus.SUCCEEDED for step in steps)
+    assert steps[0].tool_call_id is not None
+
+
+async def test_product_improvement_report_uses_task_workflow_runtime(
+    session,
+    admin_user,
+    test_settings,
+):
+    await seed_reviews(session)
+    review_service = ReviewAnalysisService(session, test_settings)
+    review = await review_service.create(
+        ReviewAnalysisCreateRequest(
+            idempotency_key="review-for-improvement-workflow-001",
+            product_id="REV-P1",
+            maximum_reviews=4,
+        ),
+        admin_user.id,
+    )
+    await review_service.run(review.analysis_id, admin_user.id)
+
+    workflows = build_workflow_registry(test_settings)
+    task = await TaskService(session, test_settings).create_workflow_task(
+        workflows.get("product_improvement"),
+        workflow_input={"analysis_id": str(review.analysis_id)},
+        created_by=admin_user.id,
+        request_id=str(uuid4()),
+    )
+    result = await TaskRunner(
+        workflows,
+        build_tool_registry(test_settings),
+        session,
+        test_settings,
+    ).run(task.id, user_id=admin_user.id)
+
+    assert result.status is TaskStatus.SUCCEEDED
+    assert result.result["report"]["algorithm_version"] == "product-improvement-rule-v1.0.0"
+    steps = await TaskRepository(session).list_steps(task.id)
+    assert [step.step_name for step in steps] == ["generate_product_improvement_plan"]
+    assert TaskStepStatus(steps[0].status) is TaskStepStatus.SUCCEEDED
+    assert steps[0].tool_call_id is not None

@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict
 
 from sellpilot.core.enums import ToolRiskLevel
 from sellpilot.core.exceptions import ParameterError, UnauthenticatedError
+from sellpilot.schemas.product_improvement import ImprovementReportResponse
 from sellpilot.services.product_improvement import ProductImprovementService
 from sellpilot.tools.contracts import RetryPolicy, ToolDefinition, ToolExecutionContext
 from sellpilot.tools.registry import ToolRegistry
@@ -18,7 +19,7 @@ class GenerateImprovementInput(ToolModel):
 
 
 class ImprovementToolOutput(ToolModel):
-    report: dict[str, object]
+    report: ImprovementReportResponse
 
 
 def _service(context: ToolExecutionContext) -> ProductImprovementService:
@@ -35,7 +36,7 @@ def _user_id(context: ToolExecutionContext) -> UUID:
 
 async def _generate(payload: GenerateImprovementInput, context: ToolExecutionContext):
     result = await _service(context).generate(payload.analysis_id, _user_id(context))
-    return ImprovementToolOutput(report=result.model_dump(mode="json"))
+    return ImprovementToolOutput(report=result)
 
 
 def build_product_improvement_tools() -> tuple[ToolDefinition, ...]:
