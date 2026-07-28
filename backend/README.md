@@ -98,6 +98,14 @@ uv run sellpilot-mcp
 
 智能选品后端通过 `/api/v1/selection` 提供候选查询、确定性分析、任务详情、商品比较和 JSON 报告导出。数据来自数据库中的 Mock Shopee 商品与类目趋势，所有响应明确携带模拟数据标记。评分不依赖 LLM；当前解释使用经过结构化校验的规则模板，不宣称已接入真实模型。详细边界见 `../docs/architecture/selection-api-tools.md`。
 
+## Task Workflow Runtime
+
+`/api/v1/tasks` 提供已认证的工作流任务创建、查询、步骤历史、run、resume、
+retry、rerun 和 cancel。生产 Registry 当前注册 deterministic diagnostic、
+`system_health_check` 和 Selection 兼容适配；工具节点统一经过 ToolExecutor，
+WRITE/HIGH_RISK 会暂停到现有 Confirmation，确认成功后由显式 resume 继续。
+详细边界见 `../docs/architecture/task-workflow-runtime.md`。
+
 ## 测试与代码质量
 
 ```powershell

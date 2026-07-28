@@ -2,6 +2,8 @@
 
 - `tool-execution-runtime.md`: unified ToolRegistry, ToolExecutor, confirmation,
   audit, retry and MCP runtime.
+- `task-workflow-runtime.md`: persistent TaskRunner, steps, confirmation pause/resume,
+  concurrency, retry/rerun/cancel and Selection workflow adapter.
 
 本目录用于记录系统上下文、模块边界、数据流、部署视图和架构决策。
 

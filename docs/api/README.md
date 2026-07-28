@@ -1,6 +1,7 @@
 # API
 
 - `tool-runtime.md`: authenticated tool metadata, execution and ToolCall query API.
+- `task-runtime.md`: authenticated workflow metadata, task lifecycle and step history API.
 
 本目录用于后续维护 API 约定、接口清单、请求与响应 Schema、错误模型和版本策略。
 
