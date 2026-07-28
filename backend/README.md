@@ -48,6 +48,8 @@ uv run alembic downgrade base
 
 成员三持久化结构包括选品运行与结果、评论分析与证据、产品改良报告、商品内容版本、Prompt 版本、模型调用和生成报告。该结构使用稳定来源业务 ID 对接后续商品与评论服务，不直接依赖模拟 CSV；详细设计见 `../docs/architecture/analysis-persistence.md`。
 
+评论分析纯领域内核位于 `sellpilot.domain.review_analysis`，提供多语言质量检查、确定性情感与主题分类、证据聚合及站点/月度趋势。内核不读取数据库或 CSV，不调用真实模型；Service、API、Tool、Workflow 和页面仍属于后续阶段。
+
 成员二迁移 `20260728_0003` 创建 13 张业务表，详细设计见 `../docs/architecture/commerce-data-foundation.md`。
 
 ## 导入模拟业务数据
