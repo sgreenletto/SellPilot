@@ -15,3 +15,5 @@
 智能选品 Service、持久化、结构化 Tool、解释校验与导出测试见 `selection-api-tools.md`。
 
 智能选品前端 API、工作台状态、表单边界和错误状态测试见 `selection-workbench.md`。
+
+评论分析多语言预处理、结构化模型失败边界、证据与趋势测试见 `review-analysis-core.md`。

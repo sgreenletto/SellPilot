@@ -550,6 +550,8 @@ docs: document selection page usage
 
 ## Step 5：评论分析内核
 
+> **实现状态**：已在 `feature/review-analysis-core` 完成领域内核与离线测试，待审核合并；Service、API、Tool、Workflow 和页面仍按 Step 6—Step 7 实施。
+
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 建立多语言、证据驱动、可评估的评论分析流水线 |
