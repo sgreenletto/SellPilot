@@ -1,5 +1,9 @@
 # SellPilot Frontend Foundation
 
+成员二的市场数据、商品管理、上架库存和订单履约页面已接入项目 Mock
+数据包。功能状态及后端边界见
+[`docs/requirements/member2-frontend-acceptance.md`](../docs/requirements/member2-frontend-acceptance.md)。
+
 SellPilot 前端公共框架采用 Vue 3、TypeScript 与 Vite，当前版本为 `0.1.0` Foundation Milestone。该版本表示公共布局、组件与 Dashboard 基线已建立，不代表完整业务已完成或已用于生产。
 
 ## 当前边界

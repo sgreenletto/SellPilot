@@ -5,6 +5,10 @@ import DefaultLayout from "@/layouts/DefaultLayout.vue";
 const DashboardView = () => import("@/views/dashboard/DashboardView.vue");
 const DesignSystemView = () => import("@/views/dev/DesignSystemView.vue");
 const ModulePlaceholderView = () => import("@/views/placeholder/ModulePlaceholderView.vue");
+const ProductsView = () => import("@/views/commerce/ProductsView.vue");
+const InventoryView = () => import("@/views/commerce/InventoryView.vue");
+const OrdersView = () => import("@/views/commerce/OrdersView.vue");
+const MarketDataView = () => import("@/views/commerce/MarketDataView.vue");
 
 const placeholderRoutes: RouteRecordRaw[] = [
   {
@@ -20,7 +24,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
   {
     path: "/market/data",
     name: "market-data",
-    component: ModulePlaceholderView,
+    component: MarketDataView,
     meta: {
       title: "市场数据",
       module: "市场与选品",
@@ -50,7 +54,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
   {
     path: "/products",
     name: "products",
-    component: ModulePlaceholderView,
+    component: ProductsView,
     meta: {
       title: "商品管理",
       module: "商品运营",
@@ -70,7 +74,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
   {
     path: "/products/listing-inventory",
     name: "listing-inventory",
-    component: ModulePlaceholderView,
+    component: InventoryView,
     meta: {
       title: "上架与库存",
       module: "商品运营",
@@ -100,7 +104,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
   {
     path: "/orders",
     name: "orders",
-    component: ModulePlaceholderView,
+    component: OrdersView,
     meta: {
       title: "订单与履约",
       module: "履约",
