@@ -273,7 +273,7 @@ onMounted(loadReviews);
       <SpSelect v-model="form.topic" label="主题" :options="topicOptions" />
       <label>开始时间<input v-model="form.createdFrom" type="date" /></label>
       <label>结束时间<input v-model="form.createdTo" type="date" /></label>
-      <SpButton :loading="loading" @click="loadReviews"
+      <SpButton :loading="loading" @click="loadReviews()"
         ><template #icon><Search :size="16" /></template>筛选评论</SpButton
       >
       <SpButton :loading="analyzing" :disabled="reviews.length === 0" @click="analyze"
@@ -355,7 +355,12 @@ onMounted(loadReviews);
             <SpButton
               size="sm"
               variant="secondary"
-              @click="router.push({ path: '/market/reviews', query: { panel: 'improvement' } })"
+              @click="
+                router.push({
+                  path: '/market/reviews/improvement',
+                  query: { analysis_id: result.analysis_id },
+                })
+              "
               >进入产品改良（Step 8）</SpButton
             >
           </div>

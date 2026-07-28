@@ -58,6 +58,7 @@ async def test_tool_metadata_and_not_found_are_safe(client_bundle):
         "calculate_product_profit",
         "compare_products",
         "export_product_analysis_report",
+        "generate_product_improvement_plan",
         "get_product_reviews",
         "score_product_opportunity",
         "search_market_products",

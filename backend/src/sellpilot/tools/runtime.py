@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sellpilot.core.config import Settings
 from sellpilot.services.confirmation import ConfirmationService
 from sellpilot.tools.executor import TOOL_CONFIRMATION_OPERATION, ToolExecutor
+from sellpilot.tools.product_improvement import register_product_improvement_tools
 from sellpilot.tools.registry import ToolRegistry
 from sellpilot.tools.review_analysis import register_review_analysis_tools
 from sellpilot.tools.selection import register_selection_tools
@@ -14,6 +15,7 @@ def build_tool_registry(settings: Settings) -> ToolRegistry:
     registry.register(build_system_health_tool(settings))
     register_selection_tools(registry)
     register_review_analysis_tools(registry)
+    register_product_improvement_tools(registry)
     return registry
 
 
