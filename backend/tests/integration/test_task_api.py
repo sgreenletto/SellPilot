@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict
@@ -29,10 +30,16 @@ def auth_headers(user: User, settings, *, request_id: str | None = None) -> dict
 
 async def test_task_api_requires_authentication(client_bundle):
     client, _, _, _ = client_bundle
+    resource_id = uuid4()
     for method, path in (
         ("GET", "/api/v1/tasks"),
         ("POST", "/api/v1/tasks"),
         ("GET", "/api/v1/tasks/workflows"),
+        ("GET", f"/api/v1/tasks/{resource_id}/operation-logs"),
+        ("GET", "/api/v1/confirmations"),
+        ("GET", f"/api/v1/confirmations/{resource_id}"),
+        ("POST", f"/api/v1/confirmations/{resource_id}/confirm"),
+        ("POST", f"/api/v1/confirmations/{resource_id}/cancel"),
     ):
         response = await client.request(method, path, json={} if method == "POST" else None)
         assert response.status_code == 401
@@ -106,7 +113,7 @@ async def test_diagnostic_task_api_create_run_steps_rerun_and_cancel(
 
 
 async def test_system_health_workflow_creates_linked_tool_call(client_bundle, admin_user):
-    client, _, _, settings = client_bundle
+    client, _, session_factory, settings = client_bundle
     headers = auth_headers(admin_user, settings)
     created = await client.post(
         "/api/v1/tasks",
@@ -129,8 +136,29 @@ async def test_system_health_workflow_creates_linked_tool_call(client_bundle, ad
     assert calls.status_code == 200
     assert calls.json()["data"]["total"] == 1
     assert calls.json()["data"]["items"][0]["tool_name"] == "system_health"
+    tool_call_id = calls.json()["data"]["items"][0]["id"]
     steps = await client.get(f"/api/v1/tasks/{task_id}/steps", headers=headers)
-    assert steps.json()["data"][0]["tool_call_id"] == calls.json()["data"]["items"][0]["id"]
+    assert steps.json()["data"][0]["tool_call_id"] == tool_call_id
+
+    async with session_factory() as session:
+        other = User(
+            username=f"tool-call-other-{uuid4()}",
+            password_hash=hash_password("OtherPassword123!"),
+            role="ADMIN",
+        )
+        session.add(other)
+        await session.commit()
+        await session.refresh(other)
+    other_headers = auth_headers(other, settings)
+    assert (
+        await client.get(f"/api/v1/tool-calls/{tool_call_id}", headers=other_headers)
+    ).status_code == 404
+    assert (
+        await client.get(
+            f"/api/v1/tool-calls?task_id={task_id}",
+            headers=other_headers,
+        )
+    ).status_code == 404
 
 
 async def test_task_api_validation_not_found_conflict_and_owner_isolation(
@@ -193,12 +221,36 @@ async def test_task_api_validation_not_found_conflict_and_owner_isolation(
     assert listing.json()["data"]["pages"] == 1
     assert listing.json()["data"]["total"] >= 1
 
+    now = datetime.now(UTC)
+    filtered = await client.get(
+        "/api/v1/tasks",
+        headers=headers,
+        params={
+            "page": 1,
+            "page_size": 1,
+            "task_type": "diagnostic",
+            "created_from": (now - timedelta(days=1)).isoformat(),
+            "created_to": (now + timedelta(days=1)).isoformat(),
+        },
+    )
+    assert filtered.status_code == 200
+    assert filtered.json()["data"]["page_size"] == 1
+    invalid_range = await client.get(
+        "/api/v1/tasks",
+        headers=headers,
+        params={
+            "created_from": (now + timedelta(days=1)).isoformat(),
+            "created_to": (now - timedelta(days=1)).isoformat(),
+        },
+    )
+    assert invalid_range.status_code == 422
+
 
 async def test_task_api_confirmation_pause_confirm_and_resume(
     client_bundle,
     admin_user,
 ):
-    client, application, _, settings = client_bundle
+    client, application, session_factory, settings = client_bundle
     calls = 0
 
     class WriteInput(BaseModel):
@@ -212,6 +264,8 @@ async def test_task_api_confirmation_pause_confirm_and_resume(
     async def write_handler(payload: WriteInput, _context):
         nonlocal calls
         calls += 1
+        if payload.value == 99:
+            raise RuntimeError("synthetic executor failure")
         return WriteOutput(value=payload.value)
 
     application.state.tool_registry.register(
@@ -285,6 +339,57 @@ async def test_task_api_confirmation_pause_confirm_and_resume(
     result = waiting.json()["data"]
     assert result["confirmation_required"] is True
     assert calls == 0
+    waiting_detail = await client.get(f"/api/v1/tasks/{task_id}", headers=headers)
+    assert waiting_detail.json()["data"]["available_actions"] == ["cancel"]
+
+    async with session_factory() as session:
+        other = User(
+            username=f"confirmation-other-{uuid4()}",
+            password_hash=hash_password("OtherPassword123!"),
+            role="ADMIN",
+        )
+        session.add(other)
+        await session.commit()
+        await session.refresh(other)
+    other_headers = auth_headers(other, settings)
+    confirmation_id = result["confirmation_id"]
+    assert (
+        await client.get(
+            f"/api/v1/confirmations/{confirmation_id}",
+            headers=other_headers,
+        )
+    ).status_code == 404
+    assert (
+        await client.post(
+            f"/api/v1/confirmations/{confirmation_id}/confirm",
+            headers=other_headers,
+        )
+    ).status_code == 404
+    assert (
+        await client.post(
+            f"/api/v1/confirmations/{confirmation_id}/cancel",
+            headers=other_headers,
+        )
+    ).status_code == 404
+    assert (
+        await client.get(
+            f"/api/v1/confirmations?task_id={task_id}",
+            headers=other_headers,
+        )
+    ).status_code == 404
+    assert (
+        await client.get(
+            f"/api/v1/tasks/{task_id}/operation-logs",
+            headers=other_headers,
+        )
+    ).status_code == 404
+
+    owner_confirmations = await client.get(
+        f"/api/v1/confirmations?task_id={task_id}&status=pending",
+        headers=headers,
+    )
+    assert owner_confirmations.status_code == 200
+    assert owner_confirmations.json()["data"]["items"][0]["agent_task_id"] == task_id
     pending_resume = await client.post(
         f"/api/v1/tasks/{task_id}/resume",
         headers=headers,
@@ -299,7 +404,75 @@ async def test_task_api_confirmation_pause_confirm_and_resume(
     assert confirmed.status_code == 200
     assert confirmed.json()["data"]["status"] == "succeeded"
     assert calls == 1
+    resumable_detail = await client.get(f"/api/v1/tasks/{task_id}", headers=headers)
+    assert resumable_detail.json()["data"]["available_actions"] == ["resume", "cancel"]
+    logs = await client.get(
+        f"/api/v1/tasks/{task_id}/operation-logs?page=1&page_size=100",
+        headers=headers,
+    )
+    assert logs.status_code == 200
+    log_times = [item["created_at"] for item in logs.json()["data"]["items"]]
+    assert log_times == sorted(log_times)
+    assert "before_snapshot" not in logs.text
+    assert "after_snapshot" not in logs.text
     resumed = await client.post(f"/api/v1/tasks/{task_id}/resume", headers=headers)
     assert resumed.status_code == 200
     assert resumed.json()["data"]["result"] == {"value": 5}
     assert calls == 1
+    completed_detail = await client.get(f"/api/v1/tasks/{task_id}", headers=headers)
+    assert completed_detail.json()["data"]["available_actions"] == ["rerun"]
+
+    cancelled_created = await client.post(
+        "/api/v1/tasks",
+        headers=headers,
+        json={"workflow_name": "api_write_confirmation", "workflow_input": {"value": 6}},
+    )
+    cancelled_task_id = cancelled_created.json()["data"]["id"]
+    cancelled_waiting = await client.post(
+        f"/api/v1/tasks/{cancelled_task_id}/run",
+        headers=headers,
+    )
+    cancelled_confirmation_id = cancelled_waiting.json()["data"]["confirmation_id"]
+    first_cancel = await client.post(
+        f"/api/v1/confirmations/{cancelled_confirmation_id}/cancel",
+        headers=headers,
+    )
+    repeated_cancel = await client.post(
+        f"/api/v1/confirmations/{cancelled_confirmation_id}/cancel",
+        headers=headers,
+    )
+    assert first_cancel.status_code == repeated_cancel.status_code == 200
+    cancelled_detail = await client.get(
+        f"/api/v1/tasks/{cancelled_task_id}",
+        headers=headers,
+    )
+    assert cancelled_detail.json()["data"]["status"] == "cancelled"
+    assert cancelled_detail.json()["data"]["available_actions"] == ["rerun"]
+    assert (
+        await client.post(
+            f"/api/v1/tasks/{cancelled_task_id}/resume",
+            headers=headers,
+        )
+    ).status_code == 409
+
+    failed_created = await client.post(
+        "/api/v1/tasks",
+        headers=headers,
+        json={"workflow_name": "api_write_confirmation", "workflow_input": {"value": 99}},
+    )
+    failed_task_id = failed_created.json()["data"]["id"]
+    failed_waiting = await client.post(
+        f"/api/v1/tasks/{failed_task_id}/run",
+        headers=headers,
+    )
+    failed_confirmation_id = failed_waiting.json()["data"]["confirmation_id"]
+    failed_confirmation = await client.post(
+        f"/api/v1/confirmations/{failed_confirmation_id}/confirm",
+        headers=headers,
+    )
+    assert failed_confirmation.status_code == 200
+    assert failed_confirmation.json()["data"]["status"] == "failed"
+    failed_detail = await client.get(f"/api/v1/tasks/{failed_task_id}", headers=headers)
+    assert failed_detail.json()["data"]["status"] == "failed"
+    assert failed_detail.json()["data"]["safe_error_summary"] == "Confirmation execution failed"
+    assert "Traceback" not in failed_detail.text
