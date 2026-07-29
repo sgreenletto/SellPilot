@@ -21,6 +21,32 @@ import type { ProductDraftPayload } from "@/types/commerce";
 
 type MarketRow = Record<string, string | number | boolean>;
 
+const marketFieldLabels: Record<string, string> = {
+  product_id: "商品 ID（product_id）",
+  shop_id: "店铺 ID（shop_id）",
+  shop_name: "店铺名称（shop_name）",
+  title: "商品名称（title）",
+  category_id: "类目 ID（category_id）",
+  category_name: "类目名称（category_name）",
+  description: "商品描述（description）",
+  platform: "平台（platform）",
+  site: "站点（site）",
+  source_type: "数据来源（source_type）",
+  currency: "币种（currency）",
+  price: "售价（price）",
+  cost: "商品成本（cost）",
+  shipping_cost: "物流成本（shipping_cost）",
+  sales_count: "销量（sales_count）",
+  rating: "评分（rating）",
+  review_count: "评论数（review_count）",
+  favorite_count: "收藏数（favorite_count）",
+  status: "商品状态（status）",
+  created_at: "创建时间（created_at）",
+  updated_at: "更新时间（updated_at）",
+  collected_at: "采集时间（collected_at）",
+  is_mock_data: "是否为模拟数据（is_mock_data）",
+};
+
 const rows = ref<MarketRow[]>([]);
 const reviews = ref<MarketRow[]>([]);
 const query = ref("");
@@ -225,6 +251,10 @@ function value(row: MarketRow, ...keys: string[]): string {
   return key ? String(row[key]) : "—";
 }
 
+function marketFieldLabel(key: string): string {
+  return marketFieldLabels[key] ?? key;
+}
+
 onMounted(() => {
   loadProjectDemo();
   void loadCandidates();
@@ -424,12 +454,12 @@ watch(totalPages, (pages) => {
       >
         <aside class="detail-drawer" role="dialog" aria-modal="true" aria-label="市场商品详情">
           <header class="drawer-header">
-            <div><span>MARKET RECORD</span><strong>市场商品详情</strong></div>
+            <div><span>市场记录 / MARKET RECORD</span><strong>市场商品详情</strong></div>
             <SpButton variant="ghost" @click="selected = null">关闭</SpButton>
           </header>
           <dl>
             <template v-for="(fieldValue, key) in selected" :key="key">
-              <dt>{{ key }}</dt>
+              <dt>{{ marketFieldLabel(String(key)) }}</dt>
               <dd>{{ fieldValue }}</dd>
             </template>
           </dl>
@@ -441,7 +471,7 @@ watch(totalPages, (pages) => {
               </div>
             </header>
             <p v-if="selectedReviews.length === 0" class="review-empty">
-              当前评论文件中没有与该商品 product_id 匹配的记录。
+              当前评论文件中没有与该商品 ID（product_id）匹配的记录。
             </p>
             <template v-else>
               <article v-for="review in selectedReviews" :key="rowKey(review)" class="review-card">

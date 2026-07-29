@@ -370,3 +370,31 @@ async def request_inventory_update(
     return success_response(
         ConfirmationTaskResponse.model_validate(confirmation), get_request_id(request)
     )
+
+
+# ---- 客服统计 ----
+
+@router.get(
+    "/customer-service/stats",
+    response_model=ApiResponse[dict],
+)
+async def get_customer_service_stats(
+    request: Request,
+    _user: CurrentUserDependency,
+    session: SessionDependency,
+) -> ApiResponse[dict]:
+    """待处理客服会话统计。"""
+    from sqlalchemy import func
+    from sqlalchemy import select as sa_select
+
+    from sellpilot.db.models.commerce import CustomerSession
+
+    total = await session.scalar(
+        sa_select(func.count()).select_from(CustomerSession).where(
+            CustomerSession.status == "open"
+        )
+    )
+    return success_response(
+        {"pending_count": total or 0},
+        get_request_id(request),
+    )
