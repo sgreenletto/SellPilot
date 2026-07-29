@@ -25,6 +25,7 @@ export interface ProductReview {
   language: string;
   sentiment_hint: string;
   issue_type: string;
+  topics?: string[];
   created_at: string;
   source_type: string;
   is_mock_data: boolean;

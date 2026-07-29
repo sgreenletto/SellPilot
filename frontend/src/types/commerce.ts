@@ -1,3 +1,5 @@
+import type { SiteCode } from "@/types/selection";
+
 export interface Product {
   product_id: string;
   title: string;
@@ -80,6 +82,7 @@ export interface ConfirmationTask {
 export interface SelectionCandidate {
   product_id: string;
   title: string;
+  site: SiteCode | null;
   source_type: string;
   is_mock_data: boolean;
   created_at: string;

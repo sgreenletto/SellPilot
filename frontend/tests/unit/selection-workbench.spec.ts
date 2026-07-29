@@ -1,4 +1,5 @@
 import { flushPromises, mount } from "@vue/test-utils";
+import { defineComponent } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -15,6 +16,8 @@ const selectionApi = vi.hoisted(() => ({
 
 const commerceApi = vi.hoisted(() => ({
   listSelectionCandidates: vi.fn(),
+  requestSelectionCandidate: vi.fn(),
+  confirmCommerceOperation: vi.fn(),
 }));
 
 vi.mock("@/api/selection", () => selectionApi);
@@ -92,7 +95,16 @@ async function mountWorkbench(path = "/market/selection") {
 describe("SelectionWorkbenchView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    Object.defineProperty(window, "confirm", {
+      configurable: true,
+      value: vi.fn(() => true),
+    });
     commerceApi.listSelectionCandidates.mockResolvedValue([]);
+    commerceApi.requestSelectionCandidate.mockResolvedValue({ id: "confirmation-1" });
+    commerceApi.confirmCommerceOperation.mockResolvedValue({
+      id: "confirmation-1",
+      status: "EXECUTED",
+    });
     selectionApi.listSelectionCandidates.mockResolvedValue([candidate]);
     selectionApi.createSelectionAnalysis.mockResolvedValue({
       task_id: "task-1",
@@ -130,6 +142,7 @@ describe("SelectionWorkbenchView", () => {
       {
         product_id: "P001",
         title: candidate.title,
+        site: "sg",
         source_type: "simulated_experiment",
         is_mock_data: true,
         created_at: "2026-07-29T00:00:00Z",
@@ -137,6 +150,7 @@ describe("SelectionWorkbenchView", () => {
       {
         product_id: "OTHER-SITE",
         title: "Other site product",
+        site: "id",
         source_type: "simulated_experiment",
         is_mock_data: true,
         created_at: "2026-07-29T00:00:00Z",
@@ -177,11 +191,126 @@ describe("SelectionWorkbenchView", () => {
     );
   });
 
+  it("selects the saved-candidate site when opened without a site query", async () => {
+    const idCandidate = {
+      ...candidate,
+      product_id: "ID-P001",
+      title: "Indonesian Candidate",
+      site: "id",
+      currency: "IDR",
+    };
+    commerceApi.listSelectionCandidates.mockResolvedValue([
+      {
+        product_id: idCandidate.product_id,
+        title: idCandidate.title,
+        site: "id",
+        source_type: "simulated_experiment",
+        is_mock_data: true,
+        created_at: "2026-07-29T00:00:00Z",
+      },
+    ]);
+    selectionApi.listSelectionCandidates.mockImplementation(({ site }: { site: string }) =>
+      Promise.resolve(site === "id" ? [idCandidate] : []),
+    );
+
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+
+    expect(selectionApi.listSelectionCandidates).toHaveBeenCalledWith(
+      expect.objectContaining({ site: "id" }),
+    );
+    expect(wrapper.get('select[aria-label="目标站点"]').element).toMatchObject({ value: "id" });
+    expect(wrapper.get('.candidate-card input[type="checkbox"]').element).toMatchObject({
+      checked: true,
+    });
+    expect(wrapper.text()).toContain("已按候选清单自动切换到 ID 站点");
+  });
+
+  it("reloads candidates immediately when the operator changes site", async () => {
+    const idCandidate = {
+      ...candidate,
+      product_id: "ID-P001",
+      title: "Indonesian Candidate",
+      site: "id",
+      currency: "IDR",
+    };
+    selectionApi.listSelectionCandidates.mockImplementation(({ site }: { site: string }) =>
+      Promise.resolve(site === "id" ? [idCandidate] : [candidate]),
+    );
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+
+    await wrapper.get('select[aria-label="目标站点"]').setValue("id");
+    await flushPromises();
+
+    expect(selectionApi.listSelectionCandidates).toHaveBeenLastCalledWith(
+      expect.objectContaining({ site: "id", category_id: undefined }),
+    );
+    expect(wrapper.text()).toContain("Indonesian Candidate");
+    expect(wrapper.text()).not.toContain("Mock Wireless Earbuds");
+  });
+
+  it("refreshes the persisted candidate list when a cached workbench is reactivated", async () => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        {
+          path: "/market/selection",
+          name: "selection",
+          component: SelectionWorkbenchView,
+          meta: {
+            title: "智能选品",
+            module: "市场与选品",
+            description: "测试候选恢复",
+            keepAlive: true,
+          },
+        },
+        {
+          path: "/other",
+          name: "other",
+          component: { template: "<div>Other page</div>" },
+        },
+      ],
+    });
+    const Host = defineComponent({
+      template:
+        '<RouterView v-slot="{ Component }"><KeepAlive><component :is="Component" /></KeepAlive></RouterView>',
+    });
+    await router.push("/market/selection");
+    await router.isReady();
+    const wrapper = mount(Host, { global: { plugins: [router] } });
+    await flushPromises();
+    expect(wrapper.get('.candidate-card input[type="checkbox"]').element).toMatchObject({
+      checked: false,
+    });
+
+    commerceApi.listSelectionCandidates.mockResolvedValue([
+      {
+        product_id: "P001",
+        title: candidate.title,
+        site: "sg",
+        source_type: "simulated_experiment",
+        is_mock_data: true,
+        created_at: "2026-07-29T00:00:00Z",
+      },
+    ]);
+    await router.push("/other");
+    await flushPromises();
+    await router.push("/market/selection");
+    await flushPromises();
+
+    expect(commerceApi.listSelectionCandidates).toHaveBeenCalledTimes(2);
+    expect(wrapper.get('.candidate-card input[type="checkbox"]').element).toMatchObject({
+      checked: true,
+    });
+  });
+
   it("does not reselect a saved candidate after the operator clears it", async () => {
     commerceApi.listSelectionCandidates.mockResolvedValue([
       {
         product_id: "P001",
         title: candidate.title,
+        site: "sg",
         source_type: "simulated_experiment",
         is_mock_data: true,
         created_at: "2026-07-29T00:00:00Z",
@@ -191,6 +320,15 @@ describe("SelectionWorkbenchView", () => {
     await flushPromises();
 
     await wrapper.get('.candidate-card input[type="checkbox"]').setValue(false);
+    await flushPromises();
+    expect(commerceApi.requestSelectionCandidate).toHaveBeenCalledWith(
+      "P001",
+      false,
+      candidate.title,
+      candidate.source_name,
+      true,
+    );
+    expect(commerceApi.confirmCommerceOperation).toHaveBeenCalledWith("confirmation-1");
     const refresh = wrapper.findAll("button").find((button) => button.text().includes("查询候选"));
     await refresh?.trigger("click");
     await flushPromises();
@@ -198,7 +336,52 @@ describe("SelectionWorkbenchView", () => {
     expect(wrapper.get('.candidate-card input[type="checkbox"]').element).toMatchObject({
       checked: false,
     });
-    expect(wrapper.text()).toContain("候选清单共 1 项，当前站点已选 0 项");
+    expect(wrapper.text()).toContain("可选后分析");
+  });
+
+  it("persists a candidate added from the selection workbench", async () => {
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+
+    await wrapper.get('.candidate-card input[type="checkbox"]').setValue(true);
+    await flushPromises();
+
+    expect(commerceApi.requestSelectionCandidate).toHaveBeenCalledWith(
+      "P001",
+      true,
+      candidate.title,
+      candidate.source_name,
+      true,
+    );
+    expect(commerceApi.confirmCommerceOperation).toHaveBeenCalledWith("confirmation-1");
+    expect(wrapper.text()).toContain("已加入后端候选清单");
+    expect(wrapper.text()).toContain("候选清单共 1 项，当前站点已选 1 项");
+  });
+
+  it("keeps persisted candidates separate from temporary result comparison", async () => {
+    commerceApi.listSelectionCandidates.mockResolvedValue([
+      {
+        product_id: "P001",
+        title: candidate.title,
+        site: "sg",
+        source_type: "simulated_experiment",
+        is_mock_data: true,
+        created_at: "2026-07-29T00:00:00Z",
+      },
+    ]);
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+    const analyze = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析所选 1 项"));
+    await analyze?.trigger("click");
+    await flushPromises();
+
+    expect(wrapper.get('.candidate-card input[type="checkbox"]').element).toMatchObject({
+      checked: true,
+    });
+    expect(wrapper.findAll(".compare-check input")[0]?.element).toMatchObject({ checked: false });
+    expect(commerceApi.requestSelectionCandidate).not.toHaveBeenCalled();
   });
 
   it("still loads analyzable products when the saved list is unavailable", async () => {
@@ -235,6 +418,7 @@ describe("SelectionWorkbenchView", () => {
       crossCategoryCandidates.map((item) => ({
         product_id: item.product_id,
         title: item.title,
+        site: "id",
         source_type: "simulated_experiment",
         is_mock_data: true,
         created_at: "2026-07-29T00:00:00Z",

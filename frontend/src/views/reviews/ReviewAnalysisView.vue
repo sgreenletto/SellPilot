@@ -68,30 +68,31 @@ const languageOptions = [
   { label: "越南语", value: "Vietnamese" },
 ];
 const sentimentOptions = [
-  { label: "全部情感", value: "" },
-  { label: "正面", value: "positive" },
+  { label: "全部分类", value: "" },
+  { label: "正向", value: "positive" },
   { label: "中性", value: "neutral" },
-  { label: "负面", value: "negative" },
+  { label: "含改进信号", value: "negative" },
 ];
 const topicOptions = [
-  { label: "全部方面", value: "" },
-  { label: "产品质量", value: "product_quality" },
+  { label: "全部主题", value: "" },
+  { label: "产品", value: "product_quality" },
   { label: "包装", value: "packaging" },
-  { label: "描述不符", value: "description_mismatch" },
+  { label: "文案", value: "description_mismatch" },
   { label: "物流", value: "logistics" },
   { label: "服务", value: "service" },
+  { label: "其他", value: "other" },
 ];
 const topicLabels: Record<string, string> = {
-  product_quality: "产品质量",
+  product_quality: "产品",
   packaging: "包装",
-  description_mismatch: "描述不符",
+  description_mismatch: "文案",
   logistics: "物流",
   service: "服务",
-  material: "材料",
-  size_specification: "尺寸规格",
-  wrong_or_missing_item: "错发漏发",
+  material: "产品",
+  size_specification: "产品",
+  wrong_or_missing_item: "产品",
   other: "其他",
-  no_clear_issue: "无明确问题",
+  no_clear_issue: "其他",
 };
 const languageLabels: Record<string, string> = {
   English: "英语",
@@ -116,108 +117,51 @@ const issueTypeLabels: Record<string, string> = {
   battery: "电池",
   customer_service: "客服",
   logistics: "物流",
-  material: "材料",
-  none: "无明确问题",
-  no_clear_issue: "无明确问题",
-  other: "其他问题",
+  material: "产品",
+  none: "其他",
+  no_clear_issue: "其他",
+  other: "其他",
   packaging: "包装",
-  product_quality: "产品质量",
-  size: "尺寸规格",
-  size_specification: "尺寸规格",
-  wrong_item: "错发商品",
-  wrong_or_missing_item: "错发漏发",
-  description_mismatch: "描述不符",
+  product_quality: "产品",
+  size: "产品",
+  size_specification: "产品",
+  wrong_item: "产品",
+  wrong_or_missing_item: "产品",
+  description_mismatch: "文案",
   service: "服务",
-};
-const keywordLabels: Record<string, string> = {
-  quality: "质量",
-  finish: "做工",
-  broken: "损坏",
-  defect: "缺陷",
-  damaged: "损坏",
-  kualitas: "质量",
-  rosak: "损坏",
-  คุณภาพ: "质量",
-  เสีย: "损坏",
-  "chất lượng": "质量",
-  hỏng: "损坏",
-  packaging: "包装",
-  package: "包装",
-  box: "包装盒",
-  kemasan: "包装",
-  bungkusan: "包装",
-  บรรจุ: "包装",
-  hộp: "包装盒",
-  "đóng gói": "包装",
-  "not as described": "与描述不符",
-  "does not match the product description": "与描述不符",
-  "doesn't match the product description": "与描述不符",
-  "does not match description": "与描述不符",
-  "different from": "与描述不符",
-  "tidak sesuai": "与描述不符",
-  "tak sama": "与描述不符",
-  ไม่ตรง: "与描述不符",
-  "không giống": "与描述不符",
-  delivery: "配送",
-  shipping: "物流",
-  late: "配送延迟",
-  courier: "快递",
-  pengiriman: "配送",
-  penghantaran: "配送",
-  huli: "配送",
-  จัดส่ง: "配送",
-  ส่งช้า: "配送延迟",
-  "giao hàng": "配送",
-  service: "服务",
-  seller: "商家",
-  reply: "回复",
-  support: "售后支持",
-  layanan: "服务",
-  perkhidmatan: "服务",
-  serbisyo: "服务",
-  บริการ: "服务",
-  "dịch vụ": "服务",
-  material: "材料",
-  plastic: "塑料",
-  fabric: "面料",
-  bahan: "材料",
-  materyal: "材料",
-  วัสดุ: "材料",
-  "chất liệu": "材料",
-  size: "尺寸",
-  small: "尺寸偏小",
-  large: "尺寸偏大",
-  measurement: "尺寸规格",
-  ukuran: "尺寸",
-  saiz: "尺寸",
-  sukat: "尺寸",
-  ขนาด: "尺寸",
-  "kích thước": "尺寸",
-  "wrong item": "错发商品",
-  "missing item": "漏发商品",
-  incomplete: "配件不全",
-  "salah barang": "错发商品",
-  kurang: "漏发商品",
-  "maling item": "错发商品",
-  ผิดชิ้น: "错发商品",
-  thiếu: "漏发商品",
-  "sai hàng": "错发商品",
 };
 const localizedLanguage = (value: string) => languageLabels[value] ?? value;
 const localizedSentiment = (value: string) => sentimentLabels[value] ?? value;
 const localizedIssueType = (value: string) => issueTypeLabels[value] ?? value;
-const localizedKeyword = (value: string) => keywordLabels[value.toLocaleLowerCase()] ?? value;
+function canonicalTopic(value: string): string {
+  if (
+    ["material", "size", "size_specification", "wrong_item", "wrong_or_missing_item"].includes(
+      value,
+    )
+  ) {
+    return "product_quality";
+  }
+  if (["none", "no_clear_issue"].includes(value)) return "other";
+  return value;
+}
 function evidenceTopicText(label: string, sentiment: string | null | undefined): string {
   if (sentiment === "negative") {
     return `改进 · ${topicLabels[label] ?? label}`;
   }
   return `提及 · ${topicLabels[label] ?? label}`;
 }
+function reviewMatchesTopic(review: ProductReview): boolean {
+  if (!form.topic) return true;
+  const analyzedTopics = judgementByReviewId.value.get(review.review_id)?.topics;
+  const availableTopics = analyzedTopics?.length
+    ? analyzedTopics
+    : (review.topics ?? [review.issue_type]);
+  return availableTopics.map(canonicalTopic).includes(form.topic);
+}
 const displayedReviews = computed(() =>
   reviews.value.filter(
     (review) =>
-      (!form.sentiment || review.sentiment_hint === form.sentiment) &&
-      (!form.topic || review.issue_type === form.topic),
+      (!form.sentiment || reviewSentiment(review) === form.sentiment) && reviewMatchesTopic(review),
   ),
 );
 const sentimentTotal = computed(() => {
@@ -281,7 +225,12 @@ const displayedPainPoints = computed(() =>
 const displayedTopics = computed(() =>
   (result.value?.topics ?? []).filter((item) => item.topic !== "no_clear_issue").slice(0, 6),
 );
-const displayedKeywords = computed(() => (result.value?.keywords ?? []).slice(0, 8));
+const highFrequencyThreshold = computed(() =>
+  Math.max(2, Math.ceil((result.value?.quality?.included_count ?? 0) * 0.1)),
+);
+const highFrequencyPainPoints = computed(() =>
+  displayedPainPoints.value.filter((item) => item.negative_count >= highFrequencyThreshold.value),
+);
 const judgementByReviewId = computed(
   () => new Map((result.value?.judgements ?? []).map((item) => [item.review_id, item])),
 );
@@ -290,9 +239,10 @@ function reviewSentiment(review: ProductReview): string {
 }
 function reviewTopics(review: ProductReview): string {
   const topics = judgementByReviewId.value.get(review.review_id)?.topics;
-  return topics?.length
-    ? topics.map((topic) => localizedIssueType(topic)).join("、")
-    : localizedIssueType(review.issue_type);
+  const availableTopics = topics?.length ? topics : (review.topics ?? [review.issue_type]);
+  return [...new Set(availableTopics.map(canonicalTopic))]
+    .map((topic) => localizedIssueType(topic))
+    .join("、");
 }
 
 function handleError(reason: unknown): void {
@@ -450,7 +400,9 @@ onMounted(loadReviews);
       <div class="section-title">
         <div>
           <h2>选择评论范围</h2>
-          <p>情感与涉及方面只筛选下方列表；分析范围由商品、关键词、站点、语言、评分和日期决定。</p>
+          <p>
+            情感与评论主题只筛选下方列表；主题来自结构化分类，不是原文关键词匹配。分析范围由商品、关键词、站点、语言、评分和日期决定。
+          </p>
         </div>
       </div>
       <div class="filter-grid">
@@ -465,8 +417,8 @@ onMounted(loadReviews);
         />
         <SpSelect v-model="form.minRating" label="最低评分" :options="ratingOptions" />
         <SpSelect v-model="form.maxRating" label="最高评分" :options="ratingOptions" />
-        <SpSelect v-model="form.sentiment" label="列表情感" :options="sentimentOptions" />
-        <SpSelect v-model="form.topic" label="涉及方面" :options="topicOptions" />
+        <SpSelect v-model="form.sentiment" label="情感分类" :options="sentimentOptions" />
+        <SpSelect v-model="form.topic" label="评论主题" :options="topicOptions" />
         <label>开始日期<input v-model="form.createdFrom" type="date" /></label>
         <label>结束日期<input v-model="form.createdTo" type="date" /></label>
       </div>
@@ -503,7 +455,10 @@ onMounted(loadReviews);
             @click="
               router.push({
                 path: '/market/reviews/improvement',
-                query: { analysis_id: result.analysis_id },
+                query: {
+                  analysis_id: result.analysis_id,
+                  regenerate: Date.now().toString(),
+                },
               })
             "
             >生成产品改良报告</SpButton
@@ -541,7 +496,7 @@ onMounted(loadReviews);
         <div class="section-title">
           <div>
             <h3>评论分析摘要</h3>
-            <p>按需求保留情感分类、评论主题和高频关键词；主题只表示评论谈到了什么。</p>
+            <p>汇总情感、评论主题和重复出现的改进信号；主题只表示评论谈到了什么。</p>
           </div>
         </div>
         <div class="analysis-summary__grid">
@@ -569,13 +524,15 @@ onMounted(loadReviews);
             <small v-else>未识别到明确主题</small>
           </section>
           <section>
-            <h4>高频关键词</h4>
-            <div v-if="displayedKeywords.length" class="summary-tags">
-              <span v-for="item in displayedKeywords" :key="item.keyword">
-                {{ localizedKeyword(item.keyword) }} · {{ item.review_count }} 条
+            <h4>高频痛点</h4>
+            <div v-if="highFrequencyPainPoints.length" class="summary-tags">
+              <span v-for="item in highFrequencyPainPoints" :key="item.pain_point">
+                {{ topicLabels[item.pain_point] ?? item.pain_point }} · {{ item.negative_count }} 条
               </span>
             </div>
-            <small v-else>当前范围没有高频关键词</small>
+            <small v-else>
+              当前没有重复出现的痛点（至少 {{ highFrequencyThreshold }} 条评论提及）
+            </small>
           </section>
         </div>
       </SpCard>
@@ -583,7 +540,7 @@ onMounted(loadReviews);
         <div class="section-title">
           <div>
             <h3>时间与站点趋势</h3>
-            <p>按月份和站点汇总评论量、负面评论与平均评分。</p>
+            <p>按月份和站点汇总评论量、含改进信号评论与平均评分。</p>
           </div>
         </div>
         <ReviewTrendChart :points="result.trends" />

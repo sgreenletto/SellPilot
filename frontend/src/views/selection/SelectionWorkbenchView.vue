@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
+import { computed, onActivated, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   AlertTriangle,
@@ -15,7 +15,11 @@ import {
   X,
 } from "@lucide/vue";
 
-import { listSelectionCandidates as listSavedSelectionCandidates } from "@/api/commerce";
+import {
+  confirmCommerceOperation,
+  listSelectionCandidates as listSavedSelectionCandidates,
+  requestSelectionCandidate,
+} from "@/api/commerce";
 import {
   compareSelectionProducts,
   createSelectionAnalysis,
@@ -54,6 +58,7 @@ const siteOptions = [
   { label: "越南 · VND", value: "vn" },
   { label: "印度尼西亚 · IDR", value: "id" },
 ];
+const supportedSites = siteOptions.map((option) => option.value) as SiteCode[];
 const riskOptions = [
   { label: "稳健 · 更重利润与履约", value: "conservative" },
   { label: "均衡 · 综合评估", value: "balanced" },
@@ -93,7 +98,9 @@ const form = reactive({
 
 const candidates = ref<SelectionCandidate[]>([]);
 const selectedCandidateIds = ref<string[]>([]);
+const compareCandidateIds = ref<string[]>([]);
 const savedCandidateIds = ref<string[]>([]);
+const updatingCandidateIds = ref<string[]>([]);
 const candidateSelectionTouched = ref(false);
 const savedCandidateMatchCount = computed(
   () => selectedCandidateIds.value.filter((id) => savedCandidateIds.value.includes(id)).length,
@@ -109,6 +116,8 @@ const message = ref("");
 const error = ref("");
 const errorCode = ref("");
 const errorOperation = ref<"candidates" | "analysis" | "compare" | "export">("candidates");
+let initialized = false;
+let synchronizingCandidates = false;
 
 const fieldErrors = computed(() => {
   const errors: Record<string, string> = {};
@@ -153,7 +162,7 @@ const canAnalyze = computed(
 const compareIds = computed(() =>
   analysis.value
     ? analysis.value.results
-        .filter((result) => selectedCandidateIds.value.includes(result.product_id))
+        .filter((result) => compareCandidateIds.value.includes(result.product_id))
         .map((result) => result.product_id)
         .slice(0, 4)
     : [],
@@ -254,13 +263,16 @@ function analysisPayload(): SelectionAnalysisRequest {
   };
 }
 
-async function loadCandidates(): Promise<void> {
+async function loadCandidates(preserveAnalysis = false): Promise<void> {
   if (Object.keys(fieldErrors.value).length > 0) return;
   clearFeedback();
   loadingCandidates.value = true;
-  analysis.value = null;
-  selectedResult.value = null;
-  comparison.value = [];
+  if (!preserveAnalysis) {
+    analysis.value = null;
+    selectedResult.value = null;
+    comparison.value = [];
+    compareCandidateIds.value = [];
+  }
   try {
     candidates.value = await listSelectionCandidates(candidateQuery());
     categoryCatalog.value = candidates.value.reduce<Record<string, string>>(
@@ -293,8 +305,7 @@ async function runAnalysis(): Promise<void> {
   comparison.value = [];
   try {
     analysis.value = await createSelectionAnalysis(analysisPayload());
-    selectedCandidateIds.value = [];
-    candidateSelectionTouched.value = true;
+    compareCandidateIds.value = [];
     message.value = `分析完成：${analysis.value.ranked_count} 个入选，${analysis.value.excluded_count} 个因利润条件排除。`;
   } catch (reason) {
     handleError(reason, "analysis");
@@ -303,20 +314,69 @@ async function runAnalysis(): Promise<void> {
   }
 }
 
-function toggleCandidate(productId: string): void {
+async function toggleCandidate(candidate: SelectionCandidate): Promise<void> {
+  if (updatingCandidateIds.value.includes(candidate.product_id)) return;
+  const shouldAdd = !savedCandidateIds.value.includes(candidate.product_id);
+  const verb = shouldAdd ? "加入" : "移出";
+  if (!window.confirm(`确认将“${candidate.title}”${verb}持久化候选清单？`)) return;
+
   candidateSelectionTouched.value = true;
-  const selected = new Set(selectedCandidateIds.value);
-  if (selected.has(productId)) selected.delete(productId);
-  else selected.add(productId);
-  selectedCandidateIds.value = [...selected];
+  updatingCandidateIds.value = [...updatingCandidateIds.value, candidate.product_id];
+  clearFeedback();
+  try {
+    const confirmation = await requestSelectionCandidate(
+      candidate.product_id,
+      shouldAdd,
+      candidate.title,
+      candidate.source_name,
+      candidate.is_mock_data,
+    );
+    await confirmCommerceOperation(confirmation.id);
+    const saved = new Set(savedCandidateIds.value);
+    const selected = new Set(selectedCandidateIds.value);
+    if (shouldAdd) {
+      saved.add(candidate.product_id);
+      selected.add(candidate.product_id);
+    } else {
+      saved.delete(candidate.product_id);
+      selected.delete(candidate.product_id);
+    }
+    savedCandidateIds.value = [...saved];
+    selectedCandidateIds.value = [...selected];
+    message.value = `已${verb}后端候选清单，市场数据页会读取到最新状态。`;
+  } catch (reason) {
+    handleError(reason, "candidates");
+  } finally {
+    updatingCandidateIds.value = updatingCandidateIds.value.filter(
+      (id) => id !== candidate.product_id,
+    );
+  }
 }
 
-async function initializeCandidates(): Promise<void> {
+async function initializeCandidates(preserveAnalysis = false): Promise<void> {
   let savedCandidateWarning = "";
+  let selectedSiteNotice = "";
+  synchronizingCandidates = true;
   try {
-    savedCandidateIds.value = (await listSavedSelectionCandidates()).map(
-      (candidate) => candidate.product_id,
-    );
+    const savedCandidates = await listSavedSelectionCandidates();
+    savedCandidateIds.value = savedCandidates.map((candidate) => candidate.product_id);
+    if (!route.query.site) {
+      const siteCounts = new Map<SiteCode, number>();
+      for (const candidate of savedCandidates) {
+        if (!candidate.site || !supportedSites.includes(candidate.site)) continue;
+        const site = candidate.site;
+        siteCounts.set(site, (siteCounts.get(site) ?? 0) + 1);
+      }
+      const preferredSite = [...siteCounts.entries()].sort(
+        ([leftSite, leftCount], [rightSite, rightCount]) =>
+          rightCount - leftCount ||
+          supportedSites.indexOf(leftSite) - supportedSites.indexOf(rightSite),
+      )[0];
+      if (preferredSite && preferredSite[0] !== form.site) {
+        form.site = preferredSite[0];
+        selectedSiteNotice = `已按候选清单自动切换到 ${preferredSite[0].toUpperCase()} 站点。`;
+      }
+    }
     // The market-data handoff historically carried the first saved product's
     // category. A persisted list can span categories, so the list must take
     // precedence while the target site remains explicit.
@@ -326,15 +386,21 @@ async function initializeCandidates(): Promise<void> {
   } catch {
     savedCandidateWarning = "已加载可分析商品，但持久化候选清单读取失败，请手动勾选。";
   }
-  await loadCandidates();
-  if (savedCandidateWarning && !error.value) message.value = savedCandidateWarning;
+  try {
+    await loadCandidates(preserveAnalysis);
+    if (!error.value) {
+      message.value = savedCandidateWarning || selectedSiteNotice || message.value;
+    }
+  } finally {
+    synchronizingCandidates = false;
+  }
 }
 
 function toggleCompare(productId: string): void {
-  const selected = new Set(selectedCandidateIds.value);
+  const selected = new Set(compareCandidateIds.value);
   if (selected.has(productId)) selected.delete(productId);
   else if (selected.size < 4) selected.add(productId);
-  selectedCandidateIds.value = [...selected];
+  compareCandidateIds.value = [...selected];
 }
 
 async function compareProducts(): Promise<void> {
@@ -478,9 +544,24 @@ function syncQuery(): void {
 }
 
 watch(form, syncQuery, { deep: true });
-onMounted(() => {
+watch(
+  () => form.site,
+  async () => {
+    if (!initialized || synchronizingCandidates) return;
+    form.categoryId = "__all__";
+    candidateSelectionTouched.value = false;
+    await loadCandidates();
+  },
+);
+onMounted(async () => {
   document.addEventListener("keydown", handleGlobalKeydown);
-  void initializeCandidates();
+  await initializeCandidates();
+  initialized = true;
+});
+onActivated(() => {
+  if (!initialized) return;
+  candidateSelectionTouched.value = false;
+  void initializeCandidates(true);
 });
 onBeforeUnmount(() => document.removeEventListener("keydown", handleGlobalKeydown));
 </script>
@@ -493,7 +574,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", handleGlobalKeydow
         <p>用可追溯的市场数据、利润公式和分项证据筛选候选商品。</p>
       </div>
       <div class="heading-actions">
-        <SpButton variant="secondary" :loading="loadingCandidates" @click="loadCandidates">
+        <SpButton variant="secondary" :loading="loadingCandidates" @click="() => loadCandidates()">
           <template #icon><RefreshCw :size="16" /></template>
           刷新候选
         </SpButton>
@@ -528,7 +609,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", handleGlobalKeydow
               <SpBadge tone="neutral">URL 已保存</SpBadge>
             </div>
           </template>
-          <form class="filters" @submit.prevent="loadCandidates">
+          <form class="filters" @submit.prevent="() => loadCandidates()">
             <SpSelect v-model="form.site" label="目标站点" :options="siteOptions" />
             <SpSelect
               v-model="form.categoryId"
@@ -659,7 +740,8 @@ onBeforeUnmount(() => document.removeEventListener("keydown", handleGlobalKeydow
               <input
                 type="checkbox"
                 :checked="selectedCandidateIds.includes(candidate.product_id)"
-                @change="toggleCandidate(candidate.product_id)"
+                :disabled="updatingCandidateIds.includes(candidate.product_id)"
+                @change="toggleCandidate(candidate)"
               />
               <span class="candidate-check"><Check :size="14" /></span>
               <span class="candidate-copy">
@@ -753,10 +835,10 @@ onBeforeUnmount(() => document.removeEventListener("keydown", handleGlobalKeydow
                   <label class="compare-check">
                     <input
                       type="checkbox"
-                      :checked="selectedCandidateIds.includes(result.product_id)"
+                      :checked="compareCandidateIds.includes(result.product_id)"
                       :disabled="
-                        !selectedCandidateIds.includes(result.product_id) &&
-                        selectedCandidateIds.length >= 4
+                        !compareCandidateIds.includes(result.product_id) &&
+                        compareCandidateIds.length >= 4
                       "
                       @change="toggleCompare(result.product_id)"
                     />

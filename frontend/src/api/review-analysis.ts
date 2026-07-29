@@ -60,11 +60,12 @@ export const listReviewEvidence = (
   page: number,
   evidenceType = "",
   label = "",
+  pageSize = 20,
 ) =>
   request<ReviewEvidencePage>(
     `/v1/review-analysis/analyses/${encodeURIComponent(analysisId)}/evidence${queryString({
       page,
-      page_size: 20,
+      page_size: pageSize,
       evidence_type: evidenceType,
       label,
       sentiment: "negative",
