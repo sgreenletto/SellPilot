@@ -93,7 +93,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @application.exception_handler(Exception)
     async def _unexpected_exc(request: Request, exc: Exception) -> JSONResponse:
-        logger.error("Unhandled error request_id=%s type=%s", get_request_id(request), type(exc).__name__)
+        logger.error(
+            "Unhandled error request_id=%s type=%s",
+            get_request_id(request), type(exc).__name__,
+        )
         return JSONResponse(
             status_code=500,
             content=jsonable_encoder(ApiResponse[object](
