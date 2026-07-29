@@ -1,20 +1,35 @@
 <script setup lang="ts">
-import { ArrowRight, Bot, CornerDownRight, RefreshCw, ShieldCheck, Sparkles } from "@lucide/vue";
+import {
+  ArrowRight,
+  Bot,
+  CornerDownRight,
+  Play,
+  RefreshCw,
+  ShieldCheck,
+  Sparkles,
+} from "@lucide/vue";
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
 import {
+  createAssistantTask,
   listAssistantCapabilities,
+  listRecentAssistantTasks,
   planAssistantMessage,
   type AssistantAvailability,
   type AssistantCapability,
+  type AssistantExecutionMode,
   type AssistantPlan,
+  type AssistantTaskResult,
 } from "@/api/assistant";
 import { FrontendApiError } from "@/api/http";
 import SpBadge from "@/components/base/SpBadge.vue";
 import SpButton from "@/components/base/SpButton.vue";
 import SpCard from "@/components/base/SpCard.vue";
+import SpEmptyState from "@/components/base/SpEmptyState.vue";
+import SpSkeleton from "@/components/base/SpSkeleton.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
+import type { TaskDetail } from "@/types/contracts";
 
 const router = useRouter();
 const message = ref("");
@@ -22,10 +37,15 @@ const capabilities = ref<AssistantCapability[]>([]);
 const plan = ref<AssistantPlan | null>(null);
 const loadingCapabilities = ref(false);
 const planning = ref(false);
+const executingMode = ref<AssistantExecutionMode | "">("");
+const taskResult = ref<AssistantTaskResult | null>(null);
+const recentTasks = ref<TaskDetail[]>([]);
+const loadingRecentTasks = ref(false);
+const recentTasksError = ref("");
 const errorMessage = ref("");
 
 const availabilityLabels: Record<AssistantAvailability, string> = {
-  available: "可规划",
+  available: "可执行",
   contract_only: "仅契约",
   unavailable: "暂不可用",
 };
@@ -58,12 +78,48 @@ async function createPlan() {
   planning.value = true;
   errorMessage.value = "";
   plan.value = null;
+  taskResult.value = null;
   try {
     plan.value = await planAssistantMessage(normalized);
   } catch (error: unknown) {
     errorMessage.value = safeError(error, "计划生成失败");
   } finally {
     planning.value = false;
+  }
+}
+
+async function executePlan(executionMode: AssistantExecutionMode) {
+  const normalized = message.value.trim();
+  if (
+    !normalized ||
+    executingMode.value ||
+    plan.value?.availability !== "available" ||
+    !plan.value.can_execute
+  ) {
+    return;
+  }
+  executingMode.value = executionMode;
+  errorMessage.value = "";
+  try {
+    taskResult.value = await createAssistantTask(normalized, executionMode);
+    await loadRecentTasks();
+  } catch (error: unknown) {
+    errorMessage.value = safeError(error, "Assistant 任务创建失败");
+  } finally {
+    executingMode.value = "";
+  }
+}
+
+async function loadRecentTasks() {
+  loadingRecentTasks.value = true;
+  recentTasksError.value = "";
+  try {
+    recentTasks.value = await listRecentAssistantTasks();
+  } catch (error: unknown) {
+    recentTasks.value = [];
+    recentTasksError.value = safeError(error, "最近任务加载失败");
+  } finally {
+    loadingRecentTasks.value = false;
   }
 }
 
@@ -77,14 +133,29 @@ async function openBusinessPage(path: string | null) {
   }
 }
 
+async function openTaskCenter(taskId: string) {
+  await router.push({ path: "/tasks", query: { task_id: taskId } });
+}
+
 function safeError(error: unknown, fallback: string): string {
   if (error instanceof FrontendApiError) {
-    if (error.status === 422) {
-      return "输入参数不符合计划契约，请检查后重试";
-    }
-    return error.message;
+    if (error.status === 401) return "登录状态已失效，请重新登录";
+    if (error.status === 404) return "任务或能力不存在，可能已被更新";
+    if (error.status === 409) return `请求冲突：${error.message || "能力状态或幂等请求发生冲突"}`;
+    if (error.status === 422)
+      return `输入参数不符合 Assistant 契约：${error.message || "请检查缺失字段"}`;
+    if (error.status >= 500) return "服务暂时不可用，请稍后重试";
+    return error.message || fallback;
   }
   return error instanceof Error ? error.message : fallback;
+}
+
+function statusTone(status: string): "neutral" | "success" | "warning" | "danger" | "info" {
+  if (status === "succeeded") return "success";
+  if (status === "failed" || status === "cancelled") return "danger";
+  if (status === "running") return "info";
+  if (status === "waiting_confirmation" || status === "pending") return "warning";
+  return "neutral";
 }
 
 function displayValue(value: unknown): string {
@@ -94,7 +165,9 @@ function displayValue(value: unknown): string {
   return JSON.stringify(value);
 }
 
-onMounted(loadCapabilities);
+onMounted(async () => {
+  await Promise.all([loadCapabilities(), loadRecentTasks()]);
+});
 </script>
 
 <template>
@@ -103,15 +176,17 @@ onMounted(loadCapabilities);
       <header class="assistant-hero">
         <div>
           <span class="assistant-hero__eyebrow"><Bot :size="15" /> Assistant Foundation</span>
-          <h1>AI 运营助手 · 计划模式</h1>
-          <p>识别运营意图、检查必要参数并生成受控执行计划，不会在本阶段自动运行任务。</p>
+          <h1>AI 运营助手</h1>
+          <p>先生成受控计划；参数完整且能力可用时，可创建任务或通过统一运行时立即执行。</p>
         </div>
         <SpBadge tone="info" dot>Mock 模式</SpBadge>
       </header>
 
       <div class="mock-notice">
         <ShieldCheck :size="18" />
-        <span>计划来自服务端能力目录；不会调用真实 LLM、执行工具或连接真实 Shopee。</span>
+        <span
+          >能力、Workflow 和风险均由服务端注册表决定；执行仍使用 Mock Shopee，不连接真实店铺。</span
+        >
       </div>
 
       <SpCard padding="lg">
@@ -278,8 +353,30 @@ onMounted(loadCapabilities);
         </p>
 
         <div class="plan-footer">
-          <p v-if="plan.can_execute">能力契约已就绪；下一阶段将接入统一 Task 执行。</p>
-          <p v-else>当前不会创建 Task，也不会自动运行 contract_only 或 unavailable 能力。</p>
+          <p v-if="plan.can_execute">参数已满足，可进入统一 Task / Workflow / Tool 执行链。</p>
+          <p v-else>缺少参数或能力不可执行，不会创建 Task。</p>
+          <div
+            v-if="plan.availability === 'available'"
+            class="execution-actions"
+            data-testid="assistant-execution-actions"
+          >
+            <SpButton
+              variant="secondary"
+              :loading="executingMode === 'create_only'"
+              :disabled="!plan.can_execute || Boolean(executingMode)"
+              @click="executePlan('create_only')"
+            >
+              创建任务
+            </SpButton>
+            <SpButton
+              :loading="executingMode === 'create_and_run'"
+              :disabled="!plan.can_execute || Boolean(executingMode)"
+              @click="executePlan('create_and_run')"
+            >
+              <template #icon><Play :size="15" /></template>
+              创建并运行
+            </SpButton>
+          </div>
           <SpButton
             v-if="plan.target_path"
             variant="secondary"
@@ -289,6 +386,90 @@ onMounted(loadCapabilities);
             <template #icon><ArrowRight :size="15" /></template>
           </SpButton>
         </div>
+      </SpCard>
+
+      <SpCard v-if="taskResult" data-testid="assistant-task-result" padding="lg">
+        <template #header>
+          <div class="section-heading">
+            <div>
+              <span class="assistant-hero__eyebrow"
+                ><CornerDownRight :size="14" /> Assistant Task</span
+              >
+              <h2>任务已创建</h2>
+            </div>
+            <SpBadge :tone="statusTone(taskResult.task_status)" dot>
+              {{ taskResult.task_status }}
+            </SpBadge>
+          </div>
+        </template>
+        <div class="task-result">
+          <div>
+            <span>Task ID</span>
+            <code>{{ taskResult.task_id }}</code>
+          </div>
+          <div>
+            <span>Workflow</span>
+            <strong>{{ taskResult.workflow_name }}@{{ taskResult.workflow_version }}</strong>
+          </div>
+          <div>
+            <span>执行模式</span>
+            <strong>{{ taskResult.execution_mode }}</strong>
+          </div>
+          <div>
+            <span>确认状态</span>
+            <strong>{{ taskResult.confirmation_required ? "等待确认" : "无需确认" }}</strong>
+          </div>
+        </div>
+        <div class="task-result__footer">
+          <small v-if="taskResult.duplicate">已复用相同 Request ID 的既有任务。</small>
+          <span v-else></span>
+          <SpButton @click="openTaskCenter(taskResult.task_id)">
+            前往 Task Center
+            <template #icon><ArrowRight :size="15" /></template>
+          </SpButton>
+        </div>
+      </SpCard>
+
+      <SpCard padding="lg">
+        <template #header>
+          <div class="section-heading">
+            <div>
+              <h2>最近 Assistant 任务</h2>
+              <p>仅展示由当前用户通过 Assistant 创建的真实任务。</p>
+            </div>
+            <SpButton
+              size="sm"
+              variant="ghost"
+              :loading="loadingRecentTasks"
+              @click="loadRecentTasks"
+            >
+              <template #icon><RefreshCw :size="15" /></template>
+              刷新任务
+            </SpButton>
+          </div>
+        </template>
+        <p v-if="recentTasksError" class="error-state" role="alert">{{ recentTasksError }}</p>
+        <div v-else-if="loadingRecentTasks" class="recent-task-list">
+          <SpSkeleton v-for="index in 2" :key="index" variant="card" />
+        </div>
+        <div v-else-if="recentTasks.length" class="recent-task-list">
+          <article v-for="task in recentTasks" :key="task.id" class="recent-task">
+            <div>
+              <strong>{{ task.workflow_name }}</strong>
+              <code>{{ task.id }}</code>
+              <small>{{ new Date(task.created_at).toLocaleString("zh-CN") }}</small>
+            </div>
+            <div class="recent-task__actions">
+              <SpBadge :tone="statusTone(task.status)" dot>{{ task.status }}</SpBadge>
+              <SpButton size="sm" variant="ghost" @click="openTaskCenter(task.id)"> 查看 </SpButton>
+            </div>
+          </article>
+        </div>
+        <SpEmptyState
+          v-else
+          title="暂无 Assistant 任务"
+          description="生成计划不会创建任务；使用“创建任务”或“创建并运行”后会显示在这里。"
+        />
       </SpCard>
     </div>
   </PageContainer>
@@ -305,7 +486,11 @@ onMounted(loadCapabilities);
 .composer-footer,
 .capability-card__top,
 .risk-panel,
-.plan-footer {
+.plan-footer,
+.task-result__footer,
+.recent-task,
+.recent-task__actions,
+.execution-actions {
   display: flex;
   gap: var(--sp-space-4);
   align-items: center;
@@ -517,6 +702,63 @@ onMounted(loadCapabilities);
 
 .plan-footer {
   margin-top: var(--sp-space-5);
+  flex-wrap: wrap;
+}
+
+.execution-actions {
+  gap: var(--sp-space-2);
+  justify-content: flex-start;
+}
+
+.task-result {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-space-3);
+}
+
+.task-result > div {
+  display: grid;
+  gap: var(--sp-space-2);
+  padding: var(--sp-space-4);
+  background: var(--sp-color-surface-muted);
+  border-radius: var(--sp-radius-control);
+}
+
+.task-result span,
+.task-result__footer small,
+.recent-task small {
+  color: var(--sp-color-text-muted);
+  font-size: var(--sp-font-xs);
+}
+
+.task-result code,
+.recent-task code {
+  overflow-wrap: anywhere;
+}
+
+.task-result__footer {
+  margin-top: var(--sp-space-4);
+}
+
+.recent-task-list {
+  display: grid;
+  gap: var(--sp-space-3);
+}
+
+.recent-task {
+  padding: var(--sp-space-4);
+  background: var(--sp-color-surface-muted);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-control);
+}
+
+.recent-task > div:first-child {
+  display: grid;
+  gap: var(--sp-space-1);
+}
+
+.recent-task__actions {
+  gap: var(--sp-space-2);
 }
 
 .error-state,
@@ -541,7 +783,8 @@ onMounted(loadCapabilities);
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .plan-summary {
+  .plan-summary,
+  .task-result {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -558,7 +801,8 @@ onMounted(loadCapabilities);
 
   .capability-grid,
   .plan-summary,
-  .plan-columns {
+  .plan-columns,
+  .task-result {
     grid-template-columns: 1fr;
   }
 }
