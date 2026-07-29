@@ -36,7 +36,8 @@ import type {
 const productId = ref("PROD0001");
 const site = ref("sg");
 const language = ref("en");
-const audience = ref("general");
+const audience = ref("大众消费者");
+const customAudience = ref("");
 const sellingPoints = ref("");
 const keywords = ref("");
 const generation = ref<ContentGeneration | null>(null);
@@ -62,6 +63,19 @@ const siteOptions = [
 const languageOptions = ["en", "zh-CN", "zh-TW", "ms", "id", "th", "vi", "tl", "pt-BR"].map(
   (value) => ({ label: value, value }),
 );
+const audienceOptions = [
+  { label: "大众消费者", value: "大众消费者" },
+  { label: "职场办公人群", value: "职场办公人群" },
+  { label: "学生群体", value: "学生群体" },
+  { label: "差旅人士", value: "差旅人士" },
+  { label: "内容创作者", value: "内容创作者" },
+  { label: "家庭用户", value: "家庭用户" },
+  { label: "数码爱好者", value: "数码爱好者" },
+  { label: "自定义受众", value: "__custom__" },
+];
+const resolvedAudience = computed(() =>
+  audience.value === "__custom__" ? customAudience.value.trim() : audience.value,
+);
 const content = computed(() => generation.value?.result.content);
 const quality = computed(() => generation.value?.result.quality);
 const qualityRunLabel = computed(() => {
@@ -83,7 +97,7 @@ const generationRequest = () => ({
   product_id: productId.value.trim(),
   site: site.value,
   target_language: language.value,
-  audience: audience.value,
+  audience: resolvedAudience.value,
   selling_points: sellingPoints.value
     .split(",")
     .map((item) => item.trim())
@@ -103,6 +117,10 @@ onMounted(() => window.addEventListener("beforeunload", warnUnsaved));
 onBeforeUnmount(() => window.removeEventListener("beforeunload", warnUnsaved));
 
 async function runGeneration(): Promise<void> {
+  if (!resolvedAudience.value) {
+    error.value = "请填写自定义目标受众";
+    return;
+  }
   const isRegeneration = generation.value !== null;
   loading.value = true;
   error.value = "";
@@ -316,7 +334,13 @@ function qualitySuggestion(issue: string): string {
           <SpInput v-model="productId" label="商品 ID" placeholder="例如 PROD0001" />
           <SpSelect v-model="site" label="目标站点" :options="siteOptions" />
           <SpSelect v-model="language" label="目标语言" :options="languageOptions" />
-          <SpInput v-model="audience" label="目标受众" placeholder="例如 urban professionals" />
+          <SpSelect v-model="audience" label="目标受众" :options="audienceOptions" />
+          <SpInput
+            v-if="audience === '__custom__'"
+            v-model="customAudience"
+            label="自定义目标受众"
+            placeholder="例如：首次购买扩展坞的远程办公人员"
+          />
           <SpInput
             v-model="sellingPoints"
             class="field-wide"
@@ -332,7 +356,11 @@ function qualitySuggestion(issue: string): string {
         </div>
         <div class="configuration-actions">
           <span>生成仅使用已验证商品事实，不会修改商品或库存。</span>
-          <SpButton :loading="loading" @click="runGeneration">
+          <SpButton
+            :loading="loading"
+            :disabled="audience === '__custom__' && !customAudience.trim()"
+            @click="runGeneration"
+          >
             <Sparkles :size="17" />生成并检查
           </SpButton>
         </div>
