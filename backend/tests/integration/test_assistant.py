@@ -211,6 +211,25 @@ async def test_deterministic_intent_plans(
     assert "handler" not in first.text.casefold()
 
 
+async def test_content_plan_does_not_treat_plain_product_word_as_identifier(
+    client_bundle,
+    admin_user,
+):
+    client, _, _, settings = client_bundle
+    response = await client.post(
+        "/api/v1/assistant/plan",
+        headers=auth_headers(admin_user, settings),
+        json={"message": "content generation for product PROD-001 in English"},
+    )
+
+    assert response.status_code == 200
+    plan = response.json()["data"]
+    assert plan["detected_intent"] == "content_generation"
+    assert plan["extracted_parameters"]["product_id"] == "PROD-001"
+    assert plan["extracted_parameters"]["target_language"] == "en"
+    assert plan["missing_parameters"] == []
+
+
 async def test_missing_parameters_unknown_and_tool_injection_do_not_execute(
     client_bundle,
     admin_user,
