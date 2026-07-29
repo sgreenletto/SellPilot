@@ -2,14 +2,17 @@
 
 审计日期：2026-07-29
 
-develop 基线：`abc9f7f70e7c77dc22a50a837da97734ecaba26b`
+开始审计 develop 基线：`abc9f7f70e7c77dc22a50a837da97734ecaba26b`
 
 功能分支同步 merge commit：`a0ea780adcd02287cccc7b52550e4f4c18c01707`
+
+最终同步 develop 基线：`49112310f6e7f888605dc0169ddb304518023347`
 审计分支：`feature/assistant-workflow-integration`
 
 ## Git 与运行基线
 
-- 最新 develop 已通过无冲突 merge 同步到当前功能分支。
+- 开发前和推送前两次 develop 更新均通过无冲突 merge 同步到当前功能分支；最终同步
+  包含 PR #49 的 AI 工作台状态恢复和产品改良草稿优化。
 - 未进入 develop 的 `origin/feature/product-translation-workflow`
   （`9dbe99a`）未合并、未 cherry-pick。
 - 唯一 Registry 运行实例包含 25 个 ToolDefinition、12 个
@@ -86,11 +89,11 @@ develop 基线：`abc9f7f70e7c77dc22a50a837da97734ecaba26b`
 
 - `uv run ruff format --check .`：220 files already formatted。
 - `uv run ruff check .`：All checks passed。
-- `uv run pytest -q`：339 passed。
+- `uv run pytest -q`：352 passed。
 - `npm run format:check`：全部文件符合 Prettier。
 - `npm run lint`：0 warning / 0 error。
 - `npm run typecheck`：通过。
-- `npm run test:run`：28 files、127 tests passed。测试退出码为 0；部分页面挂载时
+- `npm run test:run`：30 files、144 tests passed。测试退出码为 0；部分页面挂载时
   尝试访问未启动的本地 3000 端口并输出 `ECONNREFUSED` 诊断，不影响断言。
 - `npm run build`：成功；仅保留 Vite 大 chunk 非阻塞警告。
 - `sellpilot-import-mock-data` 重跑：校验 9254 行，0 插入、9255 跳过。
