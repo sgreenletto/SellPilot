@@ -19,6 +19,9 @@ const workflowLabels: Record<string, string> = {
   selection: "智能选品分析",
   review_analysis: "商品评论分析",
   product_improvement: "产品改良建议",
+  content_generation: "多语言内容生成",
+  knowledge_query: "知识库检索",
+  customer_service_reply: "客服回复建议",
   inventory_replenishment: "库存补货建议",
   low_stock_check: "低库存检查",
   order_query: "订单查询",
@@ -26,8 +29,14 @@ const workflowLabels: Record<string, string> = {
 };
 
 const stepLabels: Record<string, string> = {
+  search_market_products: "查询市场候选商品",
+  select_selection_candidates: "检查候选商品",
   score_product_opportunity: "评估商品机会",
+  finish_selection_success: "完成选品分析",
+  finish_selection_no_data: "返回无候选结果",
   analyze_product_reviews: "分析商品评论",
+  select_improvement_source: "选择改良建议数据来源",
+  analyze_reviews_for_improvement: "分析商品评论证据",
   generate_product_improvement_plan: "生成产品改良建议",
   analyze_inventory_replenishment: "分析库存补货需求",
   list_low_stock: "检查低库存商品",
@@ -38,13 +47,32 @@ const stepLabels: Record<string, string> = {
   get_order_logistics: "查询订单物流",
   generate_localized_listing: "生成多语言商品内容",
   check_listing_compliance: "检查商品内容合规性",
-  knowledge_query: "检索知识库",
-  customer_service_reply: "生成客服回复建议",
+  validate_content_quality: "核验内容质量",
+  finish_content_generation: "完成内容生成",
+  search_knowledge: "检索知识库",
+  get_customer_conversation: "读取客服会话",
+  classify_customer_request: "识别问题与风险",
+  select_customer_branch: "选择客服处理分支",
+  record_customer_handoff: "记录人工转交",
+  search_customer_knowledge: "查询政策知识",
+  get_customer_order: "查询关联订单",
+  get_customer_logistics: "查询关联物流",
+  get_customer_product: "查询关联商品",
+  draft_customer_reply: "生成客服回复建议",
+  select_customer_send: "判断是否模拟发送",
+  mock_send_customer_reply: "确认后模拟发送",
+  finish_customer_reply: "完成客服回复建议",
 };
 
 const stepSummaries: Record<string, string> = {
+  search_market_products: "按照站点、类目和价格条件查询真实导入的市场候选商品。",
+  select_selection_candidates: "检查是否存在可评分候选；没有数据时返回明确提示。",
   score_product_opportunity: "根据站点与筛选条件评估候选商品机会。",
+  finish_selection_success: "整理候选排序、评分依据和数据来源。",
+  finish_selection_no_data: "说明当前数据集没有匹配候选。",
   analyze_product_reviews: "分析指定商品的评论、情绪和用户痛点。",
+  select_improvement_source: "根据商品编号或已有评论分析编号选择数据来源。",
+  analyze_reviews_for_improvement: "读取真实商品评论并生成可追溯的评论分析。",
   generate_product_improvement_plan: "根据已有评论分析生成产品改良建议。",
   analyze_inventory_replenishment: "分析库存健康度和近期销量并生成补货建议。",
   list_low_stock: "读取低于库存预警阈值的 SKU。",
@@ -55,8 +83,21 @@ const stepSummaries: Record<string, string> = {
   get_order_logistics: "读取订单的物流信息和运输节点。",
   generate_localized_listing: "生成目标语言的商品内容。",
   check_listing_compliance: "检查生成内容是否符合平台要求。",
-  knowledge_query: "按照用户问题检索知识库。",
-  customer_service_reply: "根据会话上下文生成客服回复建议。",
+  validate_content_quality: "核验商品事实、完整性、本地化和合规检查结果。",
+  finish_content_generation: "整理最终文案和有界质量检查记录。",
+  search_knowledge: "按照用户问题检索现有知识库并返回来源。",
+  get_customer_conversation: "读取会话和关联订单、商品的上下文。",
+  classify_customer_request: "识别问题类型、风险等级和是否需要人工处理。",
+  select_customer_branch: "根据问题类型选择知识、订单、物流、商品或人工分支。",
+  record_customer_handoff: "记录高风险请求需要转交人工客服。",
+  search_customer_knowledge: "检索可引用的商品或店铺政策依据。",
+  get_customer_order: "读取客服会话关联的真实订单信息。",
+  get_customer_logistics: "读取客服会话关联的真实物流信息。",
+  get_customer_product: "读取客服会话关联的商品事实。",
+  draft_customer_reply: "只根据已查询到的可靠依据生成回复草稿。",
+  select_customer_send: "判断仅返回草稿还是进入模拟发送确认。",
+  mock_send_customer_reply: "经用户确认后向 Mock 会话写入一条模拟回复。",
+  finish_customer_reply: "整理回复建议、风险和引用依据。",
 };
 
 const parameterLabels: Record<string, string> = {
@@ -86,6 +127,9 @@ const parameterLabels: Record<string, string> = {
   min_rating: "最低评分",
   max_rating: "最高评分",
   languages: "评论语言",
+  buyer_message: "买家问题",
+  simulate_send: "模拟发送",
+  max_attempts: "最大检查轮次",
 };
 
 const valueLabels: Record<string, string> = {
@@ -248,6 +292,11 @@ export function localizedErrorMessage(message: string | null | undefined): strin
   const lowered = message.toLowerCase();
   if (lowered.includes("not found")) return "没有找到对应的业务数据。";
   if (lowered.includes("timeout") || lowered.includes("timed out")) return "执行超时，请稍后重试。";
+  if (
+    lowered.includes("external service is unavailable") ||
+    lowered.includes("provider is unavailable")
+  )
+    return "内容生成服务暂时不可用，请稍后重试。";
   if (lowered.includes("permission") || lowered.includes("forbidden"))
     return "当前账号无权访问该任务。";
   if (/[\u3400-\u9fff]/u.test(message)) return message;
@@ -407,6 +456,14 @@ export function presentTaskResult(
   }
 
   if (workflowName === "selection") {
+    const noData = source.no_data === true;
+    if (noData) {
+      return {
+        summary: asString(source.message, "当前数据集中没有匹配候选，请调整站点或类目。"),
+        metrics: [{ label: "候选商品", value: "0" }],
+        items: [],
+      };
+    }
     const analysis = asRecord(source.analysis) ?? source;
     const results = asRecords(analysis.results);
     const ranked = asCount(analysis.ranked_count, results.length);
@@ -420,8 +477,15 @@ export function presentTaskResult(
       items: results.slice(0, 8).map((item, index) => ({
         id: asString(item.id, `selection-${index}`),
         title: asString(item.title, asString(item.product_id, "候选商品")),
-        subtitle: `排名 ${asString(item.rank, String(index + 1))}`,
-        meta: [`综合得分：${asString(item.total_score, "—")}`, `站点：${labelValue(item.site)}`],
+        subtitle: asString(
+          asRecord(item.explanation)?.summary,
+          `排名 ${asString(item.rank, String(index + 1))}`,
+        ),
+        meta: [
+          `综合得分：${asString(item.total_score, "—")}`,
+          `数据完整度：${asString(item.data_completeness, "—")}`,
+          `站点：${labelValue(item.site)}`,
+        ],
       })),
     };
   }
@@ -430,16 +494,34 @@ export function presentTaskResult(
     const analysis = asRecord(source.analysis) ?? source;
     const painPoints = asRecords(analysis.pain_points);
     const topics = asRecords(analysis.topics);
+    const quality = asRecord(analysis.quality) ?? {};
+    const sentiment = asRecord(analysis.sentiment) ?? {};
+    const reviewCount = asCount(quality.included_count, 0);
+    if (analysis.no_data === true) {
+      return {
+        summary: `商品 ${asString(analysis.product_id, "—")} 没有足够评论数据，未生成推断性结论。`,
+        metrics: [{ label: "有效评论", value: String(reviewCount) }],
+        items: [],
+      };
+    }
     return {
-      summary: `商品 ${asString(analysis.product_id, "—")} 的评论分析已完成，识别到 ${topics.length} 个主题和 ${painPoints.length} 个主要痛点。`,
+      summary: `商品 ${asString(analysis.product_id, "—")} 的 ${reviewCount} 条有效评论分析已完成，识别到 ${topics.length} 个主题和 ${painPoints.length} 个主要痛点。`,
       metrics: [
-        { label: "评论主题", value: String(topics.length) },
+        { label: "有效评论", value: String(reviewCount) },
+        {
+          label: "正向 / 中性 / 负向",
+          value: `${asCount(sentiment.positive, 0)} / ${asCount(sentiment.neutral, 0)} / ${asCount(sentiment.negative, 0)}`,
+        },
         { label: "主要痛点", value: String(painPoints.length) },
       ],
       items: painPoints.slice(0, 8).map((item, index) => ({
-        id: asString(item.key, `pain-point-${index}`),
-        title: asString(item.label, asString(item.name, "评论痛点")),
-        meta: primitiveMetrics(item).map((metric) => `${metric.label}：${metric.value}`),
+        id: asString(item.pain_point, `pain-point-${index}`),
+        title: asString(item.pain_point, "评论痛点"),
+        subtitle: asString(asRecord(asRecords(item.evidence)[0])?.translated_content),
+        meta: [
+          `负向评论：${asString(item.negative_count, "0")}`,
+          `严重度：${asString(item.severity, "—")}`,
+        ],
       })),
     };
   }
@@ -458,6 +540,101 @@ export function presentTaskResult(
           asString(item.priority) ? `优先级：${asString(item.priority)}` : "",
           asString(item.evidence_count) ? `证据数：${asString(item.evidence_count)}` : "",
         ].filter(Boolean),
+      })),
+    };
+  }
+
+  if (workflowName === "content_generation") {
+    const generation = asRecord(source.generation) ?? {};
+    const generated = asRecord(generation.result) ?? {};
+    const content = asRecord(generated.content) ?? {};
+    const compliance = asRecord(source.compliance) ?? {};
+    const loop = asRecord(source.loop) ?? {};
+    const bullets = Array.isArray(content.bullet_points)
+      ? content.bullet_points.map((item) => asString(item)).filter(Boolean)
+      : [];
+    const faq = asRecords(content.faq);
+    return {
+      summary: `已根据商品 ${asString(generation.product_id, "—")} 的真实资料生成${labelValue(generation.target_language)}文案，事实与合规检查${compliance.passed === true ? "已通过" : "未通过"}。`,
+      metrics: [
+        {
+          label: "检查轮次",
+          value: `${asCount(loop.attempts, 0)} / ${asCount(loop.max_attempts, 3)}`,
+        },
+        { label: "合规检查", value: compliance.passed === true ? "已通过" : "未通过" },
+      ],
+      items: [
+        {
+          id: "generated-title",
+          title: asString(content.title, "生成标题"),
+          subtitle: asString(content.description),
+          meta: bullets.slice(0, 5),
+        },
+        ...faq.slice(0, 3).map((item, index) => ({
+          id: `faq-${index}`,
+          title: asString(item.question, `FAQ ${index + 1}`),
+          subtitle: asString(item.answer),
+          meta: [],
+        })),
+      ],
+    };
+  }
+
+  if (workflowName === "knowledge_query") {
+    const sources = asRecords(source.sources);
+    if (source.no_reliable_source === true || sources.length === 0) {
+      return {
+        summary: "当前知识库中没有找到可靠依据。",
+        metrics: [{ label: "可靠来源", value: "0" }],
+        items: [],
+      };
+    }
+    return {
+      summary: asString(source.answer, "已找到可靠知识依据。"),
+      metrics: [{ label: "可靠来源", value: String(sources.length) }],
+      items: sources.slice(0, 6).map((item, index) => ({
+        id: asString(item.document_id, `source-${index}`),
+        title: asString(item.source_doc, "知识来源"),
+        subtitle: asString(item.fragment),
+        meta: [
+          `相关度：${asString(item.score, "—")}`,
+          `语言：${labelValue(item.language)}`,
+          asString(item.updated_at),
+        ].filter(Boolean),
+      })),
+    };
+  }
+
+  if (workflowName === "customer_service_reply") {
+    const draft = asRecord(source.draft) ?? {};
+    const classification = asRecord(source.classification) ?? {};
+    const basis = asRecords(draft.basis);
+    const requiresHuman = draft.requires_human === true;
+    return {
+      summary: asString(
+        draft.reply,
+        requiresHuman ? "该请求需要转交人工客服处理。" : "已生成客服回复建议。",
+      ),
+      metrics: [
+        { label: "风险等级", value: labelValue(draft.risk_level ?? classification.risk_level) },
+        { label: "处理方式", value: requiresHuman ? "转交人工" : "回复草稿" },
+        {
+          label: "发送状态",
+          value: source.simulated_send ? "已模拟发送" : "未发送",
+        },
+      ],
+      items: basis.slice(0, 6).map((item, index) => ({
+        id: asString(item.document_id, asString(item.order_id, `basis-${index}`)),
+        title:
+          item.type === "knowledge"
+            ? "知识库依据"
+            : item.type === "logistics"
+              ? "物流依据"
+              : item.type === "order"
+                ? "订单依据"
+                : "商品依据",
+        subtitle: asString(item.source, asString(item.product_id, asString(item.order_id))),
+        meta: [],
       })),
     };
   }
