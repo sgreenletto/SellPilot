@@ -20,9 +20,12 @@ from sellpilot.schemas.knowledge_base import (
     KnowledgeDocumentResponse,
     KnowledgeRetrievalItem,
     KnowledgeRetrievalRequest,
+    RAGAnswerResponse,
+    RAGQuestionRequest,
 )
 from sellpilot.services.embedding import EmbeddingService
 from sellpilot.services.knowledge_base import KnowledgeBaseService
+from sellpilot.services.rag_service import RAGService
 from sellpilot.services.vector_store import ChromaVectorStore
 
 router = APIRouter()
@@ -156,5 +159,27 @@ async def list_chunks(
             page=page,
             page_size=page_size,
         ),
+        get_request_id(request),
+    )
+
+
+# ---- RAG Q&A ----
+
+@router.post("/qa", response_model=ApiResponse[RAGAnswerResponse])
+async def rag_qa(
+    payload: RAGQuestionRequest,
+    request: Request,
+    _user: CurrentUserDependency,
+    settings: SettingsDependency,
+) -> ApiResponse[RAGAnswerResponse]:
+    """RAG 大模型问答。"""
+    rag = RAGService(settings)
+    result = rag.ask(
+        question=payload.question,
+        top_k=payload.top_k,
+        category=payload.category,
+    )
+    return success_response(
+        RAGAnswerResponse(**result),
         get_request_id(request),
     )

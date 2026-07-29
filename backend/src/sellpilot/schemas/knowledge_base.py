@@ -118,3 +118,23 @@ class KnowledgeRetrievalItem(ContractModel):
     source_doc: str
     document_id: UUID
     chunk_index: int
+
+
+# ---- RAG Q&A ----
+
+class RAGQuestionRequest(ContractModel):
+    question: str = Field(min_length=1, max_length=2000)
+    top_k: int = Field(default=5, ge=1, le=20)
+    category: str | None = Field(default=None, min_length=1, max_length=64)
+
+
+class RAGSourceItem(ContractModel):
+    score: float
+    source_doc: str = ""
+    category: str = ""
+    fragment: str = ""
+
+
+class RAGAnswerResponse(ContractModel):
+    answer: str
+    sources: list[RAGSourceItem] = Field(default_factory=list)

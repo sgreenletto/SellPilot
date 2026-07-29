@@ -17,7 +17,11 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 
 import { listConfirmations } from "@/api/commerce";
-import { loadCommerceDashboardSnapshot } from "@/api/dashboard";
+import {
+  buildReviewSentimentTrend,
+  buildServiceIssueTrend,
+  loadCommerceDashboardSnapshot,
+} from "@/api/dashboard";
 import SpBadge from "@/components/base/SpBadge.vue";
 import SpButton from "@/components/base/SpButton.vue";
 import SpEmptyState from "@/components/base/SpEmptyState.vue";
@@ -70,11 +74,10 @@ const currentDataset = computed(
   () => datasets.value[trendType.value] ?? { categories: [], series: [] },
 );
 const currentTrendSource = computed(() => {
-  const usesBackend =
-    dataStatus.value === "backend" && ["funnel", "orders", "popularity"].includes(trendType.value);
-  return usesBackend
-    ? { label: "当前店铺后端数据", tone: "success" as const }
-    : { label: "合成 Mock 演示数据", tone: "info" as const };
+  if (dataStatus.value !== "backend") {
+    return { label: "合成 Mock 演示数据", tone: "info" as const };
+  }
+  return { label: "当前店铺后端数据", tone: "success" as const };
 });
 
 function orderTrend(orders: Awaited<ReturnType<typeof loadCommerceDashboardSnapshot>>["orders"]) {
@@ -302,10 +305,12 @@ async function loadBackendDashboard(): Promise<void> {
         },
       ],
     };
+    datasets.value.sentiment = buildReviewSentimentTrend(snapshot);
+    datasets.value.service = buildServiceIssueTrend(snapshot);
     dataStatus.value = "backend";
     const scopeLabel =
       selectedShopId.value === "all" ? "全部模拟店铺" : `来源店铺 ${selectedShopId.value}`;
-    dataMessage.value = `已连接后端：当前展示${scopeLabel}的商品、库存、订单和待确认操作；评论情绪与客服趋势为合成 Mock 演示数据。`;
+    dataMessage.value = `已连接后端：当前展示${scopeLabel}的商品、库存、订单、评论情绪和客服趋势数据。`;
   } catch {
     dashboardAlerts.value = [];
     dashboardActivities.value = [];

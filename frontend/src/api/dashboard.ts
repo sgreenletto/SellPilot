@@ -154,3 +154,46 @@ export async function loadCommerceDashboardSnapshot(
   ]);
   return { products, inventory, orders };
 }
+
+// ---- 评论情绪分布（基于产品评分）----
+
+export function buildReviewSentimentTrend(
+  snapshot: CommerceDashboardSnapshot,
+): TrendDataset {
+  const rated = snapshot.products.filter((p) => Number(p.rating) > 0);
+  const bins: Record<string, number> = {
+    "1-2分": 0, "3分": 0, "4分": 0, "5分": 0,
+  };
+  for (const p of rated) {
+    const r = Number(p.rating);
+    if (r <= 2) bins["1-2分"]++;
+    else if (r < 4) bins["3分"]++;
+    else if (r < 5) bins["4分"]++;
+    else bins["5分"]++;
+  }
+  return {
+    categories: Object.keys(bins),
+    series: [{ name: "商品数", data: Object.values(bins), color: "green" }],
+  };
+}
+
+// ---- 客服问题趋势（基于订单状态分布）----
+
+export function buildServiceIssueTrend(
+  snapshot: CommerceDashboardSnapshot,
+): TrendDataset {
+  const counts: Record<string, number> = {};
+  for (const o of snapshot.orders) {
+    const s = o.order_status || "unknown";
+    counts[s] = (counts[s] ?? 0) + 1;
+  }
+  const entries = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8);
+  return {
+    categories: entries.map(([k]) => k),
+    series: [
+      { name: "订单数", data: entries.map(([, v]) => v), color: "blue" },
+    ],
+  };
+}
