@@ -28,6 +28,24 @@ class ErrorCode(StrEnum):
     TOOL_NOT_EXPOSED = "TOOL_NOT_EXPOSED"
     TOOL_RETRY_EXHAUSTED = "TOOL_RETRY_EXHAUSTED"
     WORKFLOW_FAILED = "WORKFLOW_FAILED"
+    WORKFLOW_NOT_FOUND = "WORKFLOW_NOT_FOUND"
+    WORKFLOW_DISABLED = "WORKFLOW_DISABLED"
+    WORKFLOW_ALREADY_REGISTERED = "WORKFLOW_ALREADY_REGISTERED"
+    WORKFLOW_VERSION_CONFLICT = "WORKFLOW_VERSION_CONFLICT"
+    WORKFLOW_DEFINITION_INVALID = "WORKFLOW_DEFINITION_INVALID"
+    TASK_NOT_FOUND = "TASK_NOT_FOUND"
+    TASK_NOT_RUNNABLE = "TASK_NOT_RUNNABLE"
+    TASK_ALREADY_RUNNING = "TASK_ALREADY_RUNNING"
+    TASK_NOT_RESUMABLE = "TASK_NOT_RESUMABLE"
+    TASK_CONFIRMATION_PENDING = "TASK_CONFIRMATION_PENDING"
+    TASK_CONFIRMATION_INVALID = "TASK_CONFIRMATION_INVALID"
+    TASK_RETRY_NOT_ALLOWED = "TASK_RETRY_NOT_ALLOWED"
+    TASK_ATTEMPT_EXHAUSTED = "TASK_ATTEMPT_EXHAUSTED"
+    TASK_CANCEL_NOT_ALLOWED = "TASK_CANCEL_NOT_ALLOWED"
+    TASK_STEP_NOT_FOUND = "TASK_STEP_NOT_FOUND"
+    TASK_NODE_TIMEOUT = "TASK_NODE_TIMEOUT"
+    TASK_STATE_TOO_LARGE = "TASK_STATE_TOO_LARGE"
+    TASK_EXECUTION_CONFLICT = "TASK_EXECUTION_CONFLICT"
     MOCK_PLATFORM_FAILED = "MOCK_PLATFORM_FAILED"
     EXTERNAL_SERVICE_UNAVAILABLE = "EXTERNAL_SERVICE_UNAVAILABLE"
     PLATFORM_NOT_CONFIGURED = "PLATFORM_NOT_CONFIGURED"
@@ -212,6 +230,53 @@ class ToolConfirmationRequiredError(AppException):
 class WorkflowFailureError(AppException):
     def __init__(self, message: str = "Workflow execution failed") -> None:
         super().__init__(message, code=ErrorCode.WORKFLOW_FAILED, status_code=500)
+
+
+class WorkflowNotFoundError(AppException):
+    def __init__(self, name: str) -> None:
+        super().__init__(
+            f"Workflow '{name}' is not registered",
+            code=ErrorCode.WORKFLOW_NOT_FOUND,
+            status_code=404,
+        )
+
+
+class WorkflowDisabledError(AppException):
+    def __init__(self, name: str) -> None:
+        super().__init__(
+            f"Workflow '{name}' is disabled",
+            code=ErrorCode.WORKFLOW_DISABLED,
+            status_code=409,
+        )
+
+
+class WorkflowAlreadyRegisteredError(AppException):
+    def __init__(self, name: str) -> None:
+        super().__init__(
+            f"Workflow '{name}' is already registered",
+            code=ErrorCode.WORKFLOW_ALREADY_REGISTERED,
+            status_code=409,
+        )
+
+
+class WorkflowVersionConflictError(AppException):
+    def __init__(self, name: str, required: str, registered: str) -> None:
+        super().__init__(
+            f"Workflow '{name}' version {required} does not match registered version {registered}",
+            code=ErrorCode.WORKFLOW_VERSION_CONFLICT,
+            status_code=409,
+        )
+
+
+class TaskRuntimeError(AppException):
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: ErrorCode,
+        status_code: int = 409,
+    ) -> None:
+        super().__init__(message, code=code, status_code=status_code)
 
 
 class DatabaseUnavailableError(AppException):

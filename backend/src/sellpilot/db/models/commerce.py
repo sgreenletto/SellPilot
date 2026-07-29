@@ -73,6 +73,22 @@ class Product(SourceTrackedMixin, UUIDPrimaryKeyMixin, TimestampMixin, Base):
     collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+class SelectionCandidate(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "selection_candidates"
+    __table_args__ = (
+        UniqueConstraint("created_by", "product_external_id", name="uq_candidate_user_product"),
+        Index("ix_selection_candidates_user_created", "created_by", "created_at"),
+    )
+
+    created_by: Mapped[UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    product_external_id: Mapped[str] = mapped_column(String(100), nullable=False)
+    source_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    title_snapshot: Mapped[str] = mapped_column(String(500), nullable=False)
+    is_mock_data: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+
 class Sku(SourceTrackedMixin, UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "skus"
     __table_args__ = (

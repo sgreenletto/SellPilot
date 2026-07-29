@@ -37,11 +37,12 @@ ONE = Decimal("1")
 FOUR = Decimal("4")
 QUANTUM = Decimal("0.0001")
 
-DEFAULT_REVIEW_ANALYSIS_CONFIG = ReviewAnalysisConfig(version="review-analysis-v1.0.0")
+DEFAULT_REVIEW_ANALYSIS_CONFIG = ReviewAnalysisConfig(version="review-analysis-v1.1.0")
 
 TOPIC_KEYWORDS: dict[ReviewTopic, tuple[str, ...]] = {
     ReviewTopic.PRODUCT_QUALITY: (
         "quality",
+        "finish",
         "broken",
         "defect",
         "damaged",
@@ -52,6 +53,7 @@ TOPIC_KEYWORDS: dict[ReviewTopic, tuple[str, ...]] = {
         "chất lượng",
         "hỏng",
         "质量",
+        "工艺",
         "损坏",
     ),
     ReviewTopic.PACKAGING: (
@@ -67,15 +69,17 @@ TOPIC_KEYWORDS: dict[ReviewTopic, tuple[str, ...]] = {
     ),
     ReviewTopic.DESCRIPTION_MISMATCH: (
         "not as described",
+        "does not match the product description",
+        "doesn't match the product description",
+        "does not match description",
         "different from",
-        "picture",
-        "description",
         "tidak sesuai",
         "tak sama",
         "ไม่ตรง",
         "không giống",
-        "描述",
-        "图片",
+        "与描述不符",
+        "与图片不符",
+        "货不对版",
     ),
     ReviewTopic.LOGISTICS: (
         "delivery",
@@ -142,21 +146,6 @@ TOPIC_KEYWORDS: dict[ReviewTopic, tuple[str, ...]] = {
     ),
 }
 
-ISSUE_HINT_TOPICS = {
-    "product": ReviewTopic.PRODUCT_QUALITY,
-    "quality": ReviewTopic.PRODUCT_QUALITY,
-    "packaging": ReviewTopic.PACKAGING,
-    "description": ReviewTopic.DESCRIPTION_MISMATCH,
-    "description_mismatch": ReviewTopic.DESCRIPTION_MISMATCH,
-    "logistics": ReviewTopic.LOGISTICS,
-    "service": ReviewTopic.SERVICE,
-    "material": ReviewTopic.MATERIAL,
-    "size": ReviewTopic.SIZE_SPECIFICATION,
-    "specification": ReviewTopic.SIZE_SPECIFICATION,
-    "wrong_item": ReviewTopic.WRONG_OR_MISSING_ITEM,
-    "missing_item": ReviewTopic.WRONG_OR_MISSING_ITEM,
-}
-
 
 class ReviewAnalysisError(ValueError):
     pass
@@ -170,11 +159,37 @@ def _quantize(value: Decimal) -> Decimal:
     return value.quantize(QUANTUM, rounding=ROUND_HALF_UP)
 
 
-def _sentiment_from_rating(rating: int) -> ReviewSentiment:
+COMPLAINT_MARKERS = (
+    " but ",
+    " though ",
+    "however",
+    "basic",
+    "average",
+    "slow",
+    "usual time",
+    "hope the next",
+    "improve",
+    "一般",
+    "普通",
+    "较慢",
+    "希望",
+    "改进",
+    "但是",
+    "不过",
+)
+
+
+def _sentiment_from_review(item: PreparedReview) -> ReviewSentiment:
+    rating = item.review.rating
     if rating >= 4:
         return ReviewSentiment.POSITIVE
     if rating == 3:
-        return ReviewSentiment.NEUTRAL
+        text = f" {item.normalized_content} {item.analysis_content} ".casefold()
+        return (
+            ReviewSentiment.NEGATIVE
+            if any(marker in text for marker in COMPLAINT_MARKERS)
+            else ReviewSentiment.NEUTRAL
+        )
     return ReviewSentiment.NEGATIVE
 
 
@@ -185,9 +200,6 @@ def _rule_topics(item: PreparedReview) -> tuple[ReviewTopic, ...]:
         for topic, keywords in TOPIC_KEYWORDS.items()
         if any(keyword.casefold() in text for keyword in keywords)
     }
-    hint = (item.review.source_issue_hint or "").casefold()
-    if hint in ISSUE_HINT_TOPICS:
-        topics.add(ISSUE_HINT_TOPICS[hint])
     if not topics:
         topics.add(ReviewTopic.NO_CLEAR_ISSUE if item.review.rating >= 3 else ReviewTopic.OTHER)
     return tuple(sorted(topics, key=str))
@@ -204,10 +216,19 @@ def _rule_label(item: PreparedReview) -> ModelReviewLabel:
         confidence -= Decimal("0.08")
     return ModelReviewLabel(
         review_id=item.review.review_id,
-        sentiment=_sentiment_from_rating(item.review.rating),
+        sentiment=_sentiment_from_review(item),
         topics=topics,
         confidence=max(confidence, Decimal("0.30")),
     )
+
+
+def classify_review_preview(
+    review: ReviewInput,
+    config: ReviewAnalysisConfig = DEFAULT_REVIEW_ANALYSIS_CONFIG,
+) -> tuple[ReviewSentiment, tuple[ReviewTopic, ...]]:
+    """Return the same deterministic sentiment and topics used by full analysis."""
+    label = _rule_label(prepare_reviews((review,), config)[0])
+    return label.sentiment, label.topics
 
 
 def _parse_model_output(

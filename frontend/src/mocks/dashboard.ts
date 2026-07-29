@@ -7,7 +7,8 @@ import type {
   RecentActivity,
   RiskOperation,
   TrendDataset,
-} from "@/types/dashboard"
+  TrendType,
+} from "@/types/dashboard";
 
 // ---- 原有 mock 数据（保留兼容） ----
 
@@ -16,20 +17,20 @@ export const funnelStages: FunnelStage[] = [
   { id: "candidate", label: "选品候选", count: 320, percentage: 25 },
   { id: "draft", label: "上架草稿", count: 86, percentage: 6.7 },
   { id: "published", label: "模拟上架", count: 42, percentage: 3.3 },
-]
+];
 
 export const dashboardMetrics: DashboardMetric[] = [
   { id: "margin", label: "预计毛利率", value: "34.8%", tone: "pink", icon: "trend" },
   { id: "reply", label: "客服及时回复率", value: "92%", tone: "blue", icon: "message" },
   { id: "sku", label: "活跃 SKU", value: "186", tone: "navy", icon: "package" },
-]
+];
 
 export const healthPoints: HealthPoint[] = [
   { id: "w1", label: "第1周", value: 68 },
   { id: "w2", label: "第2周", value: 74 },
   { id: "w3", label: "第3周", value: 78 },
   { id: "w4", label: "本周", value: 82 },
-]
+];
 
 export const riskOperations: RiskOperation[] = [
   {
@@ -65,7 +66,7 @@ export const riskOperations: RiskOperation[] = [
     suggestion: "检查承运商时效",
     tone: "purple",
   },
-]
+];
 
 // ---- 新增：经营看板 v2 数据 ----
 
@@ -122,16 +123,14 @@ export const topMetrics: MetricCardData[] = [
     tone: "green",
     linkTo: "/tasks",
   },
-]
+];
 
 // ---------- 趋势图表数据 ----------
 
-export const trendDatasets: Record<string, TrendDataset> = {
+export const trendDatasets: Record<TrendType, TrendDataset> = {
   funnel: {
     categories: ["市场商品", "选品候选", "上架草稿", "模拟上架"],
-    series: [
-      { name: "商品数量", data: [1280, 320, 86, 42], color: "blue" },
-    ],
+    series: [{ name: "商品数量", data: [1280, 320, 86, 42], color: "blue" }],
   },
   orders: {
     categories: ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
@@ -163,7 +162,7 @@ export const trendDatasets: Record<string, TrendDataset> = {
       { name: "售后投诉", data: [8, 10, 7, 12, 9, 5, 4], color: "pink" },
     ],
   },
-}
+};
 
 // ---------- 异常提醒 & 今日待办 ----------
 
@@ -204,7 +203,7 @@ export const alertItems: AlertItem[] = [
     linkLabel: "查看订单",
     timestamp: "3 小时前",
   },
-]
+];
 
 // ---------- 最近动态 ----------
 
@@ -265,4 +264,4 @@ export const recentActivities: RecentActivity[] = [
     status: "processing",
     timestamp: "1.5 小时前",
   },
-]
+];

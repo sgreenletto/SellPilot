@@ -1,6 +1,8 @@
+from datetime import UTC, datetime
 from typing import Any, Never
+from uuid import uuid4
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sellpilot.adapters.base import PlatformAdapter
@@ -12,6 +14,8 @@ from sellpilot.db.models.commerce import (
     LogisticsTrack,
     Order,
     Product,
+    Review,
+    Shop,
     Sku,
 )
 from sellpilot.schemas.platform import PlatformPingResult
@@ -39,8 +43,11 @@ class MockShopeeAdapter(PlatformAdapter):
             "system.ping",
             "platform.contracts",
             "products.read",
+            "products.create_draft",
+            "products.update_draft",
             "orders.read",
             "logistics.read",
+            "reviews.read",
             "messages.read",
         ]
 
@@ -55,6 +62,8 @@ class MockShopeeAdapter(PlatformAdapter):
             statement = statement.where(Product.status == status)
         if site := filters.get("site"):
             statement = statement.where(Product.site == site)
+        if shop_id := filters.get("shop_id"):
+            statement = statement.where(Product.source_shop_external_id == shop_id)
         statement = statement.offset(int(filters.get("offset", 0))).limit(
             min(int(filters.get("limit", 20)), 100)
         )
@@ -65,13 +74,109 @@ class MockShopeeAdapter(PlatformAdapter):
         record = await self._session().scalar(
             select(Product).where(Product.external_id == product_id)
         )
-        return self._product(record) if record else {}
+        if record is None:
+            return {}
+        payload = self._product(record)
+        skus = (
+            (
+                await self._session().execute(
+                    select(Sku).where(Sku.product_id == record.id).order_by(Sku.seller_sku)
+                )
+            )
+            .scalars()
+            .all()
+        )
+        payload["skus"] = [
+            {
+                "external_id": item.external_id,
+                "seller_sku": item.seller_sku,
+                "name": f"{item.variation_name}: {item.variation_value}",
+                "variation_name": item.variation_name,
+                "variation_value": item.variation_value,
+            }
+            for item in skus
+        ]
+        payload["specifications"] = [
+            {"name": name, "value": " / ".join(values)}
+            for name, values in self._sku_specifications(skus).items()
+        ]
+        return payload
+
+    @staticmethod
+    def _sku_specifications(skus: list[Sku]) -> dict[str, list[str]]:
+        result: dict[str, list[str]] = {}
+        for sku in skus:
+            values = result.setdefault(sku.variation_name, [])
+            if sku.variation_value not in values:
+                values.append(sku.variation_value)
+        return result
 
     async def create_product(self, payload: dict[str, Any]) -> dict[str, Any]:
-        self._not_implemented("create_product")
+        shop = await self._session().scalar(
+            select(Shop).where(Shop.external_id == payload["source_shop_id"])
+        )
+        if shop is None:
+            shop = await self._session().scalar(
+                select(Shop)
+                .join(Product, Product.shop_id == Shop.id)
+                .where(Product.source_shop_external_id == payload["source_shop_id"])
+            )
+        if shop is None:
+            return {}
+        now = datetime.now(UTC)
+        record = Product(
+            external_id=payload.get("product_id") or f"DRAFT-{uuid4().hex[:16].upper()}",
+            shop_id=shop.id,
+            source_shop_external_id=shop.external_id,
+            title=payload["title"],
+            category_external_id=payload["category_id"],
+            category_name=payload["category_name"],
+            description=payload.get("description", ""),
+            platform="shopee",
+            site=payload["site"],
+            currency=payload["currency"],
+            price=payload["price"],
+            cost=payload.get("cost", 0),
+            shipping_cost=payload.get("shipping_cost", 0),
+            sales_count=0,
+            rating=0,
+            review_count=0,
+            favorite_count=0,
+            status="draft",
+            source_type=payload.get("source_type", "manual_import"),
+            is_mock_data=True,
+            source_created_at=now,
+            collected_at=now,
+            source_updated_at=now,
+        )
+        self._session().add(record)
+        await self._session().flush()
+        return self._product(record)
 
     async def update_product(self, product_id: str, payload: dict[str, Any]) -> dict[str, Any]:
-        self._not_implemented("update_product")
+        record = await self._session().scalar(
+            select(Product).where(Product.external_id == product_id)
+        )
+        if record is None:
+            return {}
+        mapping = {
+            "title": "title",
+            "category_id": "category_external_id",
+            "category_name": "category_name",
+            "description": "description",
+            "site": "site",
+            "currency": "currency",
+            "price": "price",
+            "cost": "cost",
+            "shipping_cost": "shipping_cost",
+        }
+        for source, target in mapping.items():
+            if source in payload:
+                setattr(record, target, payload[source])
+        record.status = "draft"
+        record.source_updated_at = datetime.now(UTC)
+        await self._session().flush()
+        return self._product(record)
 
     async def publish_product(self, product_id: str) -> dict[str, Any]:
         record = await self._session().scalar(
@@ -144,6 +249,8 @@ class MockShopeeAdapter(PlatformAdapter):
         statement = select(Order).order_by(Order.source_created_at.desc())
         if status := filters.get("status"):
             statement = statement.where(Order.order_status == status)
+        if shop_id := filters.get("shop_id"):
+            statement = statement.where(Order.source_shop_external_id == shop_id)
         statement = statement.offset(int(filters.get("offset", 0))).limit(
             min(int(filters.get("limit", 20)), 100)
         )
@@ -215,6 +322,58 @@ class MockShopeeAdapter(PlatformAdapter):
             for record in records
         ]
 
+    async def list_reviews(self, **filters: Any) -> list[dict[str, Any]]:
+        statement = (
+            select(Review, Product.external_id, Product.site)
+            .join(Product, Review.product_id == Product.id)
+            .order_by(Review.source_created_at.desc(), Review.external_id.asc())
+        )
+        if product_id := filters.get("product_id"):
+            statement = statement.where(Product.external_id == product_id)
+        if site := filters.get("site"):
+            statement = statement.where(Product.site == site)
+        if language := filters.get("language"):
+            statement = statement.where(Review.language == language)
+        if languages := filters.get("languages"):
+            statement = statement.where(Review.language.in_(languages))
+        if min_rating := filters.get("min_rating"):
+            statement = statement.where(Review.rating >= int(min_rating))
+        if max_rating := filters.get("max_rating"):
+            statement = statement.where(Review.rating <= int(max_rating))
+        if created_from := filters.get("created_from"):
+            statement = statement.where(Review.source_created_at >= created_from)
+        if created_to := filters.get("created_to"):
+            statement = statement.where(Review.source_created_at <= created_to)
+        if keyword := filters.get("keyword"):
+            escaped = str(keyword).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            pattern = f"%{escaped}%"
+            statement = statement.where(
+                or_(
+                    Review.content.ilike(pattern, escape="\\"),
+                    Review.content_zh.ilike(pattern, escape="\\"),
+                )
+            )
+        offset = max(int(filters.get("offset", 0)), 0)
+        limit = min(max(int(filters.get("limit", 20)), 1), 100)
+        rows = (await self._session().execute(statement.offset(offset).limit(limit))).all()
+        return [
+            {
+                "review_id": record.external_id,
+                "product_id": product_id,
+                "site": site,
+                "rating": record.rating,
+                "content": record.content,
+                "translated_content": record.content_zh,
+                "language": record.language,
+                "sentiment_hint": record.sentiment_hint,
+                "issue_type": record.issue_type,
+                "created_at": record.source_created_at,
+                "source_type": record.source_type,
+                "is_mock_data": record.is_mock_data,
+            }
+            for record, product_id, site in rows
+        ]
+
     async def send_message(self, payload: dict[str, Any]) -> dict[str, Any]:
         self._not_implemented("send_message")
 
@@ -223,6 +382,7 @@ class MockShopeeAdapter(PlatformAdapter):
         return {
             "product_id": record.external_id,
             "title": record.title,
+            "description": record.description,
             "site": record.site,
             "category_id": record.category_external_id,
             "category_name": record.category_name,

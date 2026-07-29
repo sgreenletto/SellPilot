@@ -98,6 +98,23 @@ export const TASK_STATUSES = [
 ] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
+export const TASK_ACTIONS = ["run", "resume", "retry", "rerun", "cancel"] as const;
+export type TaskAction = (typeof TASK_ACTIONS)[number];
+
+export const TASK_STEP_STATUSES = [
+  "pending",
+  "running",
+  "waiting_confirmation",
+  "succeeded",
+  "failed",
+  "skipped",
+  "cancelled",
+] as const;
+export type TaskStepStatus = (typeof TASK_STEP_STATUSES)[number];
+
+export const WORKFLOW_NODE_TYPES = ["action", "tool", "branch", "loop", "wait", "finish"] as const;
+export type WorkflowNodeType = (typeof WORKFLOW_NODE_TYPES)[number];
+
 export const CONFIRMATION_STATUSES = [
   "pending",
   "confirmed",
@@ -136,6 +153,7 @@ export const TASK_TYPES = [
   "knowledge_ingestion",
   "customer_service",
   "report_generation",
+  "replenishment",
 ] as const;
 export type TaskType = (typeof TASK_TYPES)[number];
 
@@ -192,6 +210,24 @@ export const ERROR_CODES = [
   "TOOL_NOT_EXPOSED",
   "TOOL_RETRY_EXHAUSTED",
   "WORKFLOW_FAILED",
+  "WORKFLOW_NOT_FOUND",
+  "WORKFLOW_DISABLED",
+  "WORKFLOW_ALREADY_REGISTERED",
+  "WORKFLOW_VERSION_CONFLICT",
+  "WORKFLOW_DEFINITION_INVALID",
+  "TASK_NOT_FOUND",
+  "TASK_NOT_RUNNABLE",
+  "TASK_ALREADY_RUNNING",
+  "TASK_NOT_RESUMABLE",
+  "TASK_CONFIRMATION_PENDING",
+  "TASK_CONFIRMATION_INVALID",
+  "TASK_RETRY_NOT_ALLOWED",
+  "TASK_ATTEMPT_EXHAUSTED",
+  "TASK_CANCEL_NOT_ALLOWED",
+  "TASK_STEP_NOT_FOUND",
+  "TASK_NODE_TIMEOUT",
+  "TASK_STATE_TOO_LARGE",
+  "TASK_EXECUTION_CONFLICT",
   "MOCK_PLATFORM_FAILED",
   "EXTERNAL_SERVICE_UNAVAILABLE",
   "PLATFORM_NOT_CONFIGURED",
@@ -297,6 +333,81 @@ export interface TaskSummary {
   message: string | null;
   error_code: string | null;
   created_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+export interface WorkflowMetadata {
+  name: string;
+  version: string;
+  description: string;
+  task_type: TaskType;
+  enabled: boolean;
+  resumable: boolean;
+  max_steps: number;
+  max_task_attempts: number;
+}
+
+export interface TaskDetail {
+  id: string;
+  task_type: string;
+  workflow_name: string;
+  workflow_version: string;
+  parent_task_id: string | null;
+  status: TaskStatus;
+  current_step: string | null;
+  current_node: string | null;
+  result: Record<string, unknown> | null;
+  error_code: string | null;
+  error_message: string | null;
+  retry_count: number;
+  task_attempt: number;
+  request_id: string;
+  created_by: string;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  updated_at: string;
+  completed_at: string | null;
+  waiting_confirmation: boolean;
+  waiting_reason: string | null;
+  safe_error_summary: string | null;
+  available_actions: TaskAction[];
+}
+
+export interface TaskStepDetail {
+  id: string;
+  task_id: string;
+  sequence: number;
+  node_name: string;
+  node_type: WorkflowNodeType;
+  status: TaskStepStatus;
+  attempt_count: number;
+  input_summary: Record<string, unknown> | null;
+  output_summary: Record<string, unknown> | null;
+  error_code: string | null;
+  error_message: string | null;
+  tool_call_id: string | null;
+  confirmation_id: string | null;
+  metadata: Record<string, unknown> | null;
+  started_at: string | null;
+  completed_at: string | null;
+}
+
+export interface TaskExecutionResult {
+  task_id: string;
+  workflow_name: string;
+  workflow_version: string;
+  status: TaskStatus;
+  current_node: string | null;
+  current_step_id: string | null;
+  confirmation_required: boolean;
+  confirmation_id: string | null;
+  result: Record<string, unknown> | null;
+  error_code: string | null;
+  error_message: string | null;
+  task_attempt: number;
+  request_id: string;
   started_at: string | null;
   completed_at: string | null;
 }

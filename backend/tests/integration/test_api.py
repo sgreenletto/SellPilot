@@ -54,10 +54,24 @@ async def test_commerce_read_api_is_authenticated_and_structured(client_bundle):
     assert all(product["site"] == "Singapore" for product in products)
     assert all(product["is_mock_data"] is True for product in products)
 
+    shop_products = await client.get(
+        "/api/v1/commerce/products?limit=100&shop_id=SHOP001", headers=headers
+    )
+    assert shop_products.status_code == 200
+    assert len(shop_products.json()["data"]) == 17
+    assert all(product["site"] == "Singapore" for product in shop_products.json()["data"])
+
     inventory = await client.get("/api/v1/commerce/inventory?limit=2", headers=headers)
     assert inventory.status_code == 200
     assert len(inventory.json()["data"]) == 2
     assert all(item["is_mock_data"] is True for item in inventory.json()["data"])
+
+    shop_orders = await client.get(
+        "/api/v1/commerce/orders?limit=100&shop_id=SHOP002", headers=headers
+    )
+    assert shop_orders.status_code == 200
+    assert shop_orders.json()["data"]
+    assert all(order["site"] == "Malaysia" for order in shop_orders.json()["data"])
 
     returns = await client.get("/api/v1/commerce/returns?limit=2", headers=headers)
     assert returns.status_code == 200
@@ -181,8 +195,11 @@ async def test_platform_status_reports_mock_boundary(client_bundle):
             "system.ping",
             "platform.contracts",
             "products.read",
+            "products.create_draft",
+            "products.update_draft",
             "orders.read",
             "logistics.read",
+            "reviews.read",
             "messages.read",
         ],
     }

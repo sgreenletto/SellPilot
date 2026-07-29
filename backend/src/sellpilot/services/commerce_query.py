@@ -25,6 +25,44 @@ class CommerceQueryService:
     async def get_product(self, product_id: str) -> dict[str, Any]:
         return await self.adapter.get_product(product_id)
 
+    async def list_skus(
+        self,
+        *,
+        product_id: str | None,
+        status: str | None,
+        seller_sku: str | None,
+        offset: int,
+        limit: int,
+    ) -> list[dict[str, Any]]:
+        statement = (
+            select(Sku, Product.external_id)
+            .join(Product, Sku.product_id == Product.id)
+            .order_by(Sku.seller_sku.asc(), Sku.external_id.asc())
+        )
+        if product_id:
+            statement = statement.where(Product.external_id == product_id)
+        if status:
+            statement = statement.where(Sku.status == status)
+        if seller_sku:
+            statement = statement.where(Sku.seller_sku == seller_sku)
+        rows = (await self.session.execute(statement.offset(offset).limit(limit))).all()
+        return [
+            {
+                "sku_id": sku.external_id,
+                "product_id": current_product_id,
+                "seller_sku": sku.seller_sku,
+                "variation_name": sku.variation_name,
+                "variation_value": sku.variation_value,
+                "price": sku.price,
+                "cost": sku.cost,
+                "weight": sku.weight,
+                "status": sku.status,
+                "updated_at": sku.source_updated_at,
+                "is_mock_data": sku.is_mock_data,
+            }
+            for sku, current_product_id in rows
+        ]
+
     async def list_orders(self, **filters: Any) -> list[dict[str, Any]]:
         return await self.adapter.list_orders(**filters)
 
@@ -34,11 +72,19 @@ class CommerceQueryService:
     async def get_logistics(self, order_id: str) -> dict[str, Any]:
         return await self.adapter.get_logistics(order_id)
 
+    async def list_reviews(self, **filters: Any) -> list[dict[str, Any]]:
+        return await self.adapter.list_reviews(**filters)
+
     async def list_messages(self, **filters: Any) -> list[dict[str, Any]]:
         return await self.adapter.list_messages(**filters)
 
     async def list_inventory(
-        self, *, status: str | None, offset: int, limit: int
+        self,
+        *,
+        status: str | None,
+        offset: int,
+        limit: int,
+        shop_id: str | None = None,
     ) -> list[dict[str, Any]]:
         statement = (
             select(InventoryRecord, Sku.external_id, Product.external_id)
@@ -48,6 +94,8 @@ class CommerceQueryService:
         )
         if status:
             statement = statement.where(InventoryRecord.stock_status == status)
+        if shop_id:
+            statement = statement.where(Product.source_shop_external_id == shop_id)
         rows = (await self.session.execute(statement.offset(offset).limit(limit))).all()
         return [
             {

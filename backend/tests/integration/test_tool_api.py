@@ -40,6 +40,7 @@ async def test_tool_routes_require_authentication(client_bundle):
         ("GET", "/api/v1/tools/system_health"),
         ("POST", "/api/v1/tools/system_health/execute"),
         ("GET", "/api/v1/tool-calls"),
+        ("GET", f"/api/v1/tool-calls/{uuid4()}"),
     ]:
         response = await client.request(method, path, json={"input": {}})
         assert response.status_code == 401
@@ -54,15 +55,29 @@ async def test_tool_metadata_and_not_found_are_safe(client_bundle):
     assert listing.status_code == 200
     tools = listing.json()["data"]
     assert [item["name"] for item in tools] == [
+        "analyze_inventory_replenishment",
+        "analyze_product_reviews",
         "calculate_product_profit",
+        "check_listing_compliance",
         "compare_products",
         "export_product_analysis_report",
+        "generate_localized_listing",
+        "generate_product_improvement_plan",
+        "get_order",
+        "get_order_logistics",
+        "get_product",
+        "get_product_reviews",
+        "list_inventory",
+        "list_low_stock",
+        "list_orders",
+        "list_product_skus",
+        "list_products",
         "score_product_opportunity",
         "search_market_products",
         "system_health",
     ]
-    assert tools[0]["risk_level"] == "read"
-    assert tools[0]["confirmation_required"] is False
+    assert all(item["risk_level"] == "read" for item in tools)
+    assert all(item["confirmation_required"] is False for item in tools)
     assert "handler" not in listing.text
     assert "module" not in listing.text
 

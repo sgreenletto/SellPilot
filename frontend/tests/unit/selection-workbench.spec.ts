@@ -13,7 +13,12 @@ const selectionApi = vi.hoisted(() => ({
   downloadSelectionExport: vi.fn(),
 }));
 
+const commerceApi = vi.hoisted(() => ({
+  listSelectionCandidates: vi.fn(),
+}));
+
 vi.mock("@/api/selection", () => selectionApi);
+vi.mock("@/api/commerce", () => commerceApi);
 
 const candidate = {
   product_id: "P001",
@@ -74,12 +79,12 @@ const secondResult = {
   total_score: "76.5000",
 };
 
-async function mountWorkbench() {
+async function mountWorkbench(path = "/market/selection") {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [{ path: "/market/selection", component: SelectionWorkbenchView }],
   });
-  await router.push("/market/selection");
+  await router.push(path);
   await router.isReady();
   return mount(SelectionWorkbenchView, { global: { plugins: [router] } });
 }
@@ -87,6 +92,7 @@ async function mountWorkbench() {
 describe("SelectionWorkbenchView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    commerceApi.listSelectionCandidates.mockResolvedValue([]);
     selectionApi.listSelectionCandidates.mockResolvedValue([candidate]);
     selectionApi.createSelectionAnalysis.mockResolvedValue({
       task_id: "task-1",
@@ -116,6 +122,138 @@ describe("SelectionWorkbenchView", () => {
         results: [result, secondResult],
       },
     });
+    selectionApi.downloadSelectionExport.mockReturnValue("selection-task-1.md");
+  });
+
+  it("loads the persisted candidate list and analyzes only matching products", async () => {
+    commerceApi.listSelectionCandidates.mockResolvedValue([
+      {
+        product_id: "P001",
+        title: candidate.title,
+        source_type: "simulated_experiment",
+        is_mock_data: true,
+        created_at: "2026-07-29T00:00:00Z",
+      },
+      {
+        product_id: "OTHER-SITE",
+        title: "Other site product",
+        source_type: "simulated_experiment",
+        is_mock_data: true,
+        created_at: "2026-07-29T00:00:00Z",
+      },
+    ]);
+
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("候选清单共 2 项，当前站点已选 1 项");
+    expect(wrapper.get('.candidate-card input[type="checkbox"]').element).toMatchObject({
+      checked: true,
+    });
+
+    const analyze = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析所选 1 项"));
+    await analyze?.trigger("click");
+    await flushPromises();
+
+    expect(selectionApi.createSelectionAnalysis).toHaveBeenCalledWith(
+      expect.objectContaining({ product_ids: ["P001"] }),
+    );
+  });
+
+  it("keeps all-candidate analysis when the persisted candidate list is empty", async () => {
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+
+    const analyze = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析全部候选"));
+    await analyze?.trigger("click");
+    await flushPromises();
+
+    expect(selectionApi.createSelectionAnalysis).toHaveBeenCalledWith(
+      expect.objectContaining({ product_ids: undefined }),
+    );
+  });
+
+  it("does not reselect a saved candidate after the operator clears it", async () => {
+    commerceApi.listSelectionCandidates.mockResolvedValue([
+      {
+        product_id: "P001",
+        title: candidate.title,
+        source_type: "simulated_experiment",
+        is_mock_data: true,
+        created_at: "2026-07-29T00:00:00Z",
+      },
+    ]);
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+
+    await wrapper.get('.candidate-card input[type="checkbox"]').setValue(false);
+    const refresh = wrapper.findAll("button").find((button) => button.text().includes("查询候选"));
+    await refresh?.trigger("click");
+    await flushPromises();
+
+    expect(wrapper.get('.candidate-card input[type="checkbox"]').element).toMatchObject({
+      checked: false,
+    });
+    expect(wrapper.text()).toContain("候选清单共 1 项，当前站点已选 0 项");
+  });
+
+  it("still loads analyzable products when the saved list is unavailable", async () => {
+    commerceApi.listSelectionCandidates.mockRejectedValue(new Error("saved list unavailable"));
+
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("持久化候选清单读取失败");
+    expect(wrapper.text()).toContain(candidate.title);
+    expect(selectionApi.listSelectionCandidates).toHaveBeenCalledOnce();
+  });
+
+  it("does not let the first saved product category hide other saved categories", async () => {
+    const crossCategoryCandidates = [
+      candidate,
+      {
+        ...candidate,
+        product_id: "P002",
+        title: "Travel Wallet",
+        category_id: "CAT-002",
+        category_name: "Travel",
+      },
+      {
+        ...candidate,
+        product_id: "P003",
+        title: "Microfiber Towel",
+        category_id: "CAT-003",
+        category_name: "Home",
+      },
+    ];
+    selectionApi.listSelectionCandidates.mockResolvedValue(crossCategoryCandidates);
+    commerceApi.listSelectionCandidates.mockResolvedValue(
+      crossCategoryCandidates.map((item) => ({
+        product_id: item.product_id,
+        title: item.title,
+        source_type: "simulated_experiment",
+        is_mock_data: true,
+        created_at: "2026-07-29T00:00:00Z",
+      })),
+    );
+
+    const wrapper = await mountWorkbench("/market/selection?site=id&category=CAT-001");
+    await flushPromises();
+
+    expect(selectionApi.listSelectionCandidates).toHaveBeenCalledWith(
+      expect.objectContaining({ site: "id", category_id: undefined }),
+    );
+    expect(wrapper.text()).toContain("候选清单共 3 项，当前站点已选 3 项");
+    expect(wrapper.findAll('.candidate-card input[type="checkbox"]')).toHaveLength(3);
+    expect(
+      wrapper
+        .findAll('.candidate-card input[type="checkbox"]')
+        .every((input) => (input.element as HTMLInputElement).checked),
+    ).toBe(true);
   });
 
   it("loads formal candidates and renders explainable results", async () => {
@@ -123,7 +261,7 @@ describe("SelectionWorkbenchView", () => {
     await flushPromises();
 
     expect(wrapper.text()).toContain("Mock Wireless Earbuds");
-    expect(wrapper.text()).toContain("模拟实验数据");
+    expect(wrapper.text()).toContain("Shopee 模拟实验数据");
 
     const analyze = wrapper
       .findAll("button")
@@ -132,9 +270,9 @@ describe("SelectionWorkbenchView", () => {
     await flushPromises();
 
     expect(selectionApi.createSelectionAnalysis).toHaveBeenCalledOnce();
-    expect(wrapper.text()).toContain("需求与利润表现良好");
+    expect(wrapper.text()).toContain("商品机会总分 82.1");
     expect(wrapper.text()).toContain("规则解释");
-    expect(wrapper.text()).toContain("logistics data missing");
+    expect(wrapper.find(".risk-list").exists()).toBe(false);
   });
 
   it("shows an explicit backend disconnected state", async () => {
@@ -151,6 +289,43 @@ describe("SelectionWorkbenchView", () => {
 
     expect(wrapper.get('[role="alert"]').text()).toContain("后端未连接");
     expect(wrapper.text()).toContain("没有可分析的候选商品");
+  });
+
+  it("distinguishes a request timeout from a disconnected backend", async () => {
+    selectionApi.listSelectionCandidates.mockRejectedValue(
+      new FrontendApiError({
+        code: "NETWORK_ERROR",
+        message: "请求超时",
+        status: 0,
+      }),
+    );
+
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+
+    expect(wrapper.get('[role="alert"]').text()).toContain("候选请求超时");
+    expect(wrapper.get('[role="alert"]').text()).not.toContain("后端未连接");
+  });
+
+  it("identifies a batch analysis timeout separately from candidate loading", async () => {
+    selectionApi.createSelectionAnalysis.mockRejectedValue(
+      new FrontendApiError({
+        code: "NETWORK_ERROR",
+        message: "请求超时",
+        status: 0,
+      }),
+    );
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+
+    const analyze = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析全部候选"));
+    await analyze?.trigger("click");
+    await flushPromises();
+
+    expect(wrapper.get('[role="alert"]').text()).toContain("选品分析超时");
+    expect(wrapper.get('[role="alert"]').text()).not.toContain("候选请求超时");
   });
 
   it("blocks analysis when the price range is invalid", async () => {
@@ -201,6 +376,89 @@ describe("SelectionWorkbenchView", () => {
     await exportButton?.trigger("click");
     await flushPromises();
     expect(selectionApi.downloadSelectionExport).toHaveBeenCalledOnce();
-    expect(wrapper.text()).toContain("selection-task-1.json");
+    expect(wrapper.text()).toContain("selection-task-1.md");
+  });
+
+  it("explains an analysis with no ranked products", async () => {
+    selectionApi.createSelectionAnalysis.mockResolvedValue({
+      task_id: "task-empty",
+      agent_task_id: "agent-empty",
+      status: "SUCCEEDED",
+      formula_version: "selection-v1.0.0",
+      generation_mode: "rule_template",
+      total_candidates: 1,
+      ranked_count: 0,
+      excluded_count: 1,
+      results: [],
+      excluded: [{ product_id: "P001", reason: "minimum_profit" }],
+      is_mock_data: true,
+    });
+
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+    const analyze = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析全部候选"));
+    await analyze?.trigger("click");
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("没有商品满足利润条件");
+    expect(wrapper.text()).toContain("1 个候选已被最低利润或利润率条件排除");
+  });
+
+  it("renders a schema-validated model explanation when available", async () => {
+    selectionApi.createSelectionAnalysis.mockResolvedValue({
+      task_id: "task-ai",
+      agent_task_id: "agent-ai",
+      status: "SUCCEEDED",
+      formula_version: "selection-v1.0.0",
+      generation_mode: "validated_generator",
+      total_candidates: 1,
+      ranked_count: 1,
+      excluded_count: 0,
+      results: [
+        {
+          ...result,
+          explanation: {
+            ...result.explanation,
+            summary: "该商品需求稳定，利润空间具有竞争力。",
+            generation_mode: "validated_generator",
+          },
+        },
+      ],
+      excluded: [],
+      is_mock_data: true,
+    });
+
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+    const analyze = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析全部候选"));
+    await analyze?.trigger("click");
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("校验生成解释");
+    expect(wrapper.text()).toContain("该商品需求稳定，利润空间具有竞争力。");
+  });
+
+  it("closes the product detail with Escape", async () => {
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+    const analyze = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析全部候选"));
+    await analyze?.trigger("click");
+    await flushPromises();
+
+    const detailsButton = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("查看详情"));
+    await detailsButton?.trigger("click");
+    expect(wrapper.find('[aria-label="选品详情"]').exists()).toBe(true);
+
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find('[aria-label="选品详情"]').exists()).toBe(false);
   });
 });

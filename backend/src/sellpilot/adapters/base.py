@@ -47,6 +47,9 @@ class PlatformAdapter(ABC):
     async def get_logistics(self, order_id: str) -> dict[str, Any]: ...
 
     @abstractmethod
+    async def list_reviews(self, **filters: Any) -> list[dict[str, Any]]: ...
+
+    @abstractmethod
     async def list_messages(self, **filters: Any) -> list[dict[str, Any]]: ...
 
     @abstractmethod

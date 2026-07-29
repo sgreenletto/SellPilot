@@ -1,6 +1,9 @@
 # API
 
+- `assistant-workflow-integration.md`: Assistant plan, Task create/run, idempotency,
+  and recent-task API.
 - `tool-runtime.md`: authenticated tool metadata, execution and ToolCall query API.
+- `task-runtime.md`: authenticated workflow metadata, task lifecycle and step history API.
 
 本目录用于后续维护 API 约定、接口清单、请求与响应 Schema、错误模型和版本策略。
 
@@ -10,3 +13,9 @@ Mock 商业数据和智能选品分析。
 成员二数据库驱动的 Mock 商品、订单、物流和消息只读接口见 `commerce-read-api.md`。
 
 成员三智能选品候选、分析、详情、对比和导出接口见 `selection-api.md`。
+
+评论查询、分阶段分析、结果和证据分页接口见 `review-analysis-api.md`。
+
+产品改良报告、建议编辑、导出和草稿待确认接口见 `product-improvement-api.md`。
+
+结构化商品内容生成、草稿确认和版本恢复接口见 `content-generation-api.md`。

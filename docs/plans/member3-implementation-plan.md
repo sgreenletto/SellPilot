@@ -6,7 +6,10 @@
 >
 > **目标里程碑**：以团队集成计划为准，建议对应 `v0.3.0` 业务能力里程碑
 >
-> **当前基线**：`v0.1.0 Foundation Milestone`，公共领域契约、成员三分析持久化基础及智能选品确定性计算内核已建立，成员三业务流程尚未实现
+> **当前实现状态（2026-07-29）**：成员三负责的智能选品、评论分析、产品改良、
+> 商品内容生成与翻译、Prompt/模型管理、AI 评估、百炼接入及对应前后端链路已实现。
+> 固定 AI 评估集当前零失败；最终合入 `develop`、PR 与 Tag 仍须按团队 Git 流程由本人
+> 和组长执行。仓库外软著材料不属于本次代码完成范围。
 >
 > **适用边界**：单用户、单模拟店铺、Mock Shopee；不接入或暗示已接入真实 Shopee
 >
@@ -341,7 +344,7 @@ docs: add member three implementation plan
 - 结果表保存算法/Prompt/模型版本，保证结果可复现。
 - 报告和证据引用保存稳定 ID，不保存无法追踪的纯文本快照。
 - Repository 只负责查询和持久化。
-- 补充 SQLite 隔离测试和 PostgreSQL 兼容性说明。
+- 补充 PostgreSQL 隔离测试与迁移验证说明。
 
 ### 已覆盖测试
 
@@ -624,6 +627,8 @@ docs: document review taxonomy and evidence rules
 
 ## Step 6：评论分析 Service、API、Tool 与工作流
 
+> **实现状态**：已在 `feature/review-analysis-service` 完成应用层、分阶段 API、Tool、AgentTaskStep 工作流、幂等和批处理，待审核合并；评论分析前端仍按 Step 7 实施。
+
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 将评论流水线接入持久化、API、工具和 Agent 任务 |
@@ -671,6 +676,9 @@ docs: document review analysis api
 
 ## Step 7：评论分析前端
 
+> **实现状态**：已在 `feature/review-analysis-workbench` 完成评论筛选、分析概览、
+> 趋势、证据分页与定位、任务错误状态及 Step 8 入口，待审核合并。
+
 | 项目 | 内容 |
 | --- | --- |
 | 目标 | 完成负责人表第 37—40 项，并为第 41—43 项提供入口 |
@@ -710,6 +718,8 @@ test: cover review analysis view
 ---
 
 ## Step 8：产品改良建议与报告服务
+
+> **实现状态**：已与 Step 9 合并实现确定性改良报告、证据追踪、JSON 导出和草稿确认服务。
 
 | 项目 | 内容 |
 | --- | --- |
@@ -771,6 +781,8 @@ docs: add product improvement report specification
 ---
 
 ## Step 9：产品改良报告前端与草稿确认入口
+
+> **实现状态**：已与 Step 8 合并实现报告查看、编辑、采纳/忽略、导出和确认后创建 Mock 内容草稿。
 
 | 项目 | 内容 |
 | --- | --- |

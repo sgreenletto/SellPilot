@@ -25,10 +25,10 @@ uv run pytest --cov=sellpilot --cov-report=term-missing
 
 ## 数据库策略
 
-常规测试使用逐测试隔离的 `sqlite+aiosqlite` 数据库。Alembic 集成测试在临时 SQLite 文件上依次执行：
+常规测试使用独立的 PostgreSQL `sellpilot_test` 数据库。Alembic 集成测试在该隔离数据库中依次执行：
 
 1. `upgrade head`
 2. `downgrade base`
 3. `upgrade head`
 
-SQLite 只用于测试速度与隔离性；PostgreSQL 是目标数据库。PostgreSQL 专属行为和部署兼容性必须在后续受控环境验证。
+测试夹具在用例之间重建 PostgreSQL 表结构，不接触 `sellpilot` 开发数据。生产规模下的部署兼容性仍须在受控环境验证。

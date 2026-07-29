@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import json
 from datetime import UTC, datetime
@@ -95,15 +96,23 @@ class SelectionService:
         ]
 
     async def analyze(
-        self, request: SelectionAnalysisRequest, created_by: UUID
+        self,
+        request: SelectionAnalysisRequest,
+        created_by: UUID,
+        *,
+        agent_task_id: UUID | None = None,
+        manage_agent_task: bool = True,
     ) -> SelectionAnalysisResponse:
         formula_config = SELECTION_CONFIGS[request.risk_preference]
-        agent_task = await self.tasks.create_internal_task(
-            task_type=TaskType.SELECTION,
-            user_input=request.model_dump_json(),
-            created_by=created_by,
-        )
-        await self.tasks.start(agent_task.id)
+        if agent_task_id is None:
+            agent_task = await self.tasks.create_internal_task(
+                task_type=TaskType.SELECTION,
+                user_input=request.model_dump_json(),
+                created_by=created_by,
+            )
+            await self.tasks.start(agent_task.id)
+        else:
+            agent_task = await self.tasks.get(agent_task_id, user_id=created_by)
         selection_task = await self.selection.add_task(
             ProductSelectionTask(
                 created_by=created_by,
@@ -125,11 +134,16 @@ class SelectionService:
             selection_task.status = AnalysisStatus.FAILED
             selection_task.error_message = "No candidates matched the criteria"
             selection_task.finished_at = datetime.now(UTC)
-            await self.tasks.fail(
-                agent_task.id, "SELECTION_NO_CANDIDATES", selection_task.error_message
-            )
+            if manage_agent_task:
+                await self.tasks.fail(
+                    agent_task.id, "SELECTION_NO_CANDIDATES", selection_task.error_message
+                )
             raise ResourceNotFoundError("No selection candidates matched the criteria")
-        candidates = [self._domain_candidate(product, trend, request) for product, trend in rows]
+        signals = await self.market.operational_signals([product.id for product, _ in rows])
+        candidates = [
+            self._domain_candidate(product, trend, request, signals.get(product.id))
+            for product, trend in rows
+        ]
         batch = score_candidates(
             candidates,
             SelectionCriteria(
@@ -142,12 +156,19 @@ class SelectionService:
         persisted: list[ProductSelectionResult] = []
         responses: list[SelectionResultResponse] = []
         generation_modes: set[str] = set()
-        for scored in batch.ranked:
+
+        explanation_limit = asyncio.Semaphore(4)
+
+        async def explain(scored):
             payload = scored.model_dump(mode="json")
-            workflow_result = await self.explanation_workflow.ainvoke(
-                {"score": payload, "explanation": None}
-            )
-            explanation = SelectionExplanation.model_validate(workflow_result["explanation"])
+            async with explanation_limit:
+                workflow_result = await self.explanation_workflow.ainvoke(
+                    {"score": payload, "explanation": None}
+                )
+            return payload, SelectionExplanation.model_validate(workflow_result["explanation"])
+
+        explained = await asyncio.gather(*(explain(scored) for scored in batch.ranked))
+        for scored, (payload, explanation) in zip(batch.ranked, explained, strict=True):
             generation_modes.add(explanation.generation_mode)
             model = ProductSelectionResult(
                 task_id=selection_task.id,
@@ -176,14 +197,15 @@ class SelectionService:
             responses.append(self._result_response(model))
         selection_task.status = AnalysisStatus.SUCCEEDED
         selection_task.finished_at = datetime.now(UTC)
-        await self.tasks.complete(
-            agent_task.id,
-            {
-                "selection_task_id": str(selection_task.id),
-                "ranked_count": len(responses),
-                "excluded_count": len(batch.excluded),
-            },
-        )
+        if manage_agent_task:
+            await self.tasks.complete(
+                agent_task.id,
+                {
+                    "selection_task_id": str(selection_task.id),
+                    "ranked_count": len(responses),
+                    "excluded_count": len(batch.excluded),
+                },
+            )
         return SelectionAnalysisResponse(
             task_id=selection_task.id,
             agent_task_id=agent_task.id,
@@ -266,7 +288,7 @@ class SelectionService:
         )
 
     @staticmethod
-    def _domain_candidate(product, trend, request) -> SelectionCandidate:
+    def _domain_candidate(product, trend, request, signals=None) -> SelectionCandidate:
         return SelectionCandidate(
             product_id=product.external_id,
             site=SITE_CODES[product.site],
@@ -292,6 +314,9 @@ class SelectionService:
             competition_index=trend.competition_index if trend else None,
             rating=product.rating,
             review_count=product.review_count,
+            logistics_risk_rate=signals.logistics_risk_rate if signals else None,
+            after_sales_rate=signals.after_sales_rate if signals else None,
+            factory_fit_score=signals.factory_fit_score if signals else None,
         )
 
     @staticmethod

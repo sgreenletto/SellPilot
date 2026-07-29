@@ -1,10 +1,38 @@
 import { mount } from "@vue/test-utils";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as XLSX from "xlsx";
 
 import MarketDataView from "@/views/commerce/MarketDataView.vue";
 
+const selectedIds = new Set<string>();
+vi.mock("@/api/commerce", () => ({
+  listSelectionCandidates: vi.fn(async () =>
+    [...selectedIds].map((product_id) => ({
+      product_id,
+      title: product_id,
+      source_type: "simulated_experiment",
+      is_mock_data: true,
+      created_at: "2026-07-28T00:00:00Z",
+    })),
+  ),
+  requestSelectionCandidate: vi.fn(async (productId: string, selected: boolean) => {
+    if (selected) selectedIds.add(productId);
+    else selectedIds.delete(productId);
+    return { id: "CONFIRM-1", status: "pending" };
+  }),
+  requestProductImport: vi.fn(async () => ({ id: "IMPORT-1", status: "pending" })),
+  confirmCommerceOperation: vi.fn(async () => ({ id: "CONFIRM-1", status: "succeeded" })),
+}));
+
 describe("市场数据页面", () => {
+  beforeEach(() => {
+    selectedIds.clear();
+    vi.stubGlobal(
+      "confirm",
+      vi.fn(() => true),
+    );
+  });
+
   it("对项目商品执行筛选和分页", async () => {
     const wrapper = mount(MarketDataView);
     await wrapper.vm.$nextTick();
@@ -29,8 +57,8 @@ describe("市场数据页面", () => {
   it("导入 CSV 后展示指标、来源和候选操作", async () => {
     const wrapper = mount(MarketDataView);
     const csv = [
-      "title,source_type,price,rating,review_count,sales_count,updated_at,is_mock_data",
-      "USB-C Hub,simulated_experiment,19.9,4.8,20,88,2026-07-01,true",
+      "title,price,rating,review_count,sales_count,updated_at,is_mock_data",
+      "USB-C Hub,19.9,4.8,20,88,2026-07-01,true",
     ].join("\n");
     const file = new File([csv], "products.csv", { type: "text/csv" });
 
@@ -42,10 +70,55 @@ describe("市场数据页面", () => {
 
     expect(wrapper.text()).toContain("USB-C Hub");
     expect(wrapper.text()).toContain("simulated_experiment");
-    expect(wrapper.text()).toContain("已在本地解析 1 条记录");
+    expect(wrapper.text()).toContain("products.csv（1 条）");
+    expect(wrapper.text()).toContain("确认过的商品批次已写入后端");
+
+    await wrapper.get(".actions .sp-button--ghost").trigger("click");
+    await wrapper.vm.$nextTick();
+    expect(wrapper.get(".detail-drawer").text()).toContain("USB-C Hub");
+    expect(wrapper.get(".detail-drawer").text()).toContain("商品名称（title）");
 
     await wrapper.get(".actions .sp-button--secondary").trigger("click");
-    expect(wrapper.text()).toContain("移出候选");
+    await vi.waitFor(() => expect(wrapper.text()).toContain("移出候选"));
+    await wrapper.get(".candidate-metric").trigger("click");
+    expect(wrapper.get('a[href^="/market/selection"]').text()).toContain("打开智能选品");
+    wrapper.unmount();
+  });
+
+  it("同时保留商品与评论并在商品详情中展示关联评论", async () => {
+    const wrapper = mount(MarketDataView);
+    const products = [
+      "product_id,title,price,rating,review_count,is_mock_data",
+      "PROD1001,USB-C Hub,19.9,4.8,1,true",
+    ].join("\n");
+    const reviews = [
+      "review_id,product_id,rating,content,content_zh,language,created_at,is_mock_data",
+      "REV1001,PROD1001,5,Very useful,非常实用,English,2026-07-01T10:00:00+08:00,true",
+    ].join("\n");
+    const input = wrapper.get('input[type="file"]');
+
+    Object.defineProperty(input.element, "files", {
+      configurable: true,
+      value: [
+        new File([products], "products.csv", { type: "text/csv" }),
+        new File([reviews], "reviews.csv", { type: "text/csv" }),
+      ],
+    });
+    await input.trigger("change");
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
+
+    expect(wrapper.text()).toContain("1关联评论");
+    expect(wrapper.text()).toContain("USB-C Hub");
+    expect(wrapper.findAll("tbody tr")).toHaveLength(1);
+
+    await wrapper.get(".actions .sp-button--ghost").trigger("click");
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.get(".detail-drawer").text()).toContain("关联评论（1）");
+    expect(wrapper.get(".detail-drawer").text()).toContain("商品 ID（product_id）");
+    expect(wrapper.get(".detail-drawer").text()).toContain("Very useful");
+    expect(wrapper.get(".detail-drawer").text()).toContain("中文：非常实用");
+    wrapper.unmount();
   });
 
   it("接受 Excel 工作簿", async () => {

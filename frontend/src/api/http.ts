@@ -1,7 +1,7 @@
 import type { ApiResponse, FrontendApiErrorShape } from "@/api/types";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
-const DEFAULT_TIMEOUT_MS = 8_000;
+const DEFAULT_TIMEOUT_MS = 30_000;
 
 export class FrontendApiError extends Error implements FrontendApiErrorShape {
   readonly code: string;
@@ -29,14 +29,14 @@ async function parseBody(response: Response): Promise<unknown> {
 
 function getAuthHeaders(): Record<string, string> {
   try {
-    const token = localStorage.getItem("sellpilot_token")
+    const token = localStorage.getItem("sellpilot_token");
     if (token) {
-      return { Authorization: `Bearer ${token}` }
+      return { Authorization: `Bearer ${token}` };
     }
   } catch {
     // 无痕模式等静默忽略
   }
-  return {}
+  return {};
 }
 
 export async function request<T>(
@@ -61,6 +61,21 @@ export async function request<T>(
     const body = (await parseBody(response)) as Partial<ApiResponse<T>> | null;
 
     if (!response.ok || body?.code !== 0) {
+      // 认证失效 → 清除旧 token 并跳转登录
+      if (response.status === 401 || body?.code === "UNAUTHENTICATED") {
+        try {
+          localStorage.removeItem("sellpilot_token");
+          localStorage.removeItem("sellpilot_user");
+        } catch {
+          /* noop */
+        }
+        window.location.href = "/login";
+        throw new FrontendApiError({
+          code: "UNAUTHENTICATED",
+          message: "登录已过期，请重新登录",
+          status: 401,
+        });
+      }
       throw new FrontendApiError({
         code: typeof body?.code === "string" ? body.code : "HTTP_ERROR",
         message: body?.message || `请求失败（${response.status}）`,

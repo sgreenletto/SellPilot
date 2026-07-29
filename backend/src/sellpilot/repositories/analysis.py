@@ -87,6 +87,25 @@ class ReviewAnalysisRepository:
     async def get_result(self, result_id: UUID) -> ReviewAnalysisResult | None:
         return await self.session.get(ReviewAnalysisResult, result_id)
 
+    async def find_by_idempotency_key(
+        self,
+        *,
+        created_by: UUID,
+        source_product_id: str,
+        idempotency_key: str,
+    ) -> ReviewAnalysisResult | None:
+        return await self.session.scalar(
+            select(ReviewAnalysisResult)
+            .where(
+                ReviewAnalysisResult.created_by == created_by,
+                ReviewAnalysisResult.source_product_id == source_product_id,
+                ReviewAnalysisResult.input_conditions["idempotency_key"].as_string()
+                == idempotency_key,
+            )
+            .order_by(ReviewAnalysisResult.created_at.desc())
+            .limit(1)
+        )
+
     async def list_results(
         self,
         page: int,
@@ -129,10 +148,16 @@ class ReviewAnalysisRepository:
         page_size: int,
         *,
         evidence_type: str | None = None,
+        label: str | None = None,
+        sentiment: str | None = None,
     ) -> tuple[list[ReviewAnalysisEvidence], int]:
         predicates = [ReviewAnalysisEvidence.result_id == result_id]
         if evidence_type is not None:
             predicates.append(ReviewAnalysisEvidence.evidence_type == evidence_type)
+        if label is not None:
+            predicates.append(ReviewAnalysisEvidence.label == label)
+        if sentiment is not None:
+            predicates.append(ReviewAnalysisEvidence.sentiment == sentiment)
         total = await self.session.scalar(
             select(func.count()).select_from(ReviewAnalysisEvidence).where(*predicates)
         )
@@ -163,6 +188,9 @@ class ImprovementRepository:
 
     async def get_report(self, report_id: UUID) -> ProductImprovementReport | None:
         return await self.session.get(ProductImprovementReport, report_id)
+
+    async def get_suggestion(self, suggestion_id: UUID) -> ProductImprovementSuggestion | None:
+        return await self.session.get(ProductImprovementSuggestion, suggestion_id)
 
     async def list_reports(
         self,

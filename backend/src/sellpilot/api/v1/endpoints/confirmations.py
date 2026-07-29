@@ -7,11 +7,16 @@ from sellpilot.api.dependencies import (
     SessionDependency,
     SettingsDependency,
 )
+from sellpilot.core.enums import ConfirmationStatus
 from sellpilot.core.middleware import get_request_id
 from sellpilot.core.response import ApiResponse, PageResult, success_response
 from sellpilot.schemas.confirmation import ConfirmationTaskResponse
+from sellpilot.services.ai_management import AIManagementService
 from sellpilot.services.commerce_operations import CommerceOperationService
 from sellpilot.services.confirmation import ConfirmationService
+from sellpilot.services.content_generation import ContentGenerationService
+from sellpilot.services.product_improvement import ProductImprovementService
+from sellpilot.services.product_translation import ProductTranslationService
 from sellpilot.tools.runtime import build_confirmation_service
 
 router = APIRouter()
@@ -24,11 +29,20 @@ async def list_confirmations(
     current_user: CurrentUserDependency,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
+    task_id: UUID | None = None,
+    status: ConfirmationStatus | None = None,
 ) -> ApiResponse[PageResult[ConfirmationTaskResponse]]:
-    confirmations, total = await ConfirmationService(session).list(page, page_size)
+    confirmations, total = await ConfirmationService(session).list(
+        page,
+        page_size,
+        user_id=current_user.id,
+        task_id=task_id,
+        status=status,
+    )
     result = PageResult[ConfirmationTaskResponse](
         items=[
-            ConfirmationTaskResponse.model_validate(confirmation) for confirmation in confirmations
+            ConfirmationTaskResponse.from_confirmation(confirmation, max_bytes=16_384)
+            for confirmation in confirmations
         ],
         total=total,
         page=page,
@@ -44,9 +58,12 @@ async def get_confirmation(
     session: SessionDependency,
     current_user: CurrentUserDependency,
 ) -> ApiResponse[ConfirmationTaskResponse]:
-    confirmation = await ConfirmationService(session).get(confirmation_id)
+    confirmation = await ConfirmationService(session).get(
+        confirmation_id,
+        user_id=current_user.id,
+    )
     return success_response(
-        ConfirmationTaskResponse.model_validate(confirmation),
+        ConfirmationTaskResponse.from_confirmation(confirmation, max_bytes=16_384),
         get_request_id(request),
     )
 
@@ -62,15 +79,23 @@ async def confirm_confirmation(
     settings: SettingsDependency,
     current_user: CurrentUserDependency,
 ) -> ApiResponse[ConfirmationTaskResponse]:
+    await ConfirmationService(session).get(confirmation_id, user_id=current_user.id)
     confirmations = build_confirmation_service(
         request.app.state.tool_registry,
         session,
         settings,
     )
     CommerceOperationService(session, settings).register_executors(confirmations)
+    AIManagementService(session, settings).register_executors(confirmations)
+    ContentGenerationService(session, settings).register_executors(confirmations)
+    ProductImprovementService(session).register_executors(confirmations)
+    ProductTranslationService(session, settings).register_executor(confirmations)
     confirmation = await confirmations.confirm(confirmation_id, current_user.id)
     return success_response(
-        ConfirmationTaskResponse.model_validate(confirmation),
+        ConfirmationTaskResponse.from_confirmation(
+            confirmation,
+            max_bytes=settings.tool_audit_payload_max_bytes,
+        ),
         get_request_id(request),
     )
 
@@ -85,8 +110,10 @@ async def cancel_confirmation(
     session: SessionDependency,
     current_user: CurrentUserDependency,
 ) -> ApiResponse[ConfirmationTaskResponse]:
-    confirmation = await ConfirmationService(session).cancel(confirmation_id)
+    service = ConfirmationService(session)
+    await service.get(confirmation_id, user_id=current_user.id)
+    confirmation = await service.cancel(confirmation_id, user_id=current_user.id)
     return success_response(
-        ConfirmationTaskResponse.model_validate(confirmation),
+        ConfirmationTaskResponse.from_confirmation(confirmation, max_bytes=16_384),
         get_request_id(request),
     )

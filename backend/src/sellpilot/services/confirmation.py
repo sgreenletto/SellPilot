@@ -11,6 +11,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from sellpilot.core.enums import (
     ConfirmationStatus,
+    OperationStatus,
+    TaskStatus,
+    TaskStepStatus,
+    ToolCallerType,
     ToolRiskLevel,
 )
 from sellpilot.core.exceptions import (
@@ -21,9 +25,17 @@ from sellpilot.core.exceptions import (
     ToolIdempotencyConflictError,
 )
 from sellpilot.core.logging import redact_sensitive
-from sellpilot.core.transitions import validate_confirmation_transition
+from sellpilot.core.transitions import (
+    validate_confirmation_transition,
+    validate_task_step_transition,
+    validate_task_transition,
+)
 from sellpilot.db.models.confirmation_task import ConfirmationTask
+from sellpilot.db.models.operation_log import OperationLog
 from sellpilot.repositories.confirmation import ConfirmationRepository
+from sellpilot.repositories.operation_log import OperationLogRepository
+from sellpilot.repositories.task import TaskRepository
+from sellpilot.tools.sanitization import audit_summary
 
 ConfirmationExecutor = Callable[[ConfirmationTask], Awaitable[dict[str, Any]]]
 logger = logging.getLogger(__name__)
@@ -32,6 +44,8 @@ logger = logging.getLogger(__name__)
 class ConfirmationService:
     def __init__(self, session: AsyncSession) -> None:
         self.confirmations = ConfirmationRepository(session)
+        self.tasks = TaskRepository(session)
+        self.operation_logs = OperationLogRepository(session)
         self._executors: dict[str, ConfirmationExecutor] = {}
 
     def register_executor(self, operation_type: str, executor: ConfirmationExecutor) -> None:
@@ -45,6 +59,7 @@ class ConfirmationService:
         self,
         *,
         agent_task_id: UUID,
+        task_step_id: UUID | None = None,
         operation_type: str,
         target_type: str,
         target_id: str | None,
@@ -92,6 +107,7 @@ class ConfirmationService:
             return existing
         confirmation = ConfirmationTask(
             agent_task_id=agent_task_id,
+            task_step_id=task_step_id,
             operation_type=operation_type,
             target_type=target_type,
             target_id=target_id,
@@ -182,29 +198,81 @@ class ConfirmationService:
                 "Idempotency key is already associated with another confirmation"
             )
 
-    async def get(self, confirmation_id: UUID) -> ConfirmationTask:
-        confirmation = await self.confirmations.get(confirmation_id)
+    async def get(
+        self,
+        confirmation_id: UUID,
+        *,
+        user_id: UUID | None = None,
+    ) -> ConfirmationTask:
+        confirmation = (
+            await self.confirmations.get_owned(confirmation_id, user_id)
+            if user_id is not None
+            else await self.confirmations.get(confirmation_id)
+        )
         if confirmation is None:
             raise ResourceNotFoundError("Confirmation task not found")
         return confirmation
 
-    async def list(self, page: int, page_size: int) -> tuple[list[ConfirmationTask], int]:
-        return await self.confirmations.list(page, page_size)
+    async def list(
+        self,
+        page: int,
+        page_size: int,
+        *,
+        user_id: UUID,
+        task_id: UUID | None = None,
+        status: ConfirmationStatus | None = None,
+    ) -> tuple[list[ConfirmationTask], int]:
+        if task_id is not None and await self.tasks.get_owned(task_id, user_id) is None:
+            raise ResourceNotFoundError("Agent task not found")
+        return await self.confirmations.list_owned(
+            page,
+            page_size,
+            user_id=user_id,
+            task_id=task_id,
+            status=status,
+        )
 
     def _transition(self, confirmation: ConfirmationTask, target: ConfirmationStatus) -> None:
         current = ConfirmationStatus(confirmation.status)
         validate_confirmation_transition(current, target)
         confirmation.status = target
 
-    async def cancel(self, confirmation_id: UUID) -> ConfirmationTask:
-        confirmation = await self.get(confirmation_id)
-        self._transition(confirmation, ConfirmationStatus.CANCELED)
+    async def cancel(
+        self,
+        confirmation_id: UUID,
+        *,
+        user_id: UUID | None = None,
+    ) -> ConfirmationTask:
+        confirmation = await self.get(confirmation_id, user_id=user_id)
+        current = ConfirmationStatus(confirmation.status)
+        if current is ConfirmationStatus.CANCELED:
+            if user_id is not None:
+                return confirmation
+            self._transition(confirmation, ConfirmationStatus.CANCELED)
+        if current is not ConfirmationStatus.PENDING:
+            raise StateConflictError("Confirmation cannot be cancelled in its current state")
+        if user_id is not None:
+            confirmation = await self.confirmations.cancel_owned(
+                confirmation_id,
+                user_id=user_id,
+            )
+            if confirmation is None:
+                refreshed = await self.get(confirmation_id, user_id=user_id)
+                if ConfirmationStatus(refreshed.status) is ConfirmationStatus.CANCELED:
+                    return refreshed
+                raise StateConflictError("Confirmation could not be cancelled")
+        else:
+            self._transition(confirmation, ConfirmationStatus.CANCELED)
+        await self._sync_task_terminal(
+            confirmation,
+            target=TaskStatus.CANCELLED,
+            actor_id=user_id or confirmation.created_by,
+            action="confirmation_cancelled",
+        )
         return confirmation
 
     async def confirm(self, confirmation_id: UUID, confirmed_by: UUID) -> ConfirmationTask:
-        confirmation = await self.confirmations.get(confirmation_id)
-        if confirmation is None:
-            raise ResourceNotFoundError("Confirmation task not found")
+        confirmation = await self.get(confirmation_id, user_id=confirmed_by)
         current = ConfirmationStatus(confirmation.status)
         if current in {
             ConfirmationStatus.EXECUTING,
@@ -236,7 +304,7 @@ class ConfirmationService:
             execution_started_at=now,
         )
         if confirmation is None:
-            confirmation = await self.get(confirmation_id)
+            confirmation = await self.get(confirmation_id, user_id=confirmed_by)
             await self.confirmations.session.refresh(confirmation)
             current = ConfirmationStatus(confirmation.status)
             if current in {
@@ -263,4 +331,81 @@ class ConfirmationService:
             confirmation.error_message = "Confirmation execution failed"
             confirmation.executed_at = datetime.now(UTC)
             self._transition(confirmation, ConfirmationStatus.FAILED)
+            await self._sync_task_terminal(
+                confirmation,
+                target=TaskStatus.FAILED,
+                actor_id=confirmed_by,
+                action="confirmation_failed",
+                error_code="CONFIRMATION_EXECUTION_FAILED",
+                error_message="Confirmation execution failed",
+            )
         return confirmation
+
+    async def _sync_task_terminal(
+        self,
+        confirmation: ConfirmationTask,
+        *,
+        target: TaskStatus,
+        actor_id: UUID,
+        action: str,
+        error_code: str | None = None,
+        error_message: str | None = None,
+    ) -> None:
+        task = await self.tasks.get(confirmation.agent_task_id)
+        if task is None or TaskStatus(task.status) is not TaskStatus.WAITING_CONFIRMATION:
+            return
+        validate_task_transition(TaskStatus(task.status), target)
+        now = datetime.now(UTC)
+        task.status = target
+        task.finished_at = now
+        task.execution_token = None
+        task.runner_id = None
+        task.lease_expires_at = None
+        if target is TaskStatus.FAILED:
+            task.error_code = error_code
+            task.error_message = error_message
+
+        if confirmation.task_step_id is not None:
+            step = await self.tasks.get_step(confirmation.task_step_id)
+            if (
+                step is not None
+                and step.task_id == task.id
+                and TaskStepStatus(step.status) is TaskStepStatus.WAITING_CONFIRMATION
+            ):
+                step_target = (
+                    TaskStepStatus.CANCELLED
+                    if target is TaskStatus.CANCELLED
+                    else TaskStepStatus.FAILED
+                )
+                validate_task_step_transition(TaskStepStatus(step.status), step_target)
+                step.status = step_target
+                step.error_code = error_code
+                step.error_message = error_message
+                step.finished_at = now
+
+        await self.operation_logs.add(
+            OperationLog(
+                actor_id=actor_id,
+                action=action,
+                target_type="agent_task",
+                target_id=str(task.id),
+                request_id=confirmation.request_id or task.request_id,
+                agent_task_id=task.id,
+                task_step_id=confirmation.task_step_id,
+                confirmation_task_id=confirmation.id,
+                caller_type=ToolCallerType.SYSTEM,
+                details=audit_summary(
+                    {
+                        "confirmation_status": str(confirmation.status),
+                        "task_status": target.value,
+                        "error_code": error_code,
+                    },
+                    max_bytes=16_384,
+                ),
+                status=(
+                    OperationStatus.FAILED
+                    if target is TaskStatus.FAILED
+                    else OperationStatus.SUCCEEDED
+                ),
+            )
+        )

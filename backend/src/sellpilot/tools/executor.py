@@ -22,6 +22,7 @@ from sellpilot.core.exceptions import (
     AppException,
     ErrorCode,
     ParameterError,
+    ResourceNotFoundError,
     ToolConfirmationInvalidError,
     ToolFailureError,
 )
@@ -30,6 +31,7 @@ from sellpilot.db.models.confirmation_task import ConfirmationTask
 from sellpilot.db.models.operation_log import OperationLog
 from sellpilot.db.models.tool_call import ToolCall
 from sellpilot.repositories.operation_log import OperationLogRepository
+from sellpilot.repositories.task import TaskRepository
 from sellpilot.repositories.tool_call import ToolCallRepository
 from sellpilot.services.confirmation import ConfirmationService
 from sellpilot.tools.contracts import (
@@ -64,6 +66,7 @@ class ToolExecutor:
         self.settings = settings
         self.tool_calls = ToolCallRepository(session)
         self.operation_logs = OperationLogRepository(session)
+        self.tasks = TaskRepository(session)
         self._sleep = sleep
 
     async def execute(
@@ -83,7 +86,7 @@ class ToolExecutor:
             if context.caller_type is ToolCallerType.MCP
             else self.registry.get(name)
         )
-        self._validate_context(definition, context)
+        context = await self._validate_context(definition, context)
         started_at = datetime.now(UTC)
         started = perf_counter()
         input_digest = self._input_digest(
@@ -233,6 +236,7 @@ class ToolExecutor:
             request_id=confirmation.request_id,
             user_id=confirmation.created_by,
             task_id=confirmation.agent_task_id,
+            task_step_id=tool_call.task_step_id,
             confirmation_id=confirmation.id,
             idempotency_key=confirmation.idempotency_key,
             caller_type=ToolCallerType(tool_call.caller_type),
@@ -269,20 +273,44 @@ class ToolExecutor:
             raise ToolFailureError(result.error_message or "Confirmed tool execution failed")
         return result.model_dump(mode="json")
 
-    @staticmethod
-    def _validate_context(definition: ToolDefinition, context: ToolExecutionContext) -> None:
+    async def _validate_context(
+        self,
+        definition: ToolDefinition,
+        context: ToolExecutionContext,
+    ) -> ToolExecutionContext:
         if context.confirmation_id is not None:
             raise ParameterError(
                 "confirmation_id is assigned only by the trusted confirmation executor"
             )
         if context.caller_type in {ToolCallerType.AGENT, ToolCallerType.WORKFLOW}:
-            if context.task_id is None:
-                raise ParameterError("Agent and workflow tool calls require task_id")
-        if definition.confirmation_required:
-            if context.user_id is None or context.task_id is None:
+            if context.task_id is None and context.task_step_id is None:
+                raise ParameterError(
+                    "Agent and workflow tool calls require task_id or task_step_id"
+                )
+        if context.task_id is None and context.task_step_id is None:
+            if definition.confirmation_required:
                 raise ParameterError("Confirmed tools require user_id and task_id")
-            if context.idempotency_key is None:
-                raise ParameterError("Confirmed tools require idempotency_key")
+            return context
+        if context.user_id is None:
+            raise ParameterError("Task-linked tool calls require user_id")
+
+        task_id = context.task_id
+        if context.task_step_id is not None:
+            step = await self.tasks.get_step(context.task_step_id)
+            if step is None:
+                raise ResourceNotFoundError("Agent task step not found")
+            if task_id is not None and step.task_id != task_id:
+                raise ParameterError("task_step_id does not belong to task_id")
+            task_id = step.task_id
+        if task_id is None:
+            raise ParameterError("Task-linked tool calls require task_id")
+        task = await self.tasks.get_owned(task_id, context.user_id)
+        if task is None:
+            raise ResourceNotFoundError("Agent task not found")
+        validated = context.model_copy(update={"task_id": task_id})
+        if definition.confirmation_required and validated.idempotency_key is None:
+            raise ParameterError("Confirmed tools require idempotency_key")
+        return validated
 
     async def _request_confirmation(
         self,
@@ -318,6 +346,7 @@ class ToolExecutor:
         safe_after = self._confirmation_snapshot(after_snapshot, definition)
         confirmation = await ConfirmationService(self.session).create(
             agent_task_id=context.task_id,  # validated by _validate_context
+            task_step_id=context.task_step_id,
             operation_type=TOOL_CONFIRMATION_OPERATION,
             target_type=target_type,
             target_id=target_id,
@@ -537,7 +566,9 @@ class ToolExecutor:
         validated_input: BaseModel,
         context: ToolExecutionContext,
     ) -> BaseModel | dict[str, JsonValue]:
-        handler_context = context.model_copy(update={"session": self.session})
+        handler_context = context.model_copy(
+            update={"session": self.session, "settings": self.settings}
+        )
         if inspect.iscoroutinefunction(definition.handler):
             return await definition.handler(validated_input, handler_context)
         result = await asyncio.to_thread(
@@ -636,6 +667,7 @@ class ToolExecutor:
                 target_id=target_id or definition.name,
                 request_id=context.request_id,
                 agent_task_id=context.task_id,
+                task_step_id=context.task_step_id,
                 confirmation_task_id=tool_call.confirmation_id,
                 tool_call_id=tool_call.id,
                 risk_level=definition.risk_level,

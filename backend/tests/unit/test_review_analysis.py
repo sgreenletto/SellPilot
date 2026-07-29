@@ -15,6 +15,7 @@ from sellpilot.domain.review_analysis import (
     ReviewTopic,
     TranslationStatus,
     analyze_reviews,
+    classify_review_preview,
 )
 from sellpilot.domain.review_analysis.models import QualityFlag
 from sellpilot.schemas.common import SourceMetadata
@@ -42,6 +43,23 @@ def review(review_id: str, **overrides) -> ReviewInput:
     }
     values.update(overrides)
     return ReviewInput(**values)
+
+
+def test_preview_uses_analysis_rules_instead_of_stale_source_hints():
+    sentiment, topics = classify_review_preview(
+        review(
+            "REV-PREVIEW",
+            rating=3,
+            content="It works as described, though the finish is fairly basic.",
+            translated_content="功能符合描述，不过做工比较基础。",
+            source_sentiment_hint="neutral",
+            source_issue_hint="none",
+        )
+    )
+
+    assert sentiment == ReviewSentiment.NEGATIVE
+    assert ReviewTopic.PRODUCT_QUALITY in topics
+    assert ReviewTopic.DESCRIPTION_MISMATCH not in topics
 
 
 @pytest.mark.parametrize(
@@ -351,3 +369,59 @@ async def test_source_hints_do_not_override_rating_or_evidence_rules():
     judgement = result.judgements[0]
     assert judgement.sentiment == ReviewSentiment.NEGATIVE
     assert judgement.origin == AnalysisOrigin.RULE
+
+
+@pytest.mark.asyncio
+async def test_positive_description_matches_are_not_mislabeled_as_mismatch():
+    result = await analyze_reviews(
+        [
+            review(
+                "REV-POSITIVE-MATCH",
+                rating=5,
+                content="The color matches the photos and it works as described.",
+                translated_content="颜色与图片一致，功能符合描述。",
+                source_issue_hint="description_mismatch",
+            )
+        ]
+    )
+
+    assert ReviewTopic.DESCRIPTION_MISMATCH not in result.judgements[0].topics
+    assert result.judgements[0].sentiment == ReviewSentiment.POSITIVE
+
+
+@pytest.mark.asyncio
+async def test_positive_finish_and_size_mentions_are_not_improvement_signals():
+    result = await analyze_reviews(
+        [
+            review(
+                "REV-POSITIVE-FINISH-SIZE",
+                rating=5,
+                content="The finish is clean and the size is exactly right for me.",
+                translated_content="做工整洁，尺寸对我来说正合适。",
+            )
+        ]
+    )
+
+    judgement = result.judgements[0]
+    assert judgement.sentiment == ReviewSentiment.POSITIVE
+    assert ReviewTopic.PRODUCT_QUALITY in judgement.topics
+    assert ReviewTopic.SIZE_SPECIFICATION in judgement.topics
+    assert result.pain_points == ()
+
+
+@pytest.mark.asyncio
+async def test_three_star_review_with_explicit_drawback_is_negative_evidence():
+    result = await analyze_reviews(
+        [
+            review(
+                "REV-MIXED",
+                rating=3,
+                content="Delivery took the usual time; I hope the next batch improves.",
+            )
+        ]
+    )
+
+    judgement = result.judgements[0]
+    assert judgement.sentiment == ReviewSentiment.NEGATIVE
+    assert ReviewTopic.LOGISTICS in judgement.topics
+    assert result.pain_points[0].pain_point == ReviewTopic.LOGISTICS

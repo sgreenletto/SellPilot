@@ -15,6 +15,7 @@ from sellpilot.db.base import Base
 from sellpilot.db.models.user import User
 from sellpilot.db.session import get_db_session
 from sellpilot.main import create_app
+from tests.postgres import ensure_test_database_url, reset_test_schema
 
 TEST_PASSWORD = "CorrectHorseBattery1!"
 TEST_JWT_SECRET = "test-only-jwt-secret-with-at-least-32-characters"
@@ -31,12 +32,19 @@ def tmp_path(request) -> AsyncIterator[Path]:
     shutil.rmtree(path, ignore_errors=True)
 
 
+@pytest.fixture(scope="session")
+def postgres_test_database_url() -> str:
+    database_url = ensure_test_database_url()
+    reset_test_schema(database_url)
+    return database_url
+
+
 @pytest.fixture
-def test_settings(tmp_path) -> Settings:
+def test_settings(postgres_test_database_url: str) -> Settings:
     return Settings(
         _env_file=None,
         APP_ENV="test",
-        DATABASE_URL=f"sqlite+aiosqlite:///{tmp_path / 'test.db'}",
+        DATABASE_URL=postgres_test_database_url,
         JWT_SECRET_KEY=TEST_JWT_SECRET,
         PLATFORM_ADAPTER="mock",
     )
@@ -51,6 +59,8 @@ async def session_factory(
         await connection.run_sync(Base.metadata.create_all)
     factory = async_sessionmaker(engine, expire_on_commit=False)
     yield factory
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.drop_all)
     await engine.dispose()
 
 

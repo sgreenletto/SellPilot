@@ -20,4 +20,4 @@ uv run pytest -q tests/integration/test_migrations.py
 - `is_mock_data=false` 时拒绝整个包且不产生部分写入。
 - Alembic upgrade、downgrade、再次 upgrade 和 `alembic check`。
 
-测试使用隔离 SQLite，不访问真实 Shopee、外网或本机 PostgreSQL。PostgreSQL 仍是目标数据库，合并里程碑前需要在受控 PostgreSQL 环境补充迁移与导入验证。
+测试使用隔离 PostgreSQL 数据库，不访问真实 Shopee、外网或开发数据库。合并里程碑前仍需在受控部署环境补充迁移与导入验证。

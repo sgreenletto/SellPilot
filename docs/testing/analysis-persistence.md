@@ -51,7 +51,7 @@ uv run pytest -q
 
 ## PostgreSQL 验证
 
-SQLite 自动化测试用于快速验证迁移可逆性、约束和 Repository 行为。PostgreSQL 是目标数据库，最终部署前还需在受控 PostgreSQL 环境验证：
+独立 PostgreSQL 测试数据库用于验证迁移可逆性、约束和 Repository 行为。最终部署前还需在受控部署环境验证：
 
 - JSONB 字段与查询计划。
 - `NUMERIC` 精度和返回类型。

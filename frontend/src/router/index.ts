@@ -5,21 +5,25 @@ import { useAuthStore } from "@/stores/auth";
 
 const LoginView = () => import("@/views/login/LoginView.vue");
 const DashboardView = () => import("@/views/dashboard/DashboardView.vue");
+const AssistantView = () => import("@/views/assistant/AssistantView.vue");
 const ConversationView = () => import("@/views/customer-service/ConversationView.vue");
 const KnowledgeBaseView = () => import("@/views/knowledge-base/KnowledgeBaseView.vue");
 const DesignSystemView = () => import("@/views/dev/DesignSystemView.vue");
-const ModulePlaceholderView = () => import("@/views/placeholder/ModulePlaceholderView.vue");
 const ProductsView = () => import("@/views/commerce/ProductsView.vue");
 const InventoryView = () => import("@/views/commerce/InventoryView.vue");
 const OrdersView = () => import("@/views/commerce/OrdersView.vue");
 const MarketDataView = () => import("@/views/commerce/MarketDataView.vue");
 const SelectionWorkbenchView = () => import("@/views/selection/SelectionWorkbenchView.vue");
+const ReviewAnalysisView = () => import("@/views/reviews/ReviewAnalysisView.vue");
+const ProductImprovementView = () => import("@/views/reviews/ProductImprovementView.vue");
+const ContentWorkshopView = () => import("@/views/content/ContentWorkshopView.vue");
+const TaskCenterView = () => import("@/views/tasks/TaskCenterView.vue");
 
 const placeholderRoutes: RouteRecordRaw[] = [
   {
     path: "/assistant",
     name: "assistant",
-    component: ModulePlaceholderView,
+    component: AssistantView,
     meta: {
       title: "AI 运营助手",
       module: "AI 运营",
@@ -49,11 +53,21 @@ const placeholderRoutes: RouteRecordRaw[] = [
   {
     path: "/market/reviews",
     name: "market-reviews",
-    component: ModulePlaceholderView,
+    component: ReviewAnalysisView,
     meta: {
       title: "评论与产品改良",
       module: "市场与选品",
       description: "从评论信号提炼产品改良方向。",
+    },
+  },
+  {
+    path: "/market/reviews/improvement",
+    name: "product-improvement",
+    component: ProductImprovementView,
+    meta: {
+      title: "产品改良报告",
+      module: "市场与选品",
+      description: "审查评论证据并通过确认流程创建商品内容草稿。",
     },
   },
   {
@@ -69,7 +83,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
   {
     path: "/products/content",
     name: "product-content",
-    component: ModulePlaceholderView,
+    component: ContentWorkshopView,
     meta: {
       title: "内容工坊",
       module: "商品运营",
@@ -119,7 +133,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
   {
     path: "/tasks",
     name: "tasks",
-    component: ModulePlaceholderView,
+    component: TaskCenterView,
     meta: {
       title: "任务中心",
       module: "公共任务",
@@ -162,33 +176,44 @@ export const router = createRouter({
       path: "/login",
       name: "login",
       component: LoginView,
-      meta: { title: "登录", requiresAuth: false },
+      meta: {
+        title: "登录",
+        module: "认证",
+        description: "登录 SellPilot 单用户模拟店铺。",
+        requiresAuth: false,
+      },
     },
     {
       path: "/",
       component: DefaultLayout,
       children: childRoutes,
-      meta: { requiresAuth: true },
+      meta: {
+        title: "SellPilot",
+        module: "应用",
+        description: "SellPilot 已认证应用布局。",
+        requiresAuth: true,
+      },
     },
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" },
   ],
   scrollBehavior: () => ({ top: 0 }),
 });
 
-router.beforeEach((to, _from, next) => {
-  const authStore = useAuthStore()
+router.beforeEach(async (to, _from, next) => {
+  const authStore = useAuthStore();
+  await authStore.restoreSession();
 
   if (to.meta.requiresAuth === false) {
     // 已登录用户访问登录页 → 直接进入看板
     if (authStore.isAuthenticated && to.name === "login") {
-      return next("/dashboard")
+      return next("/dashboard");
     }
-    return next()
+    return next();
   }
 
   if (!authStore.isAuthenticated) {
-    return next("/login")
+    return next("/login");
   }
 
-  return next()
-})
+  return next();
+});

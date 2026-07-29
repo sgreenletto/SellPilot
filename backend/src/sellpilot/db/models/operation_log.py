@@ -10,6 +10,7 @@ from sellpilot.db.base import JSON_TYPE, Base, UUIDPrimaryKeyMixin, utc_now
 
 if TYPE_CHECKING:
     from sellpilot.db.models.agent_task import AgentTask
+    from sellpilot.db.models.agent_task_step import AgentTaskStep
     from sellpilot.db.models.confirmation_task import ConfirmationTask
     from sellpilot.db.models.user import User
 
@@ -20,6 +21,7 @@ class OperationLog(UUIDPrimaryKeyMixin, Base):
         Index("ix_operation_logs_target", "target_type", "target_id"),
         Index("ix_operation_logs_request_id", "request_id"),
         Index("ix_operation_logs_created_at", "created_at"),
+        Index("ix_operation_logs_task_step_id", "task_step_id"),
     )
 
     actor_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
@@ -29,6 +31,9 @@ class OperationLog(UUIDPrimaryKeyMixin, Base):
     request_id: Mapped[str] = mapped_column(String(64), nullable=False)
     agent_task_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("agent_tasks.id", ondelete="SET NULL")
+    )
+    task_step_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("agent_task_steps.id", ondelete="SET NULL")
     )
     confirmation_task_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("confirmation_tasks.id", ondelete="SET NULL")
@@ -51,6 +56,7 @@ class OperationLog(UUIDPrimaryKeyMixin, Base):
 
     actor: Mapped["User | None"] = relationship(back_populates="operation_logs")
     agent_task: Mapped["AgentTask | None"] = relationship(back_populates="operation_logs")
+    task_step: Mapped["AgentTaskStep | None"] = relationship(foreign_keys=[task_step_id])
     confirmation_task: Mapped["ConfirmationTask | None"] = relationship(
         back_populates="operation_logs"
     )

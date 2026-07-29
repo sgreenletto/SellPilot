@@ -1,9 +1,19 @@
+from dataclasses import dataclass
 from decimal import Decimal
+from uuid import UUID
 
-from sqlalchemy import asc, desc, select
+from sqlalchemy import asc, case, desc, distinct, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from sellpilot.db.models.commerce import CategoryTrend, Product
+from sellpilot.db.models.commerce import (
+    CategoryTrend,
+    InventoryRecord,
+    LogisticsRecord,
+    OrderItem,
+    Product,
+    ReturnRefund,
+    Sku,
+)
 from sellpilot.schemas.selection import SelectionCandidateQuery
 
 SITE_NAMES = {
@@ -14,6 +24,16 @@ SITE_NAMES = {
     "vn": "Vietnam",
     "id": "Indonesia",
 }
+
+RISKY_LOGISTICS_STATUSES = {"delayed", "exception", "failed", "lost", "returned"}
+ACTIVE_SKU_STATUSES = {"active", "published"}
+
+
+@dataclass(frozen=True)
+class SelectionOperationalSignals:
+    logistics_risk_rate: Decimal | None
+    after_sales_rate: Decimal | None
+    factory_fit_score: Decimal | None
 
 
 class SelectionMarketRepository:
@@ -68,6 +88,105 @@ class SelectionMarketRepository:
         for trend in trend_rows:
             latest.setdefault(trend.category_external_id, trend)
         return [(product, latest.get(product.category_external_id)) for product in products]
+
+    async def operational_signals(
+        self, product_ids: list[UUID]
+    ) -> dict[UUID, SelectionOperationalSignals]:
+        """Aggregate deterministic product-level risk and factory signals."""
+        if not product_ids:
+            return {}
+
+        logistics_rows = await self.session.execute(
+            select(
+                OrderItem.product_id,
+                func.count(distinct(OrderItem.order_id)).label("order_count"),
+                func.count(
+                    distinct(
+                        case(
+                            (
+                                LogisticsRecord.status.in_(RISKY_LOGISTICS_STATUSES),
+                                OrderItem.order_id,
+                            )
+                        )
+                    )
+                ).label("risky_order_count"),
+            )
+            .join(LogisticsRecord, LogisticsRecord.order_id == OrderItem.order_id)
+            .where(OrderItem.product_id.in_(product_ids))
+            .group_by(OrderItem.product_id)
+        )
+        logistics_rates = {
+            product_id: Decimal(risky_count) / Decimal(order_count)
+            for product_id, order_count, risky_count in logistics_rows
+            if order_count
+        }
+
+        after_sales_rows = await self.session.execute(
+            select(
+                OrderItem.product_id,
+                func.count(distinct(OrderItem.id)).label("item_count"),
+                func.count(
+                    distinct(
+                        case(
+                            (
+                                ReturnRefund.status != "rejected",
+                                ReturnRefund.order_item_id,
+                            )
+                        )
+                    )
+                ).label("return_count"),
+            )
+            .outerjoin(ReturnRefund, ReturnRefund.order_item_id == OrderItem.id)
+            .where(OrderItem.product_id.in_(product_ids))
+            .group_by(OrderItem.product_id)
+        )
+        after_sales_rates = {
+            product_id: Decimal(return_count) / Decimal(item_count)
+            for product_id, item_count, return_count in after_sales_rows
+            if item_count
+        }
+
+        factory_rows = await self.session.execute(
+            select(
+                Sku.product_id,
+                func.count(distinct(Sku.id)).label("sku_count"),
+                func.count(distinct(case((Sku.status.in_(ACTIVE_SKU_STATUSES), Sku.id)))).label(
+                    "active_sku_count"
+                ),
+                func.count(
+                    distinct(
+                        case(
+                            (
+                                (InventoryRecord.available_stock >= InventoryRecord.safety_stock)
+                                & (InventoryRecord.stock_status != "out_of_stock"),
+                                Sku.id,
+                            )
+                        )
+                    )
+                ).label("ready_sku_count"),
+            )
+            .outerjoin(InventoryRecord, InventoryRecord.sku_id == Sku.id)
+            .where(Sku.product_id.in_(product_ids))
+            .group_by(Sku.product_id)
+        )
+        factory_scores = {
+            product_id: (
+                Decimal(active_count) / Decimal(sku_count)
+                + Decimal(ready_count) / Decimal(sku_count)
+            )
+            / Decimal("2")
+            for product_id, sku_count, active_count, ready_count in factory_rows
+            if sku_count
+        }
+
+        return {
+            product_id: SelectionOperationalSignals(
+                logistics_risk_rate=logistics_rates.get(product_id),
+                after_sales_rate=after_sales_rates.get(product_id),
+                factory_fit_score=factory_scores.get(product_id),
+            )
+            for product_id in product_ids
+        }
 
     @staticmethod
     def decimal(value: Decimal | None) -> Decimal | None:

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -17,10 +18,10 @@ EXAMPLE_JWT_SECRETS = {
 
 
 class Settings(BaseSettings):
-    """Application settings loaded from environment variables and backend/.env."""
+    """Application settings loaded from environment variables and the repository .env."""
 
     model_config = SettingsConfigDict(
-        env_file=(REPOSITORY_ROOT / ".env", BACKEND_ROOT / ".env"),
+        env_file=REPOSITORY_ROOT / ".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
@@ -98,12 +99,75 @@ class Settings(BaseSettings):
         le=1_048_576,
         validation_alias="TOOL_AUDIT_PAYLOAD_MAX_BYTES",
     )
+    task_max_steps: int = Field(
+        default=50,
+        ge=1,
+        le=200,
+        validation_alias="TASK_MAX_STEPS",
+    )
+    task_default_node_timeout_seconds: float = Field(
+        default=60,
+        gt=0,
+        le=300,
+        validation_alias="TASK_DEFAULT_NODE_TIMEOUT_SECONDS",
+    )
+    task_max_node_timeout_seconds: float = Field(
+        default=300,
+        gt=0,
+        le=900,
+        validation_alias="TASK_MAX_NODE_TIMEOUT_SECONDS",
+    )
+    task_max_attempts: int = Field(
+        default=3,
+        ge=1,
+        le=5,
+        validation_alias="TASK_MAX_ATTEMPTS",
+    )
+    task_state_max_bytes: int = Field(
+        default=65_536,
+        ge=1024,
+        le=1_048_576,
+        validation_alias="TASK_STATE_MAX_BYTES",
+    )
+    task_stale_execution_seconds: int = Field(
+        default=600,
+        ge=30,
+        le=86_400,
+        validation_alias="TASK_STALE_EXECUTION_SECONDS",
+    )
 
     shopee_partner_id: str | None = Field(default=None, validation_alias="SHOPEE_PARTNER_ID")
     shopee_partner_key: SecretStr | None = Field(
         default=None, validation_alias="SHOPEE_PARTNER_KEY"
     )
     shopee_shop_id: str | None = Field(default=None, validation_alias="SHOPEE_SHOP_ID")
+    content_model_provider: Literal["offline_template", "aliyun_bailian"] = Field(
+        default="offline_template", validation_alias="CONTENT_MODEL_PROVIDER"
+    )
+    bailian_api_key: SecretStr | None = Field(default=None, validation_alias="DASHSCOPE_API_KEY")
+    bailian_base_url: str | None = Field(default=None, validation_alias="BAILIAN_BASE_URL")
+    bailian_model: str = Field(default="qwen-plus", validation_alias="BAILIAN_MODEL")
+    bailian_timeout_seconds: float = Field(
+        default=30,
+        gt=0,
+        le=120,
+        validation_alias="BAILIAN_TIMEOUT_SECONDS",
+    )
+    bailian_input_cost_per_million: Decimal = Field(
+        default=Decimal("0"),
+        ge=0,
+        validation_alias="BAILIAN_INPUT_COST_PER_MILLION",
+    )
+    bailian_output_cost_per_million: Decimal = Field(
+        default=Decimal("0"),
+        ge=0,
+        validation_alias="BAILIAN_OUTPUT_COST_PER_MILLION",
+    )
+
+    # ---- RAG LLM ----
+    llm_api_key: SecretStr = Field(default=SecretStr(""), validation_alias="LLM_API_KEY")
+    llm_base_url: str = Field(default="https://api.openai.com/v1", validation_alias="LLM_BASE_URL")
+    llm_model: str = Field(default="qwen-plus", validation_alias="LLM_MODEL")
 
     @field_validator("api_v1_prefix")
     @classmethod
@@ -118,6 +182,8 @@ class Settings(BaseSettings):
             raise ValueError("Tool default timeout must not exceed the maximum timeout")
         if self.tool_retry_initial_delay_ms > self.tool_retry_max_delay_ms:
             raise ValueError("Tool retry initial delay must not exceed the maximum delay")
+        if self.task_default_node_timeout_seconds > self.task_max_node_timeout_seconds:
+            raise ValueError("Task default node timeout must not exceed the maximum timeout")
 
         jwt_secret = self.jwt_secret_key.get_secret_value()
         if self.app_env == "production" and (
@@ -138,6 +204,15 @@ class Settings(BaseSettings):
                     "Real platform mode requires explicit Shopee configuration; "
                     "it never falls back to mock"
                 )
+        if self.content_model_provider == "aliyun_bailian":
+            api_key = self.bailian_api_key.get_secret_value() if self.bailian_api_key else ""
+            if not api_key or not self.bailian_base_url:
+                raise ValueError(
+                    "Aliyun Bailian mode requires DASHSCOPE_API_KEY and "
+                    "BAILIAN_BASE_URL; it never silently falls back to offline output"
+                )
+            if not self.bailian_base_url.startswith("https://"):
+                raise ValueError("BAILIAN_BASE_URL must use HTTPS")
         return self
 
 

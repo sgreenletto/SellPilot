@@ -101,7 +101,15 @@ EXPECTED_ENUM_VALUES = {
         "failed",
         "cancelled",
     ],
-    TaskStepStatus: ["pending", "running", "succeeded", "failed", "cancelled"],
+    TaskStepStatus: [
+        "pending",
+        "running",
+        "waiting_confirmation",
+        "succeeded",
+        "failed",
+        "skipped",
+        "cancelled",
+    ],
     ConfirmationStatus: [
         "pending",
         "confirmed",
@@ -133,6 +141,7 @@ EXPECTED_ENUM_VALUES = {
         "knowledge_ingestion",
         "customer_service",
         "report_generation",
+        "replenishment",
     ],
     WorkflowType: [
         "diagnostic",
