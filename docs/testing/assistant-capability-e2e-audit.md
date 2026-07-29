@@ -1,5 +1,41 @@
 # Assistant Capability E2E Audit
 
+## 2026-07-30 运行稳定性复核
+
+- 本轮开始 HEAD：`ff32e541e53b988e94e12cb9572f3eca417c9c9b`。
+- 最新 `origin/develop`：`1dab0d2d9690790fa5729110e5864cac31880927`，包含 PR #50
+  的商品描述数据质量与响应式详情修复。演示商品冲突按字段合并：保留 Assistant 新增的
+  3 个新加坡母婴候选，并采用 develop 对既有 100 个商品的新版描述。
+- Settings 唯一读取仓库根目录 `.env`。实际配置使用 `LLM_*` 作为 RAG 模型变量，
+  使用 `DASHSCOPE_API_KEY`、`BAILIAN_*` 和 `CONTENT_MODEL_PROVIDER` 作为内容模型变量。
+  敏感值未写入本文、日志或测试输出。
+- 500 的可复现直接原因是：设置 `LLM_API_KEY` 后 RAG 进入 `LLMService`，
+  运行时导入未声明也未安装的 `openai` 包并抛出 `ModuleNotFoundError`。现改为复用项目
+  已使用的 `httpx` 调用 OpenAI-compatible 接口，并把 `httpx` 列为正式运行时依赖。
+  401、403、404、429、5xx 和超时被保留为安全的模型调用失败摘要，不再成为未处理 500。
+- 原后端 PID 早于 `.env` 修改时间，重启后新配置才生效。实际监听
+  `127.0.0.1:8000`，Windows 排除端口范围为 `50000-50059`，因此 WinError 10013
+  与本次 RAG 500 无关；重复启动由 `sellpilot-start-api` 的健康检查避免。
+- 未处理异常现在记录带 Request ID 的完整 traceback；异常文本经过统一脱敏 formatter，
+  API 响应仍只返回安全错误，不暴露堆栈。
+- Content 英文表达 `content generation for product PROD-001 in English` 曾把普通单词
+  `product` 误提取为商品 ID。产品 ID 正则现要求标识中至少包含一个数字，E2E 可正确解析
+  `PROD-001` 并通过 Commerce normalization 读取稳定 ID `PROD0001`。
+- PostgreSQL 验证：103 商品、263 SKU、263 库存、500 订单、451 物流、1000 评论、
+  1 个知识文档/片段、100 个客服会话；`PROD0001` 关联 19 条评论。
+- 真实业务 E2E：
+  - 评论分析：19 条输入、16 条有效，情感分布正面 8 / 中性 1 / 负面 7；
+  - 智能选品：新加坡母婴候选 3 个，Top 3 为 `PROD0102`、`PROD0101`、`PROD0103`；
+  - Content：本地离线 Provider 通过统一 4 Step / 2 ToolCall 有界工作流；
+  - RAG：退货政策命中 1 个来源，通过统一 Tool 与 Workflow；
+  - 客服：普通商品分支、高风险人工分支均成功；Mock 模拟发送经 Confirmation，
+    重复确认只产生 1 次成功写 ToolCall。
+- 外部 Provider 验证只发送明确的合成连通性提示，不发送本地商品、知识库或会话载荷。
+  Content 与 RAG 两套已配置端点均鉴权成功并返回结构化/非空结果。
+- 本轮门禁：后端 Ruff 通过，Alembic 单一 head `20260728_0007` 且无待生成迁移，
+  pytest 361 项通过；前端 30 个测试文件、
+  144 项测试通过，构建成功，仅保留大 chunk 非阻塞警告。
+
 审计日期：2026-07-29
 
 开始审计 develop 基线：`abc9f7f70e7c77dc22a50a837da97734ecaba26b`
