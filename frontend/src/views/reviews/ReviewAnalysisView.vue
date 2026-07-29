@@ -28,8 +28,9 @@ import type { SiteCode } from "@/types/selection";
 const router = useRouter();
 const form = reactive({
   productId: "PROD0001",
+  keyword: "",
   site: "sg" as SiteCode,
-  language: "",
+  language: "all",
   minRating: "1",
   maxRating: "5",
   sentiment: "",
@@ -57,6 +58,15 @@ const siteOptions = ["sg", "my", "ph", "th", "vn", "id"].map((value) => ({
   value,
 }));
 const ratingOptions = ["1", "2", "3", "4", "5"].map((value) => ({ label: `${value} 星`, value }));
+const languageOptions = [
+  { label: "全部语言", value: "all" },
+  { label: "英语", value: "English" },
+  { label: "菲律宾语", value: "Filipino" },
+  { label: "印度尼西亚语", value: "Indonesian" },
+  { label: "马来语", value: "Malay" },
+  { label: "泰语", value: "Thai" },
+  { label: "越南语", value: "Vietnamese" },
+];
 const sentimentOptions = [
   { label: "全部情感", value: "" },
   { label: "正面", value: "positive" },
@@ -83,6 +93,126 @@ const topicLabels: Record<string, string> = {
   other: "其他",
   no_clear_issue: "无明确问题",
 };
+const languageLabels: Record<string, string> = {
+  English: "英语",
+  Filipino: "菲律宾语",
+  Indonesian: "印度尼西亚语",
+  Malay: "马来语",
+  Thai: "泰语",
+  Vietnamese: "越南语",
+  en: "英语",
+  tl: "菲律宾语",
+  id: "印度尼西亚语",
+  ms: "马来语",
+  th: "泰语",
+  vi: "越南语",
+};
+const sentimentLabels: Record<string, string> = {
+  positive: "正向",
+  neutral: "中性",
+  negative: "含改进信号",
+};
+const issueTypeLabels: Record<string, string> = {
+  battery: "电池",
+  customer_service: "客服",
+  logistics: "物流",
+  material: "材料",
+  none: "无明确问题",
+  no_clear_issue: "无明确问题",
+  other: "其他问题",
+  packaging: "包装",
+  product_quality: "产品质量",
+  size: "尺寸规格",
+  size_specification: "尺寸规格",
+  wrong_item: "错发商品",
+  wrong_or_missing_item: "错发漏发",
+  description_mismatch: "描述不符",
+  service: "服务",
+};
+const keywordLabels: Record<string, string> = {
+  quality: "质量",
+  finish: "做工",
+  broken: "损坏",
+  defect: "缺陷",
+  damaged: "损坏",
+  kualitas: "质量",
+  rosak: "损坏",
+  คุณภาพ: "质量",
+  เสีย: "损坏",
+  "chất lượng": "质量",
+  hỏng: "损坏",
+  packaging: "包装",
+  package: "包装",
+  box: "包装盒",
+  kemasan: "包装",
+  bungkusan: "包装",
+  บรรจุ: "包装",
+  hộp: "包装盒",
+  "đóng gói": "包装",
+  "not as described": "与描述不符",
+  "does not match the product description": "与描述不符",
+  "doesn't match the product description": "与描述不符",
+  "does not match description": "与描述不符",
+  "different from": "与描述不符",
+  "tidak sesuai": "与描述不符",
+  "tak sama": "与描述不符",
+  ไม่ตรง: "与描述不符",
+  "không giống": "与描述不符",
+  delivery: "配送",
+  shipping: "物流",
+  late: "配送延迟",
+  courier: "快递",
+  pengiriman: "配送",
+  penghantaran: "配送",
+  huli: "配送",
+  จัดส่ง: "配送",
+  ส่งช้า: "配送延迟",
+  "giao hàng": "配送",
+  service: "服务",
+  seller: "商家",
+  reply: "回复",
+  support: "售后支持",
+  layanan: "服务",
+  perkhidmatan: "服务",
+  serbisyo: "服务",
+  บริการ: "服务",
+  "dịch vụ": "服务",
+  material: "材料",
+  plastic: "塑料",
+  fabric: "面料",
+  bahan: "材料",
+  materyal: "材料",
+  วัสดุ: "材料",
+  "chất liệu": "材料",
+  size: "尺寸",
+  small: "尺寸偏小",
+  large: "尺寸偏大",
+  measurement: "尺寸规格",
+  ukuran: "尺寸",
+  saiz: "尺寸",
+  sukat: "尺寸",
+  ขนาด: "尺寸",
+  "kích thước": "尺寸",
+  "wrong item": "错发商品",
+  "missing item": "漏发商品",
+  incomplete: "配件不全",
+  "salah barang": "错发商品",
+  kurang: "漏发商品",
+  "maling item": "错发商品",
+  ผิดชิ้น: "错发商品",
+  thiếu: "漏发商品",
+  "sai hàng": "错发商品",
+};
+const localizedLanguage = (value: string) => languageLabels[value] ?? value;
+const localizedSentiment = (value: string) => sentimentLabels[value] ?? value;
+const localizedIssueType = (value: string) => issueTypeLabels[value] ?? value;
+const localizedKeyword = (value: string) => keywordLabels[value.toLocaleLowerCase()] ?? value;
+function evidenceTopicText(label: string, sentiment: string | null | undefined): string {
+  if (sentiment === "negative") {
+    return `改进 · ${topicLabels[label] ?? label}`;
+  }
+  return `提及 · ${topicLabels[label] ?? label}`;
+}
 const displayedReviews = computed(() =>
   reviews.value.filter(
     (review) =>
@@ -93,6 +223,23 @@ const displayedReviews = computed(() =>
 const sentimentTotal = computed(() => {
   const item = result.value?.sentiment;
   return item ? item.positive + item.neutral + item.negative : 0;
+});
+const qualitySummary = computed(() => {
+  const quality = result.value?.quality;
+  if (!quality) return "";
+  const reasonLabels: Record<string, string> = {
+    duplicate: "重复",
+    empty: "空内容",
+    emoji_only: "仅表情",
+    spam: "垃圾内容",
+  };
+  const reasons = Object.entries(quality.flag_counts ?? {})
+    .filter(([key, count]) => key in reasonLabels && count > 0)
+    .map(([key, count]) => `${reasonLabels[key]} ${count} 条`);
+  const excluded = quality.excluded_count
+    ? `，排除 ${quality.excluded_count} 条${reasons.length ? `（${reasons.join("、")}）` : ""}`
+    : "";
+  return `筛选到 ${quality.received_count} 条，纳入分析 ${quality.included_count} 条${excluded}`;
 });
 const hasComparableTrend = computed(() => (result.value?.trends.length ?? 0) > 1);
 const groupedEvidence = computed(() => {
@@ -108,18 +255,22 @@ const groupedEvidence = computed(() => {
     }
     grouped.set(item.review_id, { ...item, labels: [item.label] });
   }
-  return [...grouped.values()].map((item) => {
-    const text = `${item.original_content} ${item.translated_content ?? ""}`.toLocaleLowerCase();
-    const explicitlyAligned =
-      text.includes("matches the photo") ||
-      text.includes("works as described") ||
-      text.includes("与图片一致") ||
-      text.includes("符合描述");
-    return {
-      ...item,
-      labels: item.labels.filter((label) => label !== "description_mismatch" || !explicitlyAligned),
-    };
-  });
+  return [...grouped.values()]
+    .filter((item) => item.sentiment === "negative")
+    .map((item) => {
+      const text = `${item.original_content} ${item.translated_content ?? ""}`.toLocaleLowerCase();
+      const explicitlyAligned =
+        text.includes("matches the photo") ||
+        text.includes("works as described") ||
+        text.includes("与图片一致") ||
+        text.includes("符合描述");
+      return {
+        ...item,
+        labels: item.labels.filter(
+          (label) => label !== "description_mismatch" || !explicitlyAligned,
+        ),
+      };
+    });
 });
 const visibleTopicLabels = computed(
   () => new Set(groupedEvidence.value.flatMap((item) => item.labels)),
@@ -127,22 +278,22 @@ const visibleTopicLabels = computed(
 const displayedPainPoints = computed(() =>
   (result.value?.pain_points ?? []).filter((item) => visibleTopicLabels.value.has(item.pain_point)),
 );
-const issueGroups = computed(() => {
-  const labels: Record<string, string> = {
-    product_quality: "产品",
-    packaging: "包装",
-    description_mismatch: "文案",
-    logistics: "物流",
-    service: "服务",
-  };
-  return Object.entries(labels).map(([key, label]) => ({
-    key,
-    label: topicLabels[key] ?? label,
-    count: visibleTopicLabels.value.has(key)
-      ? (result.value?.topics.find((item) => item.topic === key)?.count ?? 0)
-      : 0,
-  }));
-});
+const displayedTopics = computed(() =>
+  (result.value?.topics ?? []).filter((item) => item.topic !== "no_clear_issue").slice(0, 6),
+);
+const displayedKeywords = computed(() => (result.value?.keywords ?? []).slice(0, 8));
+const judgementByReviewId = computed(
+  () => new Map((result.value?.judgements ?? []).map((item) => [item.review_id, item])),
+);
+function reviewSentiment(review: ProductReview): string {
+  return judgementByReviewId.value.get(review.review_id)?.sentiment ?? review.sentiment_hint;
+}
+function reviewTopics(review: ProductReview): string {
+  const topics = judgementByReviewId.value.get(review.review_id)?.topics;
+  return topics?.length
+    ? topics.map((topic) => localizedIssueType(topic)).join("、")
+    : localizedIssueType(review.issue_type);
+}
 
 function handleError(reason: unknown): void {
   const apiError = reason instanceof FrontendApiError ? reason : null;
@@ -150,10 +301,12 @@ function handleError(reason: unknown): void {
   errorCode.value = apiError?.code ?? "UNKNOWN_ERROR";
 }
 function query() {
+  const selectedLanguage = form.language === "all" ? "" : form.language;
   return {
     product_id: form.productId.trim(),
+    keyword: form.keyword.trim() || undefined,
     site: form.site,
-    language: form.language.trim() || undefined,
+    language: selectedLanguage || undefined,
     min_rating: Number(form.minRating),
     max_rating: Number(form.maxRating),
     created_from: form.createdFrom || undefined,
@@ -194,11 +347,13 @@ async function analyze(): Promise<void> {
   result.value = null;
   evidence.value = null;
   try {
+    const selectedLanguage = form.language === "all" ? "" : form.language;
     const created = await createReviewAnalysis({
       idempotency_key: `review-ui-${form.productId}-${Date.now()}`,
       product_id: form.productId.trim(),
+      keyword: form.keyword.trim() || undefined,
       site: form.site,
-      languages: form.language.trim() ? [form.language.trim()] : [],
+      languages: selectedLanguage ? [selectedLanguage] : [],
       min_rating: Number(form.minRating),
       max_rating: Number(form.maxRating),
       created_from: form.createdFrom || undefined,
@@ -295,13 +450,19 @@ onMounted(loadReviews);
       <div class="section-title">
         <div>
           <h2>选择评论范围</h2>
-          <p>情感与涉及方面只筛选下方列表；分析范围由商品、站点、语言、评分和日期决定。</p>
+          <p>情感与涉及方面只筛选下方列表；分析范围由商品、关键词、站点、语言、评分和日期决定。</p>
         </div>
       </div>
       <div class="filter-grid">
         <SpInput v-model="form.productId" label="商品 ID" placeholder="例如 PROD0001" />
+        <SpInput v-model="form.keyword" label="评论关键词" placeholder="搜索原文或中文译文" />
         <SpSelect v-model="form.site" label="站点" :options="siteOptions" />
-        <SpInput v-model="form.language" label="语言" placeholder="全部语言" />
+        <SpSelect
+          v-model="form.language"
+          label="语言"
+          placeholder="请选择语言"
+          :options="languageOptions"
+        />
         <SpSelect v-model="form.minRating" label="最低评分" :options="ratingOptions" />
         <SpSelect v-model="form.maxRating" label="最高评分" :options="ratingOptions" />
         <SpSelect v-model="form.sentiment" label="列表情感" :options="sentimentOptions" />
@@ -349,71 +510,75 @@ onMounted(loadReviews);
           >
         </div>
       </section>
-      <section class="metric-grid">
-        <SpCard variant="solid"
-          ><small>有效评论</small><strong>{{ sentimentTotal }}</strong
-          ><span>{{ result.site.toUpperCase() }} 站点</span></SpCard
-        >
-        <SpCard variant="solid"
-          ><small>情感概览</small
-          ><strong
-            >{{ result.sentiment?.positive ?? 0 }} / {{ result.sentiment?.neutral ?? 0 }} /
-            {{ result.sentiment?.negative ?? 0 }}</strong
-          ><span>正向 / 中性 / 含改进信号</span></SpCard
-        >
-        <SpCard variant="solid"
-          ><small>涉及方面</small><strong>{{ visibleTopicLabels.size }}</strong
-          ><span>评论中提到的不同方面</span></SpCard
-        >
-        <SpCard variant="solid"
-          ><small>建议关注方向</small><strong>{{ displayedPainPoints.length }}</strong
-          ><span>低评分或明确缺点涉及的方面数</span></SpCard
-        >
-      </section>
-      <div class="analysis-grid">
-        <SpCard class="issue-card" variant="solid">
-          <div class="section-title">
-            <div>
-              <h3>评论涉及方面</h3>
-              <p>用于归纳评论内容，不代表这些方面一定存在问题。</p>
+      <SpCard class="pain-card" variant="solid">
+        <div class="section-title">
+          <div>
+            <h3>改进信号</h3>
+            <p>按问题方向汇总，可点击查看对应评论原文。</p>
+          </div>
+          <strong class="signal-count">
+            {{ result.sentiment?.negative ?? 0 }} / {{ sentimentTotal }} 条有效评论
+          </strong>
+        </div>
+        <p v-if="qualitySummary" class="quality-summary">{{ qualitySummary }}</p>
+        <div v-if="displayedPainPoints.length" class="pain-list">
+          <button
+            v-for="item in displayedPainPoints.slice(0, 6)"
+            :key="item.pain_point"
+            @click="filterEvidenceLabel(item.pain_point)"
+          >
+            <span>{{ topicLabels[item.pain_point] ?? item.pain_point }}</span
+            ><strong>{{ item.negative_count }} 条</strong>
+          </button>
+        </div>
+        <SpEmptyState
+          v-else
+          title="当前没有改进信号"
+          description="所选评论中没有低评分或明确缺点表达，因此不会生成改良建议。"
+        />
+      </SpCard>
+      <SpCard class="analysis-summary" variant="solid">
+        <div class="section-title">
+          <div>
+            <h3>评论分析摘要</h3>
+            <p>按需求保留情感分类、评论主题和高频关键词；主题只表示评论谈到了什么。</p>
+          </div>
+        </div>
+        <div class="analysis-summary__grid">
+          <section>
+            <h4>情感分类</h4>
+            <div class="sentiment-summary">
+              <span
+                ><strong>{{ result.sentiment?.positive ?? 0 }}</strong> 正向</span
+              >
+              <span
+                ><strong>{{ result.sentiment?.neutral ?? 0 }}</strong> 中性</span
+              >
+              <span
+                ><strong>{{ result.sentiment?.negative ?? 0 }}</strong> 含改进信号</span
+              >
             </div>
-          </div>
-          <div class="issue-table">
-            <div v-for="item in issueGroups" :key="item.key">
-              <span>{{ item.label }}</span>
-              <i
-                :style="{
-                  width: `${sentimentTotal ? Math.max(4, (item.count / sentimentTotal) * 100) : 0}%`,
-                }"
-              ></i>
-              <strong>{{ item.count }}</strong>
+          </section>
+          <section>
+            <h4>评论主题</h4>
+            <div v-if="displayedTopics.length" class="summary-tags">
+              <span v-for="item in displayedTopics" :key="item.topic">
+                {{ topicLabels[item.topic] ?? item.topic }} · {{ item.count }}
+              </span>
             </div>
-          </div>
-        </SpCard>
-        <SpCard class="pain-card" variant="solid">
-          <div class="section-title">
-            <div>
-              <h3>改进信号</h3>
-              <p>来自低评分或含明确缺点表达的评论，可点击核对原文。</p>
+            <small v-else>未识别到明确主题</small>
+          </section>
+          <section>
+            <h4>高频关键词</h4>
+            <div v-if="displayedKeywords.length" class="summary-tags">
+              <span v-for="item in displayedKeywords" :key="item.keyword">
+                {{ localizedKeyword(item.keyword) }} · {{ item.review_count }} 条
+              </span>
             </div>
-          </div>
-          <div v-if="displayedPainPoints.length" class="pain-list">
-            <button
-              v-for="item in displayedPainPoints.slice(0, 6)"
-              :key="item.pain_point"
-              @click="filterEvidenceLabel(item.pain_point)"
-            >
-              <span>{{ topicLabels[item.pain_point] ?? item.pain_point }}</span
-              ><strong>{{ item.negative_count }} 条</strong>
-            </button>
-          </div>
-          <SpEmptyState
-            v-else
-            title="当前没有改进信号"
-            description="所选评论中没有低评分或明确缺点表达，因此不会生成改良建议。"
-          />
-        </SpCard>
-      </div>
+            <small v-else>当前范围没有高频关键词</small>
+          </section>
+        </div>
+      </SpCard>
       <SpCard v-if="hasComparableTrend" class="trend-card" variant="solid">
         <div class="section-title">
           <div>
@@ -426,8 +591,8 @@ onMounted(loadReviews);
       <SpCard class="evidence-card" variant="solid">
         <div class="section-title">
           <div>
-            <h3>代表评论证据</h3>
-            <p>同一评论涉及的多个方面合并展示，避免重复阅读。</p>
+            <h3>改进证据</h3>
+            <p>仅展示含明确缺点的评论；同一评论的多个改进方向合并展示。</p>
           </div>
           <button v-if="evidenceLabel" class="clear-filter" @click="changeEvidenceTopic('')">
             清除“{{ topicLabels[evidenceLabel] ?? evidenceLabel }}”筛选
@@ -437,7 +602,7 @@ onMounted(loadReviews);
           <article v-for="item in groupedEvidence" :key="item.review_id">
             <div class="evidence-table__meta">
               <button @click="locateReview(item.review_id)">{{ item.review_id }}</button>
-              <span>{{ item.rating }} 星</span><span>{{ item.language }}</span>
+              <span>{{ item.rating }} 星</span><span>{{ localizedLanguage(item.language) }}</span>
               <em v-if="item.sentiment === 'negative'">含改进信号</em>
             </div>
             <div class="evidence-table__content">
@@ -447,9 +612,9 @@ onMounted(loadReviews);
               }}</small>
             </div>
             <div class="evidence-table__topics">
-              <span v-for="label in item.labels" :key="label"
-                >涉及 · {{ topicLabels[label] ?? label }}</span
-              >
+              <span v-for="label in item.labels" :key="label">{{
+                evidenceTopicText(label, item.sentiment)
+              }}</span>
               <span v-if="!item.labels.length">未识别明确方面</span>
             </div>
           </article>
@@ -495,9 +660,9 @@ onMounted(loadReviews);
           tabindex="0"
         >
           <div>
-            <strong>{{ review.rating }} 星 · {{ review.language }}</strong
-            ><SpBadge tone="info">{{ review.sentiment_hint }}</SpBadge
-            ><SpBadge tone="warning">{{ review.issue_type }}</SpBadge>
+            <strong>{{ review.rating }} 星 · {{ localizedLanguage(review.language) }}</strong
+            ><SpBadge tone="info">{{ localizedSentiment(reviewSentiment(review)) }}</SpBadge
+            ><SpBadge tone="warning">{{ reviewTopics(review) }}</SpBadge>
           </div>
           <p>{{ review.content }}</p>
           <p v-if="review.translated_content">译文：{{ review.translated_content }}</p>
@@ -610,50 +775,20 @@ onMounted(loadReviews);
   color: var(--sp-color-text-muted);
   font-size: var(--sp-font-sm);
 }
-.metric-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--sp-space-4);
-  margin-bottom: var(--sp-space-4);
+.signal-count {
+  color: var(--sp-color-primary);
+  font-size: var(--sp-font-lg);
+  white-space: nowrap;
 }
-.metric-grid :deep(.sp-card__body) {
-  display: grid;
-  gap: var(--sp-space-1);
-}
-.metric-grid strong {
-  font-size: var(--sp-font-2xl);
-}
-.metric-grid span,
-.metric-grid small {
+.quality-summary {
+  margin: var(--sp-space-2) 0 0;
   color: var(--sp-color-text-muted);
-}
-.analysis-grid {
-  display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: var(--sp-space-4);
+  font-size: var(--sp-font-sm);
 }
 .result-heading__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-}
-.issue-table {
-  display: grid;
-  gap: var(--sp-space-4);
-  margin-top: var(--sp-space-5);
-}
-.issue-table > div {
-  display: grid;
-  grid-template-columns: 92px minmax(80px, 1fr) 24px;
-  gap: var(--sp-space-3);
-  align-items: center;
-}
-.issue-table i {
-  display: block;
-  max-width: 100%;
-  height: 8px;
-  background: var(--sp-color-primary);
-  border-radius: var(--sp-radius-pill);
 }
 .pain-list {
   display: grid;
@@ -670,6 +805,44 @@ onMounted(loadReviews);
   border: 1px solid var(--sp-border-soft);
   border-radius: var(--sp-radius-control);
   cursor: pointer;
+}
+.analysis-summary {
+  margin-top: var(--sp-space-4);
+}
+.analysis-summary__grid {
+  display: grid;
+  grid-template-columns: 0.8fr 1.1fr 1.1fr;
+  gap: var(--sp-space-3);
+  margin-top: var(--sp-space-4);
+}
+.analysis-summary__grid section {
+  min-width: 0;
+  padding: var(--sp-space-4);
+  background: var(--sp-color-surface-muted);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-control);
+}
+.analysis-summary__grid h4 {
+  margin: 0 0 var(--sp-space-3);
+}
+.analysis-summary__grid small {
+  color: var(--sp-color-text-muted);
+}
+.sentiment-summary,
+.summary-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-space-2);
+}
+.sentiment-summary span,
+.summary-tags span {
+  padding: var(--sp-space-2) var(--sp-space-3);
+  background: var(--sp-color-surface);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-pill);
+}
+.sentiment-summary strong {
+  color: var(--sp-color-primary);
 }
 .trend-card,
 .evidence-card,
@@ -785,22 +958,18 @@ onMounted(loadReviews);
   .filter-grid {
     grid-template-columns: repeat(3, 1fr);
   }
-  .metric-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .analysis-grid {
-    grid-template-columns: 1fr;
-  }
   .evidence-table article {
     grid-template-columns: 150px minmax(0, 1fr);
+  }
+  .analysis-summary__grid {
+    grid-template-columns: 1fr;
   }
   .evidence-table__topics {
     grid-column: 2;
   }
 }
 @media (max-width: 640px) {
-  .filter-grid,
-  .metric-grid {
+  .filter-grid {
     grid-template-columns: 1fr;
   }
   .filter-actions,

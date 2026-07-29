@@ -64,10 +64,9 @@ npm run build
 
 ## Platform limits
 
-SQLite validates conditional updates, unique Step sequence, and migration reversibility
-for local development. It is not proof of PostgreSQL lock scheduling under production
-load. Before deployment, run concurrent run/resume/retry and stale-lease recovery tests
-against the supported PostgreSQL version.
+The isolated PostgreSQL test database validates conditional updates, unique Step
+sequence, and migration reversibility. Before deployment, repeat concurrent
+run/resume/retry and stale-lease recovery tests under production-scale load.
 
 The current runtime identifies stale running tasks through heartbeat/lease timestamps
 but does not auto-reclaim them. Confirmation completion also requires explicit resume;

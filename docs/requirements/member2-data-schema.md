@@ -6,7 +6,7 @@
 - 当前状态：设计基线，尚未创建业务表、迁移、导入服务或业务 API。
 - 数据来源：`data/demo/shopee_mock/` 中的 12 个 CSV、生成器、校验器和说明文档。
 - 数据性质：全部为合成实验数据，不代表真实 Shopee 店铺或生产接口数据。
-- 目标数据库：PostgreSQL；测试环境允许使用 SQLite。
+- 运行与测试数据库统一使用 PostgreSQL；测试必须使用独立数据库。
 
 本设计遵循首版单用户、单模拟店铺和 `MockShopeeAdapter` 边界。后续正式表结构必须通过 Alembic 迁移创建，不得在应用启动时调用 `create_all`。
 

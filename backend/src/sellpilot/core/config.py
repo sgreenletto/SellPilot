@@ -18,10 +18,10 @@ EXAMPLE_JWT_SECRETS = {
 
 
 class Settings(BaseSettings):
-    """Application settings loaded from environment variables and backend/.env."""
+    """Application settings loaded from environment variables and the repository .env."""
 
     model_config = SettingsConfigDict(
-        env_file=(REPOSITORY_ROOT / ".env", BACKEND_ROOT / ".env"),
+        env_file=REPOSITORY_ROOT / ".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",

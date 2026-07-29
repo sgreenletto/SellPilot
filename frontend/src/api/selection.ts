@@ -46,7 +46,7 @@ export function listSelectionCandidates(
 export function createSelectionAnalysis(
   payload: SelectionAnalysisRequest,
 ): Promise<SelectionAnalysis> {
-  return request<SelectionAnalysis>("/v1/selection/analyses", authInit("POST", payload), 30_000);
+  return request<SelectionAnalysis>("/v1/selection/analyses", authInit("POST", payload), 120_000);
 }
 
 export function getSelectionAnalysis(taskId: string): Promise<SelectionTask> {

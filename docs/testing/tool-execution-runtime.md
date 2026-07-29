@@ -21,7 +21,7 @@ envelopes, request IDs and ToolCall pagination. MCP tests prove
 Migration tests insert representative pre-runtime rows at `0002`, perform
 `0001 -> 0002 -> 0003 (Commerce) -> 0004 (Tool Runtime)`, downgrade from
 `0004` to `0003`, upgrade again, then downgrade to base, upgrade to head and
-run `alembic check` on a disposable SQLite database.
+run `alembic check` on the disposable PostgreSQL test database.
 
 ## Commands
 
@@ -51,15 +51,13 @@ npm run build
 
 ## Concurrency boundary
 
-SQLite verifies the unique idempotency constraint and conditional confirmation
+PostgreSQL verifies the unique idempotency constraint and conditional confirmation
 claim using simultaneous operations in independent sessions. A simulated hard
 interruption after the durable claim verifies that the row remains `executing`,
 has `execution_started_at`, retains a running ToolCall and is discoverable by
-the stale-execution query. SQLite does not reproduce PostgreSQL row-lock
-scheduling or production isolation. Before deployment, run simultaneous same-key
-create and same-confirmation execute tests against the supported PostgreSQL
-version and inspect that one confirmation and one handler execution remain.
-This repository does not claim that external PostgreSQL validation has already
+the stale-execution query. Before deployment, run simultaneous same-key create and
+same-confirmation execute tests under production isolation and inspect that one
+confirmation and one handler execution remain.
 occurred.
 
 All fixtures use synthetic users, isolated databases and test-local registries.

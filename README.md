@@ -24,7 +24,7 @@ SellPilot 是面向跨境电商卖家的 AI 运营辅助平台，首版以 Shope
 
 - FastAPI 公共架构、Pydantic Settings 和标准日志。
 - 统一响应、统一异常、参数校验转换和 `X-Request-ID`。
-- SQLAlchemy 2 异步会话、PostgreSQL 目标配置和 SQLite 隔离测试。
+- SQLAlchemy 2 异步会话、PostgreSQL 运行配置和 PostgreSQL 隔离测试库。
 - Alembic 迁移及完整 upgrade / downgrade 基础迁移。
 - 单用户认证底座、Argon2 密码哈希、Bearer JWT 和管理员 CLI。
 - 六张公共基础表：User、AgentTask、AgentTaskStep、ToolCall、ConfirmationTask、OperationLog。
@@ -48,7 +48,7 @@ SellPilot 是面向跨境电商卖家的 AI 运营辅助平台，首版以 Shope
 - 大圆角应用 Shell、侧边栏、顶部栏和响应式独立滚动布局。
 - 使用 ECharts 的经营看板和原创本地 SVG/CSS AI Orb。
 - 开发环境设计系统展示页。
-- 智能选品、评论分析、产品改良、内容工坊和 AI 评估/Prompt 审计页面。
+- 智能选品、评论分析、产品改良和内容工坊页面。
 - 平台状态 API 客户端；后端不可达时明确显示“后端未连接”。
 - Vitest、Vue Test Utils、ESLint、Prettier 和严格 TypeScript 检查。
 
@@ -149,7 +149,10 @@ npm run build
 
 ## 环境变量
 
-根目录 `.env.example` 提供后端安全占位符，至少包括应用环境、数据库、JWT、日志和平台适配器配置。复制为本地 `.env` 后填写，不得提交 `.env`。
+根目录 `.env.example` 提供后端安全占位符，至少包括应用环境、PostgreSQL 数据库、
+JWT、日志、平台适配器和模型配置。复制为仓库根目录的本地 `.env` 后填写，不得提交
+`.env`。不要创建或分发 `backend/.env`；后端运行和团队联调统一读取根目录 `.env`。
+自动化测试统一使用独立的 PostgreSQL `sellpilot_test` 数据库，不得连接开发数据库。
 
 前端读取：
 
@@ -165,7 +168,6 @@ npm run build
 - `/market/data`、`/market/selection`、`/market/reviews`：市场数据、智能选品和评论分析。
 - `/market/reviews/improvement`：产品改良报告与确认任务。
 - `/products`、`/products/content`、`/products/listing-inventory`：商品、内容工坊和库存。
-- `/ai/management`：Prompt、模型运行状态和成员三 AI 评估。
 - `/customer-service/conversations`、`/customer-service/knowledge`：智能客服占位页。
 - `/orders`：订单与履约占位页。
 - `/tasks`：真实任务中心；支持筛选、分页、按需详情、确认处理、任务操作和安全审计时间线。

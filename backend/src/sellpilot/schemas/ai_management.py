@@ -3,7 +3,9 @@ from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from sellpilot.core.enums import PromptStatus
 
 
 class PromptVersionSummary(BaseModel):
@@ -30,6 +32,27 @@ class PromptTemplateSummary(BaseModel):
     version_count: int
     created_at: datetime
     updated_at: datetime
+
+
+class PromptVersionChangeRequest(BaseModel):
+    content: str = Field(min_length=10, max_length=50_000)
+    input_schema: dict[str, Any]
+    output_schema: dict[str, Any]
+    model_parameters: dict[str, Any] = Field(default_factory=dict)
+    change_summary: str = Field(min_length=3, max_length=500)
+    idempotency_key: str = Field(min_length=8, max_length=128)
+
+    @field_validator("input_schema", "output_schema")
+    @classmethod
+    def validate_json_schema(cls, value: dict[str, Any]) -> dict[str, Any]:
+        if value.get("type") != "object":
+            raise ValueError("Prompt schemas must declare type=object")
+        return value
+
+
+class PromptStatusChangeRequest(BaseModel):
+    status: PromptStatus
+    idempotency_key: str = Field(min_length=8, max_length=128)
 
 
 class ModelInvocationSummary(BaseModel):

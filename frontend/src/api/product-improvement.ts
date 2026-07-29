@@ -18,6 +18,7 @@ export const generateImprovementReport = (analysisId: string) =>
   request<ImprovementReport>(
     "/v1/product-improvement/reports",
     auth("POST", { analysis_id: analysisId }),
+    130_000,
   );
 
 export const getImprovementReport = (reportId: string) =>

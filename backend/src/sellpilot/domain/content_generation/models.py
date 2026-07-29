@@ -39,6 +39,7 @@ class LocalizedListing(StrictModel):
     faq: list[FaqItem] = Field(default_factory=list, max_length=10)
     sku_content: list[SkuContentItem] = Field(default_factory=list)
     keywords: list[str] = Field(min_length=1, max_length=30)
+    keyword_suggestions_zh: list[str] = Field(default_factory=list, max_length=30)
     target_language: str
     generation_mode: str
 
@@ -49,6 +50,8 @@ class QualityResult(StrictModel):
     keyword_coverage: float
     fact_issues: list[str]
     compliance_issues: list[str]
+    seo_issues: list[str] = Field(default_factory=list)
+    localization_issues: list[str] = Field(default_factory=list)
     completeness_issues: list[str]
     attempts: int
 

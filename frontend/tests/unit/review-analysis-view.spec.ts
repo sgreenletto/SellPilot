@@ -42,7 +42,13 @@ const result = {
   analysis_mode: "rule",
   prompt_version: null,
   model_version: null,
-  quality: { included_count: 1 },
+  quality: {
+    received_count: 1,
+    included_count: 1,
+    excluded_count: 0,
+    flag_counts: {},
+    excluded_review_ids: [],
+  },
   sentiment: { positive: 0, neutral: 0, negative: 1 },
   topics: [{ topic: "packaging", count: 1, frequency_rate: "1", negative_count: 1, severity: "1" }],
   pain_points: [
@@ -54,7 +60,7 @@ const result = {
       affected_sites: ["sg"],
     },
   ],
-  keywords: [],
+  keywords: [{ keyword: "packaging", count: 2, review_count: 1 }],
   trends: [],
   judgements: [],
   error_message: null,
@@ -85,6 +91,7 @@ describe("ReviewAnalysisView", () => {
           id: "E1",
           review_id: "REV1",
           label: "packaging",
+          sentiment: "negative",
           confidence: "0.9",
           original_content: review.content,
           translated_content: null,
@@ -101,7 +108,90 @@ describe("ReviewAnalysisView", () => {
     await flushPromises();
     expect(wrapper.text()).toContain("Packaging damaged");
     expect(wrapper.text()).toContain("当前仅展示数据源已有译文");
+    expect(wrapper.text()).toContain("2 星 · 英语");
+    expect(wrapper.text()).toContain("含改进信号");
+    expect(wrapper.text()).toContain("包装");
+    expect(wrapper.text()).not.toContain("negative");
     expect(api.listProductReviews).toHaveBeenCalledOnce();
+  });
+
+  it("searches original text or Chinese translation and keeps it in analysis scope", async () => {
+    const wrapper = await mountView();
+    await flushPromises();
+    await wrapper.get('input[placeholder="搜索原文或中文译文"]').setValue("配送延迟");
+    await wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("刷新评论"))
+      ?.trigger("click");
+    await flushPromises();
+    expect(api.listProductReviews).toHaveBeenLastCalledWith(
+      expect.objectContaining({ keyword: "配送延迟" }),
+    );
+    await wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析当前范围"))
+      ?.trigger("click");
+    await flushPromises();
+    expect(api.createReviewAnalysis).toHaveBeenCalledWith(
+      expect.objectContaining({ keyword: "配送延迟" }),
+    );
+  });
+
+  it("uses a fixed supported-language selector for listing and analysis", async () => {
+    const wrapper = await mountView();
+    await flushPromises();
+    const languageSelect = wrapper.get('select[aria-label="语言"]');
+    expect(languageSelect.findAll("option").map((option) => option.text())).toEqual([
+      "请选择语言",
+      "全部语言",
+      "英语",
+      "菲律宾语",
+      "印度尼西亚语",
+      "马来语",
+      "泰语",
+      "越南语",
+    ]);
+    await languageSelect.setValue("Vietnamese");
+    await wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("刷新评论"))
+      ?.trigger("click");
+    await flushPromises();
+    expect(api.listProductReviews).toHaveBeenLastCalledWith(
+      expect.objectContaining({ language: "Vietnamese" }),
+    );
+    await wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析当前范围"))
+      ?.trigger("click");
+    await flushPromises();
+    expect(api.createReviewAnalysis).toHaveBeenCalledWith(
+      expect.objectContaining({ languages: ["Vietnamese"] }),
+    );
+  });
+
+  it("localizes stored language, sentiment, and issue codes for Chinese users", async () => {
+    api.listProductReviews.mockResolvedValue([
+      { ...review, review_id: "REV-WRONG", issue_type: "wrong_item" },
+      {
+        ...review,
+        review_id: "REV-POSITIVE",
+        rating: 5,
+        sentiment_hint: "positive",
+        issue_type: "no_clear_issue",
+      },
+      { ...review, review_id: "REV-OTHER", issue_type: "other" },
+    ]);
+    const wrapper = await mountView();
+    await flushPromises();
+    expect(wrapper.text()).toContain("错发商品");
+    expect(wrapper.text()).toContain("正向");
+    expect(wrapper.text()).toContain("无明确问题");
+    expect(wrapper.text()).toContain("其他问题");
+    expect(wrapper.text()).not.toContain("wrong_item");
+    expect(wrapper.text()).not.toContain("no_clear_issue");
+    expect(wrapper.text()).not.toMatch(/\bother\b/);
+    expect(wrapper.text()).not.toContain("positive");
   });
 
   it("runs analysis and locates representative evidence", async () => {
@@ -114,11 +204,90 @@ describe("ReviewAnalysisView", () => {
     await flushPromises();
     expect(wrapper.text()).toContain("评论概览");
     expect(wrapper.text()).toContain("评论分析结果");
+    expect(wrapper.text()).toContain("改进信号");
+    expect(wrapper.text()).toContain("情感分类");
+    expect(wrapper.text()).toContain("评论主题");
+    expect(wrapper.text()).toContain("高频关键词");
+    expect(wrapper.text()).toContain("包装 · 1 条");
+    expect(wrapper.text()).not.toContain("建议关注方向");
     await wrapper
       .findAll("button")
       .find((button) => button.text() === "REV1")
       ?.trigger("click");
     expect(wrapper.get("#review-REV1").classes()).toContain("selected");
+  });
+
+  it("uses analysis judgements after running so list and sentiment summary reconcile", async () => {
+    api.listProductReviews.mockResolvedValue([
+      {
+        ...review,
+        rating: 3,
+        sentiment_hint: "neutral",
+        issue_type: "none",
+        content: "It works as described, though the finish is fairly basic.",
+      },
+    ]);
+    api.runReviewAnalysis.mockResolvedValue({
+      ...result,
+      sentiment: { positive: 0, neutral: 0, negative: 1 },
+      judgements: [
+        {
+          review_id: "REV1",
+          product_id: "PROD0001",
+          site: "sg",
+          rating: 3,
+          original_content: "It works as described, though the finish is fairly basic.",
+          translated_content: "功能符合描述，不过做工比较基础。",
+          display_content: "功能符合描述，不过做工比较基础。",
+          declared_language: "English",
+          detected_language: "en",
+          translation_status: "available",
+          sentiment: "negative",
+          topics: ["product_quality"],
+          confidence: "0.82",
+          origin: "rule",
+          source_created_at: "2026-01-01T00:00:00Z",
+          quality_flags: [],
+        },
+      ],
+    });
+    const wrapper = await mountView();
+    await flushPromises();
+    expect(wrapper.text()).toContain("中性");
+    await wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析当前范围"))
+      ?.trigger("click");
+    await flushPromises();
+    expect(wrapper.get("#review-REV1").text()).toContain("含改进信号");
+    expect(wrapper.get("#review-REV1").text()).toContain("产品质量");
+    expect(wrapper.get(".analysis-summary").text()).toContain("0 中性");
+  });
+
+  it("reconciles filtered and analyzed review counts with exclusion reasons", async () => {
+    api.runReviewAnalysis.mockResolvedValue({
+      ...result,
+      quality: {
+        received_count: 19,
+        included_count: 16,
+        excluded_count: 3,
+        flag_counts: { duplicate: 2, spam: 1 },
+        excluded_review_ids: ["REV17", "REV18", "REV19"],
+      },
+      sentiment: { positive: 8, neutral: 0, negative: 8 },
+    });
+    const wrapper = await mountView();
+    await flushPromises();
+    await wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析当前范围"))
+      ?.trigger("click");
+    await flushPromises();
+    expect(wrapper.text()).toContain("8 / 16 条有效评论");
+    expect(wrapper.text()).toContain(
+      "筛选到 19 条，纳入分析 16 条，排除 3 条（重复 2 条、垃圾内容 1 条）",
+    );
+    expect(wrapper.text()).toContain("评论主题");
   });
 
   it("shows backend disconnected and empty states honestly", async () => {
@@ -160,7 +329,7 @@ describe("ReviewAnalysisView", () => {
       ?.trigger("click");
     await flushPromises();
     expect(api.listReviewEvidence).toHaveBeenLastCalledWith("A1", 1, "topic", "packaging");
-    expect(wrapper.text()).toContain("同一评论涉及的多个方面合并展示");
+    expect(wrapper.text()).toContain("同一评论的多个改进方向合并展示");
   });
 
   it("does not display stale mismatch evidence for explicitly matching descriptions", async () => {
@@ -193,7 +362,57 @@ describe("ReviewAnalysisView", () => {
       .find((button) => button.text().includes("分析当前范围"))
       ?.trigger("click");
     await flushPromises();
-    expect(wrapper.get(".evidence-table__topics").text()).toContain("未识别明确方面");
-    expect(wrapper.get(".evidence-table__topics").text()).not.toContain("描述不符");
+    expect(wrapper.text()).toContain("暂无匹配证据");
+    expect(wrapper.get(".evidence-card").text()).not.toContain("描述不符");
+  });
+
+  it("does not include positive topic mentions in improvement evidence", async () => {
+    api.listReviewEvidence.mockResolvedValue({
+      items: [
+        {
+          id: "E-POSITIVE-QUALITY",
+          review_id: "REV00126",
+          language: "en",
+          rating: 5,
+          evidence_type: "topic",
+          label: "product_quality",
+          sentiment: "positive",
+          issue_type: "product_quality",
+          original_content: "The finish is clean and the size is exactly right for me.",
+          translated_content: "做工整洁，尺寸对我来说正合适。",
+          source_created_at: "2026-01-01T00:00:00Z",
+          confidence: "0.9",
+          is_mock_data: true,
+        },
+        {
+          id: "E-POSITIVE-SIZE",
+          review_id: "REV00126",
+          language: "en",
+          rating: 5,
+          evidence_type: "topic",
+          label: "size_specification",
+          sentiment: "positive",
+          issue_type: "size_specification",
+          original_content: "The finish is clean and the size is exactly right for me.",
+          translated_content: "做工整洁，尺寸对我来说正合适。",
+          source_created_at: "2026-01-01T00:00:00Z",
+          confidence: "0.9",
+          is_mock_data: true,
+        },
+      ],
+      page: 1,
+      page_size: 20,
+      total: 2,
+    });
+    const wrapper = await mountView();
+    await flushPromises();
+    await wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析当前范围"))
+      ?.trigger("click");
+    await flushPromises();
+    expect(wrapper.text()).toContain("暂无匹配证据");
+    expect(wrapper.text()).not.toContain("肯定 · 做工/质量良好");
+    expect(wrapper.text()).not.toContain("肯定 · 尺寸合适");
   });
 });

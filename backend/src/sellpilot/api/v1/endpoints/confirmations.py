@@ -11,6 +11,7 @@ from sellpilot.core.enums import ConfirmationStatus
 from sellpilot.core.middleware import get_request_id
 from sellpilot.core.response import ApiResponse, PageResult, success_response
 from sellpilot.schemas.confirmation import ConfirmationTaskResponse
+from sellpilot.services.ai_management import AIManagementService
 from sellpilot.services.commerce_operations import CommerceOperationService
 from sellpilot.services.confirmation import ConfirmationService
 from sellpilot.services.content_generation import ContentGenerationService
@@ -85,6 +86,7 @@ async def confirm_confirmation(
         settings,
     )
     CommerceOperationService(session, settings).register_executors(confirmations)
+    AIManagementService(session, settings).register_executors(confirmations)
     ContentGenerationService(session, settings).register_executors(confirmations)
     ProductImprovementService(session).register_executors(confirmations)
     ProductTranslationService(session, settings).register_executor(confirmations)

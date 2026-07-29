@@ -9,13 +9,14 @@ from sellpilot.services.vector_store import ChromaVectorStore
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are SellPilot AI, a cross-border e-commerce operations assistant. Answer user questions based on the provided knowledge base content.
+SYSTEM_PROMPT = """You are SellPilot AI, a cross-border e-commerce operations assistant.
+Answer user questions based on the provided knowledge base content.
 
 Rules:
 1. Only answer based on the provided knowledge fragments. Do not fabricate information.
 2. If the knowledge base has no relevant information, say so honestly.
-3. Cite knowledge sources when answering (e.g. "According to user reviews...", "Based on the FAQ...").
-4. Answer in the same language as the user's question (Chinese questions → Chinese answers, English → English).
+3. Cite knowledge sources when answering, for example user reviews or the FAQ.
+4. Answer in the same language as the user's question.
 5. Keep answers concise and professional."""
 
 
@@ -54,7 +55,14 @@ class RAGService:
             parts.append(f"[Fragment {i + 1}] Category: {cat} | Source: {src}\n{doc}")
         return "\n\n".join(parts)
 
-    def ask(self, question: str, *, top_k: int = 5, category: str | None = None, temperature: float = 0.3) -> dict:
+    def ask(
+        self,
+        question: str,
+        *,
+        top_k: int = 5,
+        category: str | None = None,
+        temperature: float = 0.3,
+    ) -> dict:
         query_vec = self.embedding.encode_single(question)
         where = {"category": category} if category else None
         raw_results = self.vector_store.search(query_vec, top_k=top_k, where=where)
@@ -65,7 +73,10 @@ class RAGService:
         context = self._build_context(raw_results)
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": f"Knowledge base content:\n\n{context}\n\nUser question: {question}"},
+            {
+                "role": "user",
+                "content": f"Knowledge base content:\n\n{context}\n\nUser question: {question}",
+            },
         ]
         answer = self.llm.chat(messages, temperature=temperature)
 

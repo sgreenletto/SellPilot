@@ -22,6 +22,7 @@ ReviewAnalysisMode = Literal["rule", "validated_model"]
 
 class ReviewQuery(ContractModel):
     product_id: str = Field(min_length=1, max_length=100)
+    keyword: str | None = Field(default=None, min_length=1, max_length=100)
     site: SiteCode | None = None
     language: str | None = Field(default=None, min_length=2, max_length=32)
     min_rating: int | None = Field(default=None, ge=1, le=5)
@@ -66,6 +67,7 @@ class ReviewResponse(ContractModel):
 class ReviewAnalysisCreateRequest(ContractModel):
     idempotency_key: IdempotencyKey
     product_id: str = Field(min_length=1, max_length=100)
+    keyword: str | None = Field(default=None, min_length=1, max_length=100)
     site: SiteCode | None = None
     languages: list[str] = Field(default_factory=list, max_length=10)
     min_rating: int | None = Field(default=None, ge=1, le=5)
@@ -80,6 +82,7 @@ class ReviewAnalysisCreateRequest(ContractModel):
     def validate_ranges_and_languages(self) -> "ReviewAnalysisCreateRequest":
         ReviewQuery(
             product_id=self.product_id,
+            keyword=self.keyword,
             site=self.site,
             min_rating=self.min_rating,
             max_rating=self.max_rating,

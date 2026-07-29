@@ -9,9 +9,12 @@ from sellpilot.schemas.ai_management import (
     MemberThreeEvaluationSummary,
     ModelInvocationSummary,
     ModelRuntimeSummary,
+    PromptStatusChangeRequest,
     PromptTemplateSummary,
+    PromptVersionChangeRequest,
     PromptVersionSummary,
 )
+from sellpilot.schemas.confirmation import ConfirmationTaskResponse
 from sellpilot.services.ai_management import AIManagementService
 
 router = APIRouter()
@@ -41,6 +44,48 @@ async def list_prompt_versions(
 ) -> ApiResponse[list[PromptVersionSummary]]:
     result = await AIManagementService(session, settings).list_prompt_versions(template_id)
     return success_response(result, get_request_id(request))
+
+
+@router.post(
+    "/prompts/{template_id}/versions",
+    response_model=ApiResponse[ConfirmationTaskResponse],
+)
+async def request_prompt_version(
+    template_id: UUID,
+    payload: PromptVersionChangeRequest,
+    request: Request,
+    session: SessionDependency,
+    settings: SettingsDependency,
+    user: CurrentUserDependency,
+) -> ApiResponse[ConfirmationTaskResponse]:
+    confirmation = await AIManagementService(session, settings).request_version_change(
+        template_id, payload, user.id
+    )
+    return success_response(
+        ConfirmationTaskResponse.model_validate(confirmation),
+        get_request_id(request),
+    )
+
+
+@router.post(
+    "/prompts/{template_id}/status",
+    response_model=ApiResponse[ConfirmationTaskResponse],
+)
+async def request_prompt_status(
+    template_id: UUID,
+    payload: PromptStatusChangeRequest,
+    request: Request,
+    session: SessionDependency,
+    settings: SettingsDependency,
+    user: CurrentUserDependency,
+) -> ApiResponse[ConfirmationTaskResponse]:
+    confirmation = await AIManagementService(session, settings).request_status_change(
+        template_id, payload, user.id
+    )
+    return success_response(
+        ConfirmationTaskResponse.model_validate(confirmation),
+        get_request_id(request),
+    )
 
 
 @router.get("/model-runtime", response_model=ApiResponse[ModelRuntimeSummary])

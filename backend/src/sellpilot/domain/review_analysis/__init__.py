@@ -3,6 +3,7 @@ from sellpilot.domain.review_analysis.analyzer import (
     ReviewAnalysisError,
     ReviewModelError,
     analyze_reviews,
+    classify_review_preview,
 )
 from sellpilot.domain.review_analysis.models import (
     AnalysisOrigin,
@@ -26,4 +27,5 @@ __all__ = [
     "ReviewTopic",
     "TranslationStatus",
     "analyze_reviews",
+    "classify_review_preview",
 ]

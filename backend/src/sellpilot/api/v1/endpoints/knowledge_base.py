@@ -115,7 +115,7 @@ async def delete_document(
     session: SessionDependency,
     settings: SettingsDependency,
 ) -> ApiResponse[dict]:
-    """删除知识文档，同时清除关联的 SQLite chunk 记录和 ChromaDB 向量。"""
+    """删除知识文档，同时清除关联的 PostgreSQL chunk 记录和 ChromaDB 向量。"""
     vector_store = ChromaVectorStore()
     vector_store.delete_by_document(document_id)
 

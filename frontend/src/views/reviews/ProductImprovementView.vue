@@ -14,7 +14,6 @@ import {
 import SpBadge from "@/components/base/SpBadge.vue";
 import SpButton from "@/components/base/SpButton.vue";
 import SpCard from "@/components/base/SpCard.vue";
-import SpEmptyState from "@/components/base/SpEmptyState.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
 import type {
   ConfirmationResult,
@@ -32,10 +31,22 @@ const loading = ref(false);
 const action = ref("");
 const error = ref("");
 const notice = ref("");
+const linkedAnalysis = computed(() => Boolean(route.query.analysis_id));
 const accepted = computed(
   () => report.value?.suggestions.filter((item) => item.status === "ACCEPTED") ?? [],
 );
 const confirmationStatus = computed(() => confirmation.value?.status.toUpperCase() ?? "");
+const confirmationStatusLabel = computed(
+  () =>
+    ({
+      PENDING: "等待确认",
+      CONFIRMED: "已确认",
+      EXECUTED: "已创建草稿",
+      CANCELLED: "已取消",
+      CANCELED: "已取消",
+      FAILED: "执行失败",
+    })[confirmationStatus.value] ?? "处理中",
+);
 const canRequestDraft = computed(
   () =>
     !action.value &&
@@ -52,9 +63,15 @@ const categoryLabels: Record<string, string> = {
   wrong_or_missing_item: "错发漏发",
 };
 const statusLabels = { PROPOSED: "待审查", ACCEPTED: "已采纳", IGNORED: "已忽略" };
+const percent = (value: string): string => `${Math.round(Number(value) * 100)}%`;
 
 function handleError(reason: unknown, fallback: string): void {
-  error.value = reason instanceof FrontendApiError ? reason.message : fallback;
+  if (reason instanceof FrontendApiError) {
+    error.value =
+      reason.message === "请求超时" ? "AI 生成等待时间过长，请稍后重试。" : reason.message;
+    return;
+  }
+  error.value = fallback;
 }
 
 async function generate(): Promise<void> {
@@ -206,18 +223,26 @@ onMounted(() => {
     title="产品改良报告"
     description="把评论证据转为可审查、可编辑、需确认后才能生成草稿的改良方案。"
   >
-    <div v-if="error" class="message message--error" role="alert">{{ error }}</div>
+    <div v-if="error && report" class="message message--error" role="alert">{{ error }}</div>
     <div v-if="notice" class="message message--success" role="status">{{ notice }}</div>
     <SpCard v-if="!report" class="generator" variant="solid">
-      <div>
-        <small>报告来源</small>
-        <h2>已完成的评论分析</h2>
-        <p>仅根据低评分或含明确缺点表达的评论生成改良建议。</p>
+      <div class="generator__copy">
+        <div class="generator__icon"><RefreshCw :size="22" /></div>
+        <div>
+          <small>{{ loading ? "正在生成" : "评论分析已就绪" }}</small>
+          <h2>{{ loading ? "正在生成产品改良报告" : "生成产品改良报告" }}</h2>
+          <p>仅使用含明确缺点的评论，AI 生成通常需要十几秒。</p>
+          <p v-if="error" class="generator__error" role="alert">{{ error }}</p>
+        </div>
       </div>
-      <label>评论分析 ID<input v-model="analysisId" placeholder="从评论分析结果进入" /></label>
-      <SpButton :loading="loading" @click="generate">
-        <template #icon><RefreshCw :size="17" /></template>加载报告
-      </SpButton>
+      <div class="generator__action">
+        <label v-if="!linkedAnalysis">
+          评论分析 ID<input v-model="analysisId" placeholder="粘贴已完成的分析 ID" />
+        </label>
+        <SpButton :loading="loading" @click="generate">
+          {{ error ? "重新生成" : "生成报告" }}
+        </SpButton>
+      </div>
     </SpCard>
 
     <template v-if="report">
@@ -230,7 +255,7 @@ onMounted(() => {
         </div>
         <div class="toolbar">
           <SpButton variant="secondary" :loading="action === 'export'" @click="exportReport">
-            <template #icon><Download :size="17" /></template>导出 Markdown
+            <template #icon><Download :size="17" /></template>导出工厂改良报告
           </SpButton>
           <SpButton
             :loading="action === 'request'"
@@ -278,13 +303,35 @@ onMounted(() => {
               优先级 P{{ suggestion.priority }}
             </SpBadge>
             <strong>{{ categoryLabels[suggestion.category] ?? suggestion.category }}</strong>
-            <span>{{ suggestion.evidence_count }} 条评论提及</span>
             <span class="suggestion__status">{{ statusLabels[suggestion.status] }}</span>
           </header>
+          <div class="suggestion__metrics" aria-label="建议依据">
+            <span
+              ><small>问题频率</small
+              ><strong>{{ percent(suggestion.frequency_rate) }}</strong></span
+            >
+            <span
+              ><small>严重程度</small><strong>{{ percent(suggestion.severity) }}</strong></span
+            >
+            <span
+              ><small>结论置信度</small><strong>{{ percent(suggestion.confidence) }}</strong></span
+            >
+            <span
+              ><small>证据评论</small><strong>{{ suggestion.evidence_count }} 条</strong></span
+            >
+          </div>
           <div class="suggestion__body">
             <div class="suggestion__editor">
               <label>建议标题<input v-model="suggestion.title" class="title-input" /></label>
               <label>改良方案<textarea v-model="suggestion.description" rows="4"></textarea></label>
+              <details v-if="suggestion.evidence_review_ids.items?.length" class="evidence-reviews">
+                <summary>查看 {{ suggestion.evidence_count }} 条证据评论编号</summary>
+                <div>
+                  <span v-for="reviewId in suggestion.evidence_review_ids.items" :key="reviewId">
+                    {{ reviewId }}
+                  </span>
+                </div>
+              </details>
             </div>
           </div>
           <footer>
@@ -320,35 +367,37 @@ onMounted(() => {
       </section>
 
       <SpCard v-if="confirmation" class="confirmation">
-        <ShieldCheck :size="28" />
-        <div>
-          <h3>草稿确认任务：{{ confirmation.status }}</h3>
-          <p>{{ confirmation.risk_warning }}</p>
-          <p v-if="confirmation.execution_result">执行结果：{{ confirmation.execution_result }}</p>
+        <div class="confirmation__main">
+          <div class="confirmation__icon"><ShieldCheck :size="22" /></div>
+          <div>
+            <SpBadge :variant="confirmationStatus === 'PENDING' ? 'warning' : 'info'">
+              {{ confirmationStatusLabel }}
+            </SpBadge>
+            <h3>创建商品内容草稿</h3>
+            <p>{{ confirmation.risk_warning }}</p>
+            <p v-if="confirmation.execution_result">草稿已创建，可前往任务中心查看。</p>
+          </div>
         </div>
-        <SpButton
-          v-if="confirmationStatus === 'PENDING'"
-          :loading="action === 'confirm'"
-          @click="confirmDraft"
-        >
-          明确确认并创建草稿
-        </SpButton>
-        <SpButton
-          v-if="confirmationStatus === 'PENDING'"
-          variant="secondary"
-          :loading="action === 'cancel'"
-          @click="cancelDraft"
-        >
-          取消
-        </SpButton>
-        <SpButton variant="ghost" @click="router.push('/tasks')"> 前往任务中心 </SpButton>
+        <div class="confirmation__actions">
+          <SpButton
+            v-if="confirmationStatus === 'PENDING'"
+            :loading="action === 'confirm'"
+            @click="confirmDraft"
+          >
+            确认创建草稿
+          </SpButton>
+          <SpButton
+            v-if="confirmationStatus === 'PENDING'"
+            variant="secondary"
+            :loading="action === 'cancel'"
+            @click="cancelDraft"
+          >
+            取消
+          </SpButton>
+          <SpButton variant="ghost" @click="router.push('/tasks')">前往任务中心</SpButton>
+        </div>
       </SpCard>
     </template>
-    <SpEmptyState
-      v-else
-      title="尚未生成改良报告"
-      description="请先完成评论分析，再使用分析 ID 生成基于证据的规则报告。"
-    />
   </PageContainer>
 </template>
 
@@ -364,9 +413,31 @@ onMounted(() => {
   gap: var(--sp-space-4);
 }
 .generator {
-  display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(320px, 1.2fr) auto;
+  justify-content: space-between;
   margin-bottom: var(--sp-space-6);
+  padding: var(--sp-space-5);
+}
+.generator__copy,
+.generator__action {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-space-4);
+}
+.generator__copy {
+  min-width: 0;
+}
+.generator__icon {
+  display: grid;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  color: var(--sp-color-primary);
+  background: var(--sp-color-primary-soft);
+  border-radius: var(--sp-radius-control);
+  place-items: center;
+}
+.generator__action label {
+  width: min(420px, 42vw);
 }
 .generator h2,
 .generator p {
@@ -375,6 +446,10 @@ onMounted(() => {
 .generator p,
 .report-heading p {
   color: var(--sp-color-text-muted);
+}
+.generator .generator__error {
+  color: var(--sp-color-danger);
+  font-weight: 650;
 }
 input,
 textarea {
@@ -429,6 +504,45 @@ textarea {
 .suggestion__body {
   margin: var(--sp-space-5) 0;
 }
+.suggestion__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-space-3);
+  margin-top: var(--sp-space-4);
+}
+.suggestion__metrics span {
+  display: grid;
+  gap: var(--sp-space-1);
+  padding: var(--sp-space-3);
+  background: var(--sp-color-surface-muted);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-control);
+}
+.suggestion__metrics small {
+  color: var(--sp-color-text-muted);
+}
+.evidence-reviews {
+  padding: var(--sp-space-3);
+  background: var(--sp-color-surface-muted);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-control);
+}
+.evidence-reviews summary {
+  color: var(--sp-color-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+.evidence-reviews div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-space-2);
+  margin-top: var(--sp-space-3);
+}
+.evidence-reviews span {
+  padding: var(--sp-space-1) var(--sp-space-2);
+  background: var(--sp-color-surface);
+  border-radius: var(--sp-radius-pill);
+}
 .suggestion__editor {
   display: grid;
   gap: var(--sp-space-4);
@@ -482,10 +596,37 @@ textarea {
 }
 .confirmation {
   margin-top: var(--sp-space-5);
-  flex-wrap: wrap;
+  justify-content: space-between;
+  padding: var(--sp-space-5);
 }
-.confirmation div {
-  flex: 1;
+.confirmation__main,
+.confirmation__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-space-4);
+}
+.confirmation__main {
+  min-width: 0;
+}
+.confirmation__main h3 {
+  margin: var(--sp-space-2) 0 var(--sp-space-1);
+}
+.confirmation__main p {
+  margin: 0;
+  color: var(--sp-color-text-secondary);
+}
+.confirmation__icon {
+  display: grid;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  color: var(--sp-color-primary);
+  background: var(--sp-color-surface-muted);
+  border-radius: var(--sp-radius-control);
+  place-items: center;
+}
+.confirmation__actions {
+  flex: 0 0 auto;
 }
 .message {
   padding: var(--sp-space-3) var(--sp-space-4);
@@ -497,15 +638,26 @@ textarea {
   background: var(--sp-color-surface);
   border: 1px solid var(--sp-color-danger);
 }
+@media (max-width: 900px) {
+  .suggestion__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .message--success {
   color: var(--sp-color-success);
   background: var(--sp-color-surface);
   border: 1px solid var(--sp-color-success);
 }
 @media (max-width: 900px) {
-  .generator,
   .suggestion__body {
     grid-template-columns: 1fr;
+  }
+  .generator {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .generator__action {
+    justify-content: flex-end;
   }
   .report-heading,
   .no-suggestions {
@@ -521,14 +673,21 @@ textarea {
     grid-template-columns: 1fr;
   }
   .toolbar,
-  .confirmation,
   .report-heading {
     align-items: stretch;
     flex-direction: column;
   }
   .toolbar :deep(.sp-button),
-  .confirmation :deep(.sp-button) {
+  .confirmation__actions :deep(.sp-button) {
     width: 100%;
+  }
+  .confirmation {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .confirmation__actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 </style>

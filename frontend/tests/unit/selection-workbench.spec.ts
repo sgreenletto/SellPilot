@@ -154,6 +154,43 @@ describe("SelectionWorkbenchView", () => {
     expect(wrapper.text()).toContain("没有可分析的候选商品");
   });
 
+  it("distinguishes a request timeout from a disconnected backend", async () => {
+    selectionApi.listSelectionCandidates.mockRejectedValue(
+      new FrontendApiError({
+        code: "NETWORK_ERROR",
+        message: "请求超时",
+        status: 0,
+      }),
+    );
+
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+
+    expect(wrapper.get('[role="alert"]').text()).toContain("候选请求超时");
+    expect(wrapper.get('[role="alert"]').text()).not.toContain("后端未连接");
+  });
+
+  it("identifies a batch analysis timeout separately from candidate loading", async () => {
+    selectionApi.createSelectionAnalysis.mockRejectedValue(
+      new FrontendApiError({
+        code: "NETWORK_ERROR",
+        message: "请求超时",
+        status: 0,
+      }),
+    );
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+
+    const analyze = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析全部候选"));
+    await analyze?.trigger("click");
+    await flushPromises();
+
+    expect(wrapper.get('[role="alert"]').text()).toContain("选品分析超时");
+    expect(wrapper.get('[role="alert"]').text()).not.toContain("候选请求超时");
+  });
+
   it("blocks analysis when the price range is invalid", async () => {
     const wrapper = await mountWorkbench();
     await flushPromises();
@@ -230,6 +267,42 @@ describe("SelectionWorkbenchView", () => {
 
     expect(wrapper.text()).toContain("没有商品满足利润条件");
     expect(wrapper.text()).toContain("1 个候选已被最低利润或利润率条件排除");
+  });
+
+  it("renders a schema-validated model explanation when available", async () => {
+    selectionApi.createSelectionAnalysis.mockResolvedValue({
+      task_id: "task-ai",
+      agent_task_id: "agent-ai",
+      status: "SUCCEEDED",
+      formula_version: "selection-v1.0.0",
+      generation_mode: "validated_generator",
+      total_candidates: 1,
+      ranked_count: 1,
+      excluded_count: 0,
+      results: [
+        {
+          ...result,
+          explanation: {
+            ...result.explanation,
+            summary: "该商品需求稳定，利润空间具有竞争力。",
+            generation_mode: "validated_generator",
+          },
+        },
+      ],
+      excluded: [],
+      is_mock_data: true,
+    });
+
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+    const analyze = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析全部候选"));
+    await analyze?.trigger("click");
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("校验生成解释");
+    expect(wrapper.text()).toContain("该商品需求稳定，利润空间具有竞争力。");
   });
 
   it("closes the product detail with Escape", async () => {

@@ -2,8 +2,8 @@
 
 - 数据集版本：`member3-eval-v1.0.0`
 - 评估器版本：`member3-evaluator-v1.0.0`
-- 实际运行时间：`2026-07-28T10:15:39.572461+00:00`
-- 总耗时：`9.567 ms`
+- 实际运行时间：`2026-07-28T18:52:56.505189+00:00`
+- 总耗时：`16.402 ms`
 - 失败案例：`0`
 
 ## 实际指标
@@ -21,7 +21,7 @@
 - topic_correct_rate: `1.0`
 - evidence_reference_valid_rate: `1.0`
 - analysis_origin: `rule`
-- analyzer_version: `review-analysis-v1.0.0`
+- analyzer_version: `review-analysis-v1.1.0`
 - case_count: `3`
 
 ### content_generation

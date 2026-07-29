@@ -108,11 +108,36 @@ async def test_review_analysis_api_create_run_query_and_evidence(client_bundle):
     assert reviews.status_code == 200
     assert reviews.json()["data"][0]["review_id"] == "REV-API-1"
 
+    translated_search = await client.get(
+        "/api/v1/review-analysis/reviews",
+        params={"product_id": "REV-API-P1", "keyword": "配送延迟"},
+        headers=headers,
+    )
+    assert translated_search.status_code == 200
+    assert [item["review_id"] for item in translated_search.json()["data"]] == ["REV-API-1"]
+
+    original_search = await client.get(
+        "/api/v1/review-analysis/reviews",
+        params={"product_id": "REV-API-P1", "keyword": "Broken product"},
+        headers=headers,
+    )
+    assert original_search.status_code == 200
+    assert [item["review_id"] for item in original_search.json()["data"]] == ["REV-API-1"]
+
+    missing_search = await client.get(
+        "/api/v1/review-analysis/reviews",
+        params={"product_id": "REV-API-P1", "keyword": "完全不存在的评论内容"},
+        headers=headers,
+    )
+    assert missing_search.status_code == 200
+    assert missing_search.json()["data"] == []
+
     created = await client.post(
         "/api/v1/review-analysis/analyses",
         json={
             "idempotency_key": "review-api-create-001",
             "product_id": "REV-API-P1",
+            "keyword": "配送延迟",
             "site": "sg",
             "batch_size": 1,
             "maximum_reviews": 10,
@@ -160,13 +185,16 @@ async def test_review_analysis_api_create_run_query_and_evidence(client_bundle):
             "page_size": 20,
             "evidence_type": "topic",
             "label": evidence_item["label"],
+            "sentiment": "negative",
         },
         headers=headers,
     )
     assert filtered_evidence.status_code == 200
     assert filtered_evidence.json()["data"]["total"] >= 1
     assert all(
-        item["evidence_type"] == "topic" and item["label"] == evidence_item["label"]
+        item["evidence_type"] == "topic"
+        and item["label"] == evidence_item["label"]
+        and item["sentiment"] == "negative"
         for item in filtered_evidence.json()["data"]["items"]
     )
 
@@ -199,7 +227,11 @@ async def test_review_analysis_api_create_run_query_and_evidence(client_bundle):
     export_data = exported.json()["data"]
     assert export_data["format"] == "markdown"
     assert export_data["filename"].endswith(".md")
-    assert "# REV-API-P1 产品改良报告" in export_data["content"]
+    assert "# REV-API-P1 工厂产品改良报告" in export_data["content"]
+    assert "- 问题频率：" in export_data["content"]
+    assert "- 严重程度：" in export_data["content"]
+    assert "- 结论置信度：" in export_data["content"]
+    assert "- 证据编号：REV-API-1" in export_data["content"]
 
     draft_request = await client.post(
         f"/api/v1/product-improvement/reports/{report['id']}/draft-confirmations",
