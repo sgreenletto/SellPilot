@@ -515,7 +515,11 @@ async def translate_review_batch(
     return {}
 
 
-def build_selection_explanation_generator(settings: Settings):
+def build_selection_explanation_generator(
+    settings: Settings,
+    *,
+    transport: httpx.AsyncBaseTransport | None = None,
+):
     if settings.content_model_provider != "aliyun_bailian":
         return None
 
@@ -536,7 +540,8 @@ def build_selection_explanation_generator(settings: Settings):
                         "Explain deterministic product selection results. Return JSON only "
                         "with summary, evidence, risks and generation_mode. Evidence must "
                         "contain exactly the supplied metric values; never change a score. "
-                        "Write summary and risks in Simplified Chinese."
+                        "Write summary and risks in Simplified Chinese. Set generation_mode "
+                        "to validated_generator exactly."
                     ),
                 },
                 {
@@ -555,14 +560,37 @@ def build_selection_explanation_generator(settings: Settings):
             "response_format": {"type": "json_object"},
         }
         try:
-            async with httpx.AsyncClient(timeout=settings.bailian_timeout_seconds) as client:
+            async with httpx.AsyncClient(
+                timeout=settings.bailian_timeout_seconds,
+                transport=transport,
+            ) as client:
                 response = await client.post(
                     f"{settings.bailian_base_url.rstrip('/')}/chat/completions",
                     headers={"Authorization": f"Bearer {api_key}"},
                     json=payload,
                 )
                 response.raise_for_status()
-            return json.loads(response.json()["choices"][0]["message"]["content"])
+            result = json.loads(response.json()["choices"][0]["message"]["content"])
+            if not isinstance(result, dict):
+                return {}
+            # Generation provenance is owned by the application, not the model.
+            result["generation_mode"] = "validated_generator"
+            # Deterministic evidence is owned by the scoring kernel. Rebuild it from
+            # trusted values instead of accepting model-selected shapes or numbers.
+            result["evidence"] = [
+                {
+                    "metric": metric,
+                    "value": value,
+                    "source": "deterministic selection result",
+                }
+                for metric, value in expected.items()
+            ]
+            risks = result.get("risks")
+            if isinstance(risks, str):
+                result["risks"] = [risks] if risks.strip() else []
+            elif not isinstance(risks, list):
+                result["risks"] = []
+            return result
         except (httpx.HTTPError, KeyError, IndexError, TypeError, json.JSONDecodeError):
             return {}
 

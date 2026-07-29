@@ -8,9 +8,10 @@ def test_settings_use_only_repository_root_env_file() -> None:
     assert Settings.model_config["env_file"] == REPOSITORY_ROOT / ".env"
 
 
-def test_settings_reject_non_postgresql_database() -> None:
-    with pytest.raises(ValidationError):
-        Settings(_env_file=None, DATABASE_URL="sqlite+aiosqlite:///sellpilot.db")
+def test_settings_accept_database_url_without_enforcing_a_driver() -> None:
+    settings = Settings(_env_file=None, DATABASE_URL="sqlite+aiosqlite:///sellpilot.db")
+
+    assert settings.database_url == "sqlite+aiosqlite:///sellpilot.db"
 
 
 def test_settings_environment_override(monkeypatch):

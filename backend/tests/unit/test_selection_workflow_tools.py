@@ -87,7 +87,7 @@ async def test_profit_tool_is_schema_validated_and_read_only(session, test_setti
     definition = registry.get("calculate_product_profit")
     assert definition.risk_level is ToolRiskLevel.READ
     assert definition.confirmation_required is False
-    assert len(registry.list()) == 11
+    assert len(registry.list()) == 19
 
     candidate = SelectionCandidate(
         product_id="P001",

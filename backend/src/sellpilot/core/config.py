@@ -176,13 +176,6 @@ class Settings(BaseSettings):
             raise ValueError("API_V1_PREFIX must start with '/'")
         return value.rstrip("/")
 
-    @field_validator("database_url")
-    @classmethod
-    def validate_database_url(cls, value: str) -> str:
-        if not value.startswith("postgresql+asyncpg://"):
-            raise ValueError("DATABASE_URL must use PostgreSQL with the asyncpg driver")
-        return value
-
     @model_validator(mode="after")
     def validate_security_and_platform(self) -> "Settings":
         if self.tool_default_timeout_seconds > self.tool_max_timeout_seconds:
