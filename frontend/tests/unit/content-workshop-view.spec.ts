@@ -70,6 +70,9 @@ describe("ContentWorkshopView", () => {
     expect(wrapper.text()).not.toContain("商品内容工坊");
     expect(wrapper.text()).not.toContain("内容流程");
     expect(wrapper.text()).not.toContain("关键词覆盖率");
+    expect(wrapper.text()).toContain("大众消费者");
+    expect(wrapper.text()).toContain("职场办公人群");
+    expect(wrapper.text()).toContain("学生群体");
   });
 
   it("renders localized editable fields and supports section regeneration", async () => {
@@ -100,5 +103,22 @@ describe("ContentWorkshopView", () => {
     await flushPromises();
     expect(contentApi.generateContent).toHaveBeenCalledTimes(2);
     expect(wrapper.text()).toContain("全部内容已重新生成");
+  });
+
+  it("accepts a custom Chinese audience", async () => {
+    const wrapper = mount(ContentWorkshopView);
+    await wrapper.get('select[aria-label="目标受众"]').setValue("__custom__");
+
+    const input = wrapper.get('input[placeholder="例如：首次购买扩展坞的远程办公人员"]');
+    await input.setValue("银发数码产品初学者");
+    await wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("生成并检查"))
+      ?.trigger("click");
+    await flushPromises();
+
+    expect(contentApi.generateContent).toHaveBeenCalledWith(
+      expect.objectContaining({ audience: "银发数码产品初学者" }),
+    );
   });
 });
