@@ -22,6 +22,7 @@ dependencies = [
 sellpilot-create-admin = "sellpilot.cli.create_admin:main"
 sellpilot-import-mock-data = "sellpilot.cli.import_mock_data:main"
 sellpilot-import-knowledge = "sellpilot.cli.import_knowledge_data:main"
+sellpilot-check-demo-readiness = "sellpilot.cli.check_demo_readiness:main"
 sellpilot-start-api = "sellpilot.cli.start_api:main"
 sellpilot-evaluate-member3 = "sellpilot.cli.evaluate_member3:main"
 sellpilot-mcp = "sellpilot.mcp_server.server:main"
