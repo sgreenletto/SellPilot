@@ -368,6 +368,22 @@ function scoreClass(s: number) {
 .kb-search-bar__input {
   flex: 1;
 }
+.kb-cn-toggle {
+  padding: 6px 12px;
+  border-radius: 99px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #999;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.kb-cn-toggle--on {
+  background: #0b234a10;
+  border-color: #0b234a;
+  color: #0b234a;
+}
 
 /* Results */
 .kb-results {

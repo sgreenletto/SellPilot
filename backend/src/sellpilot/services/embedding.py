@@ -6,7 +6,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_MODEL_NAME = "all-MiniLM-L6-v2"
+DEFAULT_MODEL_NAME = "BAAI/bge-small-zh-v1.5"
 
 # 启动时即加载，不延迟到首次 API 调用
 _model: Any = None
@@ -16,9 +16,8 @@ _model_name: str = DEFAULT_MODEL_NAME
 def _load_model() -> Any:
     from sentence_transformers import SentenceTransformer
 
-    # 禁用 HF Hub 网络请求，只用本地缓存
-    os.environ.setdefault("HF_HUB_OFFLINE", "1")
     logger.info("Loading embedding model '%s' ...", _model_name)
+    os.environ.setdefault("HF_HUB_OFFLINE", "1")
     m = SentenceTransformer(_model_name, local_files_only=True)
     logger.info("Embedding model ready. dim=%d", m.get_sentence_embedding_dimension())
     return m
