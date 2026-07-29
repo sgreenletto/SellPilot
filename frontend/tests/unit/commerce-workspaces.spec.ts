@@ -21,6 +21,8 @@ const cancelCommerceOperation = vi.fn();
 const requestProductDraft = vi.fn();
 const requestProductImport = vi.fn();
 const getProductTranslationProviderStatus = vi.fn();
+const requestProductTranslation = vi.fn();
+const getProductTranslationTask = vi.fn();
 
 vi.mock("@/api/dashboard", () => ({
   loadCommerceDashboardSnapshot: (...args: unknown[]) => loadCommerceDashboardSnapshot(...args),
@@ -37,8 +39,8 @@ vi.mock("@/api/commerce", async (importOriginal) => ({
 vi.mock("@/api/product-translation", () => ({
   getProductTranslationProviderStatus: (...args: unknown[]) =>
     getProductTranslationProviderStatus(...args),
-  requestProductTranslation: vi.fn(),
-  getProductTranslationTask: vi.fn(),
+  requestProductTranslation: (...args: unknown[]) => requestProductTranslation(...args),
+  getProductTranslationTask: (...args: unknown[]) => getProductTranslationTask(...args),
 }));
 
 const dashboardOrders: Order[] = [
@@ -156,6 +158,8 @@ describe("成员二业务工作台", () => {
     requestProductDraft.mockReset();
     requestProductImport.mockReset();
     getProductTranslationProviderStatus.mockReset();
+    requestProductTranslation.mockReset();
+    getProductTranslationTask.mockReset();
     getProductTranslationProviderStatus.mockResolvedValue({
       provider: "offline_template",
       configured: false,
@@ -277,6 +281,53 @@ describe("成员二业务工作台", () => {
       expect(requestProductDraft).toHaveBeenCalled();
       expect(wrapper.text()).toContain("刷新页面后仍会保留");
     });
+  });
+
+  it("商品页选择缺失语言后自动通过确认任务生成机器译文", async () => {
+    getProductTranslationProviderStatus.mockResolvedValue({
+      provider: "aliyun_bailian",
+      configured: true,
+      supported_languages: ["zh-CN"],
+    });
+    requestProductTranslation.mockResolvedValue({
+      task_id: "TRANSLATION-TASK-001",
+      confirmation_task_id: "TRANSLATION-CONFIRMATION-001",
+      status: "pending_confirmation",
+      results: [],
+      failed_languages: [],
+    });
+    getProductTranslationTask.mockResolvedValue({
+      task_id: "TRANSLATION-TASK-001",
+      confirmation_task_id: "TRANSLATION-CONFIRMATION-001",
+      status: "completed",
+      results: [
+        {
+          language: "zh-CN",
+          title: "USB-C 集线器",
+          description: "适用于笔记本电脑和平板电脑的多接口集线器。",
+          category_name: "消费电子",
+          specifications: [],
+        },
+      ],
+      failed_languages: [],
+    });
+
+    const wrapper = mount(ProductsView, {
+      global: { plugins: [createPinia()] },
+    });
+    await vi.waitFor(() => expect(wrapper.text()).toContain("已连接后端"));
+
+    await wrapper.get(".form-grid select").setValue("zh-CN");
+
+    await vi.waitFor(() => {
+      expect(requestProductTranslation).toHaveBeenCalledTimes(1);
+      expect(confirmCommerceOperation).toHaveBeenCalledWith("TRANSLATION-CONFIRMATION-001");
+      expect(wrapper.get('input[placeholder="待补充简体中文名称"]').element).toHaveProperty(
+        "value",
+        "USB-C 集线器",
+      );
+    });
+    expect(wrapper.text()).not.toContain("百炼机器翻译");
   });
 
   it("库存页展示预警、补货建议并记录单项调整流水", async () => {
