@@ -147,43 +147,61 @@ async function loadTranslationStatus(): Promise<void> {
 
 async function translateActiveLanguage(): Promise<void> {
   if (!selected.value || activeLanguage.value === "en") return;
+  const product = selected.value;
+  const productId = String(product.product_id);
+  const language = activeLanguage.value as ProductTranslationLanguage;
   translating.value = true;
-  notice.value = `正在请求${activeLanguageLabel.value}机器翻译确认…`;
+  notice.value = "";
   try {
     const requested = await requestProductTranslation({
       source: {
-        product_id: String(selected.value.product_id),
+        product_id: productId,
         source_language: "en",
-        title: String(selected.value.title ?? ""),
-        description: String(selected.value.description ?? ""),
-        category_name: String(selected.value.category_name ?? ""),
+        title: String(product.title ?? ""),
+        description: String(product.description ?? ""),
+        category_name: String(product.category_name ?? ""),
         specifications: [],
       },
-      target_languages: [activeLanguage.value as ProductTranslationLanguage],
+      target_languages: [language],
       fields: ["title", "description", "category_name", "specifications"],
-      idempotency_key: `product-translation-${selected.value.product_id}-${activeLanguage.value}-${Date.now()}`,
+      idempotency_key: `product-translation-${productId}-${language}-${Date.now()}`,
     });
     await confirmCommerceOperation(requested.confirmation_task_id);
     const completed = await getProductTranslationTask(requested.task_id);
-    const translated = completed.results.find((item) => item.language === activeLanguage.value);
+    const translated = completed.results.find((item) => item.language === language);
     if (!translated) {
       throw new Error(completed.failed_languages[0]?.message ?? "翻译服务未返回目标语言");
     }
-    const productId = String(selected.value.product_id);
     localizedByProduct.value[productId] = {
       ...localizedByProduct.value[productId],
-      [activeLanguage.value]: {
+      [language]: {
         title: translated.title,
         description: translated.description,
         category_name: translated.category_name ?? "",
       },
     };
-    notice.value = `${activeLanguageLabel.value}机器翻译已生成，当前仅保存在浏览器会话中`;
+    notice.value = "";
   } catch (reason) {
     notice.value = reason instanceof Error ? reason.message : "商品机器翻译失败";
   } finally {
     translating.value = false;
   }
+}
+
+async function translateMissingActiveLanguage(): Promise<void> {
+  if (
+    !selected.value ||
+    activeLanguage.value === "en" ||
+    translating.value ||
+    hasLocalizedContent.value
+  ) {
+    return;
+  }
+  if (!translationStatus.value?.configured) {
+    notice.value = "机器翻译服务未配置，无法自动生成当前语言内容";
+    return;
+  }
+  await translateActiveLanguage();
 }
 
 function defaultLocalizedTitle(language: string): string {
@@ -406,13 +424,17 @@ async function saveDraft(): Promise<void> {
 
 function badge(value: unknown): "active" | "pending" | "failed" {
   const text = String(value);
-  if (text.includes("fail")) return "failed";
+  if (text.includes("fail") || text.includes("inactive")) return "failed";
   if (text.includes("draft") || text.includes("pending")) return "pending";
   return "active";
 }
 
 watch([query, status, pageSize], () => (currentPage.value = 1));
 watch(selectedShopId, () => void loadCurrentShop());
+watch(
+  [activeLanguage, () => selected.value?.product_id, () => translationStatus.value?.configured],
+  () => void translateMissingActiveLanguage(),
+);
 onMounted(() => {
   void loadCurrentShop();
   void loadTranslationStatus();
@@ -521,7 +543,7 @@ onMounted(() => {
         <div class="form-grid">
           <label class="wide">
             当前内容语言
-            <select v-model="activeLanguage">
+            <select v-model="activeLanguage" :disabled="translating">
               <option
                 v-for="language in languageOptions"
                 :key="language.code"
@@ -531,28 +553,18 @@ onMounted(() => {
               </option>
             </select>
           </label>
-          <div v-if="activeLanguage !== 'en'" class="translation-status wide" role="status">
-            <div>
-              <strong>{{ hasLocalizedContent ? "本地化内容" : "待翻译" }}</strong>
-              <span v-if="hasLocalizedContent">
-                当前{{ activeLanguageLabel }}内容保存在浏览器会话中，尚未写入后端。
-              </span>
-              <span v-else>
-                暂无{{
-                  activeLanguageLabel
-                }}内容；可以调用百炼机器翻译，也可以进入编辑模式人工补充。
-              </span>
-            </div>
-            <SpButton
-              size="sm"
-              variant="secondary"
-              :loading="translating"
-              :disabled="!translationStatus?.configured"
-              @click="translateActiveLanguage"
-            >
-              {{ translationStatus?.configured ? "百炼机器翻译" : "机器翻译服务未配置" }}
-            </SpButton>
-          </div>
+          <span v-if="translating" class="translation-progress wide" role="status">
+            正在生成{{ activeLanguageLabel }}内容…
+          </span>
+          <span
+            v-else-if="
+              activeLanguage !== 'en' && !translationStatus?.configured && !hasLocalizedContent
+            "
+            class="translation-progress translation-progress--error wide"
+            role="status"
+          >
+            机器翻译服务未配置，可进入编辑模式人工补充。
+          </span>
           <label
             >商品名称<input
               v-model="localizedTitle"
@@ -700,10 +712,9 @@ small {
   clip: rect(0, 0, 0, 0);
 }
 .notice {
-  padding: var(--sp-space-3);
-  color: var(--sp-color-primary);
-  background: var(--sp-color-accent-blue-soft);
-  border-radius: var(--sp-radius-control);
+  margin: 0 0 var(--sp-space-2);
+  color: var(--sp-color-text-secondary);
+  font-size: var(--sp-font-sm);
 }
 .data-status {
   padding: var(--sp-space-3) var(--sp-space-4);
@@ -721,27 +732,13 @@ small {
   color: var(--sp-color-danger);
   background: var(--sp-color-danger-soft);
 }
-.translation-status {
-  display: flex;
-  gap: var(--sp-space-3);
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--sp-space-3);
+.translation-progress {
   color: var(--sp-color-text-secondary);
-  background: var(--sp-color-accent-blue-soft);
-  border: 1px solid var(--sp-border-soft);
-  border-radius: var(--sp-radius-control);
-}
-.translation-status div {
-  display: grid;
-  gap: var(--sp-space-1);
-}
-.translation-status strong {
-  color: var(--sp-color-text);
-}
-.translation-status span {
   font-size: var(--sp-font-xs);
   font-weight: 500;
+}
+.translation-progress--error {
+  color: var(--sp-color-danger);
 }
 select,
 input,

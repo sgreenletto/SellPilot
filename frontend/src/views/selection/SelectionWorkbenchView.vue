@@ -15,6 +15,7 @@ import {
   X,
 } from "@lucide/vue";
 
+import { listSelectionCandidates as listSavedSelectionCandidates } from "@/api/commerce";
 import {
   compareSelectionProducts,
   createSelectionAnalysis,
@@ -92,6 +93,11 @@ const form = reactive({
 
 const candidates = ref<SelectionCandidate[]>([]);
 const selectedCandidateIds = ref<string[]>([]);
+const savedCandidateIds = ref<string[]>([]);
+const candidateSelectionTouched = ref(false);
+const savedCandidateMatchCount = computed(
+  () => selectedCandidateIds.value.filter((id) => savedCandidateIds.value.includes(id)).length,
+);
 const analysis = ref<SelectionAnalysis | null>(null);
 const selectedResult = ref<SelectionResult | null>(null);
 const comparison = ref<SelectionResult[]>([]);
@@ -264,9 +270,12 @@ async function loadCandidates(): Promise<void> {
       },
       { ...categoryCatalog.value },
     );
-    selectedCandidateIds.value = selectedCandidateIds.value.filter((id) =>
-      candidates.value.some((candidate) => candidate.product_id === id),
-    );
+    const availableIds = new Set(candidates.value.map((candidate) => candidate.product_id));
+    if (!candidateSelectionTouched.value && savedCandidateIds.value.length > 0) {
+      selectedCandidateIds.value = savedCandidateIds.value.filter((id) => availableIds.has(id));
+    } else {
+      selectedCandidateIds.value = selectedCandidateIds.value.filter((id) => availableIds.has(id));
+    }
     if (candidates.value.length === 0) message.value = "当前条件下没有候选商品，请调整条件。";
   } catch (reason) {
     candidates.value = [];
@@ -285,6 +294,7 @@ async function runAnalysis(): Promise<void> {
   try {
     analysis.value = await createSelectionAnalysis(analysisPayload());
     selectedCandidateIds.value = [];
+    candidateSelectionTouched.value = true;
     message.value = `分析完成：${analysis.value.ranked_count} 个入选，${analysis.value.excluded_count} 个因利润条件排除。`;
   } catch (reason) {
     handleError(reason, "analysis");
@@ -294,10 +304,30 @@ async function runAnalysis(): Promise<void> {
 }
 
 function toggleCandidate(productId: string): void {
+  candidateSelectionTouched.value = true;
   const selected = new Set(selectedCandidateIds.value);
   if (selected.has(productId)) selected.delete(productId);
   else selected.add(productId);
   selectedCandidateIds.value = [...selected];
+}
+
+async function initializeCandidates(): Promise<void> {
+  let savedCandidateWarning = "";
+  try {
+    savedCandidateIds.value = (await listSavedSelectionCandidates()).map(
+      (candidate) => candidate.product_id,
+    );
+    // The market-data handoff historically carried the first saved product's
+    // category. A persisted list can span categories, so the list must take
+    // precedence while the target site remains explicit.
+    if (savedCandidateIds.value.length > 0 && route.query.category) {
+      form.categoryId = "__all__";
+    }
+  } catch {
+    savedCandidateWarning = "已加载可分析商品，但持久化候选清单读取失败，请手动勾选。";
+  }
+  await loadCandidates();
+  if (savedCandidateWarning && !error.value) message.value = savedCandidateWarning;
 }
 
 function toggleCompare(productId: string): void {
@@ -450,7 +480,7 @@ function syncQuery(): void {
 watch(form, syncQuery, { deep: true });
 onMounted(() => {
   document.addEventListener("keydown", handleGlobalKeydown);
-  void loadCandidates();
+  void initializeCandidates();
 });
 onBeforeUnmount(() => document.removeEventListener("keydown", handleGlobalKeydown));
 </script>
@@ -597,7 +627,14 @@ onBeforeUnmount(() => document.removeEventListener("keydown", handleGlobalKeydow
           <template #header>
             <div class="card-title candidate-heading">
               <span><FlaskConical :size="18" />候选商品</span>
-              <span>{{ candidates.length }} 项 · 可选后分析</span>
+              <span>
+                {{ candidates.length }} 项 ·
+                {{
+                  savedCandidateIds.length
+                    ? `候选清单共 ${savedCandidateIds.length} 项，当前站点已选 ${savedCandidateMatchCount} 项`
+                    : "可选后分析"
+                }}
+              </span>
             </div>
           </template>
           <div v-if="loadingCandidates" class="skeleton-list" aria-label="正在加载候选商品">

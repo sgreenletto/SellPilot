@@ -13,6 +13,7 @@ from sellpilot.services.model_gateway import (
     OfflineTemplateGateway,
     _operator_keyword_suggestions,
     build_model_gateway,
+    build_selection_explanation_generator,
     translate_review_batch,
 )
 
@@ -156,3 +157,48 @@ async def test_bailian_gateway_rejects_invalid_schema() -> None:
     )
     with pytest.raises(ModelGatewayError, match="schema"):
         await gateway.generate(facts())
+
+
+@pytest.mark.asyncio
+async def test_selection_explanation_provenance_is_owned_by_application() -> None:
+    async def handler(request: httpx.Request) -> httpx.Response:
+        payload = json.loads(request.content)
+        assert (
+            "Set generation_mode to validated_generator exactly"
+            in payload["messages"][0]["content"]
+        )
+        explanation = {
+            "summary": "该商品利润空间稳定。",
+            "evidence": {"total_score": "model-controlled-value"},
+            "risks": "物流风险数据缺失",
+            "generation_mode": "deterministic",
+        }
+        return httpx.Response(
+            200,
+            json={"choices": [{"message": {"content": json.dumps(explanation)}}]},
+        )
+
+    generator = build_selection_explanation_generator(
+        bailian_settings(),
+        transport=httpx.MockTransport(handler),
+    )
+    assert generator is not None
+
+    result = await generator(
+        {
+            "total_score": "72.7",
+            "profit": {"profit": "10.79", "margin": "0.4104"},
+            "data_completeness": "0.571",
+            "recommendation_facts": ["商品机会总分 72.7"],
+            "risk_warnings": ["物流风险数据缺失"],
+        }
+    )
+
+    assert result["generation_mode"] == "validated_generator"
+    assert result["risks"] == ["物流风险数据缺失"]
+    assert {item["metric"]: item["value"] for item in result["evidence"]} == {
+        "total_score": "72.7",
+        "profit": "10.79",
+        "margin": "0.4104",
+        "data_completeness": "0.571",
+    }
