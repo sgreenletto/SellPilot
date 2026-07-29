@@ -95,6 +95,82 @@ CATEGORY_PRODUCTS = {
     ],
 }
 
+PRODUCT_DESCRIPTION_CONTEXT = {
+    "Wireless Earbuds": "The compact charging case keeps the earbuds ready for commuting, calls, study sessions, and everyday listening.",
+    "Portable Charger": "Its portable format provides a practical backup power source for commutes, travel days, and time away from a wall outlet.",
+    "USB-C Hub": "It expands a compatible laptop or tablet workspace while keeping several everyday connections together in one portable accessory.",
+    "Smart Desk Lamp": "The adjustable light and touch operation make it suitable for reading, focused desk work, and bedside use without a complicated setup.",
+    "Storage Organizer": "The foldable design helps sort clothing, toys, or household supplies and can be stored more compactly when it is not needed.",
+    "Microfiber Towel Set": "The soft, quick-dry fabric suits bathrooms, gyms, and travel bags while remaining easy to wash and reuse.",
+    "Aroma Diffuser": "Quiet mist output supports bedrooms, work areas, or relaxation spaces, while the ambient light adds a gentle visual accent.",
+    "Vacuum Storage Bags": "The reusable bags reduce the storage volume of suitable clothing or bedding and help organize wardrobes, luggage, and seasonal items.",
+    "Facial Cleansing Brush": "The soft silicone contact surface supports a gentle daily cleansing routine and is straightforward to rinse after use.",
+    "Hair Styling Brush": "Adjustable heat gives users more control during routine styling, with a brush format intended for convenient at-home handling.",
+    "Makeup Organizer": "Clear modular compartments keep frequently used cosmetics visible and separated on a vanity, shelf, or compact counter.",
+    "Travel Bottle Set": "The refillable containers keep suitable toiletries divided and easier to organize in a wash bag, gym kit, or carry-on.",
+    "Crossbody Bag": "Secure compartments keep daily essentials organized and accessible during commuting, errands, sightseeing, or casual outings.",
+    "Polarized Sunglasses": "The lightweight frame is comfortable for commuting and outdoor leisure, while the polarized lenses help reduce distracting glare.",
+    "Minimalist Watch": "The clean dial and adjustable strap provide an understated accessory for work, commuting, and casual everyday wear.",
+    "Travel Wallet": "Dedicated organization keeps cards and a passport together, while the RFID-blocking construction adds practical protection during travel.",
+    "Resistance Band Set": "Different resistance levels support warm-ups and progressive home strength exercises without requiring bulky training equipment.",
+    "Insulated Water Bottle": "The double-wall body helps maintain drink temperature during commuting, workouts, desk use, and day trips.",
+    "Yoga Mat": "The non-slip surface and included carrying strap support repeat practice at home, in a studio, or during outdoor sessions.",
+    "Running Waist Belt": "The sweat-resistant belt keeps a phone and small essentials close to the body during running, walking, or other active use.",
+    "Interactive Cat Toy": "Rechargeable motion encourages supervised indoor play and gives cats an engaging activity between owner-led play sessions.",
+    "Pet Grooming Brush": "Rounded tips support regular coat care for cats or dogs, and the handheld format makes brushing sessions easier to control.",
+    "Slow Feeder Bowl": "The maze layout encourages a slower feeding pace and can be added to a pet's supervised daily mealtime routine.",
+    "Portable Pet Bottle": "The leak-resistant bottle keeps drinking water convenient for supervised walks, park visits, road trips, and other outings.",
+    "Mini Food Chopper": "The compact bowl handles small preparation tasks such as garlic, herbs, and vegetables while taking up limited counter and storage space.",
+    "Digital Kitchen Scale": "The clear display and tare function support repeatable ingredient measurement for cooking, baking, and portion preparation.",
+    "Electric Milk Frother": "The handheld shape makes it easy to froth suitable milk or mix beverages at home without occupying much kitchen space.",
+    "Sandwich Maker": "The compact non-stick press supports quick breakfasts and simple toasted snacks and is designed for straightforward wipe-down after cooling.",
+    "Silicone Feeding Set": "The food-grade set and suction base support supervised mealtimes while making the pieces easy to arrange and clean.",
+    "Baby Safety Corner Guards": "Soft transparent guards add cushioning to suitable furniture corners while keeping the room's appearance unobtrusive.",
+    "Portable Changing Mat": "The foldable wipe-clean surface and storage pockets keep changing essentials together for supervised care at home or while travelling.",
+    "Stroller Organizer": "The universal organizer keeps small care items within reach, and insulated cup holders help separate suitable drinks during supervised outings.",
+}
+
+
+def build_option_guidance(variation_name: str) -> str:
+    """Return factual ordering guidance tailored to the available variation field."""
+
+    guidance = {
+        "Plug": "Check that the selected plug type matches the socket standard at the place of use",
+        "Ports": "Check the selected port configuration and compatibility with the devices to be connected",
+        "Capacity": "Check the selected capacity, product dimensions, and suitability for the intended use",
+        "Size": "Check the selected size against the intended user, pet, storage space, or carried items as applicable",
+        "Pack": "Check the selected pack quantity and the size of the items or area to be covered",
+        "Thickness": "Check the selected thickness and product dimensions against the intended training setup",
+        "Level": "Check that the selected resistance level is appropriate for the intended exercise and current ability",
+        "Style": "Check the selected style, frame dimensions, and fit before ordering",
+        "Color": "Check the selected color, product dimensions, and local compatibility requirements where applicable",
+    }
+    return guidance.get(
+        variation_name,
+        "Check the selected option and product dimensions before ordering",
+    )
+
+
+def build_product_description(
+    product_name: str,
+    product_type: str,
+    feature_summary: str,
+    variation_name: str,
+    variations: list[str],
+) -> str:
+    """Build a detailed, deterministic catalog description for every mock product."""
+
+    feature_text = feature_summary.rstrip(".")
+    context = PRODUCT_DESCRIPTION_CONTEXT[product_type]
+    option_text = ", ".join(variations)
+    guidance = build_option_guidance(variation_name)
+    return (
+        f"{product_name} - {feature_text}. {context} "
+        f"Available {variation_name.lower()} options include {option_text}. "
+        f"{guidance}."
+    )
+
+
 # Base prices are expressed in local currency ranges per market.
 PRICE_RANGES = {
     "SGD": (9, 95),
@@ -383,8 +459,17 @@ def generate_products_and_skus() -> tuple[list[dict[str, Any]], list[dict[str, A
         site = list(SITES)[(idx - 1) % len(SITES)]
         currency = SITES[site]["currency"]
         shop_id, shop_name = shop_by_site[site]
-        product_name, description, variation_name, variations = RNG.choice(CATEGORY_PRODUCTS[category])
+        product_name, feature_summary, variation_name, variations = RNG.choice(
+            CATEGORY_PRODUCTS[category]
+        )
         title = f"{product_name} {RNG.choice(['Essential', 'Plus', 'Everyday', 'Compact', 'Premium'])} {idx:03d}"
+        description = build_product_description(
+            title,
+            product_name,
+            feature_summary,
+            variation_name,
+            variations,
+        )
         base_price = random_price(currency)
         cost_ratio = RNG.uniform(0.45, 0.72)
         cost = base_price * cost_ratio
