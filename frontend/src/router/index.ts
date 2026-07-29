@@ -27,7 +27,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
     meta: {
       title: "AI 运营助手",
       module: "AI 运营",
-      description: "统一编排运营分析、工具调用和待确认任务。",
+      description: "通过对话完成店铺查询与运营分析。",
     },
   },
   {
