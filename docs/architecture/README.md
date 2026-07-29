@@ -1,5 +1,7 @@
 # Architecture
 
+- `assistant-workflow-integration.md`: Assistant Capability integration with the
+  unified Task, Workflow, and Tool runtime.
 - `tool-execution-runtime.md`: unified ToolRegistry, ToolExecutor, confirmation,
   audit, retry and MCP runtime.
 - `task-workflow-runtime.md`: persistent TaskRunner, steps, confirmation pause/resume,
