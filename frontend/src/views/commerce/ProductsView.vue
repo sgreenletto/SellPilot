@@ -679,6 +679,9 @@ small {
   gap: var(--sp-space-5);
   align-items: start;
 }
+.workspace > * {
+  min-width: 0;
+}
 .file-button {
   display: inline-flex;
   gap: var(--sp-space-2);
@@ -743,8 +746,11 @@ small {
 select,
 input,
 textarea {
+  width: 100%;
+  min-width: 0;
   min-height: 40px;
   padding: var(--sp-space-2) var(--sp-space-3);
+  box-sizing: border-box;
   color: var(--sp-color-text);
   background: var(--sp-color-surface);
   border: 1px solid var(--sp-border-strong);
@@ -778,12 +784,13 @@ tbody tr:hover,
 }
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-space-3);
   margin-bottom: var(--sp-space-4);
 }
 label {
   display: grid;
+  min-width: 0;
   gap: var(--sp-space-2);
   font-size: var(--sp-font-xs);
   font-weight: 650;
@@ -844,6 +851,14 @@ ol {
 @media (max-width: 1000px) {
   .workspace {
     grid-template-columns: 1fr;
+  }
+}
+@media (min-width: 1001px) and (max-width: 1440px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .wide {
+    grid-column: auto;
   }
 }
 @media (max-width: 767px) {
