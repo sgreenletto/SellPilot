@@ -36,7 +36,32 @@ export interface ImprovementReport {
 
 export interface ConfirmationResult {
   id: string;
+  operation_type?: string;
   status: string;
   risk_warning: string | null;
   execution_result: Record<string, unknown> | null;
+}
+
+export interface ImprovementDraftItem {
+  title: string;
+  description: string;
+}
+
+export interface ImprovementDraftVersion {
+  id: string;
+  content_id: string;
+  source_product_id: string;
+  site: string;
+  version: number;
+  sequence: number;
+  status: string;
+  report_id: string | null;
+  items: ImprovementDraftItem[];
+  change_summary: string;
+  created_at: string;
+}
+
+export interface ImprovementDraftList {
+  items: ImprovementDraftVersion[];
+  total: number;
 }

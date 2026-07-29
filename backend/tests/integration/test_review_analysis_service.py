@@ -423,7 +423,7 @@ async def test_product_improvement_report_uses_task_workflow_runtime(
     ).run(task.id, user_id=admin_user.id)
 
     assert result.status is TaskStatus.SUCCEEDED
-    assert result.result["report"]["algorithm_version"] == "product-improvement-rule-v1.2.0"
+    assert result.result["report"]["algorithm_version"] == "product-improvement-rule-v1.3.0"
     steps = await TaskRepository(session).list_steps(task.id)
     assert [step.step_name for step in steps] == [
         "select_improvement_source",

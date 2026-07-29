@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 
 import DefaultLayout from "@/layouts/DefaultLayout.vue";
+import { rememberReviewModuleRoute, resolveReviewModuleEntry } from "@/router/review-route-memory";
 import { useAuthStore } from "@/stores/auth";
 
 const LoginView = () => import("@/views/login/LoginView.vue");
@@ -48,6 +49,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
       title: "智能选品",
       module: "市场与选品",
       description: "建立可解释的候选商品评估流程。",
+      keepAlive: true,
     },
   },
   {
@@ -58,6 +60,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
       title: "评论与产品改良",
       module: "市场与选品",
       description: "从评论信号提炼产品改良方向。",
+      keepAlive: true,
     },
   },
   {
@@ -68,6 +71,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
       title: "产品改良报告",
       module: "市场与选品",
       description: "审查评论证据并通过确认流程创建商品内容草稿。",
+      keepAlive: true,
     },
   },
   {
@@ -88,6 +92,7 @@ const placeholderRoutes: RouteRecordRaw[] = [
       title: "内容工坊",
       module: "商品运营",
       description: "生成并校验多语言商品内容。",
+      keepAlive: true,
     },
   },
   {
@@ -200,6 +205,8 @@ export const router = createRouter({
 });
 
 router.beforeEach(async (to, _from, next) => {
+  const rememberedRoute = resolveReviewModuleEntry(to.path, _from.path);
+  if (rememberedRoute) return next(rememberedRoute);
   const authStore = useAuthStore();
   await authStore.restoreSession();
 
@@ -216,4 +223,8 @@ router.beforeEach(async (to, _from, next) => {
   }
 
   return next();
+});
+
+router.afterEach((to) => {
+  rememberReviewModuleRoute(to.fullPath);
 });

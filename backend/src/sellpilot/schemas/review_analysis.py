@@ -59,6 +59,7 @@ class ReviewResponse(ContractModel):
     language: str
     sentiment_hint: str
     issue_type: str
+    topics: tuple[str, ...]
     created_at: datetime
     source_type: str
     is_mock_data: bool
