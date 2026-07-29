@@ -4,6 +4,14 @@ import type { InventoryItem, Order, Product } from "@/types/commerce";
 import type { PaginatedResponse, TaskDetail } from "@/types/contracts";
 import type { DashboardMetric, TrendDataset } from "@/types/dashboard";
 
+export interface CustomerServiceStats {
+  pending_count: number;
+}
+
+export function fetchCustomerServiceStats(): Promise<CustomerServiceStats> {
+  return request("/v1/commerce/customer-service/stats");
+}
+
 // ---- 后端 Schema 类型（与 commerce.ts 一致）----
 
 // ---- Dashboard API ----

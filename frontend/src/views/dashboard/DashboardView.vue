@@ -20,6 +20,7 @@ import { listConfirmations } from "@/api/commerce";
 import {
   buildReviewSentimentTrend,
   buildServiceIssueTrend,
+  fetchCustomerServiceStats,
   loadCommerceDashboardSnapshot,
 } from "@/api/dashboard";
 import SpBadge from "@/components/base/SpBadge.vue";
@@ -151,6 +152,14 @@ function backendTimestamp(value?: string | null): string {
 }
 
 async function loadBackendDashboard(): Promise<void> {
+  let pendingSessions = 0;
+  let sessionsConnected = false;
+  try {
+    const stats = await fetchCustomerServiceStats();
+    pendingSessions = stats.pending_count;
+    sessionsConnected = true;
+  } catch { /* 客服统计接口不可用 */ }
+
   try {
     const snapshot = await loadCommerceDashboardSnapshot(selectedShopId.value);
     const lowStock = snapshot.inventory.filter(
@@ -282,9 +291,9 @@ async function loadBackendDashboard(): Promise<void> {
       },
       {
         id: "pending-sessions",
-        label: "待处理客服会话",
-        value: 0,
-        suffix: "未接入",
+        label: "智能客服",
+        value: sessionsConnected ? pendingSessions : 0,
+        suffix: sessionsConnected ? "条" : "未接入",
         icon: "message",
         tone: "purple",
         linkTo: "/customer-service/conversations",
