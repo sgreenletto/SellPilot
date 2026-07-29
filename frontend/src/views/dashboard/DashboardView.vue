@@ -275,10 +275,10 @@ async function loadBackendDashboard(): Promise<void> {
         linkTo: "/orders",
       },
       {
-        id: "pending-sessions",
-        label: "待处理客服会话",
-        value: 0,
-        suffix: "未接入",
+        id: "smart-service",
+        label: "智能客服",
+        value: "已接入",
+        suffix: "",
         icon: "message",
         tone: "purple",
         linkTo: "/customer-service/conversations",
@@ -380,7 +380,7 @@ watch(selectedShopId, () => {
           <div class="metric-card__body">
             <span class="metric-card__label">{{ metric.label }}</span>
             <div class="metric-card__value">
-              <strong>{{ metric.value.toLocaleString("zh-CN") }}</strong>
+              <strong :style="metric.id === 'smart-service' ? { fontSize: '22px' } : {}">{{ metric.value.toLocaleString("zh-CN") }}</strong>
               <span v-if="metric.suffix" class="metric-card__suffix">{{ metric.suffix }}</span>
             </div>
             <span
