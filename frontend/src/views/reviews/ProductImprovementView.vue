@@ -399,7 +399,7 @@ onActivated(restoreFromRoute);
         <div>
           <small>{{ loading ? "正在生成" : "评论分析已就绪" }}</small>
           <h2>{{ loading ? "正在生成产品改良报告" : "生成产品改良报告" }}</h2>
-          <p>仅使用含明确缺点的评论，AI 生成通常需要十几秒。</p>
+          <p>根据评论中的明确改进信号生成改良建议。</p>
           <p v-if="error" class="generator__error" role="alert">{{ error }}</p>
         </div>
       </div>

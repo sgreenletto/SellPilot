@@ -51,12 +51,12 @@ const route = useRoute();
 const router = useRouter();
 
 const siteOptions = [
-  { label: "新加坡 · SGD", value: "sg" },
-  { label: "马来西亚 · MYR", value: "my" },
-  { label: "菲律宾 · PHP", value: "ph" },
-  { label: "泰国 · THB", value: "th" },
-  { label: "越南 · VND", value: "vn" },
-  { label: "印度尼西亚 · IDR", value: "id" },
+  { label: "Singapore", value: "sg" },
+  { label: "Malaysia", value: "my" },
+  { label: "Philippines", value: "ph" },
+  { label: "Thailand", value: "th" },
+  { label: "Vietnam", value: "vn" },
+  { label: "Indonesia", value: "id" },
 ];
 const supportedSites = siteOptions.map((option) => option.value) as SiteCode[];
 const riskOptions = [
@@ -569,10 +569,6 @@ onBeforeUnmount(() => document.removeEventListener("keydown", handleGlobalKeydow
 <template>
   <PageContainer>
     <header class="page-heading">
-      <div class="page-context">
-        <SpBadge tone="info" dot>Shopee 模拟实验数据</SpBadge>
-        <p>用可追溯的市场数据、利润公式和分项证据筛选候选商品。</p>
-      </div>
       <div class="heading-actions">
         <SpButton variant="secondary" :loading="loadingCandidates" @click="() => loadCandidates()">
           <template #icon><RefreshCw :size="16" /></template>
@@ -606,7 +602,6 @@ onBeforeUnmount(() => document.removeEventListener("keydown", handleGlobalKeydow
           <template #header>
             <div class="card-title">
               <span><SlidersHorizontal :size="18" />分析条件</span>
-              <SpBadge tone="neutral">URL 已保存</SpBadge>
             </div>
           </template>
           <form class="filters" @submit.prevent="() => loadCandidates()">
@@ -724,7 +719,7 @@ onBeforeUnmount(() => document.removeEventListener("keydown", handleGlobalKeydow
           <SpEmptyState
             v-else-if="candidates.length === 0"
             title="没有可分析的候选商品"
-            description="确认后端已连接并导入 Mock 商品数据，或放宽站点、类目和价格条件。"
+            description="请确认后端已连接并已有商品数据，或放宽站点、类目和价格条件。"
           >
             <template #icon><Search :size="24" /></template>
           </SpEmptyState>
@@ -767,10 +762,6 @@ onBeforeUnmount(() => document.removeEventListener("keydown", handleGlobalKeydow
                 <div class="card-title">
                   <span><ArrowDownUp :size="18" />选品结果</span>
                 </div>
-                <p>
-                  评分公式 {{ analysis.formula_version }} ·
-                  {{ analysis.generation_mode === "rule_template" ? "规则解释" : "校验生成解释" }}
-                </p>
               </div>
               <div class="heading-actions">
                 <SpButton
