@@ -131,6 +131,26 @@ class TaskService:
         )
         return task
 
+    async def create_persisted_workflow_task(
+        self,
+        definition: WorkflowDefinition,
+        *,
+        workflow_input: dict[str, object],
+        created_by: UUID,
+        request_id: str,
+        parent_task_id: UUID | None = None,
+    ) -> AgentTask:
+        """Create an API-visible workflow task before a follow-up run request."""
+        task = await self.create_workflow_task(
+            definition,
+            workflow_input=workflow_input,
+            created_by=created_by,
+            request_id=request_id,
+            parent_task_id=parent_task_id,
+        )
+        await self.session.commit()
+        return task
+
     async def get(self, task_id: UUID, *, user_id: UUID | None = None) -> AgentTask:
         task = (
             await self.tasks.get_owned(task_id, user_id)

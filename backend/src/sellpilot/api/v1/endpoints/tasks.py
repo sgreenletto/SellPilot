@@ -73,7 +73,7 @@ async def create_task(
     current_user: CurrentUserDependency,
 ) -> ApiResponse[AgentTaskResponse]:
     definition = _workflow_registry(request).get(payload.workflow_name)
-    task = await TaskService(session, settings).create_workflow_task(
+    task = await TaskService(session, settings).create_persisted_workflow_task(
         definition,
         workflow_input=payload.workflow_input,
         created_by=current_user.id,

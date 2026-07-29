@@ -146,6 +146,9 @@ not persisted or returned.
 - `product_improvement`: adapts the registered READ
   `generate_product_improvement_plan` tool. Creating a product-content draft remains
   a separate HIGH_RISK Confirmation operation and never runs during report generation.
+- `inventory_replenishment`: adapts the registered READ
+  `analyze_inventory_replenishment` tool and returns deterministic SKU replenishment
+  evidence without changing inventory.
 
 LangGraph remains available for the existing bounded explanation graph. It is not a
 second persistence runtime. A future graph adapter must still delegate task state,
