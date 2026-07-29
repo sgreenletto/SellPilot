@@ -116,7 +116,7 @@ class RAGService:
             f"[{index + 1}] {item['source_doc']}\n{item['fragment']}"
             for index, item in enumerate(sources)
         )
-        answer = LLMService(self.settings).chat(
+        answer = await LLMService(self.settings).chat(
             [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {

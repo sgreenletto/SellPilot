@@ -302,7 +302,7 @@ class AssistantPlanService:
     ) -> dict[str, JsonValue]:
         parameters: dict[str, JsonValue] = {}
         product_id = self._first_match(
-            r"\b(?:PROD|PRODUCT|SP)[-_]?[A-Z0-9][A-Z0-9_-]*\b",
+            r"\b(?:PRODUCT|PROD|SP)[-_]?(?=[A-Z0-9_-]*\d)[A-Z0-9][A-Z0-9_-]*\b",
             message,
         )
         order_id = self._first_match(r"\bORD[A-Z0-9_-]*\d[A-Z0-9_-]*\b", message)
