@@ -519,6 +519,7 @@ class ReviewAnalysisService:
             language=row["language"],
             sentiment_hint=sentiment,
             issue_type=primary_topic,
+            topics=topics,
             created_at=row["created_at"],
             source_type=row["source_type"],
             is_mock_data=row["is_mock_data"],

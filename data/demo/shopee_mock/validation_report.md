@@ -1,7 +1,7 @@
 # 模拟数据校验报告
 
 - 校验状态：**通过**
-- 通过项：101
+- 通过项：103
 - 警告项：0
 - 失败项：0
 - 数据性质：全部为模拟实验数据，不代表真实 Shopee 生产数据。
@@ -103,6 +103,8 @@
 - Order item SKU-to-product relationships are consistent
 - Product currencies match their sites
 - Product prices are reasonable relative to cost
+- Product descriptions include features, usage context, and option guidance
+- Product descriptions include the full title, available options, and ordering guidance
 - SKU prices are not below SKU cost
 - Inventory quantities are non-negative
 - Inventory status matches available and safety stock

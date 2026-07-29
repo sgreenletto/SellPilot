@@ -7,7 +7,10 @@ from sellpilot.core.middleware import get_request_id
 from sellpilot.core.response import ApiResponse, success_response
 from sellpilot.schemas.confirmation import ConfirmationTaskResponse
 from sellpilot.schemas.product_improvement import (
+    ImprovementDraftHistoryClearRequest,
+    ImprovementDraftListResponse,
     ImprovementDraftRequest,
+    ImprovementDraftRevisionRequest,
     ImprovementGenerateRequest,
     ImprovementReportResponse,
     ImprovementSuggestionResponse,
@@ -27,7 +30,9 @@ async def generate_report(
     user: CurrentUserDependency,
 ) -> ApiResponse[ImprovementReportResponse]:
     result = await ProductImprovementService(session, settings).generate(
-        payload.analysis_id, user.id
+        payload.analysis_id,
+        user.id,
+        force_regenerate=payload.force_regenerate,
     )
     return success_response(result, get_request_id(request))
 
@@ -83,6 +88,52 @@ async def request_draft(
     user: CurrentUserDependency,
 ) -> ApiResponse[ConfirmationTaskResponse]:
     result = await ProductImprovementService(session).request_draft(report_id, payload, user.id)
+    return success_response(
+        ConfirmationTaskResponse.model_validate(result), get_request_id(request)
+    )
+
+
+@router.get("/drafts", response_model=ApiResponse[ImprovementDraftListResponse])
+async def list_drafts(
+    request: Request,
+    session: SessionDependency,
+    user: CurrentUserDependency,
+    source_product_id: str,
+) -> ApiResponse[ImprovementDraftListResponse]:
+    result = await ProductImprovementService(session).list_drafts(source_product_id, user.id)
+    return success_response(result, get_request_id(request))
+
+
+@router.post(
+    "/drafts/{version_id}/revision-confirmations",
+    response_model=ApiResponse[ConfirmationTaskResponse],
+)
+async def request_draft_revision(
+    version_id: UUID,
+    payload: ImprovementDraftRevisionRequest,
+    request: Request,
+    session: SessionDependency,
+    user: CurrentUserDependency,
+) -> ApiResponse[ConfirmationTaskResponse]:
+    result = await ProductImprovementService(session).request_draft_revision(
+        version_id, payload, user.id
+    )
+    return success_response(
+        ConfirmationTaskResponse.model_validate(result), get_request_id(request)
+    )
+
+
+@router.post(
+    "/drafts/clear-confirmations",
+    response_model=ApiResponse[ConfirmationTaskResponse],
+)
+async def request_draft_history_clear(
+    payload: ImprovementDraftHistoryClearRequest,
+    request: Request,
+    session: SessionDependency,
+    user: CurrentUserDependency,
+) -> ApiResponse[ConfirmationTaskResponse]:
+    result = await ProductImprovementService(session).request_draft_history_clear(payload, user.id)
     return success_response(
         ConfirmationTaskResponse.model_validate(result), get_request_id(request)
     )

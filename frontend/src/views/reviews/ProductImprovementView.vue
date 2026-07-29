@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onActivated, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { Download, FileCheck2, RefreshCw, ShieldCheck } from "@lucide/vue";
 import { FrontendApiError } from "@/api/http";
+import { listReviewEvidence } from "@/api/review-analysis";
 import {
   cancelImprovementDraft,
   confirmImprovementDraft,
   exportImprovementReport,
   generateImprovementReport,
+  listImprovementDrafts,
   requestImprovementDraft,
+  requestImprovementDraftHistoryClear,
+  requestImprovementDraftRevision,
   updateImprovementSuggestion,
 } from "@/api/product-improvement";
 import SpBadge from "@/components/base/SpBadge.vue";
@@ -17,9 +21,12 @@ import SpCard from "@/components/base/SpCard.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
 import type {
   ConfirmationResult,
+  ImprovementDraftItem,
+  ImprovementDraftVersion,
   ImprovementReport,
   ImprovementSuggestion,
 } from "@/types/product-improvement";
+import type { ReviewEvidence } from "@/types/review-analysis";
 
 const route = useRoute();
 const router = useRouter();
@@ -31,6 +38,14 @@ const loading = ref(false);
 const action = ref("");
 const error = ref("");
 const notice = ref("");
+const draftPreviewVisible = ref(false);
+const lastRegenerateToken = ref("");
+const evidenceByReviewId = ref<Record<string, ReviewEvidence>>({});
+const drafts = ref<ImprovementDraftVersion[]>([]);
+const activeDraftId = ref("");
+const draftEditor = ref<ImprovementDraftItem[]>([]);
+const draftEditing = ref(false);
+const confirmationPurpose = ref<"create" | "revision" | "clear">("create");
 const linkedAnalysis = computed(() => Boolean(route.query.analysis_id));
 const accepted = computed(
   () => report.value?.suggestions.filter((item) => item.status === "ACCEPTED") ?? [],
@@ -42,6 +57,7 @@ const confirmationStatusLabel = computed(
       PENDING: "等待确认",
       CONFIRMED: "已确认",
       EXECUTED: "已创建草稿",
+      SUCCEEDED: "已创建草稿",
       CANCELLED: "已取消",
       CANCELED: "已取消",
       FAILED: "执行失败",
@@ -52,18 +68,65 @@ const canRequestDraft = computed(
     !action.value &&
     selected.value.some((id) => accepted.value.some((suggestion) => suggestion.id === id)),
 );
+const savedDraftSuggestions = computed(() =>
+  accepted.value.filter((suggestion) => selected.value.includes(suggestion.id)),
+);
+const activeDraft = computed(
+  () => drafts.value.find((item) => item.id === activeDraftId.value) ?? drafts.value[0] ?? null,
+);
+const reportSite = computed(() => {
+  const value = report.value?.input_conditions.site;
+  return typeof value === "string" && ["sg", "my", "ph", "th", "vn", "id"].includes(value)
+    ? value
+    : "sg";
+});
 const categoryLabels: Record<string, string> = {
-  product_quality: "产品质量",
+  product_quality: "产品",
   packaging: "包装",
-  description_mismatch: "描述不符",
-  logistics: "物流履约",
-  service: "服务与说明",
-  material: "材料",
-  size_specification: "尺寸规格",
-  wrong_or_missing_item: "错发漏发",
+  description_mismatch: "文案",
+  logistics: "物流",
+  service: "服务",
+  material: "产品",
+  size_specification: "产品",
+  wrong_or_missing_item: "产品",
+  other: "其他",
 };
 const statusLabels = { PROPOSED: "待审查", ACCEPTED: "已采纳", IGNORED: "已忽略" };
 const percent = (value: string): string => `${Math.round(Number(value) * 100)}%`;
+const cloneDraftItems = (items: ImprovementDraftItem[]): ImprovementDraftItem[] =>
+  items.map((item) => ({ title: item.title, description: item.description }));
+function suggestionEvidence(suggestion: ImprovementSuggestion): ReviewEvidence[] {
+  return (suggestion.evidence_review_ids.items ?? [])
+    .map((reviewId) => evidenceByReviewId.value[reviewId])
+    .filter((item): item is ReviewEvidence => Boolean(item));
+}
+
+async function loadEvidence(analysisIdValue: string): Promise<void> {
+  const byId: Record<string, ReviewEvidence> = {};
+  let page = 1;
+  let total = 0;
+  do {
+    const response = await listReviewEvidence(analysisIdValue, page, "", "", 100);
+    total = response.total;
+    for (const item of response.items) {
+      byId[item.review_id] ??= item;
+    }
+    if (response.items.length === 0) break;
+    page += 1;
+  } while ((page - 1) * 100 < total);
+  evidenceByReviewId.value = byId;
+}
+
+async function loadDraftHistory(sourceProductId: string): Promise<void> {
+  const response = await listImprovementDrafts(sourceProductId);
+  drafts.value = response.items;
+  if (!drafts.value.some((item) => item.id === activeDraftId.value)) {
+    activeDraftId.value = drafts.value[0]?.id ?? "";
+  }
+  if (activeDraft.value && !draftEditing.value) {
+    draftEditor.value = cloneDraftItems(activeDraft.value.items);
+  }
+}
 
 function handleError(reason: unknown, fallback: string): void {
   if (reason instanceof FrontendApiError) {
@@ -74,7 +137,7 @@ function handleError(reason: unknown, fallback: string): void {
   error.value = fallback;
 }
 
-async function generate(): Promise<void> {
+async function generate(forceRegenerate = false): Promise<void> {
   if (!analysisId.value.trim()) {
     error.value = "请从评论分析结果进入，或填写分析 ID。";
     return;
@@ -84,10 +147,21 @@ async function generate(): Promise<void> {
   notice.value = "";
   confirmation.value = null;
   try {
-    report.value = await generateImprovementReport(analysisId.value.trim());
+    const currentAnalysisId = analysisId.value.trim();
+    report.value = await generateImprovementReport(currentAnalysisId, forceRegenerate);
     selected.value = report.value.suggestions
       .filter((item) => item.status === "ACCEPTED")
       .map((item) => item.id);
+    try {
+      await loadEvidence(currentAnalysisId);
+    } catch {
+      error.value = "报告已生成，但证据评论暂时加载失败，请稍后重新进入报告。";
+    }
+    try {
+      await loadDraftHistory(report.value.source_product_id);
+    } catch {
+      notice.value = "报告已生成，但历史改良草稿暂时无法加载。";
+    }
   } catch (reason) {
     handleError(reason, "产品改良报告生成失败");
   } finally {
@@ -171,14 +245,81 @@ async function requestDraft(): Promise<void> {
   error.value = "";
   notice.value = "";
   try {
+    confirmationPurpose.value = "create";
     confirmation.value = await requestImprovementDraft(
       report.value.id,
       ids,
       `improvement-${report.value.id}-${Date.now()}`,
+      reportSite.value,
     );
-    notice.value = "已创建待确认任务，尚未生成任何商品内容草稿。";
+    notice.value = "请核对下方范围并确认；确认前不会创建草稿。";
   } catch (reason) {
     handleError(reason, "待确认任务创建失败");
+  } finally {
+    action.value = "";
+  }
+}
+
+function selectDraft(draft: ImprovementDraftVersion): void {
+  activeDraftId.value = draft.id;
+  draftEditor.value = cloneDraftItems(draft.items);
+  draftEditing.value = false;
+}
+
+function startDraftEditing(): void {
+  if (!activeDraft.value) return;
+  draftEditor.value = cloneDraftItems(activeDraft.value.items);
+  draftEditing.value = true;
+}
+
+function cancelDraftEditing(): void {
+  if (!activeDraft.value) return;
+  draftEditing.value = false;
+  draftEditor.value = cloneDraftItems(activeDraft.value.items);
+}
+
+async function requestDraftRevision(): Promise<void> {
+  if (!activeDraft.value) return;
+  if (draftEditor.value.some((item) => !item.title.trim() || !item.description.trim())) {
+    error.value = "草稿标题和改良方案不能为空。";
+    return;
+  }
+  action.value = "request-revision";
+  error.value = "";
+  notice.value = "";
+  try {
+    confirmationPurpose.value = "revision";
+    confirmation.value = await requestImprovementDraftRevision(
+      activeDraft.value.id,
+      activeDraft.value.version,
+      draftEditor.value.map((item) => ({
+        title: item.title.trim(),
+        description: item.description.trim(),
+      })),
+      `improvement-revision-${activeDraft.value.id}-${Date.now()}`,
+    );
+    notice.value = "请确认保存改良草稿新版本；确认前不会写入修改。";
+  } catch (reason) {
+    handleError(reason, "草稿版本待确认任务创建失败");
+  } finally {
+    action.value = "";
+  }
+}
+
+async function requestDraftHistoryClear(): Promise<void> {
+  if (!report.value || !drafts.value.length) return;
+  action.value = "clear-history";
+  error.value = "";
+  notice.value = "";
+  try {
+    confirmationPurpose.value = "clear";
+    confirmation.value = await requestImprovementDraftHistoryClear(
+      report.value.source_product_id,
+      `improvement-clear-${report.value.source_product_id}-${Date.now()}`,
+    );
+    notice.value = "请确认清空当前商品的草稿历史；确认后新草稿将从 v1 重新编号。";
+  } catch (reason) {
+    handleError(reason, "清空草稿历史待确认任务创建失败");
   } finally {
     action.value = "";
   }
@@ -190,7 +331,15 @@ async function confirmDraft(): Promise<void> {
   error.value = "";
   try {
     confirmation.value = await confirmImprovementDraft(confirmation.value.id);
-    notice.value = "确认已执行；仅创建 Mock 商品内容草稿，未发布商品。";
+    draftPreviewVisible.value = true;
+    draftEditing.value = false;
+    if (report.value) await loadDraftHistory(report.value.source_product_id);
+    notice.value =
+      confirmationPurpose.value === "clear"
+        ? "当前商品的改良草稿历史已清空；下一份草稿将显示为 v1。"
+        : confirmationPurpose.value === "revision"
+          ? "改良草稿新版本已保存；旧版本仍保留。"
+          : "改良草稿已创建并保存；未发布商品，也未修改价格或库存。";
   } catch (reason) {
     handleError(reason, "确认执行失败");
   } finally {
@@ -212,9 +361,23 @@ async function cancelDraft(): Promise<void> {
   }
 }
 
-onMounted(() => {
-  if (analysisId.value) void generate();
-});
+function restoreFromRoute(): void {
+  const routeAnalysisId = String(route.query.analysis_id ?? "");
+  if (routeAnalysisId) analysisId.value = routeAnalysisId;
+  const regenerateToken = String(route.query.regenerate ?? "");
+  if (regenerateToken && regenerateToken !== lastRegenerateToken.value) {
+    lastRegenerateToken.value = regenerateToken;
+    const remainingQuery = { ...route.query };
+    delete remainingQuery.regenerate;
+    void router.replace({ query: remainingQuery });
+    void generate(true);
+    return;
+  }
+  if (analysisId.value && !report.value && !loading.value) void generate();
+}
+
+onMounted(restoreFromRoute);
+onActivated(restoreFromRoute);
 </script>
 
 <template>
@@ -223,6 +386,11 @@ onMounted(() => {
     title="产品改良报告"
     description="把评论证据转为可审查、可编辑、需确认后才能生成草稿的改良方案。"
   >
+    <div class="page-actions">
+      <SpButton variant="secondary" @click="router.push('/market/reviews')">
+        返回评论分析
+      </SpButton>
+    </div>
     <div v-if="error && report" class="message message--error" role="alert">{{ error }}</div>
     <div v-if="notice" class="message message--success" role="status">{{ notice }}</div>
     <SpCard v-if="!report" class="generator" variant="solid">
@@ -231,7 +399,7 @@ onMounted(() => {
         <div>
           <small>{{ loading ? "正在生成" : "评论分析已就绪" }}</small>
           <h2>{{ loading ? "正在生成产品改良报告" : "生成产品改良报告" }}</h2>
-          <p>仅使用含明确缺点的评论，AI 生成通常需要十几秒。</p>
+          <p>根据评论中的明确改进信号生成改良建议。</p>
           <p v-if="error" class="generator__error" role="alert">{{ error }}</p>
         </div>
       </div>
@@ -239,7 +407,7 @@ onMounted(() => {
         <label v-if="!linkedAnalysis">
           评论分析 ID<input v-model="analysisId" placeholder="粘贴已完成的分析 ID" />
         </label>
-        <SpButton :loading="loading" @click="generate">
+        <SpButton :loading="loading" @click="generate(true)">
           {{ error ? "重新生成" : "生成报告" }}
         </SpButton>
       </div>
@@ -262,7 +430,7 @@ onMounted(() => {
             :disabled="!canRequestDraft"
             @click="requestDraft"
           >
-            <template #icon><FileCheck2 :size="17" /></template>提交草稿确认
+            <template #icon><FileCheck2 :size="17" /></template>创建改良商品草稿
           </SpButton>
         </div>
       </section>
@@ -313,24 +481,35 @@ onMounted(() => {
             <span
               ><small>严重程度</small><strong>{{ percent(suggestion.severity) }}</strong></span
             >
-            <span
+            <span title="综合评论分类可靠度（60%）、证据数量（25%）和问题覆盖率（15%）计算"
               ><small>结论置信度</small><strong>{{ percent(suggestion.confidence) }}</strong></span
             >
             <span
               ><small>证据评论</small><strong>{{ suggestion.evidence_count }} 条</strong></span
             >
           </div>
+          <p class="confidence-note">
+            置信度衡量这条改良结论的证据可靠程度，由评论判定可靠度、证据数量和问题覆盖率综合计算。
+          </p>
           <div class="suggestion__body">
             <div class="suggestion__editor">
               <label>建议标题<input v-model="suggestion.title" class="title-input" /></label>
               <label>改良方案<textarea v-model="suggestion.description" rows="4"></textarea></label>
-              <details v-if="suggestion.evidence_review_ids.items?.length" class="evidence-reviews">
-                <summary>查看 {{ suggestion.evidence_count }} 条证据评论编号</summary>
-                <div>
-                  <span v-for="reviewId in suggestion.evidence_review_ids.items" :key="reviewId">
-                    {{ reviewId }}
-                  </span>
+              <details v-if="suggestion.evidence_count" class="evidence-reviews">
+                <summary>查看 {{ suggestion.evidence_count }} 条证据评论</summary>
+                <div v-if="suggestionEvidence(suggestion).length" class="evidence-reviews__list">
+                  <article
+                    v-for="evidence in suggestionEvidence(suggestion)"
+                    :key="evidence.review_id"
+                  >
+                    <strong>{{ evidence.rating }} 星 · 原评论</strong>
+                    <p>{{ evidence.original_content }}</p>
+                    <p v-if="evidence.translated_content" class="evidence-reviews__translation">
+                      译文：{{ evidence.translated_content }}
+                    </p>
+                  </article>
                 </div>
+                <p v-else class="evidence-reviews__empty">评论内容暂未加载。</p>
               </details>
             </div>
           </div>
@@ -366,16 +545,108 @@ onMounted(() => {
         </SpCard>
       </section>
 
+      <SpCard v-if="drafts.length" class="draft-history">
+        <header class="draft-history__heading">
+          <div>
+            <small>持久化草稿</small>
+            <h3>产品改良草稿历史</h3>
+            <p>在本页查看和编辑；保存修改会新增版本，不覆盖旧版本。</p>
+          </div>
+          <div class="draft-history__heading-actions">
+            <SpBadge variant="info">{{ drafts.length }} 个版本</SpBadge>
+            <SpButton
+              size="sm"
+              variant="secondary"
+              :loading="action === 'clear-history'"
+              @click="requestDraftHistoryClear"
+            >
+              清空草稿历史
+            </SpButton>
+          </div>
+        </header>
+        <div class="draft-history__body">
+          <nav aria-label="改良草稿版本">
+            <button
+              v-for="(draft, index) in drafts"
+              :key="draft.id"
+              type="button"
+              :class="{ active: activeDraft?.id === draft.id }"
+              @click="selectDraft(draft)"
+            >
+              <strong>v{{ draft.sequence }}</strong>
+              <span>{{ index === 0 ? "最新版本" : draft.change_summary }}</span>
+            </button>
+          </nav>
+          <section v-if="activeDraft" class="draft-editor">
+            <div class="draft-editor__toolbar">
+              <div>
+                <strong>{{ activeDraft.source_product_id }} 改良方案</strong>
+                <span>{{ activeDraft.site.toUpperCase() }} · Mock</span>
+              </div>
+              <SpButton
+                v-if="activeDraft.id === drafts[0]?.id && !draftEditing"
+                size="sm"
+                variant="secondary"
+                @click="startDraftEditing"
+              >
+                编辑最新草稿
+              </SpButton>
+            </div>
+            <div v-for="(item, index) in draftEditor" :key="index" class="draft-editor__item">
+              <template v-if="draftEditing">
+                <label>
+                  改良项标题
+                  <input v-model="item.title" maxlength="255" />
+                </label>
+                <label>
+                  改良方案
+                  <textarea v-model="item.description" rows="4" maxlength="4000"></textarea>
+                </label>
+              </template>
+              <template v-else>
+                <strong>{{ item.title }}</strong>
+                <p>{{ item.description }}</p>
+              </template>
+            </div>
+            <p v-if="activeDraft.id !== drafts[0]?.id" class="draft-editor__hint">
+              这是历史只读版本；如需修改，请选择最新版本。
+            </p>
+            <div v-if="draftEditing" class="draft-editor__actions">
+              <SpButton variant="secondary" @click="cancelDraftEditing"> 取消编辑 </SpButton>
+              <SpButton :loading="action === 'request-revision'" @click="requestDraftRevision">
+                申请保存新版本
+              </SpButton>
+            </div>
+          </section>
+        </div>
+      </SpCard>
+
       <SpCard v-if="confirmation" class="confirmation">
         <div class="confirmation__main">
           <div class="confirmation__icon"><ShieldCheck :size="22" /></div>
-          <div>
+          <div class="confirmation__copy">
             <SpBadge :variant="confirmationStatus === 'PENDING' ? 'warning' : 'info'">
               {{ confirmationStatusLabel }}
             </SpBadge>
-            <h3>创建商品内容草稿</h3>
+            <h3>
+              {{
+                confirmationPurpose === "clear"
+                  ? "清空产品改良草稿历史"
+                  : confirmationPurpose === "revision"
+                    ? "保存改良草稿新版本"
+                    : "创建产品改良草稿"
+              }}
+            </h3>
             <p>{{ confirmation.risk_warning }}</p>
-            <p v-if="confirmation.execution_result">草稿已创建，可前往任务中心查看。</p>
+            <p v-if="confirmation.execution_result">
+              {{
+                confirmationPurpose === "clear"
+                  ? "页面历史已清空；底层审计记录保留，后续草稿从 v1 重新编号。"
+                  : confirmationPurpose === "revision"
+                    ? "新版本已保存，旧版本仍可在本页查看。"
+                    : "草稿已保存为产品改良的待编辑版本；任务中心仅保留本次操作记录。"
+              }}
+            </p>
           </div>
         </div>
         <div class="confirmation__actions">
@@ -384,7 +655,13 @@ onMounted(() => {
             :loading="action === 'confirm'"
             @click="confirmDraft"
           >
-            确认创建草稿
+            {{
+              confirmationPurpose === "clear"
+                ? "确认清空历史"
+                : confirmationPurpose === "revision"
+                  ? "确认保存新版本"
+                  : "确认创建草稿"
+            }}
           </SpButton>
           <SpButton
             v-if="confirmationStatus === 'PENDING'"
@@ -394,14 +671,46 @@ onMounted(() => {
           >
             取消
           </SpButton>
-          <SpButton variant="ghost" @click="router.push('/tasks')">前往任务中心</SpButton>
+          <SpButton
+            v-if="confirmation.execution_result && confirmationPurpose === 'create'"
+            @click="draftPreviewVisible = !draftPreviewVisible"
+          >
+            {{ draftPreviewVisible ? "收起改良草稿" : "查看改良草稿" }}
+          </SpButton>
         </div>
+        <section
+          v-if="confirmation.execution_result && draftPreviewVisible"
+          class="draft-preview"
+          aria-label="产品改良草稿"
+        >
+          <header>
+            <div>
+              <small>已保存草稿</small>
+              <h4>{{ report.source_product_id }} 产品改良方案</h4>
+            </div>
+            <SpBadge variant="info">{{ reportSite.toUpperCase() }} · Mock</SpBadge>
+          </header>
+          <ol>
+            <li v-for="suggestion in savedDraftSuggestions" :key="suggestion.id">
+              <strong>{{ suggestion.title }}</strong>
+              <p>{{ suggestion.description }}</p>
+            </li>
+          </ol>
+          <p class="draft-preview__note">
+            这是供运营和工厂继续审核的改良方案，不是已发布的商品文案，也不会自动修改商品。
+          </p>
+        </section>
       </SpCard>
     </template>
   </PageContainer>
 </template>
 
 <style scoped>
+.page-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--sp-space-4);
+}
 .generator,
 .toolbar,
 .summary,
@@ -521,6 +830,11 @@ textarea {
 .suggestion__metrics small {
   color: var(--sp-color-text-muted);
 }
+.confidence-note {
+  margin: var(--sp-space-2) 0 0;
+  color: var(--sp-color-text-muted);
+  font-size: var(--sp-font-sm);
+}
 .evidence-reviews {
   padding: var(--sp-space-3);
   background: var(--sp-color-surface-muted);
@@ -532,16 +846,28 @@ textarea {
   font-weight: 700;
   cursor: pointer;
 }
-.evidence-reviews div {
-  display: flex;
-  flex-wrap: wrap;
+.evidence-reviews__list {
+  display: grid;
   gap: var(--sp-space-2);
   margin-top: var(--sp-space-3);
 }
-.evidence-reviews span {
-  padding: var(--sp-space-1) var(--sp-space-2);
+.evidence-reviews article {
+  padding: var(--sp-space-3);
   background: var(--sp-color-surface);
-  border-radius: var(--sp-radius-pill);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-control);
+}
+.evidence-reviews article p {
+  margin: var(--sp-space-2) 0 0;
+  color: var(--sp-color-text);
+  line-height: 1.6;
+}
+.evidence-reviews article .evidence-reviews__translation {
+  color: var(--sp-color-text-secondary);
+}
+.evidence-reviews__empty {
+  margin: var(--sp-space-3) 0 0;
+  color: var(--sp-color-text-muted);
 }
 .suggestion__editor {
   display: grid;
@@ -594,9 +920,102 @@ textarea {
   background: var(--sp-color-surface-muted);
   border-radius: 50%;
 }
-.confirmation {
+.draft-history {
   margin-top: var(--sp-space-5);
+  padding: var(--sp-space-5);
+}
+.draft-history__heading,
+.draft-history__heading-actions,
+.draft-editor__toolbar,
+.draft-editor__actions {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: var(--sp-space-3);
+}
+.draft-history__heading-actions {
+  flex: 0 0 auto;
+}
+.draft-history__heading h3,
+.draft-history__heading p {
+  margin: 0;
+}
+.draft-history__heading h3 {
+  margin: var(--sp-space-1) 0;
+}
+.draft-history__heading p,
+.draft-editor__toolbar span,
+.draft-editor__hint {
+  color: var(--sp-color-text-muted);
+}
+.draft-history__body {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: var(--sp-space-4);
+  margin-top: var(--sp-space-4);
+}
+.draft-history nav {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-space-2);
+}
+.draft-history nav button {
+  display: grid;
+  gap: var(--sp-space-1);
+  padding: var(--sp-space-3);
+  color: var(--sp-color-text-secondary);
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-control);
+}
+.draft-history nav button.active {
+  color: var(--sp-color-primary);
+  background: var(--sp-color-surface-muted);
+  border-color: var(--sp-color-primary);
+}
+.draft-history nav span {
+  color: var(--sp-color-text-muted);
+  font-size: var(--sp-font-xs);
+}
+.draft-editor {
+  display: grid;
+  gap: var(--sp-space-3);
+  min-width: 0;
+  padding: var(--sp-space-4);
+  background: var(--sp-color-surface-muted);
+  border-radius: var(--sp-radius-control);
+}
+.draft-editor__toolbar > div {
+  display: grid;
+  gap: var(--sp-space-1);
+}
+.draft-editor__item {
+  display: grid;
+  gap: var(--sp-space-2);
+  padding-top: var(--sp-space-3);
+  border-top: 1px solid var(--sp-border-soft);
+}
+.draft-editor__item label {
+  display: grid;
+  gap: var(--sp-space-2);
+  color: var(--sp-color-text-secondary);
+  font-size: var(--sp-font-xs);
+  font-weight: 650;
+}
+.draft-editor__item p,
+.draft-editor__hint {
+  margin: 0;
+}
+.draft-editor__actions {
+  justify-content: flex-end;
+}
+.confirmation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  margin-top: var(--sp-space-5);
   padding: var(--sp-space-5);
 }
 .confirmation__main,
@@ -606,6 +1025,10 @@ textarea {
   gap: var(--sp-space-4);
 }
 .confirmation__main {
+  min-width: 0;
+  align-items: flex-start;
+}
+.confirmation__copy {
   min-width: 0;
 }
 .confirmation__main h3 {
@@ -627,6 +1050,42 @@ textarea {
 }
 .confirmation__actions {
   flex: 0 0 auto;
+  align-self: center;
+  justify-content: flex-end;
+}
+.draft-preview {
+  grid-column: 1 / -1;
+  padding: var(--sp-space-4);
+  background: var(--sp-color-surface-muted);
+  border: 1px solid var(--sp-border-soft);
+  border-radius: var(--sp-radius-control);
+}
+.draft-preview header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-space-3);
+}
+.draft-preview h4,
+.draft-preview p {
+  margin: 0;
+}
+.draft-preview h4 {
+  margin-top: var(--sp-space-1);
+}
+.draft-preview small,
+.draft-preview__note {
+  color: var(--sp-color-text-muted);
+}
+.draft-preview ol {
+  display: grid;
+  gap: var(--sp-space-3);
+  padding-left: var(--sp-space-5);
+  margin: var(--sp-space-4) 0;
+}
+.draft-preview li p {
+  margin-top: var(--sp-space-1);
+  color: var(--sp-color-text-secondary);
 }
 .message {
   padding: var(--sp-space-3) var(--sp-space-4);
@@ -651,6 +1110,12 @@ textarea {
 @media (max-width: 900px) {
   .suggestion__body {
     grid-template-columns: 1fr;
+  }
+  .draft-history__body {
+    grid-template-columns: 1fr;
+  }
+  .draft-history nav {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   }
   .generator {
     align-items: stretch;
@@ -683,7 +1148,7 @@ textarea {
   }
   .confirmation {
     align-items: stretch;
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
   .confirmation__actions {
     align-items: stretch;

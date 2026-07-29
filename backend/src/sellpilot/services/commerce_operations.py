@@ -26,6 +26,14 @@ SAVE_PRODUCT_DRAFT = "commerce.save_product_draft"
 IMPORT_PRODUCTS = "commerce.import_products"
 ADD_CANDIDATE = "commerce.add_selection_candidate"
 REMOVE_CANDIDATE = "commerce.remove_selection_candidate"
+CANDIDATE_SITE_CODES = {
+    "Singapore": "sg",
+    "Malaysia": "my",
+    "Philippines": "ph",
+    "Thailand": "th",
+    "Vietnam": "vn",
+    "Indonesia": "id",
+}
 
 
 class CommerceOperationService:
@@ -192,25 +200,23 @@ class CommerceOperationService:
 
     async def list_candidates(self, created_by: UUID) -> list[dict[str, Any]]:
         rows = (
-            (
-                await self.session.execute(
-                    select(SelectionCandidate)
-                    .where(SelectionCandidate.created_by == created_by)
-                    .order_by(SelectionCandidate.created_at.desc())
-                )
+            await self.session.execute(
+                select(SelectionCandidate, Product.site)
+                .outerjoin(Product, Product.external_id == SelectionCandidate.product_external_id)
+                .where(SelectionCandidate.created_by == created_by)
+                .order_by(SelectionCandidate.created_at.desc())
             )
-            .scalars()
-            .all()
-        )
+        ).all()
         return [
             {
                 "product_id": item.product_external_id,
                 "title": item.title_snapshot,
+                "site": CANDIDATE_SITE_CODES.get(site) if site else None,
                 "source_type": item.source_type,
                 "is_mock_data": item.is_mock_data,
                 "created_at": item.created_at,
             }
-            for item in rows
+            for item, site in rows
         ]
 
     async def _create_confirmation(

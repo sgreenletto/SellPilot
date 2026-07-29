@@ -22,7 +22,12 @@ function render(): void {
     animation: false,
     color: [primary, danger],
     tooltip: { trigger: "axis", valueFormatter: (value: unknown) => String(value) },
-    legend: { top: 0, right: 0, data: ["评论总数", "负面评论"], textStyle: { color: muted } },
+    legend: {
+      top: 0,
+      right: 0,
+      data: ["评论总数", "含改进信号评论"],
+      textStyle: { color: muted },
+    },
     grid: { left: 36, right: 16, top: 42, bottom: 28, containLabel: true },
     xAxis: {
       type: "category",
@@ -47,7 +52,7 @@ function render(): void {
         data: props.points.map((item) => item.review_count),
       },
       {
-        name: "负面评论",
+        name: "含改进信号评论",
         type: compact ? "bar" : "line",
         barMaxWidth: 56,
         symbolSize: 8,
@@ -84,7 +89,7 @@ onBeforeUnmount(() => {
       <small>评论总数</small><strong>{{ singlePoint.review_count }}</strong>
     </div>
     <div>
-      <small>负面评论</small><strong>{{ singlePoint.negative_count }}</strong>
+      <small>含改进信号评论</small><strong>{{ singlePoint.negative_count }}</strong>
     </div>
     <div>
       <small>平均评分</small><strong>{{ Number(singlePoint.average_rating).toFixed(1) }}</strong

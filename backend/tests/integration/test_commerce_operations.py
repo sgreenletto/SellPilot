@@ -153,3 +153,21 @@ async def test_draft_import_and_candidate_writes_require_confirmation(
         assert draft is not None
         assert draft.status == "draft"
         assert candidate is not None
+        listed_candidates = await operations.list_candidates(admin_user.id)
+        assert listed_candidates == [
+            {
+                "product_id": source.external_id,
+                "title": source.title,
+                "site": {
+                    "Singapore": "sg",
+                    "Malaysia": "my",
+                    "Philippines": "ph",
+                    "Thailand": "th",
+                    "Vietnam": "vn",
+                    "Indonesia": "id",
+                }[source.site],
+                "source_type": source.source_type,
+                "is_mock_data": True,
+                "created_at": candidate.created_at,
+            }
+        ]

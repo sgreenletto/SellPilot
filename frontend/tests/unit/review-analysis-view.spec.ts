@@ -170,6 +170,52 @@ describe("ReviewAnalysisView", () => {
     );
   });
 
+  it("uses the same sentiment wording in filters, rows, and summary", async () => {
+    const wrapper = await mountView();
+    await flushPromises();
+    const sentimentSelect = wrapper.get('select[aria-label="情感分类"]');
+    expect(sentimentSelect.findAll("option").map((option) => option.text())).toEqual([
+      "请选择",
+      "全部分类",
+      "正向",
+      "中性",
+      "含改进信号",
+    ]);
+    expect(wrapper.text()).not.toContain("列表情感");
+    expect(wrapper.text()).not.toContain("负面");
+  });
+
+  it("filters by the complete structured topic set rather than keyword text", async () => {
+    api.listProductReviews.mockResolvedValue([
+      {
+        ...review,
+        review_id: "REV-MATERIAL",
+        issue_type: "other",
+        topics: ["material", "packaging"],
+        content: "Feels sturdy.",
+      },
+      { ...review, review_id: "REV-OTHER", issue_type: "other", content: "Unexpected concern." },
+    ]);
+    const wrapper = await mountView();
+    await flushPromises();
+    expect(wrapper.get("#review-REV-MATERIAL").text()).toContain("产品、包装");
+    const topicSelect = wrapper.get('select[aria-label="评论主题"]');
+    expect(topicSelect.findAll("option").map((option) => option.text())).toEqual([
+      "请选择",
+      "全部主题",
+      "产品",
+      "包装",
+      "文案",
+      "物流",
+      "服务",
+      "其他",
+    ]);
+    await topicSelect.setValue("product_quality");
+    expect(wrapper.text()).toContain("Feels sturdy.");
+    expect(wrapper.text()).not.toContain("Unexpected concern.");
+    expect(wrapper.text()).toContain("按商品、关键词、站点、语言、评分和日期选择分析范围");
+  });
+
   it("localizes stored language, sentiment, and issue codes for Chinese users", async () => {
     api.listProductReviews.mockResolvedValue([
       { ...review, review_id: "REV-WRONG", issue_type: "wrong_item" },
@@ -184,10 +230,10 @@ describe("ReviewAnalysisView", () => {
     ]);
     const wrapper = await mountView();
     await flushPromises();
-    expect(wrapper.text()).toContain("错发商品");
+    expect(wrapper.text()).toContain("产品");
     expect(wrapper.text()).toContain("正向");
-    expect(wrapper.text()).toContain("无明确问题");
-    expect(wrapper.text()).toContain("其他问题");
+    expect(wrapper.text()).toContain("其他");
+    expect(wrapper.text()).toContain("其他");
     expect(wrapper.text()).not.toContain("wrong_item");
     expect(wrapper.text()).not.toContain("no_clear_issue");
     expect(wrapper.text()).not.toMatch(/\bother\b/);
@@ -207,8 +253,8 @@ describe("ReviewAnalysisView", () => {
     expect(wrapper.text()).toContain("改进信号");
     expect(wrapper.text()).toContain("情感分类");
     expect(wrapper.text()).toContain("评论主题");
-    expect(wrapper.text()).toContain("高频关键词");
-    expect(wrapper.text()).toContain("包装 · 1 条");
+    expect(wrapper.text()).toContain("高频痛点");
+    expect(wrapper.text()).toContain("包装1 条");
     expect(wrapper.text()).not.toContain("建议关注方向");
     await wrapper
       .findAll("button")
@@ -260,7 +306,7 @@ describe("ReviewAnalysisView", () => {
       ?.trigger("click");
     await flushPromises();
     expect(wrapper.get("#review-REV1").text()).toContain("含改进信号");
-    expect(wrapper.get("#review-REV1").text()).toContain("产品质量");
+    expect(wrapper.get("#review-REV1").text()).toContain("产品");
     expect(wrapper.get(".analysis-summary").text()).toContain("0 中性");
   });
 

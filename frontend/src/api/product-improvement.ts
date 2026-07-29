@@ -1,6 +1,8 @@
 import { request } from "@/api/http";
 import type {
   ConfirmationResult,
+  ImprovementDraftItem,
+  ImprovementDraftList,
   ImprovementReport,
   ImprovementSuggestion,
 } from "@/types/product-improvement";
@@ -14,10 +16,10 @@ const auth = (method = "GET", body?: unknown): RequestInit => {
   };
 };
 
-export const generateImprovementReport = (analysisId: string) =>
+export const generateImprovementReport = (analysisId: string, forceRegenerate = false) =>
   request<ImprovementReport>(
     "/v1/product-improvement/reports",
-    auth("POST", { analysis_id: analysisId }),
+    auth("POST", { analysis_id: analysisId, force_regenerate: forceRegenerate }),
     130_000,
   );
 
@@ -46,13 +48,14 @@ export const requestImprovementDraft = (
   reportId: string,
   suggestionIds: string[],
   idempotencyKey: string,
+  site: string,
 ) =>
   request<ConfirmationResult>(
     `/v1/product-improvement/reports/${encodeURIComponent(reportId)}/draft-confirmations`,
     auth("POST", {
       idempotency_key: idempotencyKey,
-      site: "sg",
-      target_language: "en",
+      site,
+      target_language: "und",
       suggestion_ids: suggestionIds,
     }),
   );
@@ -67,4 +70,37 @@ export const cancelImprovementDraft = (confirmationId: string) =>
   request<ConfirmationResult>(
     `/v1/confirmations/${encodeURIComponent(confirmationId)}/cancel`,
     auth("POST"),
+  );
+
+export const listImprovementDrafts = (sourceProductId: string) =>
+  request<ImprovementDraftList>(
+    `/v1/product-improvement/drafts?source_product_id=${encodeURIComponent(sourceProductId)}`,
+    auth(),
+  );
+
+export const requestImprovementDraftRevision = (
+  versionId: string,
+  expectedVersion: number,
+  items: ImprovementDraftItem[],
+  idempotencyKey: string,
+) =>
+  request<ConfirmationResult>(
+    `/v1/product-improvement/drafts/${encodeURIComponent(versionId)}/revision-confirmations`,
+    auth("POST", {
+      idempotency_key: idempotencyKey,
+      expected_version: expectedVersion,
+      items,
+    }),
+  );
+
+export const requestImprovementDraftHistoryClear = (
+  sourceProductId: string,
+  idempotencyKey: string,
+) =>
+  request<ConfirmationResult>(
+    "/v1/product-improvement/drafts/clear-confirmations",
+    auth("POST", {
+      idempotency_key: idempotencyKey,
+      source_product_id: sourceProductId,
+    }),
   );

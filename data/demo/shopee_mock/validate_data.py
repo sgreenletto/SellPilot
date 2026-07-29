@@ -134,6 +134,28 @@ class Validator:
 
         bad_price = [r["product_id"] for r in products if Decimal(r["price"]) < Decimal(r["cost"]) * Decimal("0.95")]
         self.check(not bad_price, "Product prices are reasonable relative to cost", f"{len(bad_price)} products are priced materially below cost")
+        short_descriptions = [
+            row["product_id"]
+            for row in products
+            if len(row.get("description", "").strip()) < 180
+        ]
+        self.check(
+            not short_descriptions,
+            "Product descriptions include features, usage context, and option guidance",
+            f"{len(short_descriptions)} products have descriptions shorter than 180 characters",
+        )
+        incomplete_descriptions = [
+            row["product_id"]
+            for row in products
+            if row["title"] not in row.get("description", "")
+            or "Available " not in row.get("description", "")
+            or "Check " not in row.get("description", "")
+        ]
+        self.check(
+            not incomplete_descriptions,
+            "Product descriptions include the full title, available options, and ordering guidance",
+            f"{len(incomplete_descriptions)} product descriptions are missing required detail sections",
+        )
         bad_sku_price = [r["sku_id"] for r in skus if Decimal(r["price"]) < Decimal(r["cost"])]
         self.check(not bad_sku_price, "SKU prices are not below SKU cost", f"{len(bad_sku_price)} SKUs are priced below cost")
 
