@@ -432,11 +432,7 @@ function badge(value: unknown): "active" | "pending" | "failed" {
 watch([query, status, pageSize], () => (currentPage.value = 1));
 watch(selectedShopId, () => void loadCurrentShop());
 watch(
-  [
-    activeLanguage,
-    () => selected.value?.product_id,
-    () => translationStatus.value?.configured,
-  ],
+  [activeLanguage, () => selected.value?.product_id, () => translationStatus.value?.configured],
   () => void translateMissingActiveLanguage(),
 );
 onMounted(() => {
