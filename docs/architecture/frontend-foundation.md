@@ -50,6 +50,12 @@ Dashboard 的“异常提醒与今日待办”不使用固定商品名称。当�
 
 ## 路由与加载
 
+应用壳通过路由 `meta.keepAlive` 仅缓存智能选品、评论分析、产品改良和内容工坊四个有长耗时
+分析或生成交互的工作台，缓存上限为 4。用户在站内切换页面时，进行中的 Promise、表单状态和
+已返回结果不会随路由组件卸载而丢失。普通查询页不缓存；浏览器刷新后的事实恢复仍由后端
+PostgreSQL 中的任务、候选清单、确认任务和内容版本负责，不把大型业务结果写入
+`localStorage`。
+
 公共路由使用 `DefaultLayout`。未实现业务模块复用 `ModulePlaceholderView`，页面名称、模块和说明来自路由元数据。`/tasks` 已替换为真实 `TaskCenterView`，复用现有 Sp 组件与语义变量：列表只取任务摘要，选中任务后并行按需读取详情、Step、ToolCall、Confirmation 和 OperationLog。操作按钮只渲染后端 `available_actions`，危险确认使用显式二次确认，成功后刷新列表与详情，并通过查询参数恢复选中任务。`/dev/design-system` 仅在开发构建中注册。
 
 `api/tasks.ts` 复用统一认证 HTTP Client 和响应包络，过滤空查询参数，并将 404、409、

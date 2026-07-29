@@ -107,6 +107,7 @@ async def test_review_analysis_api_create_run_query_and_evidence(client_bundle):
     )
     assert reviews.status_code == 200
     assert reviews.json()["data"][0]["review_id"] == "REV-API-1"
+    assert set(reviews.json()["data"][0]["topics"]) == {"logistics", "product_quality"}
 
     translated_search = await client.get(
         "/api/v1/review-analysis/reviews",
@@ -206,10 +207,30 @@ async def test_review_analysis_api_create_run_query_and_evidence(client_bundle):
     assert improvement.status_code == 200
     report = improvement.json()["data"]
     assert report["source_product_id"] == "REV-API-P1"
-    assert report["algorithm_version"] == "product-improvement-rule-v1.2.0"
+    assert report["algorithm_version"] == "product-improvement-rule-v1.3.0"
+    assert report["summary"]["sample_size"] == 1
     assert report["suggestions"]
     suggestion = report["suggestions"][0]
+    assert suggestion["category"] in {
+        "product_quality",
+        "packaging",
+        "description_mismatch",
+        "logistics",
+        "service",
+        "other",
+    }
     assert suggestion["evidence_review_ids"]["items"] == ["REV-API-1"]
+    assert Decimal("0.60") <= Decimal(suggestion["confidence"]) <= Decimal("1")
+
+    regenerated = await client.post(
+        "/api/v1/product-improvement/reports",
+        json={"analysis_id": payload["analysis_id"], "force_regenerate": True},
+        headers=headers,
+    )
+    assert regenerated.status_code == 200
+    regenerated_report = regenerated.json()["data"]
+    assert regenerated_report["id"] != report["id"]
+    assert regenerated_report["version"] == report["version"] + 1
 
     accepted = await client.patch(
         f"/api/v1/product-improvement/suggestions/{suggestion['id']}",
@@ -238,7 +259,7 @@ async def test_review_analysis_api_create_run_query_and_evidence(client_bundle):
         json={
             "idempotency_key": "review-api-improvement-draft-001",
             "site": "sg",
-            "target_language": "en",
+            "target_language": "und",
             "suggestion_ids": [suggestion["id"]],
         },
         headers=headers,
@@ -252,7 +273,7 @@ async def test_review_analysis_api_create_run_query_and_evidence(client_bundle):
         json={
             "idempotency_key": "review-api-improvement-draft-001",
             "site": "sg",
-            "target_language": "en",
+            "target_language": "und",
             "suggestion_ids": [suggestion["id"]],
         },
         headers=headers,
@@ -267,6 +288,111 @@ async def test_review_analysis_api_create_run_query_and_evidence(client_bundle):
     assert confirmed.status_code == 200
     assert confirmed.json()["data"]["status"] == "succeeded"
     assert confirmed.json()["data"]["execution_result"]["status"] == "DRAFT"
+
+    drafts = await client.get(
+        "/api/v1/product-improvement/drafts",
+        params={"source_product_id": "REV-API-P1"},
+        headers=headers,
+    )
+    assert drafts.status_code == 200
+    draft_data = drafts.json()["data"]
+    assert draft_data["total"] == 1
+    first_draft = draft_data["items"][0]
+    assert first_draft["version"] == 1
+    assert first_draft["sequence"] == 1
+    assert first_draft["items"][0]["title"] == "Accepted evidence-based improvement"
+
+    revision_request = await client.post(
+        f"/api/v1/product-improvement/drafts/{first_draft['id']}/revision-confirmations",
+        json={
+            "idempotency_key": "review-api-improvement-revision-001",
+            "expected_version": 1,
+            "items": [
+                {
+                    "title": "Revised packaging improvement",
+                    "description": "Add cushioning and validate with a drop test.",
+                }
+            ],
+        },
+        headers=headers,
+    )
+    assert revision_request.status_code == 200
+    revision_confirmation = revision_request.json()["data"]
+    assert revision_confirmation["status"] == "pending"
+
+    revision_confirmed = await client.post(
+        f"/api/v1/confirmations/{revision_confirmation['id']}/confirm",
+        headers=headers,
+    )
+    assert revision_confirmed.status_code == 200
+    assert revision_confirmed.json()["data"]["execution_result"]["version"] == 2
+
+    revised_drafts = await client.get(
+        "/api/v1/product-improvement/drafts",
+        params={"source_product_id": "REV-API-P1"},
+        headers=headers,
+    )
+    assert revised_drafts.status_code == 200
+    revised_data = revised_drafts.json()["data"]
+    assert revised_data["total"] == 2
+    assert revised_data["items"][0]["version"] == 2
+    assert revised_data["items"][0]["sequence"] == 2
+    assert revised_data["items"][0]["items"][0]["title"] == "Revised packaging improvement"
+
+    clear_request = await client.post(
+        "/api/v1/product-improvement/drafts/clear-confirmations",
+        json={
+            "idempotency_key": "review-api-improvement-clear-001",
+            "source_product_id": "REV-API-P1",
+        },
+        headers=headers,
+    )
+    assert clear_request.status_code == 200
+    clear_confirmation = clear_request.json()["data"]
+    assert clear_confirmation["status"] == "pending"
+
+    cleared = await client.post(
+        f"/api/v1/confirmations/{clear_confirmation['id']}/confirm",
+        headers=headers,
+    )
+    assert cleared.status_code == 200
+    assert cleared.json()["data"]["execution_result"]["cleared"] is True
+
+    empty_history = await client.get(
+        "/api/v1/product-improvement/drafts",
+        params={"source_product_id": "REV-API-P1"},
+        headers=headers,
+    )
+    assert empty_history.status_code == 200
+    assert empty_history.json()["data"] == {"items": [], "total": 0}
+
+    new_draft_request = await client.post(
+        f"/api/v1/product-improvement/reports/{report['id']}/draft-confirmations",
+        json={
+            "idempotency_key": "review-api-improvement-draft-002",
+            "site": "sg",
+            "target_language": "und",
+            "suggestion_ids": [suggestion["id"]],
+        },
+        headers=headers,
+    )
+    assert new_draft_request.status_code == 200
+    new_confirmation = new_draft_request.json()["data"]
+    recreated = await client.post(
+        f"/api/v1/confirmations/{new_confirmation['id']}/confirm",
+        headers=headers,
+    )
+    assert recreated.status_code == 200
+
+    recreated_history = await client.get(
+        "/api/v1/product-improvement/drafts",
+        params={"source_product_id": "REV-API-P1"},
+        headers=headers,
+    )
+    assert recreated_history.status_code == 200
+    recreated_data = recreated_history.json()["data"]
+    assert recreated_data["total"] == 1
+    assert recreated_data["items"][0]["sequence"] == 1
 
 
 async def test_review_analysis_api_validates_schema_and_missing_resources(client_bundle):

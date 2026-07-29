@@ -19,7 +19,8 @@
 - `POST /products/draft-request`：创建或更新内部 Mock 商品草稿。
 - `POST /products/import-request`：提交已在前端完成字段校验的商品批次，每批最多 500
   条；确认后按 `product_id` 更新或新增。
-- `GET /selection-candidates`：读取当前用户持久化候选清单。
+- `GET /selection-candidates`：读取当前用户持久化候选清单；每项包含关联商品的 `site`
+  （商品已不存在时为 `null`），供选品工作台从侧边栏进入时恢复候选所在站点。
 - `POST /selection-candidates/{product_id}/add-request`：请求加入候选。
 - `POST /selection-candidates/{product_id}/remove-request`：请求移出候选。
 - `POST /api/v1/confirmations/{confirmation_id}/confirm`：明确确认并执行上述写操作。
@@ -38,6 +39,7 @@
 - `POST /products/{product_id}/inventory-request`
 
 这些接口只创建内部 `AgentTask` 和 `ConfirmationTask`，不会立即修改业务数据。用户随后调用既有的 `POST /confirmations/{id}/confirm`，系统注册对应 Commerce 执行器后才修改 Mock 数据，并写入操作前后快照、执行结果和 `OperationLog`。重复幂等键返回原确认任务，重复确认不会再次执行。
+
 ## 经营看板前端聚合
 
 经营看板当前不新增独立的 Dashboard 后端接口，而是通过统一 API 客户端分页读取以下已有只读接口：

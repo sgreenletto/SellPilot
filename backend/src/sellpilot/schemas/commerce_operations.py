@@ -3,6 +3,8 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
+from sellpilot.core.enums import SiteCode
+
 
 class OperationRequest(BaseModel):
     idempotency_key: str = Field(min_length=8, max_length=255)
@@ -50,6 +52,7 @@ class CandidateRequest(OperationRequest):
 class CandidateResponse(BaseModel):
     product_id: str
     title: str
+    site: SiteCode | None = None
     source_type: str
     is_mock_data: bool
     created_at: datetime

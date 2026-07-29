@@ -63,6 +63,66 @@ def test_preview_uses_analysis_rules_instead_of_stale_source_hints():
 
 
 @pytest.mark.parametrize(
+    ("content", "translated_content", "expected_topic"),
+    [
+        ("The finish has a defect.", "做工有缺陷。", ReviewTopic.PRODUCT_QUALITY),
+        ("The outer box arrived crushed.", "外包装被压坏。", ReviewTopic.PACKAGING),
+        ("The item is not as described.", "商品与描述不符。", ReviewTopic.DESCRIPTION_MISMATCH),
+        ("Delivery was late.", "配送延迟。", ReviewTopic.LOGISTICS),
+        ("Seller support did not reply.", "客服没有回复。", ReviewTopic.SERVICE),
+        ("The plastic material feels weak.", "塑料材料较薄。", ReviewTopic.PRODUCT_QUALITY),
+        ("The size is too small.", "尺寸偏小。", ReviewTopic.PRODUCT_QUALITY),
+        (
+            "I received a different variation from the one selected.",
+            "收到的款式与下单时选择的款式不一致。",
+            ReviewTopic.PRODUCT_QUALITY,
+        ),
+    ],
+)
+def test_every_selectable_problem_topic_has_matching_review_rules(
+    content, translated_content, expected_topic
+):
+    _, topics = classify_review_preview(
+        review(
+            f"REV-{expected_topic}",
+            rating=2,
+            content=content,
+            translated_content=translated_content,
+        )
+    )
+
+    assert expected_topic in topics
+
+
+def test_positive_practical_design_has_product_quality_topic():
+    sentiment, topics = classify_review_preview(
+        review(
+            "REV-PRACTICAL-DESIGN",
+            rating=5,
+            content="Very practical design. I would recommend it to friends.",
+            translated_content="设计很实用，我愿意推荐给朋友。",
+        )
+    )
+
+    assert sentiment == ReviewSentiment.POSITIVE
+    assert ReviewTopic.PRODUCT_QUALITY in topics
+    assert ReviewTopic.NO_CLEAR_ISSUE not in topics
+
+
+def test_unmatched_review_uses_other_instead_of_inventing_a_category():
+    _, topics = classify_review_preview(
+        review(
+            "REV-OTHER",
+            rating=4,
+            content="Arrived yesterday.",
+            translated_content="昨天收到。",
+        )
+    )
+
+    assert topics == (ReviewTopic.OTHER,)
+
+
+@pytest.mark.parametrize(
     ("language", "content", "expected"),
     [
         ("English", "The item has good quality", "en"),
@@ -194,7 +254,7 @@ async def test_multitopic_review_keeps_all_allowed_topics():
     )
 
     topics = set(result.judgements[0].topics)
-    assert ReviewTopic.WRONG_OR_MISSING_ITEM in topics
+    assert ReviewTopic.PRODUCT_QUALITY in topics
     assert ReviewTopic.PACKAGING in topics
     assert ReviewTopic.LOGISTICS in topics
 
@@ -226,7 +286,7 @@ async def test_fake_model_valid_output_is_schema_checked_and_attributed():
                 {
                     "review_id": "REV-1",
                     "sentiment": "negative",
-                    "topics": ["material", "size_specification"],
+                    "topics": ["product_quality"],
                     "confidence": "0.91",
                 }
             ]
@@ -238,10 +298,7 @@ async def test_fake_model_valid_output_is_schema_checked_and_attributed():
     judgement = result.judgements[0]
     assert judgement.origin == AnalysisOrigin.MODEL
     assert judgement.sentiment == ReviewSentiment.NEGATIVE
-    assert judgement.topics == (
-        ReviewTopic.MATERIAL,
-        ReviewTopic.SIZE_SPECIFICATION,
-    )
+    assert judgement.topics == (ReviewTopic.PRODUCT_QUALITY,)
 
 
 @pytest.mark.parametrize(
@@ -405,23 +462,30 @@ async def test_positive_finish_and_size_mentions_are_not_improvement_signals():
     judgement = result.judgements[0]
     assert judgement.sentiment == ReviewSentiment.POSITIVE
     assert ReviewTopic.PRODUCT_QUALITY in judgement.topics
-    assert ReviewTopic.SIZE_SPECIFICATION in judgement.topics
+    assert ReviewTopic.PRODUCT_QUALITY in judgement.topics
     assert result.pain_points == ()
 
 
 @pytest.mark.asyncio
-async def test_three_star_review_with_explicit_drawback_is_negative_evidence():
+async def test_three_star_normal_delivery_is_neutral_and_not_actionable():
     result = await analyze_reviews(
         [
             review(
                 "REV-MIXED",
                 rating=3,
-                content="Delivery took the usual time; I hope the next batch improves.",
+                content=(
+                    'I bought "USB-C Hub Essential 001", Ports: 6-in-1. '
+                    "Acceptable for the price; delivery took the usual time."
+                ),
+                translated_content=(
+                    "我购买的是 USB-C Hub Essential 001，接口为 6-in-1。"
+                    "以这个价格来说可以接受，配送时效也属正常。"
+                ),
             )
         ]
     )
 
     judgement = result.judgements[0]
-    assert judgement.sentiment == ReviewSentiment.NEGATIVE
+    assert judgement.sentiment == ReviewSentiment.NEUTRAL
     assert ReviewTopic.LOGISTICS in judgement.topics
-    assert result.pain_points[0].pain_point == ReviewTopic.LOGISTICS
+    assert result.pain_points == ()

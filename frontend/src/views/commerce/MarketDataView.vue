@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onActivated, onMounted, ref, watch } from "vue";
 import { FileSpreadsheet, Search, Star } from "@lucide/vue";
 import * as XLSX from "xlsx";
 
@@ -258,6 +258,11 @@ function marketFieldLabel(key: string): string {
 onMounted(() => {
   loadProjectDemo();
   void loadCandidates();
+});
+let hasActivated = false;
+onActivated(() => {
+  if (hasActivated) void loadCandidates();
+  hasActivated = true;
 });
 watch(
   [query, sourceFilter, siteFilter, categoryFilter, statusFilter, onlyCandidates, pageSize],
