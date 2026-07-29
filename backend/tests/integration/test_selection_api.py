@@ -67,11 +67,29 @@ async def test_selection_api_full_authenticated_flow(client_bundle) -> None:
     analysis = analysis_response.json()["data"]
     assert analysis["status"] == "SUCCEEDED"
     assert analysis["ranked_count"] == len(candidates)
-    assert all(Decimal(item["data_completeness"]) == Decimal("1") for item in analysis["results"])
-    assert all(
-        all(metric["score"] is not None for metric in item["metrics"].values())
+    completeness = [Decimal(item["data_completeness"]) for item in analysis["results"]]
+    assert all(Decimal("0") < value <= Decimal("1") for value in completeness)
+    assert any(value < Decimal("1") for value in completeness)
+    assert any(
+        "missing review_quality" in warning
         for item in analysis["results"]
+        for warning in item["risk_warnings"]
     )
+    for item in analysis["results"]:
+        assert set(item["metrics"]) == {
+            "demand",
+            "competition",
+            "profitability",
+            "review_quality",
+            "logistics",
+            "after_sales",
+            "factory_fit",
+        }
+        assert any(metric["score"] is not None for metric in item["metrics"].values())
+        assert all(
+            metric["score"] is not None or metric["missing_reason"]
+            for metric in item["metrics"].values()
+        )
 
     product_ids = [item["product_id"] for item in analysis["results"][:2]]
     compare_response = await client.get(

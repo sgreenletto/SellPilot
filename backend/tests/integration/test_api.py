@@ -58,7 +58,13 @@ async def test_commerce_read_api_is_authenticated_and_structured(client_bundle):
         "/api/v1/commerce/products?limit=100&shop_id=SHOP001", headers=headers
     )
     assert shop_products.status_code == 200
-    assert len(shop_products.json()["data"]) == 17
+    shop_rows = shop_products.json()["data"]
+    assert len(shop_rows) == 20
+    assert {item["product_id"] for item in shop_rows if item["category_id"] == "CAT008"} == {
+        "PROD0101",
+        "PROD0102",
+        "PROD0103",
+    }
     assert all(product["site"] == "Singapore" for product in shop_products.json()["data"])
 
     inventory = await client.get("/api/v1/commerce/inventory?limit=2", headers=headers)

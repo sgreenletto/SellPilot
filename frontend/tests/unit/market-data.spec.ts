@@ -38,13 +38,13 @@ describe("市场数据页面", () => {
     await wrapper.vm.$nextTick();
 
     expect(wrapper.findAll("tbody tr")).toHaveLength(10);
-    expect(wrapper.text()).toContain("共 100 条 · 第 1 / 10 页");
+    expect(wrapper.text()).toContain("共 103 条 · 第 1 / 11 页");
 
     await wrapper
       .findAll("button")
       .find((button) => button.text().includes("下一页"))!
       .trigger("click");
-    expect(wrapper.text()).toContain("第 2 / 10 页");
+    expect(wrapper.text()).toContain("第 2 / 11 页");
 
     await wrapper.get('select[aria-label="站点筛选"]').setValue("Singapore");
     expect(wrapper.text()).toContain("第 1 /");
