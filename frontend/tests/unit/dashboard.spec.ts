@@ -7,7 +7,8 @@ import DashboardView from "@/views/dashboard/DashboardView.vue";
 const loadCommerceDashboardSnapshot = vi.fn();
 const listConfirmations = vi.fn();
 
-vi.mock("@/api/dashboard", () => ({
+vi.mock("@/api/dashboard", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/api/dashboard")>()),
   loadCommerceDashboardSnapshot: (...args: unknown[]) => loadCommerceDashboardSnapshot(...args),
 }));
 vi.mock("@/api/commerce", async (importOriginal) => ({
@@ -201,7 +202,7 @@ describe("经营看板 v2", () => {
       .findAll("button")
       .find((button) => button.text().includes("评论情绪分布"))!
       .trigger("click");
-    expect(wrapper.text()).toContain("合成 Mock 演示数据");
+    expect(wrapper.text()).toContain("后端商品评分代理数据");
     expect(wrapper.text()).not.toContain("折叠支架");
     expect(wrapper.text()).toContain("未接入");
   });

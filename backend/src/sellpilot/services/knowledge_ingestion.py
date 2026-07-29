@@ -64,22 +64,22 @@ class KnowledgeIngestionService:
                     },
                     {"role": "user", "content": text},
                 ],
-                temperature=0.1, max_tokens=2048,
+                temperature=0.1,
+                max_tokens=2048,
             )
             result = resp.strip().strip('"').strip("'").strip()
             # 如果返回的是英文（不含任何中文字符），说明翻译失败，返回空
-            if result and not any('一' <= c <= '鿿' for c in result):
-                logger.warning(
-                    "Translation returned no Chinese chars, retrying"
-                )
+            if result and not any("一" <= c <= "鿿" for c in result):
+                logger.warning("Translation returned no Chinese chars, retrying")
                 resp2 = llm.chat(
-                    [{
-                        "role": "user",
-                        "content": (
-                            f"请将以下内容翻译成简体中文，只返回中文译文：\n\n{text}"
-                        ),
-                    }],
-                    temperature=0.1, max_tokens=2048,
+                    [
+                        {
+                            "role": "user",
+                            "content": (f"请将以下内容翻译成简体中文，只返回中文译文：\n\n{text}"),
+                        }
+                    ],
+                    temperature=0.1,
+                    max_tokens=2048,
                 )
                 result = resp2.strip()
             return result
@@ -129,8 +129,13 @@ class KnowledgeIngestionService:
 
     @staticmethod
     def _faq(
-        q: str, a: str, lang: str, intent: str, risk: str,
-        zh_q: str = "", zh_a: str = "",
+        q: str,
+        a: str,
+        lang: str,
+        intent: str,
+        risk: str,
+        zh_q: str = "",
+        zh_a: str = "",
     ) -> str:
         zh_line = ""
         if zh_q and zh_a:
@@ -149,14 +154,25 @@ class KnowledgeIngestionService:
 
     async def _make(self, title: str, content: str, cat: str, src: str) -> KnowledgeDocument:
         doc = KnowledgeDocument(
-            title=title, file_type="csv", file_size_bytes=len(content.encode()),
-            category=cat, status="indexed", source=src, chunk_count=1, created_by=_ADMIN,
+            title=title,
+            file_type="csv",
+            file_size_bytes=len(content.encode()),
+            category=cat,
+            status="indexed",
+            source=src,
+            chunk_count=1,
+            created_by=_ADMIN,
         )
         self.session.add(doc)
         await self.session.flush()
-        self.session.add(KnowledgeChunk(
-            document_id=doc.id, chunk_index=0, content=content, chunk_size=len(content),
-        ))
+        self.session.add(
+            KnowledgeChunk(
+                document_id=doc.id,
+                chunk_index=0,
+                content=content,
+                chunk_size=len(content),
+            )
+        )
         return doc
 
     async def _clear(self) -> int:
@@ -198,8 +214,9 @@ class KnowledgeIngestionService:
 
         # FAQ 翻译（先清洗语言标签再翻译）
         import re
+
         def _clean(t: str) -> str:
-            return re.sub(r'\[[A-Za-z ]+\]\s*', '', t).strip()
+            return re.sub(r"\[[A-Za-z ]+\]\s*", "", t).strip()
 
         faq_rows: list[tuple[str, str, str, str, str, str]] = []
         for sid in sorted(set(b_msgs) | set(a_msgs)):
@@ -208,29 +225,44 @@ class KnowledgeIngestionService:
             if not q or not a:
                 continue
             s = smap.get(sid, {})
-            faq_rows.append((
-                sid, q, a,
-                s.get("language", ""),
-                s.get("intent", ""),
-                s.get("risk_level", ""),
-            ))
+            faq_rows.append(
+                (
+                    sid,
+                    q,
+                    a,
+                    s.get("language", ""),
+                    s.get("intent", ""),
+                    s.get("risk_level", ""),
+                )
+            )
         faq_qs_zh = self._translate_batch(llm, [_clean(r[1]) for r in faq_rows], "FAQ questions")
         faq_as_zh = self._translate_batch(llm, [_clean(r[2]) for r in faq_rows], "FAQ answers")
 
         # ---- 创建文档 ----
         pc = rc = fc = 0
         for i, row in enumerate(prods):
-            await self._make(row.get("title", ""), self._prod(row, prod_zh[i]), "product",
-                             f"products.csv#{row.get('product_id', '')}")
+            await self._make(
+                row.get("title", ""),
+                self._prod(row, prod_zh[i]),
+                "product",
+                f"products.csv#{row.get('product_id', '')}",
+            )
             pc += 1
         for row in revs:
-            await self._make(f"Review {row.get('review_id', '')}", self._rev(row), "review",
-                             f"reviews.csv#{row.get('review_id', '')}")
+            await self._make(
+                f"Review {row.get('review_id', '')}",
+                self._rev(row),
+                "review",
+                f"reviews.csv#{row.get('review_id', '')}",
+            )
             rc += 1
         for i, (sid, q, a, lang, intent, risk) in enumerate(faq_rows):
-            await self._make(f"FAQ #{sid}",
-                             self._faq(q, a, lang, intent, risk, faq_qs_zh[i], faq_as_zh[i]),
-                             "faq", f"customer_messages.csv#{sid}")
+            await self._make(
+                f"FAQ #{sid}",
+                self._faq(q, a, lang, intent, risk, faq_qs_zh[i], faq_as_zh[i]),
+                "faq",
+                f"customer_messages.csv#{sid}",
+            )
             fc += 1
 
         await self.session.flush()
@@ -241,9 +273,16 @@ class KnowledgeIngestionService:
         es = EmbeddingService()
         off = 0
         while True:
-            batch = list((await self.session.execute(
-                select(KnowledgeChunk).order_by(KnowledgeChunk.created_at).offset(off).limit(100)
-            )).scalars())
+            batch = list(
+                (
+                    await self.session.execute(
+                        select(KnowledgeChunk)
+                        .order_by(KnowledgeChunk.created_at)
+                        .offset(off)
+                        .limit(100)
+                    )
+                ).scalars()
+            )
             if not batch:
                 break
             embs = es.encode([c.content for c in batch])
@@ -251,9 +290,18 @@ class KnowledgeIngestionService:
                 doc = await self.session.get(KnowledgeDocument, chunk.document_id)
                 cat = doc.category if doc else "unknown"
                 vs.upsert_chunks(
-                    chunk.document_id, [chunk.chunk_index], [chunk.content], [emb],
-                    [{"document_id": str(chunk.document_id), "chunk_index": chunk.chunk_index,
-                      "category": cat, "source": doc.source if doc else ""}],
+                    chunk.document_id,
+                    [chunk.chunk_index],
+                    [chunk.content],
+                    [emb],
+                    [
+                        {
+                            "document_id": str(chunk.document_id),
+                            "chunk_index": chunk.chunk_index,
+                            "category": cat,
+                            "source": doc.source if doc else "",
+                        }
+                    ],
                 )
                 chunk.embedding_status = "embedded"
                 chunk.chroma_id = f"{chunk.document_id}_{chunk.chunk_index}"
@@ -262,8 +310,14 @@ class KnowledgeIngestionService:
             logger.info("Embedded %d/%d", min(off, total), total)
 
         return {
-            "cleared": cleared, "products": pc, "reviews": rc, "faq": fc,
-            "total_documents": total, "total_chunks": total,
-            "embedding_model": es._model_name, "embedding_dim": es.dim,
-            "chroma_collection": vs._collection_name, "chroma_count": vs.count,
+            "cleared": cleared,
+            "products": pc,
+            "reviews": rc,
+            "faq": fc,
+            "total_documents": total,
+            "total_chunks": total,
+            "embedding_model": es._model_name,
+            "embedding_dim": es.dim,
+            "chroma_collection": vs._collection_name,
+            "chroma_count": vs.count,
         }

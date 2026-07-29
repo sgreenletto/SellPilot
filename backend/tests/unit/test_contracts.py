@@ -141,6 +141,7 @@ EXPECTED_ENUM_VALUES = {
         "knowledge_ingestion",
         "customer_service",
         "report_generation",
+        "replenishment",
     ],
     WorkflowType: [
         "diagnostic",

@@ -2,7 +2,7 @@ import { request } from "@/api/http";
 import { listInventory, listOrders, listProducts } from "@/api/commerce";
 import type { InventoryItem, Order, Product } from "@/types/commerce";
 import type { PaginatedResponse, TaskDetail } from "@/types/contracts";
-import type { DashboardMetric } from "@/types/dashboard";
+import type { DashboardMetric, TrendDataset } from "@/types/dashboard";
 
 // ---- 后端 Schema 类型（与 commerce.ts 一致）----
 
@@ -157,12 +157,13 @@ export async function loadCommerceDashboardSnapshot(
 
 // ---- 评论情绪分布（基于产品评分）----
 
-export function buildReviewSentimentTrend(
-  snapshot: CommerceDashboardSnapshot,
-): TrendDataset {
+export function buildReviewSentimentTrend(snapshot: CommerceDashboardSnapshot): TrendDataset {
   const rated = snapshot.products.filter((p) => Number(p.rating) > 0);
-  const bins: Record<string, number> = {
-    "1-2分": 0, "3分": 0, "4分": 0, "5分": 0,
+  const bins = {
+    "1-2分": 0,
+    "3分": 0,
+    "4分": 0,
+    "5分": 0,
   };
   for (const p of rated) {
     const r = Number(p.rating);
@@ -179,9 +180,7 @@ export function buildReviewSentimentTrend(
 
 // ---- 客服问题趋势（基于订单状态分布）----
 
-export function buildServiceIssueTrend(
-  snapshot: CommerceDashboardSnapshot,
-): TrendDataset {
+export function buildServiceIssueTrend(snapshot: CommerceDashboardSnapshot): TrendDataset {
   const counts: Record<string, number> = {};
   for (const o of snapshot.orders) {
     const s = o.order_status || "unknown";
@@ -192,8 +191,6 @@ export function buildServiceIssueTrend(
     .slice(0, 8);
   return {
     categories: entries.map(([k]) => k),
-    series: [
-      { name: "订单数", data: entries.map(([, v]) => v), color: "blue" },
-    ],
+    series: [{ name: "订单数", data: entries.map(([, v]) => v), color: "blue" }],
   };
 }
