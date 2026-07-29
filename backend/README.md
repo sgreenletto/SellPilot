@@ -1,13 +1,12 @@
 # SellPilot Backend
 
-SellPilot 公共后端架构底座，当前稳定版本为 **0.1.0**，属于 Foundation Milestone。该版本表示公共工程基线已建立，不代表完整业务已完成或已用于生产。
+SellPilot 后端当前发布候选版本为 **0.5.0**，对应 AI 运营助手与跨模块工作流集成里程碑。
 
-当前 `develop` 阶段在公共底座上增加成员三分析持久化与智能选品确定性计算内核，以及
-成员二商品、SKU、库存、订单、物流、售后、评论、客服实验数据和类目趋势的持久化与导入
-基础。选品 Service、API、Tool、工作流和页面，以及完整 Mock 平台操作、其他前端业务页面
-和 AI/RAG 流程仍未实现。
+当前 `develop` 已包含 PostgreSQL 业务数据、Assistant Task Runtime、统一 Tool/Workflow 注册表、
+智能选品、评论分析、产品改良、内容生成、知识库检索和客服回复建议。所有平台动作继续通过
+适配器和确认边界执行；项目仍为单用户、单模拟店铺和 Mock Shopee 验证环境。
 
-v0.1.0 采用普通 Git Tag 标记，不创建 GitHub Release；当前不连接真实 Shopee。
+v0.5.0 发布说明见 [`docs/releases/v0.5.0.md`](../docs/releases/v0.5.0.md)；当前不连接真实 Shopee。
 
 ## 技术栈
 

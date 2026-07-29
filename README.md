@@ -4,11 +4,13 @@ SellPilot 是面向跨境电商卖家的 AI 运营辅助平台，首版以 Shope
 
 ## 当前版本
 
-**develop — v0.3.0 业务能力候选基线**
+**develop — v0.5.0 AI 运营助手集成候选版本**
 
-当前 `develop` 已在公共底座上集成 Mock 商业数据、智能选品、评论分析、产品改良、多语言内容生成、Prompt/模型审计和成员三 AI 评估能力。它仍是课程实验候选版本，不代表系统已用于生产环境。
+当前 `develop` 已在公共底座上集成 Mock 商业数据、智能选品、评论分析、产品改良、多语言内容生成、知识库检索、客服回复建议，以及统一的 Assistant Task、Workflow、ToolExecutor 和 Confirmation 执行链。它仍是课程实验候选版本，不代表系统已用于生产环境。
 
 该里程碑采用普通 Git Tag 标记，不创建 GitHub Release。本仓库当前仍保持单用户、单模拟店铺和 Mock Shopee 模式，不连接真实 Shopee 账号。
+
+发布范围、验证结果和已知限制见 [`docs/releases/v0.5.0.md`](docs/releases/v0.5.0.md)。
 
 ## 目标业务闭环
 
