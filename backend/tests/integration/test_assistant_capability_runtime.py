@@ -122,6 +122,39 @@ async def test_knowledge_assistant_returns_sources_and_refuses_unknown_basis(
         "sources": [],
         "answer_mode": "no_reliable_source",
         "no_reliable_source": True,
+        "knowledge_initialized": True,
+    }
+
+
+async def test_knowledge_assistant_reports_uninitialized_store_without_500(
+    client_bundle,
+    admin_user,
+) -> None:
+    client, _, _, settings = client_bundle
+    headers = auth_headers(admin_user, settings)
+
+    created = await client.post(
+        "/api/v1/assistant/tasks",
+        headers=headers,
+        json={
+            "message": "在知识库中检索退货政策",
+            "execution_mode": "create_and_run",
+        },
+    )
+
+    assert created.status_code == 201
+    task = await client.get(
+        f"/api/v1/tasks/{created.json()['data']['task_id']}",
+        headers=headers,
+    )
+    assert task.status_code == 200
+    assert task.json()["data"]["status"] == "succeeded"
+    assert task.json()["data"]["result"] == {
+        "answer": "当前知识库尚未完成初始化，请先导入知识数据。",
+        "sources": [],
+        "answer_mode": "knowledge_not_initialized",
+        "no_reliable_source": True,
+        "knowledge_initialized": False,
     }
 
 

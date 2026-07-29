@@ -6,7 +6,7 @@ import re
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sellpilot.core.config import Settings
@@ -14,6 +14,7 @@ from sellpilot.db.models.knowledge_base import KnowledgeChunk, KnowledgeDocument
 from sellpilot.services.llm_service import LLMService
 
 NO_RELIABLE_ANSWER = "当前知识库中没有找到可靠依据。"
+KNOWLEDGE_NOT_INITIALIZED = "当前知识库尚未完成初始化，请先导入知识数据。"
 SYSTEM_PROMPT = """You are SellPilot AI, a cross-border e-commerce operations assistant.
 Answer only from the supplied knowledge fragments. Do not invent facts.
 If the fragments are insufficient, state that there is no reliable basis.
@@ -87,6 +88,17 @@ class RAGService:
         ranked.sort(key=lambda item: (-float(item["score"]), str(item["document_id"])))
         return ranked[: min(max(top_k, 1), 20)]
 
+    async def has_indexed_knowledge(self) -> bool:
+        """Return whether at least one indexed document has a persisted chunk."""
+
+        statement = select(
+            exists().where(
+                KnowledgeDocument.status == "indexed",
+                KnowledgeChunk.document_id == KnowledgeDocument.id,
+            )
+        )
+        return bool(await self.session.scalar(statement))
+
     async def ask(
         self,
         question: str,
@@ -96,11 +108,22 @@ class RAGService:
         temperature: float = 0.3,
     ) -> dict[str, Any]:
         sources = await self.retrieve(question, top_k=top_k, category=category)
-        if not sources or float(sources[0]["score"]) < 0.2:
+        if not sources:
+            initialized = await self.has_indexed_knowledge()
+            return {
+                "answer": NO_RELIABLE_ANSWER if initialized else KNOWLEDGE_NOT_INITIALIZED,
+                "sources": [],
+                "answer_mode": (
+                    "no_reliable_source" if initialized else "knowledge_not_initialized"
+                ),
+                "knowledge_initialized": initialized,
+            }
+        if float(sources[0]["score"]) < 0.2:
             return {
                 "answer": NO_RELIABLE_ANSWER,
                 "sources": [],
                 "answer_mode": "no_reliable_source",
+                "knowledge_initialized": True,
             }
 
         api_key = self.settings.llm_api_key.get_secret_value()
@@ -110,6 +133,7 @@ class RAGService:
                 "answer": f"根据知识库“{source['source_doc']}”：{source['fragment']}",
                 "sources": sources,
                 "answer_mode": "grounded_extract",
+                "knowledge_initialized": True,
             }
 
         context = "\n\n".join(
@@ -126,7 +150,12 @@ class RAGService:
             ],
             temperature=temperature,
         )
-        return {"answer": answer, "sources": sources, "answer_mode": "grounded_llm"}
+        return {
+            "answer": answer,
+            "sources": sources,
+            "answer_mode": "grounded_llm",
+            "knowledge_initialized": True,
+        }
 
 
 def serialize_source_timestamp(value: datetime | None) -> str | None:
