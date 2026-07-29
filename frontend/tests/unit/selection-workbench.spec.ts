@@ -445,7 +445,7 @@ describe("SelectionWorkbenchView", () => {
     await flushPromises();
 
     expect(wrapper.text()).toContain("Mock Wireless Earbuds");
-    expect(wrapper.text()).toContain("Shopee 模拟实验数据");
+    expect(wrapper.text()).not.toContain("Shopee 模拟实验数据");
 
     const analyze = wrapper
       .findAll("button")
@@ -455,7 +455,7 @@ describe("SelectionWorkbenchView", () => {
 
     expect(selectionApi.createSelectionAnalysis).toHaveBeenCalledOnce();
     expect(wrapper.text()).toContain("商品机会总分 82.1");
-    expect(wrapper.text()).toContain("规则解释");
+    expect(wrapper.text()).not.toContain("规则解释");
     expect(wrapper.find(".risk-list").exists()).toBe(false);
   });
 
@@ -622,7 +622,7 @@ describe("SelectionWorkbenchView", () => {
     await analyze?.trigger("click");
     await flushPromises();
 
-    expect(wrapper.text()).toContain("校验生成解释");
+    expect(wrapper.text()).not.toContain("校验生成解释");
     expect(wrapper.text()).toContain("该商品需求稳定，利润空间具有竞争力。");
   });
 

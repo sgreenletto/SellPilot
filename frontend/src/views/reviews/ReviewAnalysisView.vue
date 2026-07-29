@@ -380,8 +380,6 @@ onMounted(loadReviews);
     title="评论与产品改良"
     description="筛选评论，查看情感、涉及方面、改进信号和对应原文。"
   >
-    <template #actions><SpBadge tone="info">Mock Shopee · 规则分析</SpBadge></template>
-
     <div v-if="error" class="alert" role="alert">
       <AlertTriangle :size="18" />
       <div>
@@ -400,9 +398,7 @@ onMounted(loadReviews);
       <div class="section-title">
         <div>
           <h2>选择评论范围</h2>
-          <p>
-            情感与评论主题只筛选下方列表；主题来自结构化分类，不是原文关键词匹配。分析范围由商品、关键词、站点、语言、评分和日期决定。
-          </p>
+          <p>按商品、关键词、站点、语言、评分和日期选择分析范围。</p>
         </div>
       </div>
       <div class="filter-grid">
@@ -437,7 +433,7 @@ onMounted(loadReviews);
       <span class="progress__spinner"></span>
       <div>
         <strong>正在分析评论</strong>
-        <p>加载评论、执行规则分析并保存证据…</p>
+        <p>正在汇总评论主题与改进信号…</p>
       </div>
     </div>
     <template v-else-if="result?.status === 'SUCCEEDED'">
@@ -496,7 +492,7 @@ onMounted(loadReviews);
         <div class="section-title">
           <div>
             <h3>评论分析摘要</h3>
-            <p>汇总情感、评论主题和重复出现的改进信号；主题只表示评论谈到了什么。</p>
+            <p>查看情感、评论主题和重复出现的改进信号。</p>
           </div>
         </div>
         <div class="analysis-summary__grid">
