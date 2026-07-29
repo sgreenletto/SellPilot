@@ -55,6 +55,7 @@ async def test_tool_metadata_and_not_found_are_safe(client_bundle):
     assert listing.status_code == 200
     tools = listing.json()["data"]
     assert [item["name"] for item in tools] == [
+        "analyze_inventory_replenishment",
         "analyze_product_reviews",
         "calculate_product_profit",
         "check_listing_compliance",
@@ -75,8 +76,8 @@ async def test_tool_metadata_and_not_found_are_safe(client_bundle):
         "search_market_products",
         "system_health",
     ]
-    assert tools[0]["risk_level"] == "read"
-    assert tools[0]["confirmation_required"] is False
+    assert all(item["risk_level"] == "read" for item in tools)
+    assert all(item["confirmation_required"] is False for item in tools)
     assert "handler" not in listing.text
     assert "module" not in listing.text
 

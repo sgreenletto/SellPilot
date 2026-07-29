@@ -153,6 +153,7 @@ export const TASK_TYPES = [
   "knowledge_ingestion",
   "customer_service",
   "report_generation",
+  "replenishment",
 ] as const;
 export type TaskType = (typeof TASK_TYPES)[number];
 

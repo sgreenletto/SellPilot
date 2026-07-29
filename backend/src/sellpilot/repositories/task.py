@@ -37,6 +37,40 @@ class TaskRepository:
         )
         return result.scalar_one_or_none()
 
+    async def find_owned_by_request_id(
+        self,
+        *,
+        user_id: UUID,
+        request_id: str,
+    ) -> AgentTask | None:
+        result = await self.session.execute(
+            select(AgentTask)
+            .where(
+                AgentTask.created_by == user_id,
+                AgentTask.request_id == request_id,
+            )
+            .order_by(AgentTask.created_at.asc(), AgentTask.id.asc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
+    async def list_recent_assistant_tasks(
+        self,
+        *,
+        user_id: UUID,
+        limit: int,
+    ) -> list[AgentTask]:
+        result = await self.session.execute(
+            select(AgentTask)
+            .where(
+                AgentTask.created_by == user_id,
+                AgentTask.user_input.like('{"source":"assistant",%'),
+            )
+            .order_by(AgentTask.created_at.desc(), AgentTask.id.desc())
+            .limit(limit)
+        )
+        return list(result.scalars())
+
     async def get_step(self, step_id: UUID) -> AgentTaskStep | None:
         return await self.session.get(AgentTaskStep, step_id)
 

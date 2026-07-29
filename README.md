@@ -203,6 +203,10 @@ JWT、日志、平台适配器和模型配置。复制为仓库根目录的本�
 - `POST /api/v1/tools/{tool_name}/execute`
 - `GET /api/v1/tool-calls`
 - `GET /api/v1/tool-calls/{tool_call_id}`
+- `GET /api/v1/assistant/capabilities`
+- `POST /api/v1/assistant/plan`
+- `GET /api/v1/assistant/tasks`
+- `POST /api/v1/assistant/tasks`
 
 Task 创建 API 只接受已注册工作流和结构化输入，实际创建仍由内部
 `TaskService` 完成；Confirmation 仍只能由内部 Service 创建。Task、Confirmation、

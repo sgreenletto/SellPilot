@@ -1,5 +1,7 @@
 # API
 
+- `assistant-workflow-integration.md`: Assistant plan, Task create/run, idempotency,
+  and recent-task API.
 - `tool-runtime.md`: authenticated tool metadata, execution and ToolCall query API.
 - `task-runtime.md`: authenticated workflow metadata, task lifecycle and step history API.
 

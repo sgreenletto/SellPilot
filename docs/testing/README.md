@@ -1,5 +1,7 @@
 # Testing
 
+- `assistant-workflow-integration-audit.md`: develop baseline audit, Capability
+  matrix, blockers, and integration decision.
 - `member3-ai-evaluation.md`：成员三固定合成数据、指标与失败案例评估方法。
 - `member3-ai-evaluation-report.md`：由评估命令实际生成的最新报告。
 - `member3-integration-verification.md`：成员三两条核心业务闭环的联调验收。

@@ -1,9 +1,11 @@
 from enum import StrEnum
 from typing import Annotated, Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, StringConstraints
 
-from sellpilot.core.enums import ToolRiskLevel
+from sellpilot.core.enums import TaskStatus, ToolRiskLevel
+from sellpilot.schemas.common import ApiDateTime
 
 
 class AssistantAvailability(StrEnum):
@@ -17,6 +19,7 @@ class AssistantIntent(StrEnum):
     REVIEW_ANALYSIS = "review_analysis"
     PRODUCT_IMPROVEMENT = "product_improvement"
     CONTENT_GENERATION = "content_generation"
+    INVENTORY_REPLENISHMENT = "inventory_replenishment"
     LOW_STOCK_CHECK = "low_stock_check"
     ORDER_QUERY = "order_query"
     LOGISTICS_QUERY = "logistics_query"
@@ -53,6 +56,13 @@ class AssistantPlanRequest(BaseModel):
     ]
 
 
+AssistantExecutionMode = Literal["create_only", "create_and_run"]
+
+
+class AssistantTaskRequest(AssistantPlanRequest):
+    execution_mode: AssistantExecutionMode
+
+
 class AssistantWorkflowReference(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -87,3 +97,20 @@ class AssistantPlanResponse(BaseModel):
     target_path: str | None
     mock_mode: bool = True
     mock_notice: str
+
+
+class AssistantTaskResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    detected_intent: AssistantIntent
+    selected_capability: str
+    workflow_name: str
+    workflow_version: str
+    plan: AssistantPlanResponse
+    task_id: UUID
+    task_status: TaskStatus
+    execution_mode: AssistantExecutionMode
+    confirmation_required: bool
+    confirmation_id: UUID | None = None
+    duplicate: bool = False
+    created_at: ApiDateTime

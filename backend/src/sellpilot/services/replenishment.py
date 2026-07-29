@@ -32,10 +32,7 @@ class ReplenishmentService:
             shop_external_id=request.shop_external_id,
             sales_since=analysis_time - timedelta(days=request.analysis_days),
         )
-        recommendations = [
-            self.calculate_recommendation(row, request)
-            for row in rows
-        ]
+        recommendations = [self.calculate_recommendation(row, request) for row in rows]
         visible = (
             [item for item in recommendations if item.recommended_quantity > 0]
             if request.only_replenishment
@@ -49,13 +46,9 @@ class ReplenishmentService:
             formula_version="replenishment-v1.0.0",
             summary=ReplenishmentSummary(
                 analyzed_skus=len(recommendations),
-                replenishment_skus=sum(
-                    item.recommended_quantity > 0 for item in recommendations
-                ),
+                replenishment_skus=sum(item.recommended_quantity > 0 for item in recommendations),
                 critical_skus=sum(item.risk_level == "critical" for item in recommendations),
-                recommended_units=sum(
-                    item.recommended_quantity for item in recommendations
-                ),
+                recommended_units=sum(item.recommended_quantity for item in recommendations),
             ),
             recommendations=visible,
             is_mock_data=all(item.is_mock_data for item in recommendations),
@@ -66,25 +59,18 @@ class ReplenishmentService:
         row: ReplenishmentSourceRow,
         request: ReplenishmentAnalysisRequest,
     ) -> ReplenishmentRecommendation:
-        average = (Decimal(row.units_sold) / Decimal(request.analysis_days)).quantize(
-            FOUR_PLACES
-        )
+        average = (Decimal(row.units_sold) / Decimal(request.analysis_days)).quantize(FOUR_PLACES)
         demand_target = (
             average * Decimal(request.lead_time_days) * request.safety_factor
         ).to_integral_value(rounding=ROUND_CEILING)
         target_stock = int(demand_target)
         recommended = max(target_stock - row.available_stock, 0)
         days_of_supply = (
-            (Decimal(row.available_stock) / average).quantize(FOUR_PLACES)
-            if average > 0
-            else None
+            (Decimal(row.available_stock) / average).quantize(FOUR_PLACES) if average > 0 else None
         )
         if average > 0 and (
             row.available_stock == 0
-            or (
-                days_of_supply is not None
-                and days_of_supply <= Decimal(request.lead_time_days)
-            )
+            or (days_of_supply is not None and days_of_supply <= Decimal(request.lead_time_days))
         ):
             risk_level = "critical"
         elif recommended > 0:

@@ -1,5 +1,5 @@
 import { request } from "@/api/http";
-import type { ToolRiskLevel } from "@/types/contracts";
+import type { TaskDetail, TaskStatus, ToolRiskLevel } from "@/types/contracts";
 
 export type AssistantAvailability = "available" | "contract_only" | "unavailable";
 export type AssistantIntent =
@@ -7,6 +7,7 @@ export type AssistantIntent =
   | "review_analysis"
   | "product_improvement"
   | "content_generation"
+  | "inventory_replenishment"
   | "low_stock_check"
   | "order_query"
   | "logistics_query"
@@ -56,6 +57,23 @@ export interface AssistantPlan {
   mock_notice: string;
 }
 
+export type AssistantExecutionMode = "create_only" | "create_and_run";
+
+export interface AssistantTaskResult {
+  detected_intent: AssistantIntent;
+  selected_capability: string;
+  workflow_name: string;
+  workflow_version: string;
+  plan: AssistantPlan;
+  task_id: string;
+  task_status: TaskStatus;
+  execution_mode: AssistantExecutionMode;
+  confirmation_required: boolean;
+  confirmation_id: string | null;
+  duplicate: boolean;
+  created_at: string;
+}
+
 export function listAssistantCapabilities(): Promise<AssistantCapability[]> {
   return request<AssistantCapability[]>("/v1/assistant/capabilities");
 }
@@ -65,4 +83,18 @@ export function planAssistantMessage(message: string): Promise<AssistantPlan> {
     method: "POST",
     body: JSON.stringify({ message }),
   });
+}
+
+export function createAssistantTask(
+  message: string,
+  executionMode: AssistantExecutionMode,
+): Promise<AssistantTaskResult> {
+  return request<AssistantTaskResult>("/v1/assistant/tasks", {
+    method: "POST",
+    body: JSON.stringify({ message, execution_mode: executionMode }),
+  });
+}
+
+export function listRecentAssistantTasks(limit = 5): Promise<TaskDetail[]> {
+  return request<TaskDetail[]>(`/v1/assistant/tasks?limit=${limit}`);
 }

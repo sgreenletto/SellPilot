@@ -77,6 +77,12 @@ const currentTrendSource = computed(() => {
   if (dataStatus.value !== "backend") {
     return { label: "合成 Mock 演示数据", tone: "info" as const };
   }
+  if (trendType.value === "sentiment") {
+    return { label: "后端商品评分代理数据", tone: "warning" as const };
+  }
+  if (trendType.value === "service") {
+    return { label: "后端订单状态代理数据", tone: "warning" as const };
+  }
   return { label: "当前店铺后端数据", tone: "success" as const };
 });
 
@@ -275,10 +281,10 @@ async function loadBackendDashboard(): Promise<void> {
         linkTo: "/orders",
       },
       {
-        id: "smart-service",
-        label: "智能客服",
-        value: "已接入",
-        suffix: "",
+        id: "pending-sessions",
+        label: "待处理客服会话",
+        value: 0,
+        suffix: "未接入",
         icon: "message",
         tone: "purple",
         linkTo: "/customer-service/conversations",
@@ -310,7 +316,7 @@ async function loadBackendDashboard(): Promise<void> {
     dataStatus.value = "backend";
     const scopeLabel =
       selectedShopId.value === "all" ? "全部模拟店铺" : `来源店铺 ${selectedShopId.value}`;
-    dataMessage.value = `已连接后端：当前展示${scopeLabel}的商品、库存、订单、评论情绪和客服趋势数据。`;
+    dataMessage.value = `已连接后端：当前展示${scopeLabel}的商品、库存、订单及明确标识的派生指标。`;
   } catch {
     dashboardAlerts.value = [];
     dashboardActivities.value = [];
@@ -380,7 +386,7 @@ watch(selectedShopId, () => {
           <div class="metric-card__body">
             <span class="metric-card__label">{{ metric.label }}</span>
             <div class="metric-card__value">
-              <strong :style="metric.id === 'smart-service' ? { fontSize: '22px' } : {}">{{ metric.value.toLocaleString("zh-CN") }}</strong>
+              <strong>{{ metric.value.toLocaleString("zh-CN") }}</strong>
               <span v-if="metric.suffix" class="metric-card__suffix">{{ metric.suffix }}</span>
             </div>
             <span
