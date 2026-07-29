@@ -259,3 +259,6 @@ INV00257,SKU00257,WH003,Malaysia Demo Fulfillment Center,4,2,12,low_stock,2026-0
 INV00258,SKU00258,WH003,Malaysia Demo Fulfillment Center,7,6,14,low_stock,2026-06-29T10:00:00+08:00,true
 INV00259,SKU00259,WH004,Philippines Demo Fulfillment Center,23,2,8,sufficient,2026-06-30T22:00:00+08:00,true
 INV00260,SKU00260,WH005,Thailand Demo Fulfillment Center,3,1,5,low_stock,2026-07-01T10:00:00+08:00,true
+INV00261,SKU00261,WH002,Singapore Demo Fulfillment Center,86,4,12,sufficient,2026-07-20T10:00:00+08:00,true
+INV00262,SKU00262,WH002,Singapore Demo Fulfillment Center,64,3,10,sufficient,2026-07-20T10:00:00+08:00,true
+INV00263,SKU00263,WH002,Singapore Demo Fulfillment Center,42,2,8,sufficient,2026-07-20T10:00:00+08:00,true

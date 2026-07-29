@@ -16,6 +16,7 @@ from sellpilot.schemas.assistant import (
     AssistantPlanStep,
     AssistantWorkflowReference,
 )
+from sellpilot.services.commerce_normalization import extract_category_external_id
 from sellpilot.tools.registry import ToolRegistry
 from sellpilot.workflows.registry import WorkflowRegistry
 
@@ -195,6 +196,12 @@ class AssistantPlanService:
             for name in capability.required_parameters
             if name not in parameters or parameters[name] in ("", None, [])
         ]
+        if (
+            intent is AssistantIntent.PRODUCT_IMPROVEMENT
+            and "product_id" not in parameters
+            and "analysis_id" not in parameters
+        ):
+            missing = ["product_id"]
         selected_tools = self._select_tools(capability, parameters)
         risk_level = self.registry.risk_level(selected_tools)
         steps = self._build_steps(capability, selected_tools)
@@ -307,10 +314,16 @@ class AssistantPlanService:
             site = self._extract_site(message)
             if site:
                 parameters["site"] = site
+            category_id = extract_category_external_id(message)
+            if category_id:
+                parameters["category_id"] = category_id
         elif intent is AssistantIntent.REVIEW_ANALYSIS and product_id:
             parameters["product_id"] = product_id
-        elif intent is AssistantIntent.PRODUCT_IMPROVEMENT and uuid_match:
-            parameters["analysis_id"] = uuid_match.group(0).lower()
+        elif intent is AssistantIntent.PRODUCT_IMPROVEMENT:
+            if product_id:
+                parameters["product_id"] = product_id
+            elif uuid_match:
+                parameters["analysis_id"] = uuid_match.group(0).lower()
         elif intent is AssistantIntent.CONTENT_GENERATION:
             if product_id:
                 parameters["product_id"] = product_id
@@ -337,6 +350,9 @@ class AssistantPlanService:
             parameters["query"] = message
         elif intent is AssistantIntent.CUSTOMER_SERVICE_REPLY and session_id:
             parameters["session_id"] = session_id
+            parameters["buyer_message"] = message
+            if "模拟发送" in message or "mock send" in message.casefold():
+                parameters["simulate_send"] = True
         return parameters
 
     @staticmethod
@@ -410,6 +426,12 @@ class AssistantPlanService:
     ) -> tuple[str, ...]:
         if capability.intent is AssistantIntent.ORDER_QUERY:
             return ("get_order",) if parameters.get("order_id") else ("list_orders",)
+        if capability.intent is AssistantIntent.CUSTOMER_SERVICE_REPLY and not parameters.get(
+            "simulate_send"
+        ):
+            return tuple(
+                name for name in capability.tool_names if name != "mock_send_customer_reply"
+            )
         return capability.tool_names
 
     def _build_steps(
@@ -497,7 +519,7 @@ def build_assistant_capability_registry(
             workflow_version="1.0.0",
             required_parameters=("site",),
             optional_parameters=("category_id", "min_price", "max_price", "risk_preference"),
-            tool_names=("score_product_opportunity",),
+            tool_names=("search_market_products", "score_product_opportunity"),
             availability=AssistantAvailability.AVAILABLE,
             example_message="分析新加坡站的选品机会",
             target_path="/market/selection",
@@ -521,25 +543,23 @@ def build_assistant_capability_registry(
             intent=AssistantIntent.PRODUCT_IMPROVEMENT,
             workflow_name="product_improvement",
             workflow_version="1.0.0",
-            required_parameters=("analysis_id",),
-            optional_parameters=(),
-            tool_names=("generate_product_improvement_plan",),
+            required_parameters=(),
+            optional_parameters=("product_id", "analysis_id"),
+            tool_names=("analyze_product_reviews", "generate_product_improvement_plan"),
             availability=AssistantAvailability.AVAILABLE,
-            example_message="根据评论分析结果生成产品改良建议",
+            example_message="根据商品 PROD-001 的评论生成产品改良建议",
             target_path="/market/reviews/improvement",
         ),
         AssistantCapabilityDefinition(
             capability_key="content_generation",
             display_name="多语言内容生成",
             intent=AssistantIntent.CONTENT_GENERATION,
+            workflow_name="content_generation",
+            workflow_version="1.0.0",
             required_parameters=("product_id", "target_language"),
             optional_parameters=("site", "audience", "selling_points", "keywords"),
             tool_names=("generate_localized_listing", "check_listing_compliance"),
-            availability=AssistantAvailability.CONTRACT_ONLY,
-            unavailable_reason=(
-                "Content 工具契约已注册，但专业 Workflow 仍在成员修缮中；"
-                "Assistant 当前不创建或执行该任务。"
-            ),
+            availability=AssistantAvailability.AVAILABLE,
             example_message="为商品 PROD-001 生成英文商品文案",
             target_path="/products/content",
         ),
@@ -601,13 +621,12 @@ def build_assistant_capability_registry(
             capability_key="knowledge_query",
             display_name="知识库检索",
             intent=AssistantIntent.KNOWLEDGE_QUERY,
+            workflow_name="knowledge_query",
+            workflow_version="1.0.0",
             required_parameters=("query",),
             optional_parameters=("category", "top_k"),
-            availability=AssistantAvailability.CONTRACT_ONLY,
-            unavailable_reason=(
-                "知识库页面和检索 API 已可用，但 RAG 尚未接入统一 ToolRegistry/WorkflowRegistry；"
-                "Assistant 当前只冻结契约。"
-            ),
+            tool_names=("search_knowledge",),
+            availability=AssistantAvailability.AVAILABLE,
             example_message="在知识库中检索退货政策",
             target_path="/customer-service/knowledge",
         ),
@@ -615,13 +634,21 @@ def build_assistant_capability_registry(
             capability_key="customer_service_reply",
             display_name="客服回复建议",
             intent=AssistantIntent.CUSTOMER_SERVICE_REPLY,
+            workflow_name="customer_service_reply",
+            workflow_version="1.0.0",
             required_parameters=("session_id",),
-            optional_parameters=("language", "buyer_message"),
-            availability=AssistantAvailability.UNAVAILABLE,
-            unavailable_reason=(
-                "Customer Service 回复 Service、Tool 和 Workflow 尚未形成稳定统一契约，"
-                "本轮不提供执行计划。"
+            optional_parameters=("buyer_message", "simulate_send"),
+            tool_names=(
+                "get_customer_conversation",
+                "classify_customer_request",
+                "search_knowledge",
+                "get_order",
+                "get_order_logistics",
+                "get_product",
+                "draft_customer_reply",
+                "mock_send_customer_reply",
             ),
+            availability=AssistantAvailability.AVAILABLE,
             example_message="为会话 SES00001 生成客服回复建议",
             target_path="/customer-service/conversations",
         ),

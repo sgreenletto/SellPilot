@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_validator
 from sellpilot.core.enums import TaskStatus, TaskStepStatus, TaskType, WorkflowNodeType
 from sellpilot.core.logging import redact_sensitive
 from sellpilot.schemas.common import ApiDateTime
+from sellpilot.services.task_result import public_task_result
 from sellpilot.tools.sanitization import audit_summary
 from sellpilot.workflows.contracts import TaskExecutionResult, WorkflowMetadata
 
@@ -86,7 +87,9 @@ class AgentTaskResponse(BaseModel):
             "current_step": task.current_step,
             "current_node": task.current_node,
             "result": (
-                audit_summary(task.result, max_bytes=16_384) if task.result is not None else None
+                public_task_result(task.workflow_name, task.result)
+                if task.result is not None
+                else None
             ),
             "error_code": task.error_code,
             "error_message": safe_error,

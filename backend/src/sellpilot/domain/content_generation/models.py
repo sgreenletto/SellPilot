@@ -59,6 +59,7 @@ class QualityResult(StrictModel):
 class GeneratedListing(StrictModel):
     content: LocalizedListing
     quality: QualityResult
+    attempt_history: list[dict[str, Any]] = Field(default_factory=list, max_length=3)
 
 
 class ModelGateway(Protocol):

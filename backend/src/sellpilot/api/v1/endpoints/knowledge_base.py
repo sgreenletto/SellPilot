@@ -23,10 +23,8 @@ from sellpilot.schemas.knowledge_base import (
     RAGAnswerResponse,
     RAGQuestionRequest,
 )
-from sellpilot.services.embedding import EmbeddingService
 from sellpilot.services.knowledge_base import KnowledgeBaseService
 from sellpilot.services.rag_service import RAGService
-from sellpilot.services.vector_store import ChromaVectorStore
 
 router = APIRouter()
 
@@ -39,26 +37,16 @@ async def retrieve_knowledge(
     payload: KnowledgeRetrievalRequest,
     request: Request,
     _user: CurrentUserDependency,
+    session: SessionDependency,
+    settings: SettingsDependency,
 ) -> ApiResponse[list[KnowledgeRetrievalItem]]:
     """知识检索：输入 query → embedding → ChromaDB 相似度搜索 → Top-K 片段。"""
-    embedding_service = EmbeddingService()
-    vector_store = ChromaVectorStore()
-
-    query_vec = embedding_service.encode_single(payload.query)
-    where = {"category": payload.category} if payload.category else None
-    raw_results = vector_store.search(query_vec, top_k=payload.top_k, where=where)
-
-    items = [
-        KnowledgeRetrievalItem(
-            fragment=r["document"],
-            score=round(r["score"], 4),
-            source_doc=r.get("metadata", {}).get("source", ""),
-            document_id=UUID(r.get("metadata", {}).get("document_id", "")),
-            chunk_index=r.get("metadata", {}).get("chunk_index", 0),
-        )
-        for r in raw_results
-        if r.get("metadata", {}).get("document_id")
-    ]
+    raw_results = await RAGService(settings, session).retrieve(
+        payload.query,
+        top_k=payload.top_k,
+        category=payload.category,
+    )
+    items = [KnowledgeRetrievalItem.model_validate(item) for item in raw_results]
     return success_response(items, get_request_id(request))
 
 
@@ -119,9 +107,6 @@ async def delete_document(
     settings: SettingsDependency,
 ) -> ApiResponse[dict]:
     """删除知识文档，同时清除关联的 PostgreSQL chunk 记录和 ChromaDB 向量。"""
-    vector_store = ChromaVectorStore()
-    vector_store.delete_by_document(document_id)
-
     service = KnowledgeBaseService(session, settings)
     ok = await service.delete_document(document_id)
     if not ok:
@@ -171,11 +156,12 @@ async def rag_qa(
     payload: RAGQuestionRequest,
     request: Request,
     _user: CurrentUserDependency,
+    session: SessionDependency,
     settings: SettingsDependency,
 ) -> ApiResponse[RAGAnswerResponse]:
     """RAG 大模型问答。"""
-    rag = RAGService(settings)
-    result = rag.ask(
+    rag = RAGService(settings, session)
+    result = await rag.ask(
         question=payload.question,
         top_k=payload.top_k,
         category=payload.category,

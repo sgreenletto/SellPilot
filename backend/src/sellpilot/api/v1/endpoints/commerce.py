@@ -374,6 +374,7 @@ async def request_inventory_update(
 
 # ---- 客服统计 ----
 
+
 @router.get(
     "/customer-service/stats",
     response_model=ApiResponse[dict],
@@ -390,9 +391,7 @@ async def get_customer_service_stats(
     from sellpilot.db.models.commerce import CustomerSession
 
     total = await session.scalar(
-        sa_select(func.count()).select_from(CustomerSession).where(
-            CustomerSession.status == "open"
-        )
+        sa_select(func.count()).select_from(CustomerSession).where(CustomerSession.status == "open")
     )
     return success_response(
         {"pending_count": total or 0},

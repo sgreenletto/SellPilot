@@ -375,7 +375,34 @@ class MockShopeeAdapter(PlatformAdapter):
         ]
 
     async def send_message(self, payload: dict[str, Any]) -> dict[str, Any]:
-        self._not_implemented("send_message")
+        from sellpilot.db.models.commerce import CustomerSession
+
+        session = await self._session().scalar(
+            select(CustomerSession).where(CustomerSession.external_id == payload["session_id"])
+        )
+        if session is None:
+            return {}
+        now = datetime.now(UTC)
+        record = CustomerMessage(
+            external_id=f"MOCKMSG-{uuid4().hex[:16].upper()}",
+            session_id=session.id,
+            sender_type=payload.get("sender_type", "assistant"),
+            content=payload["content"],
+            language=session.language,
+            message_time=now,
+            source_type="assistant_mock_send",
+            is_mock_data=True,
+            source_updated_at=now,
+        )
+        self._session().add(record)
+        await self._session().flush()
+        return {
+            "message_id": record.external_id,
+            "session_id": session.external_id,
+            "status": "mock_sent",
+            "sent_at": now,
+            "is_mock_data": True,
+        }
 
     @staticmethod
     def _product(record: Product) -> dict[str, Any]:
