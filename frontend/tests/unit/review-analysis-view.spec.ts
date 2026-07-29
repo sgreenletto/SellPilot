@@ -213,7 +213,7 @@ describe("ReviewAnalysisView", () => {
     await topicSelect.setValue("product_quality");
     expect(wrapper.text()).toContain("Feels sturdy.");
     expect(wrapper.text()).not.toContain("Unexpected concern.");
-    expect(wrapper.text()).toContain("主题来自结构化分类，不是原文关键词匹配");
+    expect(wrapper.text()).toContain("按商品、关键词、站点、语言、评分和日期选择分析范围");
   });
 
   it("localizes stored language, sentiment, and issue codes for Chinese users", async () => {

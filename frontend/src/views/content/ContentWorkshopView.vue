@@ -305,7 +305,7 @@ function qualitySuggestion(issue: string): string {
 
 <template>
   <PageContainer
-    eyebrow="CONTENT WORKSHOP · STRUCTURED OUTPUT"
+    eyebrow="商品内容"
     title="多语言内容工坊"
     description="基于商品事实生成、检查、编辑、比较并经人工确认保存内容版本。"
   >
@@ -378,7 +378,6 @@ function qualitySuggestion(issue: string): string {
         <div class="editor-surface">
           <div class="editor-header">
             <div>
-              <span class="result-kicker">LOCALIZED LISTING</span>
               <h3>商品内容编辑器</h3>
             </div>
             <span class="language-chip">{{ content.target_language }}</span>
@@ -772,7 +771,7 @@ function qualitySuggestion(issue: string): string {
       <div class="empty-illustration"><Sparkles :size="30" /></div>
       <SpEmptyState
         title="准备创建第一版商品内容"
-        description="填写上方参数并点击“生成并检查”，结构化内容将在这里展开。"
+        description="填写上方参数并点击“生成并检查”，生成内容将在这里展开。"
       />
     </SpCard>
   </PageContainer>
