@@ -141,6 +141,8 @@ class ReviewAnalysisResultResponse(ContractModel):
     keywords: tuple[KeywordAggregate, ...]
     trends: tuple[TrendPoint, ...]
     judgements: tuple[ReviewJudgement, ...]
+    no_data: bool = False
+    data_source: str
     error_message: str | None
     is_mock_data: bool
     started_at: datetime | None

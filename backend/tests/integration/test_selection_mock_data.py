@@ -43,8 +43,13 @@ def test_all_mock_products_match_selection_input_contract():
 
     result = score_candidates(candidates)
 
-    assert len(candidates) == 100
-    assert len(result.ranked) + len(result.excluded) == 100
+    assert len(candidates) == 103
+    assert len(result.ranked) + len(result.excluded) == 103
+    assert {item.product_id for item in candidates if item.site is SiteCode.SG} >= {
+        "PROD0101",
+        "PROD0102",
+        "PROD0103",
+    }
     assert result.cohort_keys == (
         "id:IDR",
         "my:MYR",

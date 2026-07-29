@@ -14,6 +14,17 @@ def test_settings_accept_database_url_without_enforcing_a_driver() -> None:
     assert settings.database_url == "sqlite+aiosqlite:///sellpilot.db"
 
 
+def test_api_endpoint_defaults_and_validation() -> None:
+    settings = Settings(_env_file=None)
+
+    assert settings.api_host == "127.0.0.1"
+    assert settings.api_port == 8000
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, API_HOST=" ")
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, API_PORT=70_000)
+
+
 def test_settings_environment_override(monkeypatch):
     monkeypatch.setenv("APP_NAME", "TestPilot")
     monkeypatch.setenv(

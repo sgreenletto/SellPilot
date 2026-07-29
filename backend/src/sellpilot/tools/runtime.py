@@ -4,7 +4,9 @@ from sellpilot.core.config import Settings
 from sellpilot.services.confirmation import ConfirmationService
 from sellpilot.tools.commerce import register_commerce_read_tools
 from sellpilot.tools.content_generation import register_content_generation_tools
+from sellpilot.tools.customer_service import register_customer_service_tools
 from sellpilot.tools.executor import TOOL_CONFIRMATION_OPERATION, ToolExecutor
+from sellpilot.tools.knowledge import register_knowledge_tools
 from sellpilot.tools.product_improvement import register_product_improvement_tools
 from sellpilot.tools.registry import ToolRegistry
 from sellpilot.tools.replenishment import register_replenishment_tools
@@ -21,6 +23,8 @@ def build_tool_registry(settings: Settings) -> ToolRegistry:
     register_review_analysis_tools(registry)
     register_product_improvement_tools(registry)
     register_content_generation_tools(registry)
+    register_customer_service_tools(registry)
+    register_knowledge_tools(registry)
     register_replenishment_tools(registry)
     return registry
 

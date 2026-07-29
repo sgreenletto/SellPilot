@@ -25,6 +25,7 @@ from sellpilot.domain.review_analysis import (
     ReviewTopic,
     classify_review_preview,
 )
+from sellpilot.domain.review_analysis.models import QualityReport, SentimentAggregate
 from sellpilot.repositories.analysis import ReviewAnalysisRepository
 from sellpilot.schemas.common import SourceMetadata
 from sellpilot.schemas.review_analysis import (
@@ -87,6 +88,7 @@ class ReviewAnalysisService:
         product = await self.commerce.get_product(request.product_id)
         if not product:
             raise ResourceNotFoundError("Product not found")
+        request = request.model_copy(update={"product_id": str(product["product_id"])})
         product_site = SITE_CODES[product["site"]]
         if request.site is not None and request.site != product_site:
             raise ResourceNotFoundError("Product was not found in the requested site")
@@ -174,7 +176,46 @@ class ReviewAnalysisService:
             )
             reviews = await self._load_analysis_reviews(request)
             if not reviews:
-                raise ResourceNotFoundError("No reviews matched the analysis criteria")
+                await self.tasks.complete_step(
+                    load_step.id,
+                    output_summary={"review_count": 0, "no_data": True},
+                )
+                analysis_step = await self.tasks.start_step(
+                    steps["analyze_reviews"].id,
+                    input_summary={"review_count": 0},
+                )
+                report = self._empty_report(request)
+                await self.tasks.complete_step(
+                    analysis_step.id,
+                    output_summary={"no_data": True, "reason": "没有足够评论数据"},
+                )
+                persist_step = await self.tasks.start_step(
+                    steps["persist_results"].id,
+                    input_summary={"evidence_review_count": 0},
+                )
+                await self._persist_report(result, report)
+                result.summary = {
+                    **(result.summary or {}),
+                    "no_data": True,
+                    "data_source": result.source_type,
+                }
+                await self.tasks.complete_step(
+                    persist_step.id,
+                    output_summary={"evidence_count": 0, "no_data": True},
+                )
+                result.status = AnalysisStatus.SUCCEEDED
+                result.finished_at = datetime.now(UTC)
+                if manage_agent_task:
+                    await self.tasks.complete(
+                        result.agent_task_id,
+                        {
+                            "analysis_id": str(result.id),
+                            "included_count": 0,
+                            "no_data": True,
+                            "message": "没有足够评论数据",
+                        },
+                    )
+                return await self._result_response(result)
             await self.tasks.complete_step(
                 load_step.id,
                 output_summary={"review_count": len(reviews)},
@@ -240,6 +281,34 @@ class ReviewAnalysisService:
             await self.session.commit()
             raise
         return await self._result_response(result)
+
+    @staticmethod
+    def _empty_report(request: ReviewAnalysisCreateRequest) -> ReviewAnalysisReport:
+        return ReviewAnalysisReport(
+            analyzer_version="review-analysis-v1.1.0",
+            product_ids=(request.product_id,),
+            source=SourceMetadata(
+                source_type=DataSource.MOCK,
+                source_name="simulated_experiment",
+                source_reference=request.product_id,
+                is_mock=True,
+            ),
+            is_mock_data=True,
+            quality=QualityReport(
+                received_count=0,
+                included_count=0,
+                excluded_count=0,
+                flag_counts={},
+                excluded_review_ids=(),
+            ),
+            sentiment=SentimentAggregate(positive=0, neutral=0, negative=0),
+            topics=(),
+            pain_points=(),
+            keywords=(),
+            trends=(),
+            judgements=(),
+            facts=("没有足够评论数据",),
+        )
 
     async def get(
         self,
@@ -610,6 +679,8 @@ class ReviewAnalysisService:
             keywords=summary.get("keywords", ()),
             trends=summary.get("trends", ()),
             judgements=summary.get("judgements", ()),
+            no_data=bool(summary.get("no_data", False)),
+            data_source=str(summary.get("data_source", result.source_type)),
             error_message=result.error_message,
             is_mock_data=result.is_mock_data,
             started_at=result.started_at,

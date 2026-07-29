@@ -72,6 +72,7 @@ const entries = computed(() =>
   overflow: hidden;
   background: var(--sp-color-sidebar);
   border-right: 1px solid var(--sp-border-highlight);
+  box-shadow: var(--sp-shadow-sidebar);
   transition:
     width var(--sp-transition-normal),
     min-width var(--sp-transition-normal),
@@ -134,7 +135,6 @@ const entries = computed(() =>
   padding-top: var(--sp-space-8);
   overflow-x: hidden;
   overflow-y: auto;
-  scrollbar-gutter: stable;
 }
 
 .app-sidebar__operator {

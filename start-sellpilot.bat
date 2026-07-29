@@ -39,14 +39,25 @@ if not exist "%SELLPILOT_ROOT%frontend\node_modules" (
 )
 
 if defined CHECK_ONLY (
-  echo SellPilot launcher checks passed.
+  pushd "%SELLPILOT_ROOT%backend"
+  for /f "delims=" %%I in ('uv run sellpilot-start-api --print-proxy-target') do set "VITE_PROXY_TARGET=%%I"
+  popd
+  echo SellPilot launcher checks passed. Backend target: %VITE_PROXY_TARGET%
   exit /b 0
 )
 
-echo Starting SellPilot backend at http://127.0.0.1:8000 ...
-start "SellPilot Backend" /D "%SELLPILOT_ROOT%backend" cmd /k "uv run python -m uvicorn sellpilot.main:app --reload --host 127.0.0.1 --port 8000"
+pushd "%SELLPILOT_ROOT%backend"
+for /f "delims=" %%I in ('uv run sellpilot-start-api --print-proxy-target') do set "VITE_PROXY_TARGET=%%I"
+popd
+if not defined VITE_PROXY_TARGET (
+  echo [ERROR] Could not resolve the configured SellPilot backend endpoint.
+  exit /b 1
+)
+
+echo Starting or reusing SellPilot backend at %VITE_PROXY_TARGET% ...
+start "SellPilot Backend" /D "%SELLPILOT_ROOT%backend" cmd /c "uv run sellpilot-start-api"
 echo Starting SellPilot frontend at http://127.0.0.1:5173 ...
-start "SellPilot Frontend" /D "%SELLPILOT_ROOT%frontend" cmd /k "npm run dev -- --host 127.0.0.1"
+start "SellPilot Frontend" /D "%SELLPILOT_ROOT%frontend" cmd /k "set VITE_PROXY_TARGET=%VITE_PROXY_TARGET%&& npm run dev -- --host 127.0.0.1"
 
 timeout /t 4 /nobreak >nul
 start "" "http://127.0.0.1:5173/dashboard"

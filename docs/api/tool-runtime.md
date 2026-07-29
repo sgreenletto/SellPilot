@@ -48,7 +48,7 @@ module paths, secrets and internal exception configuration.
     "status": "succeeded",
     "data": {
       "app_name": "SellPilot",
-      "app_version": "0.1.0",
+      "app_version": "0.5.0",
       "environment": "development",
       "adapter": "mock",
       "status": "ok"

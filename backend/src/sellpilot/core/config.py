@@ -29,11 +29,13 @@ class Settings(BaseSettings):
     )
 
     app_name: str = Field(default="SellPilot", validation_alias="APP_NAME")
-    app_version: str = Field(default="0.1.0", validation_alias="APP_VERSION")
+    app_version: str = Field(default="0.5.0", validation_alias="APP_VERSION")
     app_env: Literal["development", "test", "production"] = Field(
         default="development", validation_alias="APP_ENV"
     )
     debug: bool = Field(default=False, validation_alias="DEBUG")
+    api_host: str = Field(default="127.0.0.1", validation_alias="API_HOST")
+    api_port: int = Field(default=8000, ge=1, le=65_535, validation_alias="API_PORT")
     api_v1_prefix: str = Field(default="/api/v1", validation_alias="API_V1_PREFIX")
     database_url: str = Field(
         default="postgresql+asyncpg://sellpilot:replace_me@localhost:5432/sellpilot",
@@ -175,6 +177,14 @@ class Settings(BaseSettings):
         if not value.startswith("/"):
             raise ValueError("API_V1_PREFIX must start with '/'")
         return value.rstrip("/")
+
+    @field_validator("api_host")
+    @classmethod
+    def validate_api_host(cls, value: str) -> str:
+        host = value.strip()
+        if not host:
+            raise ValueError("API_HOST must not be blank")
+        return host
 
     @model_validator(mode="after")
     def validate_security_and_platform(self) -> "Settings":

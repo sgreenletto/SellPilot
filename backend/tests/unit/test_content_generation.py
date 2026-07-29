@@ -1,11 +1,18 @@
+from uuid import uuid4
+
 import pytest
 
+from sellpilot.core.enums import ToolCallerType
+from sellpilot.core.exceptions import ExternalServiceUnavailableError
 from sellpilot.domain.content_generation.models import ListingFacts, LocalizedListing
 from sellpilot.domain.content_generation.workflow import (
     check_listing,
     generate_with_quality_loop,
 )
-from sellpilot.services.model_gateway import OfflineTemplateGateway
+from sellpilot.services.model_gateway import ModelGatewayError, OfflineTemplateGateway
+from sellpilot.tools import content_generation as content_tools
+from sellpilot.tools.content_generation import GenerateLocalizedListingInput
+from sellpilot.tools.contracts import ToolExecutionContext
 
 
 def _facts() -> ListingFacts:
@@ -226,6 +233,12 @@ async def test_quality_loop_retries_with_structured_issues() -> None:
     assert result.quality.passed is True
     assert result.quality.attempts == 2
     assert gateway.received[1] == ["missing protected fact: 750 ml"]
+    assert [item["stop_reason"] for item in result.attempt_history] == [
+        "retry",
+        "quality_passed",
+    ]
+    assert result.attempt_history[0]["retry"] is True
+    assert result.attempt_history[1]["retry"] is False
 
 
 @pytest.mark.asyncio
@@ -248,6 +261,24 @@ async def test_quality_loop_does_not_retry_an_unsupported_user_keyword() -> None
 
     assert gateway.calls == 1
     assert result.quality.seo_issues == ["unsupported factual keyword: 容量大"]
+    assert result.attempt_history == [
+        {
+            "attempt": 1,
+            "generation_summary": {
+                "title": "Travel Bottle",
+                "bullet_count": 3,
+                "faq_count": 0,
+                "sku_content_count": 0,
+            },
+            "fact_issues": [],
+            "compliance_issues": [],
+            "seo_issues": ["unsupported factual keyword: 容量大"],
+            "localization_issues": [],
+            "completeness_issues": [],
+            "retry": False,
+            "stop_reason": "unsupported_factual_keyword",
+        }
+    ]
 
 
 @pytest.mark.asyncio
@@ -271,3 +302,35 @@ async def test_offline_gateway_localizes_template_without_claiming_real_llm() ->
     assert all(
         any("\u3400" <= char <= "\u9fff" for char in item) for item in result.keyword_suggestions_zh
     )
+
+
+@pytest.mark.asyncio
+async def test_content_tool_reports_provider_failure_as_external_unavailable(monkeypatch) -> None:
+    class FailingService:
+        async def get_listing_facts(self, _request):
+            return _facts()
+
+        async def generate(self, *_args, **_kwargs):
+            raise ModelGatewayError("synthetic provider detail")
+
+    monkeypatch.setattr(content_tools, "_service", lambda _context: FailingService())
+    context = ToolExecutionContext(
+        request_id=str(uuid4()),
+        user_id=uuid4(),
+        task_id=uuid4(),
+        caller_type=ToolCallerType.WORKFLOW,
+        caller_name="content_generation",
+    )
+
+    with pytest.raises(ExternalServiceUnavailableError) as exc_info:
+        await content_tools._generate(
+            GenerateLocalizedListingInput(
+                product_id="PROD0001",
+                site="sg",
+                target_language="en",
+            ),
+            context,
+        )
+
+    assert exc_info.value.code == "EXTERNAL_SERVICE_UNAVAILABLE"
+    assert "synthetic provider detail" not in exc_info.value.message

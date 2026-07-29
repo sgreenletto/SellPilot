@@ -12,6 +12,7 @@ from sellpilot.db.models.commerce import (
     ReturnRefund,
     Sku,
 )
+from sellpilot.services.commerce_normalization import normalize_product_external_id
 
 
 class CommerceQueryService:
@@ -23,7 +24,7 @@ class CommerceQueryService:
         return await self.adapter.list_products(**filters)
 
     async def get_product(self, product_id: str) -> dict[str, Any]:
-        return await self.adapter.get_product(product_id)
+        return await self.adapter.get_product(normalize_product_external_id(product_id))
 
     async def list_skus(
         self,
@@ -73,6 +74,8 @@ class CommerceQueryService:
         return await self.adapter.get_logistics(order_id)
 
     async def list_reviews(self, **filters: Any) -> list[dict[str, Any]]:
+        if product_id := filters.get("product_id"):
+            filters["product_id"] = normalize_product_external_id(str(product_id))
         return await self.adapter.list_reviews(**filters)
 
     async def list_messages(self, **filters: Any) -> list[dict[str, Any]]:

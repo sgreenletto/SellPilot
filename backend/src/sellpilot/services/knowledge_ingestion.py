@@ -1,6 +1,8 @@
 """知识库数据导入服务。"""
 
+import asyncio
 import csv
+import hashlib
 import logging
 import shutil
 import time
@@ -35,6 +37,90 @@ class KnowledgeIngestionError(ValueError):
 class KnowledgeIngestionService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
+
+    async def ensure_assistant_demo_policy(
+        self,
+        source_path: Path,
+        *,
+        created_by: UUID = _ADMIN,
+    ) -> dict[str, object]:
+        """Idempotently import the small, explicitly Mock Assistant policy document."""
+
+        if not await asyncio.to_thread(source_path.is_file):
+            raise KnowledgeIngestionError(f"missing: {source_path}")
+        content = (await asyncio.to_thread(source_path.read_text, encoding="utf-8")).strip()
+        checksum = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        source = "knowledge_mock/return-policy.md"
+        document = await self.session.scalar(
+            select(KnowledgeDocument).where(KnowledgeDocument.source == source)
+        )
+        if document is not None and document.checksum_sha256 == checksum:
+            return {
+                "inserted": 0,
+                "skipped": 1,
+                "document_id": str(document.id),
+                "source": source,
+            }
+        if document is None:
+            document = KnowledgeDocument(
+                title="SellPilot Mock 店铺退货政策",
+                file_type="markdown",
+                file_size_bytes=len(content.encode("utf-8")),
+                category="policy",
+                status="indexed",
+                source=source,
+                checksum_sha256=checksum,
+                chunk_count=1,
+                metadata_json={"language": "zh-CN", "dataset": "assistant_demo_mock"},
+                is_mock_data=True,
+                created_by=created_by,
+            )
+            self.session.add(document)
+            await self.session.flush()
+            self.session.add(
+                KnowledgeChunk(
+                    document_id=document.id,
+                    chunk_index=0,
+                    content=content,
+                    chunk_size=len(content),
+                    embedding_status="not_required",
+                    metadata_json={"language": "zh-CN"},
+                    is_mock_data=True,
+                )
+            )
+        else:
+            document.file_size_bytes = len(content.encode("utf-8"))
+            document.checksum_sha256 = checksum
+            document.status = "indexed"
+            chunks = list(
+                (
+                    await self.session.execute(
+                        select(KnowledgeChunk).where(KnowledgeChunk.document_id == document.id)
+                    )
+                ).scalars()
+            )
+            if chunks:
+                chunks[0].content = content
+                chunks[0].chunk_size = len(content)
+            else:
+                self.session.add(
+                    KnowledgeChunk(
+                        document_id=document.id,
+                        chunk_index=0,
+                        content=content,
+                        chunk_size=len(content),
+                        embedding_status="not_required",
+                        metadata_json={"language": "zh-CN"},
+                        is_mock_data=True,
+                    )
+                )
+        await self.session.flush()
+        return {
+            "inserted": 1,
+            "skipped": 0,
+            "document_id": str(document.id),
+            "source": source,
+        }
 
     @staticmethod
     def _csv(data_dir: Path, name: str) -> list[dict]:

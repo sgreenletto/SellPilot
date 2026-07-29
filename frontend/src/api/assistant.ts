@@ -88,9 +88,11 @@ export function planAssistantMessage(message: string): Promise<AssistantPlan> {
 export function createAssistantTask(
   message: string,
   executionMode: AssistantExecutionMode,
+  requestId: string = crypto.randomUUID(),
 ): Promise<AssistantTaskResult> {
   return request<AssistantTaskResult>("/v1/assistant/tasks", {
     method: "POST",
+    headers: { "X-Request-ID": requestId },
     body: JSON.stringify({ message, execution_mode: executionMode }),
   });
 }

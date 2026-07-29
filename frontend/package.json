@@ -1,6 +1,6 @@
 {
   "name": "sellpilot-frontend",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "description": "SellPilot frontend foundation and operations dashboard",
   "private": true,
   "type": "module",

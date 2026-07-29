@@ -4,14 +4,14 @@
 数据包。功能状态及后端边界见
 [`docs/requirements/member2-frontend-acceptance.md`](../docs/requirements/member2-frontend-acceptance.md)。
 
-SellPilot 前端公共框架采用 Vue 3、TypeScript 与 Vite，当前版本为 `0.1.0` Foundation Milestone。该版本表示公共布局、组件与 Dashboard 基线已建立，不代表完整业务已完成或已用于生产。
+SellPilot 前端采用 Vue 3、TypeScript 与 Vite，当前发布候选版本为 `0.5.0`，对应 AI 运营助手与跨模块工作流集成里程碑。
 
 ## 当前边界
 
-当前已实现公共布局、设计系统、可复用组件、API 客户端、经营看板、Mock 商品/订单/库存页面和
-智能选品工作台。尚未实现评论分析、客服、RAG、完整 Agent 页面或真实 Shopee 连接。
+当前已实现公共布局、设计系统、可复用组件、统一 API 客户端、经营看板、Mock 商品/订单/库存页面、
+中文聊天式 AI 运营助手、任务中心，以及智能选品、评论分析、产品改良、内容生成、知识检索和客服工作台。
 
-v0.1.0 采用普通 Git Tag 标记，不创建 GitHub Release；当前不连接真实 Shopee。
+v0.5.0 发布说明见 [`docs/releases/v0.5.0.md`](../docs/releases/v0.5.0.md)；当前不连接真实 Shopee。
 
 平台标签会请求后端 `/api/v1/platform/status`。请求失败时界面显示“后端未连接”，不会伪装成 Mock Shopee 正常运行。
 
@@ -59,6 +59,10 @@ npm run test:run
 VITE_API_BASE_URL=/api
 VITE_PROXY_TARGET=http://127.0.0.1:8000
 ```
+
+使用仓库根目录 `start-sellpilot.bat` 时不需要手工同步该值：启动器会根据后端
+`API_HOST` / `API_PORT` 配置注入同一代理目标。仅单独运行前端时才需要在本地环境中
+设置 `VITE_PROXY_TARGET`。
 
 开发服务器把 `/api` 代理到 FastAPI。`VITE_*` 会暴露给浏览器，禁止放入密码、Token 或 API Key。
 

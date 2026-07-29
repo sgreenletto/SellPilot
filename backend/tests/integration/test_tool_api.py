@@ -59,10 +59,13 @@ async def test_tool_metadata_and_not_found_are_safe(client_bundle):
         "analyze_product_reviews",
         "calculate_product_profit",
         "check_listing_compliance",
+        "classify_customer_request",
         "compare_products",
+        "draft_customer_reply",
         "export_product_analysis_report",
         "generate_localized_listing",
         "generate_product_improvement_plan",
+        "get_customer_conversation",
         "get_order",
         "get_order_logistics",
         "get_product",
@@ -72,12 +75,20 @@ async def test_tool_metadata_and_not_found_are_safe(client_bundle):
         "list_orders",
         "list_product_skus",
         "list_products",
+        "mock_send_customer_reply",
         "score_product_opportunity",
+        "search_knowledge",
         "search_market_products",
         "system_health",
     ]
-    assert all(item["risk_level"] == "read" for item in tools)
-    assert all(item["confirmation_required"] is False for item in tools)
+    high_risk = [item for item in tools if item["risk_level"] != "read"]
+    assert [(item["name"], item["risk_level"]) for item in high_risk] == [
+        ("mock_send_customer_reply", "high_risk")
+    ]
+    assert all(
+        item["confirmation_required"] is (item["name"] == "mock_send_customer_reply")
+        for item in tools
+    )
     assert "handler" not in listing.text
     assert "module" not in listing.text
 
