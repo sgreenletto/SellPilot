@@ -289,6 +289,7 @@ class SelectionService:
 
     @staticmethod
     def _domain_candidate(product, trend, request, signals=None) -> SelectionCandidate:
+        has_review_evidence = product.review_count is not None and product.review_count > 0
         return SelectionCandidate(
             product_id=product.external_id,
             site=SITE_CODES[product.site],
@@ -312,8 +313,11 @@ class SelectionService:
             sales_index=trend.sales_index if trend else None,
             growth_rate=trend.growth_rate if trend else None,
             competition_index=trend.competition_index if trend else None,
-            rating=product.rating,
-            review_count=product.review_count,
+            # Imported market snapshots can contain a displayed rating while omitting the
+            # underlying review volume. The scorer treats that pair as unavailable evidence
+            # instead of failing the whole Assistant task or trusting an unverifiable rating.
+            rating=product.rating if has_review_evidence else None,
+            review_count=product.review_count if has_review_evidence else None,
             logistics_risk_rate=signals.logistics_risk_rate if signals else None,
             after_sales_rate=signals.after_sales_rate if signals else None,
             factory_fit_score=signals.factory_fit_score if signals else None,

@@ -98,7 +98,7 @@ Vue Views
 ```powershell
 uv sync
 uv run alembic upgrade head
-uv run python -m uvicorn sellpilot.main:app --host 127.0.0.1 --port 8000
+uv run sellpilot-start-api
 ```
 
 交互式创建单用户管理员：
@@ -138,7 +138,10 @@ npm run build
 ## Windows 一键启动
 
 首次运行前仍需按后端和前端章节安装依赖。依赖准备完成后，可双击根目录的
-`start-sellpilot.bat`，脚本会分别打开后端和前端开发服务窗口，并打开
+`start-sellpilot.bat`。启动器从根目录配置读取 `API_HOST` 和 `API_PORT`，启动前先调用
+`/api/v1/health/live`：若已有健康 SellPilot 后端则直接复用；若端口由其他进程占用，
+会给出明确提示并停止，不会终止任何进程。前端代理会自动使用同一个后端地址。脚本随后
+打开前端开发服务窗口，并打开
 `http://127.0.0.1:5173/dashboard`。
 
 只检查 `uv`、`npm`、项目文件和前端依赖是否就绪而不启动服务：
@@ -157,18 +160,20 @@ JWT、日志、平台适配器和模型配置。复制为仓库根目录的本�
 前端读取：
 
 - `VITE_API_BASE_URL`：浏览器 API 基础路径，开发默认 `/api`。
-- `VITE_PROXY_TARGET`：Vite 开发代理目标，示例为 `http://127.0.0.1:8000`。
+- `API_HOST` / `API_PORT`：本机 API 监听地址和端口，默认 `127.0.0.1:8000`。
+- `VITE_PROXY_TARGET`：单独启动前端时的 Vite 开发代理目标；一键启动会根据
+  `API_HOST` / `API_PORT` 自动注入，避免前后端端口不一致。
 
 `VITE_*` 会暴露给浏览器，禁止存放密码、Token 或 API Key。`PLATFORM_ADAPTER=real` 缺少明确配置时会失败，不会回退到 mock。
 
 ## 页面路由
 
 - `/dashboard`：经营看板。
-- `/assistant`：AI 运营助手占位页。
+- `/assistant`：中文聊天式 AI 运营助手；计划、任务执行、确认和任务中心共用统一运行时。
 - `/market/data`、`/market/selection`、`/market/reviews`：市场数据、智能选品和评论分析。
 - `/market/reviews/improvement`：产品改良报告与确认任务。
 - `/products`、`/products/content`、`/products/listing-inventory`：商品、内容工坊和库存。
-- `/customer-service/conversations`、`/customer-service/knowledge`：智能客服占位页。
+- `/customer-service/conversations`、`/customer-service/knowledge`：Mock 客服会话与知识库管理。
 - `/orders`：订单与履约占位页。
 - `/tasks`：真实任务中心；支持筛选、分页、按需详情、确认处理、任务操作和安全审计时间线。
 - `/dev/design-system`：仅开发环境注册的设计系统展示页。

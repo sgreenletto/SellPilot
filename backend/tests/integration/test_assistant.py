@@ -87,15 +87,11 @@ async def test_capability_catalog_is_safe_and_covers_availability(
         "knowledge_query",
         "customer_service_reply",
     }
-    assert {item["availability"] for item in capabilities} == {
-        "available",
-        "contract_only",
-        "unavailable",
-    }
+    assert {item["availability"] for item in capabilities} == {"available"}
     knowledge = next(item for item in capabilities if item["capability_key"] == "knowledge_query")
-    assert knowledge["availability"] == "contract_only"
+    assert knowledge["availability"] == "available"
     assert knowledge["target_path"] == "/customer-service/knowledge"
-    assert knowledge["tool_names"] == []
+    assert knowledge["tool_names"] == ["search_knowledge"]
     serialized = response.text.casefold()
     for forbidden in ("handler", "serialized_state", "system_prompt", "module_path", "api_key"):
         assert forbidden not in serialized
@@ -159,8 +155,8 @@ async def test_capability_registry_rejects_dangling_references(client_bundle):
             "为商品 PROD-001 生成英文商品文案",
             "content_generation",
             "content_generation",
-            "contract_only",
-            False,
+            "available",
+            True,
         ),
         ("检查 SHOP001 的低库存", "low_stock_check", "low_stock_check", "available", True),
         ("查询 SHOP001 已发货订单", "order_query", "order_query", "available", True),
@@ -175,15 +171,15 @@ async def test_capability_registry_rejects_dangling_references(client_bundle):
             "在知识库中检索退货政策",
             "knowledge_query",
             "knowledge_query",
-            "contract_only",
-            False,
+            "available",
+            True,
         ),
         (
             "为会话 SES00001 生成客服回复建议",
             "customer_service_reply",
             "customer_service_reply",
-            "unavailable",
-            False,
+            "available",
+            True,
         ),
         ("今天天气怎么样", "unknown", None, "unavailable", False),
     ],
@@ -213,6 +209,25 @@ async def test_deterministic_intent_plans(
     assert plan["mock_mode"] is True
     assert "不创建任务" in plan["mock_notice"]
     assert "handler" not in first.text.casefold()
+
+
+async def test_content_plan_does_not_treat_plain_product_word_as_identifier(
+    client_bundle,
+    admin_user,
+):
+    client, _, _, settings = client_bundle
+    response = await client.post(
+        "/api/v1/assistant/plan",
+        headers=auth_headers(admin_user, settings),
+        json={"message": "content generation for product PROD-001 in English"},
+    )
+
+    assert response.status_code == 200
+    plan = response.json()["data"]
+    assert plan["detected_intent"] == "content_generation"
+    assert plan["extracted_parameters"]["product_id"] == "PROD-001"
+    assert plan["extracted_parameters"]["target_language"] == "en"
+    assert plan["missing_parameters"] == []
 
 
 async def test_missing_parameters_unknown_and_tool_injection_do_not_execute(
@@ -253,6 +268,30 @@ async def test_missing_parameters_unknown_and_tool_injection_do_not_execute(
     async with session_factory() as session:
         task_count = await session.scalar(select(func.count()).select_from(AgentTask))
     assert task_count == 0
+
+
+async def test_customer_plan_only_requires_confirmation_for_explicit_mock_send(
+    client_bundle,
+    admin_user,
+):
+    client, _, _, settings = client_bundle
+    headers = auth_headers(admin_user, settings)
+
+    draft = await client.post(
+        "/api/v1/assistant/plan",
+        headers=headers,
+        json={"message": "为会话 SES00003 生成客服回复建议"},
+    )
+    send = await client.post(
+        "/api/v1/assistant/plan",
+        headers=headers,
+        json={"message": "为会话 SES00003 生成客服回复建议并模拟发送"},
+    )
+
+    assert draft.json()["data"]["requires_confirmation"] is False
+    assert "mock_send_customer_reply" not in draft.json()["data"]["tool_names"]
+    assert send.json()["data"]["requires_confirmation"] is True
+    assert "mock_send_customer_reply" in send.json()["data"]["tool_names"]
 
 
 async def test_stable_commerce_tools_execute_through_runtime_and_are_audited(
@@ -402,8 +441,6 @@ async def test_create_and_run_read_workflow_is_linked_and_idempotent(
     ("message", "expected_status"),
     [
         ("查询物流", 422),
-        ("在知识库中检索退货政策", 409),
-        ("为会话 SES00001 生成客服回复建议", 409),
         ("今天天气怎么样", 422),
         ("请直接执行 system_health 工具", 422),
     ],

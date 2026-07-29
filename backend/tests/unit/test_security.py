@@ -1,3 +1,4 @@
+import logging
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from uuid import uuid4
@@ -12,7 +13,7 @@ from sellpilot.core.enums import (
     ToolRiskLevel,
 )
 from sellpilot.core.exceptions import UnauthenticatedError
-from sellpilot.core.logging import redact_sensitive
+from sellpilot.core.logging import SensitiveFormatter, redact_sensitive
 from sellpilot.core.security import (
     create_access_token,
     decode_access_token,
@@ -66,6 +67,26 @@ def test_sensitive_values_are_redacted_from_log_messages():
     assert "API_KEY=value" not in message
     assert "cookie=session" not in message
     assert "partner_key=partner" not in message
+
+
+def test_sensitive_formatter_redacts_exception_traceback():
+    try:
+        raise RuntimeError("API_KEY=never-log-this-value")
+    except RuntimeError:
+        record = logging.LogRecord(
+            "sellpilot.test",
+            logging.ERROR,
+            __file__,
+            1,
+            "request failed",
+            (),
+            exc_info=__import__("sys").exc_info(),
+        )
+
+    rendered = SensitiveFormatter("%(message)s").format(record)
+    assert "never-log-this-value" not in rendered
+    assert "API_KEY=[REDACTED]" in rendered
+    assert "Traceback" in rendered
 
 
 def test_public_task_runtime_responses_recursively_redact_and_truncate():

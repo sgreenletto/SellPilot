@@ -70,3 +70,24 @@ Capability 和 Workflow 记录在 `task_created` OperationLog 的安全
 
 Content、RAG 和 Customer Service 尚未满足统一运行时条件，分别保持
 `contract_only`、`contract_only`、`unavailable`。
+
+## 前端对话工作台
+
+`/assistant` 使用中文优先的聊天式工作台，页面主标题由全局 `AppTopbar` 唯一提供。
+用户发送消息后，前端仍先调用 `/assistant/plan` 判断意图、参数和能力状态；默认模式仅在
+能力为 `available` 且参数完整时继续调用 Assistant Task 的 `create_and_run`。
+
+前端同时保留两个次级模式：
+
+- `create_only`：生成计划并创建 Task，但不运行；
+- `plan_only`：只调用 `/assistant/plan`，不创建 Task、不调用 Tool。
+
+任务执行结果不由前端推测。页面通过现有 Task 详情接口读取真实 `result`，对仍在
+`pending` 或 `running` 的任务进行有界轮询，并在页面销毁时取消轮询计时器。订单、物流、
+低库存、补货、选品、评论分析和产品改良结果按现有结构化输出展示；未知结构只展示公开
+Task 响应中的基础字段。
+
+内部 intent、Capability、Workflow、Step、Tool 和 Task ID 保持英文稳定标识，仅在默认
+折叠的“查看执行计划”区域中显示。用户默认看到的是集中展示映射提供的中文名称、状态、
+参数和步骤说明。常用任务面板只显示服务端 Capability Registry 返回的能力名称，点击只
+填充示例文本，不会自动执行。

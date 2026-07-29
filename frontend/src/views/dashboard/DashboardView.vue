@@ -158,7 +158,9 @@ async function loadBackendDashboard(): Promise<void> {
     const stats = await fetchCustomerServiceStats();
     pendingSessions = stats.pending_count;
     sessionsConnected = true;
-  } catch { /* 客服统计接口不可用 */ }
+  } catch {
+    /* 客服统计接口不可用 */
+  }
 
   try {
     const snapshot = await loadCommerceDashboardSnapshot(selectedShopId.value);

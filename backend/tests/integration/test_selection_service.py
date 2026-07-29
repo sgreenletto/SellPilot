@@ -97,8 +97,17 @@ async def test_full_mock_package_completes_all_selection_capabilities(
             analysis.results,
             key=lambda item: (-item.total_score, -item.data_completeness, item.product_id),
         )
+        assert all(
+            Decimal("0") < item.data_completeness <= Decimal("1") for item in analysis.results
+        )
+        incomplete = [item for item in analysis.results if item.data_completeness < Decimal("1")]
+        assert incomplete
+        assert any(
+            "missing review_quality" in warning
+            for item in incomplete
+            for warning in item.risk_warnings
+        )
         for result in analysis.results:
-            assert result.data_completeness == Decimal("1.0000")
             assert set(result.metrics) == {
                 "demand",
                 "competition",
@@ -108,7 +117,7 @@ async def test_full_mock_package_completes_all_selection_capabilities(
                 "after_sales",
                 "factory_fit",
             }
-            assert all(metric["score"] is not None for metric in result.metrics.values())
+            assert any(metric["score"] is not None for metric in result.metrics.values())
             assert result.explanation["summary"]
             assert result.explanation["evidence"]
 

@@ -104,7 +104,7 @@ function suggestionEvidence(suggestion: ImprovementSuggestion): ReviewEvidence[]
 async function loadEvidence(analysisIdValue: string): Promise<void> {
   const byId: Record<string, ReviewEvidence> = {};
   let page = 1;
-  let total = 0;
+  let total: number;
   do {
     const response = await listReviewEvidence(analysisIdValue, page, "", "", 100);
     total = response.total;

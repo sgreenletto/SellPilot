@@ -60,6 +60,10 @@ VITE_API_BASE_URL=/api
 VITE_PROXY_TARGET=http://127.0.0.1:8000
 ```
 
+使用仓库根目录 `start-sellpilot.bat` 时不需要手工同步该值：启动器会根据后端
+`API_HOST` / `API_PORT` 配置注入同一代理目标。仅单独运行前端时才需要在本地环境中
+设置 `VITE_PROXY_TARGET`。
+
 开发服务器把 `/api` 代理到 FastAPI。`VITE_*` 会暴露给浏览器，禁止放入密码、Token 或 API Key。
 
 ## 目录

@@ -260,6 +260,7 @@ async def generate_with_quality_loop(
         issues: list[str]
         content: Any
         quality: Any
+        attempt_history: list[dict[str, Any]]
 
     async def generate(state: ContentQualityState) -> dict[str, Any]:
         content = await gateway.generate(facts, state["issues"])
@@ -267,14 +268,49 @@ async def generate_with_quality_loop(
 
     async def validate(state: ContentQualityState) -> dict[str, Any]:
         quality = check_listing(state["content"], facts, state["attempt"])
+        issues = [
+            *quality.fact_issues,
+            *quality.compliance_issues,
+            *quality.seo_issues,
+            *quality.localization_issues,
+            *quality.completeness_issues,
+        ]
+        unsupported_keyword = any(
+            issue.startswith("unsupported factual keyword:") for issue in quality.seo_issues
+        )
+        will_retry = (
+            not quality.passed and state["attempt"] < max_attempts and not unsupported_keyword
+        )
+        stop_reason = (
+            "quality_passed"
+            if quality.passed
+            else (
+                "unsupported_factual_keyword"
+                if unsupported_keyword
+                else ("retry" if will_retry else "max_attempts_reached")
+            )
+        )
         return {
             "quality": quality,
-            "issues": [
-                *quality.fact_issues,
-                *quality.compliance_issues,
-                *quality.seo_issues,
-                *quality.localization_issues,
-                *quality.completeness_issues,
+            "issues": issues,
+            "attempt_history": [
+                *state["attempt_history"],
+                {
+                    "attempt": state["attempt"],
+                    "generation_summary": {
+                        "title": state["content"].title,
+                        "bullet_count": len(state["content"].bullet_points),
+                        "faq_count": len(state["content"].faq),
+                        "sku_content_count": len(state["content"].sku_content),
+                    },
+                    "fact_issues": quality.fact_issues,
+                    "compliance_issues": quality.compliance_issues,
+                    "seo_issues": quality.seo_issues,
+                    "localization_issues": quality.localization_issues,
+                    "completeness_issues": quality.completeness_issues,
+                    "retry": will_retry,
+                    "stop_reason": stop_reason,
+                },
             ],
         }
 
@@ -295,5 +331,17 @@ async def generate_with_quality_loop(
     graph.add_edge("generate", "validate")
     graph.add_conditional_edges("validate", route, {"generate": "generate", END: END})
     workflow = graph.compile(name="sellpilot_content_quality_loop")
-    final = await workflow.ainvoke({"attempt": 0, "issues": [], "content": None, "quality": None})
-    return GeneratedListing(content=final["content"], quality=final["quality"])
+    final = await workflow.ainvoke(
+        {
+            "attempt": 0,
+            "issues": [],
+            "content": None,
+            "quality": None,
+            "attempt_history": [],
+        }
+    )
+    return GeneratedListing(
+        content=final["content"],
+        quality=final["quality"],
+        attempt_history=final["attempt_history"],
+    )

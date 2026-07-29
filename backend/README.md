@@ -68,7 +68,9 @@ uv run sellpilot-import-mock-data
 uv run sellpilot-import-mock-data --data-dir ../data/demo/shopee_mock
 ```
 
-导入前会使用 Pydantic Schema 校验 12 个 CSV；任一文件失败则事务回滚。重复执行按 `external_id` 跳过已有记录，不重复插入。当前数据包导入 9,129 行数据并创建一个内部模拟店铺，共形成 9,130 条数据库记录。
+导入前会使用 Pydantic Schema 校验 12 个 CSV；任一文件失败则事务回滚。重复执行按
+`external_id` 跳过已有记录，不重复插入。当前数据包共校验 9,254 行记录，包含用于
+Assistant 选品验证的 3 个明确标记为 Mock 的新加坡母婴候选商品。
 
 ## 创建管理员
 
@@ -83,10 +85,13 @@ uv run sellpilot-create-admin --username admin
 ## 启动 API
 
 ```powershell
-uv run python -m uvicorn sellpilot.main:app --host 127.0.0.1 --port 8000
+uv run sellpilot-start-api
 ```
 
-基础地址为 `http://127.0.0.1:8000/api/v1`。
+命令从根目录环境配置读取 `API_HOST` 和 `API_PORT`，默认基础地址为
+`http://127.0.0.1:8000/api/v1`。它会先检查健康接口；已有健康 SellPilot 实例时直接
+复用，未知进程占用端口时明确报错且不会自动终止进程。需要显式热重载时使用
+`uv run sellpilot-start-api --reload`。
 
 ## MCP
 
@@ -105,8 +110,8 @@ uv run sellpilot-mcp
 ## Task Workflow Runtime
 
 `/api/v1/tasks` 提供已认证的工作流任务创建、查询、步骤历史、run、resume、
-retry、rerun 和 cancel。生产 Registry 当前注册 deterministic diagnostic、
-`system_health_check`、Selection 和 Review Analysis 兼容适配；工具节点统一经过 ToolExecutor，
+retry、rerun 和 cancel。唯一 Workflow Registry 已注册订单、物流、库存、选品、评论、
+产品改良、内容生成、知识检索和客服分支等工作流；所有工具节点统一经过 ToolExecutor。
 WRITE/HIGH_RISK 会暂停到现有 Confirmation，确认成功后由显式 resume 继续。
 详细边界见 `../docs/architecture/task-workflow-runtime.md`。
 

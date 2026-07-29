@@ -73,7 +73,6 @@ watch(isMobile, (mobile) => {
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior-y: contain;
-  scrollbar-gutter: stable;
 }
 
 .app-shell__overlay {

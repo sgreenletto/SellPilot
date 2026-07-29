@@ -25,6 +25,13 @@ class SensitiveDataFilter(logging.Filter):
         return True
 
 
+class SensitiveFormatter(logging.Formatter):
+    """Preserve tracebacks while applying the same redaction to exception text."""
+
+    def formatException(self, ei: tuple[type[BaseException], BaseException, Any]) -> str:
+        return redact_sensitive(super().formatException(ei))
+
+
 def configure_logging(settings: Settings) -> None:
     logging.config.dictConfig(
         {
@@ -33,6 +40,7 @@ def configure_logging(settings: Settings) -> None:
             "filters": {"sensitive": {"()": SensitiveDataFilter}},
             "formatters": {
                 "default": {
+                    "()": SensitiveFormatter,
                     "format": (
                         "%(asctime)s %(levelname)s %(name)s request_id=%(request_id)s %(message)s"
                     ),

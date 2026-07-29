@@ -719,6 +719,8 @@ class ToolExecutor:
             str(ErrorCode.MOCK_PLATFORM_FAILED): "Mock platform operation failed",
             str(ErrorCode.DATABASE_UNAVAILABLE): "Database is unavailable",
         }
+        if str(exc.code) == str(ErrorCode.MODEL_CALL_FAILED):
+            return redact_sensitive(exc.message)[:500]
         return safe_messages.get(str(exc.code), "Tool execution failed")
 
     @staticmethod
