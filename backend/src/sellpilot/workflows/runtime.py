@@ -2,6 +2,10 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from sellpilot.core.config import Settings
 from sellpilot.core.enums import TaskStepStatus, TaskType, WorkflowNodeType
+from sellpilot.schemas.replenishment import (
+    ReplenishmentAnalysisOutput,
+    ReplenishmentAnalysisRequest,
+)
 from sellpilot.schemas.review_analysis import ReviewAnalysisCreateRequest
 from sellpilot.schemas.selection import SelectionAnalysisRequest
 from sellpilot.tools.product_improvement import GenerateImprovementInput, ImprovementToolOutput
@@ -180,6 +184,30 @@ def build_product_improvement_definition(settings: Settings) -> WorkflowDefiniti
     )
 
 
+def build_replenishment_definition(settings: Settings) -> WorkflowDefinition:
+    return WorkflowDefinition(
+        name="inventory_replenishment",
+        version="1.0.0",
+        description=(
+            "Analyze inventory health and recent SKU demand through a deterministic read tool."
+        ),
+        task_type=TaskType.REPLENISHMENT,
+        input_schema=ReplenishmentAnalysisRequest,
+        output_schema=ReplenishmentAnalysisOutput,
+        nodes=(
+            NodeDefinition(
+                name="analyze_inventory_replenishment",
+                node_type=WorkflowNodeType.TOOL,
+                tool_name="analyze_inventory_replenishment",
+                timeout_seconds=min(30, settings.task_max_node_timeout_seconds),
+            ),
+        ),
+        entry_node="analyze_inventory_replenishment",
+        max_steps=1,
+        max_task_attempts=1,
+    )
+
+
 def build_workflow_registry(settings: Settings) -> WorkflowRegistry:
     registry = WorkflowRegistry(settings)
     registry.register(build_diagnostic_definition(settings))
@@ -187,4 +215,5 @@ def build_workflow_registry(settings: Settings) -> WorkflowRegistry:
     registry.register(build_selection_definition(settings))
     registry.register(build_review_analysis_definition(settings))
     registry.register(build_product_improvement_definition(settings))
+    registry.register(build_replenishment_definition(settings))
     return registry

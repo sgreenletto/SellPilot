@@ -252,6 +252,7 @@ class TaskType(StrEnum):
     KNOWLEDGE_INGESTION = "knowledge_ingestion"
     CUSTOMER_SERVICE = "customer_service"
     REPORT_GENERATION = "report_generation"
+    REPLENISHMENT = "replenishment"
 
 
 class WorkflowType(StrEnum):

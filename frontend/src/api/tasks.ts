@@ -100,6 +100,19 @@ function post<T>(path: string): Promise<T> {
   return request<T>(path, { method: "POST" });
 }
 
+export function createTask(
+  workflowName: string,
+  workflowInput: Record<string, unknown>,
+): Promise<TaskDetail> {
+  return request<TaskDetail>("/v1/tasks", {
+    method: "POST",
+    body: JSON.stringify({
+      workflow_name: workflowName,
+      workflow_input: workflowInput,
+    }),
+  });
+}
+
 export function listTasks(filters: TaskListFilters = {}): Promise<PaginatedResponse<TaskDetail>> {
   return request<PaginatedResponse<TaskDetail>>(`/v1/tasks${queryString(filters)}`);
 }

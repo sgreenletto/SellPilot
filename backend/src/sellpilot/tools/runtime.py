@@ -7,6 +7,7 @@ from sellpilot.tools.content_generation import register_content_generation_tools
 from sellpilot.tools.executor import TOOL_CONFIRMATION_OPERATION, ToolExecutor
 from sellpilot.tools.product_improvement import register_product_improvement_tools
 from sellpilot.tools.registry import ToolRegistry
+from sellpilot.tools.replenishment import register_replenishment_tools
 from sellpilot.tools.review_analysis import register_review_analysis_tools
 from sellpilot.tools.selection import register_selection_tools
 from sellpilot.tools.system import build_system_health_tool
@@ -20,6 +21,7 @@ def build_tool_registry(settings: Settings) -> ToolRegistry:
     register_review_analysis_tools(registry)
     register_product_improvement_tools(registry)
     register_content_generation_tools(registry)
+    register_replenishment_tools(registry)
     return registry
 
 

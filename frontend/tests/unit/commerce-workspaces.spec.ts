@@ -21,6 +21,8 @@ const cancelCommerceOperation = vi.fn();
 const requestProductDraft = vi.fn();
 const requestProductImport = vi.fn();
 const getProductTranslationProviderStatus = vi.fn();
+const createTask = vi.fn();
+const runTask = vi.fn();
 const requestProductTranslation = vi.fn();
 const getProductTranslationTask = vi.fn();
 
@@ -41,6 +43,11 @@ vi.mock("@/api/product-translation", () => ({
     getProductTranslationProviderStatus(...args),
   requestProductTranslation: (...args: unknown[]) => requestProductTranslation(...args),
   getProductTranslationTask: (...args: unknown[]) => getProductTranslationTask(...args),
+}));
+vi.mock("@/api/tasks", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/api/tasks")>()),
+  createTask: (...args: unknown[]) => createTask(...args),
+  runTask: (...args: unknown[]) => runTask(...args),
 }));
 
 const dashboardOrders: Order[] = [
@@ -158,12 +165,50 @@ describe("成员二业务工作台", () => {
     requestProductDraft.mockReset();
     requestProductImport.mockReset();
     getProductTranslationProviderStatus.mockReset();
+    createTask.mockReset();
+    runTask.mockReset();
     requestProductTranslation.mockReset();
     getProductTranslationTask.mockReset();
     getProductTranslationProviderStatus.mockResolvedValue({
       provider: "offline_template",
       configured: false,
       supported_languages: [],
+    });
+    createTask.mockResolvedValue({ id: "REPLENISHMENT-TASK-001" });
+    runTask.mockResolvedValue({
+      status: "succeeded",
+      result: {
+        shop_external_id: "SHOP001",
+        analysis_days: 90,
+        lead_time_days: 30,
+        safety_factor: "1.50",
+        formula_version: "replenishment-v1.0.0",
+        summary: {
+          analyzed_skus: 1,
+          replenishment_skus: 1,
+          critical_skus: 1,
+          recommended_units: 24,
+        },
+        recommendations: [
+          {
+            product_id: "PROD0001",
+            product_title: "USB-C Hub Essential 001",
+            sku_id: "SKU00001",
+            seller_sku: "CAT001-0001-01",
+            available_stock: 10,
+            safety_stock: 5,
+            units_sold: 60,
+            average_daily_sales: "2.0000",
+            days_of_supply: "5.0000",
+            target_stock: 34,
+            recommended_quantity: 24,
+            risk_level: "critical",
+            reason: "30日销量60件，目标库存34件，当前可用10件。",
+            is_mock_data: true,
+          },
+        ],
+        is_mock_data: true,
+      },
     });
     vi.stubGlobal(
       "confirm",
@@ -386,6 +431,32 @@ describe("成员二业务工作台", () => {
     });
     expect(wrapper.text()).toContain("Mock 平台库存已更新");
     expect(wrapper.text()).toContain("→");
+  });
+
+  it("库存页通过统一任务 API 展示可解释的补货决策", async () => {
+    const wrapper = mount(InventoryView, {
+      global: { plugins: [createPinia()] },
+    });
+    await vi.waitFor(() => expect(wrapper.text()).toContain("已连接后端"));
+
+    const analyzeButton = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("生成补货建议"))!;
+    expect(analyzeButton.attributes("disabled")).toBeUndefined();
+    await analyzeButton.trigger("click");
+
+    await vi.waitFor(() => {
+      expect(createTask).toHaveBeenCalledWith("inventory_replenishment", {
+        shop_external_id: "SHOP001",
+        analysis_days: 90,
+        lead_time_days: 30,
+        safety_factor: "1.5",
+        only_replenishment: true,
+      });
+      expect(runTask).toHaveBeenCalledWith("REPLENISHMENT-TASK-001");
+      expect(wrapper.text()).toContain("建议合计 24 件");
+      expect(wrapper.text()).toContain("30日销量60件");
+    });
   });
 
   it("订单页展示脱敏买家、商品、物流和售后区域", async () => {

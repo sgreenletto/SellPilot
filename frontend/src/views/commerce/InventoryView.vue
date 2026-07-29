@@ -12,6 +12,7 @@ import {
   requestProductStatus,
 } from "@/api/commerce";
 import { loadCommerceDashboardSnapshot } from "@/api/dashboard";
+import { createTask, runTask } from "@/api/tasks";
 import SpButton from "@/components/base/SpButton.vue";
 import SpCard from "@/components/base/SpCard.vue";
 import CommercePagination from "@/components/commerce/CommercePagination.vue";
@@ -48,6 +49,52 @@ const pendingInventoryTasks = ref(
   new Map<string, { confirmationId: string; skuId: string; before: number; after: number }>(),
 );
 const inventoryOperationLoading = ref(false);
+const replenishmentLoading = ref(false);
+const replenishmentError = ref("");
+const replenishmentResult = ref<ReplenishmentOutput | null>(null);
+const analysisDays = ref(90);
+const leadTimeDays = ref(30);
+const safetyFactor = ref(1.5);
+
+interface ReplenishmentRecommendation {
+  product_id: string;
+  product_title: string;
+  sku_id: string;
+  seller_sku: string;
+  available_stock: number;
+  safety_stock: number;
+  units_sold: number;
+  average_daily_sales: string | number;
+  days_of_supply: string | number | null;
+  target_stock: number;
+  recommended_quantity: number;
+  risk_level: "critical" | "warning" | "healthy";
+  reason: string;
+  is_mock_data: boolean;
+}
+
+interface ReplenishmentOutput {
+  shop_external_id: string;
+  analysis_days: number;
+  lead_time_days: number;
+  safety_factor: string | number;
+  formula_version: string;
+  summary: {
+    analyzed_skus: number;
+    replenishment_skus: number;
+    critical_skus: number;
+    recommended_units: number;
+  };
+  recommendations: ReplenishmentRecommendation[];
+  is_mock_data: boolean;
+}
+
+function applyReplenishmentPreset(days: number, leadTime: number, factor: number): void {
+  analysisDays.value = days;
+  leadTimeDays.value = leadTime;
+  safetyFactor.value = factor;
+  replenishmentResult.value = null;
+}
 
 const visible = computed(() =>
   rows.value.filter(
@@ -132,6 +179,33 @@ async function loadCurrentShop(): Promise<void> {
     listingDrafts.value = [];
     dataStatus.value = "error";
     dataMessage.value = "后端数据读取失败，未使用本地全量 CSV 冒充当前店铺数据。";
+  }
+}
+async function analyzeReplenishment(): Promise<void> {
+  if (selectedShopId.value === "all") {
+    replenishmentError.value = "请先选择一个具体店铺，再生成补货建议。";
+    return;
+  }
+  replenishmentLoading.value = true;
+  replenishmentError.value = "";
+  try {
+    const task = await createTask("inventory_replenishment", {
+      shop_external_id: selectedShopId.value,
+      analysis_days: analysisDays.value,
+      lead_time_days: leadTimeDays.value,
+      safety_factor: String(safetyFactor.value),
+      only_replenishment: true,
+    });
+    const execution = await runTask(task.id);
+    if (execution.status !== "succeeded" || !execution.result) {
+      throw new Error(execution.error_message || "补货分析任务未成功完成");
+    }
+    replenishmentResult.value = execution.result as unknown as ReplenishmentOutput;
+  } catch (caught) {
+    replenishmentResult.value = null;
+    replenishmentError.value = caught instanceof Error ? caught.message : "补货分析失败";
+  } finally {
+    replenishmentLoading.value = false;
   }
 }
 function toggle(id: string): void {
@@ -290,7 +364,11 @@ async function cancelListing(row: Row): Promise<void> {
 
 watch([lowOnly, inventoryPageSize], () => (inventoryPage.value = 1));
 watch(draftPageSize, () => (draftPage.value = 1));
-watch(selectedShopId, () => void loadCurrentShop());
+watch(selectedShopId, () => {
+  replenishmentResult.value = null;
+  replenishmentError.value = "";
+  void loadCurrentShop();
+});
 onMounted(() => void loadCurrentShop());
 </script>
 
@@ -323,6 +401,110 @@ onMounted(() => void loadCurrentShop());
       >
     </section>
     <p v-if="notice" class="notice">{{ notice }}</p>
+    <SpCard class="replenishment-agent" padding="lg">
+      <template #header>
+        <div class="toolbar">
+          <div>
+            <strong>库存健康与补货决策</strong>
+            <p>根据当前店铺近期订单销量、可用库存和安全库存生成可解释建议。</p>
+          </div>
+          <SpButton
+            :loading="replenishmentLoading"
+            :disabled="dataStatus !== 'backend' || selectedShopId === 'all'"
+            @click="analyzeReplenishment"
+            >生成补货建议</SpButton
+          >
+        </div>
+      </template>
+      <div class="agent-controls">
+        <label>
+          分析周期（天）
+          <input v-model.number="analysisDays" type="number" min="1" max="365" />
+        </label>
+        <label>
+          采购提前期（天）
+          <input v-model.number="leadTimeDays" type="number" min="1" max="180" />
+        </label>
+        <label>
+          安全系数
+          <input v-model.number="safetyFactor" type="number" min="1" max="3" step="0.1" />
+        </label>
+      </div>
+      <div class="agent-presets" aria-label="补货分析演示参数">
+        <span>演示预设：</span>
+        <SpButton size="sm" variant="ghost" @click="applyReplenishmentPreset(90, 14, 1.2)"
+          >日常需求</SpButton
+        >
+        <SpButton size="sm" variant="ghost" @click="applyReplenishmentPreset(90, 30, 1.5)"
+          >活动备货</SpButton
+        >
+        <SpButton size="sm" variant="ghost" @click="applyReplenishmentPreset(90, 60, 2)"
+          >旺季压力测试</SpButton
+        >
+      </div>
+      <p v-if="replenishmentError" class="agent-error" role="alert">
+        {{ replenishmentError }}
+      </p>
+      <template v-if="replenishmentResult">
+        <div class="agent-summary">
+          <span>已分析 {{ replenishmentResult.summary.analyzed_skus }} 个 SKU</span>
+          <span>建议补货 {{ replenishmentResult.summary.replenishment_skus }} 个</span>
+          <span>严重风险 {{ replenishmentResult.summary.critical_skus }} 个</span>
+          <span>建议合计 {{ replenishmentResult.summary.recommended_units }} 件</span>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>商品 / SKU</th>
+                <th>当前库存</th>
+                <th>近 {{ replenishmentResult.analysis_days }} 天销量</th>
+                <th>日均销量</th>
+                <th>可售天数</th>
+                <th>目标库存</th>
+                <th>建议补货</th>
+                <th>风险</th>
+                <th>依据</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in replenishmentResult.recommendations" :key="item.sku_id">
+                <td>
+                  <strong>{{ item.product_title }}</strong>
+                  <small>{{ item.seller_sku }}</small>
+                </td>
+                <td>{{ item.available_stock }}</td>
+                <td>{{ item.units_sold }}</td>
+                <td>{{ item.average_daily_sales }}</td>
+                <td>{{ item.days_of_supply ?? "无近期销量" }}</td>
+                <td>{{ item.target_stock }}</td>
+                <td>
+                  <strong>{{ item.recommended_quantity }}</strong>
+                </td>
+                <td>
+                  <StatusBadge
+                    :status="item.risk_level === 'critical' ? 'failed' : 'pending'"
+                    :label="item.risk_level === 'critical' ? '严重' : '预警'"
+                  />
+                </td>
+                <td class="reason">{{ item.reason }}</td>
+              </tr>
+              <tr v-if="replenishmentResult.recommendations.length === 0">
+                <td colspan="9">当前店铺暂无需要补货的 SKU。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="agent-footnote">
+          {{ replenishmentResult.formula_version }} ·
+          {{ replenishmentResult.is_mock_data ? "Mock 数据分析" : "混合来源数据" }} ·
+          本结果只提供决策建议，不会直接修改库存。
+        </p>
+      </template>
+      <p v-else-if="!replenishmentLoading" class="agent-empty">
+        选择参数并生成建议后，可在这里查看逐 SKU 的销量证据和补货数量。
+      </p>
+    </SpCard>
     <SpCard class="drafts" padding="lg">
       <template #header><strong>上架草稿、预览与完整性检查</strong></template>
       <div class="table-scroll">
@@ -581,6 +763,52 @@ small {
 }
 .drafts {
   margin-bottom: var(--sp-space-5);
+}
+.replenishment-agent {
+  margin-bottom: var(--sp-space-5);
+}
+.replenishment-agent p {
+  margin: var(--sp-space-1) 0 0;
+  color: var(--sp-color-text-secondary);
+}
+.agent-controls,
+.agent-summary,
+.agent-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-space-3);
+  margin-bottom: var(--sp-space-4);
+}
+.agent-presets {
+  align-items: center;
+  color: var(--sp-color-text-secondary);
+  font-size: var(--sp-font-sm);
+}
+.agent-controls label {
+  display: grid;
+  gap: var(--sp-space-2);
+  color: var(--sp-color-text-secondary);
+  font-size: var(--sp-font-sm);
+}
+.agent-summary span {
+  padding: var(--sp-space-2) var(--sp-space-3);
+  color: var(--sp-color-primary);
+  background: var(--sp-color-accent-blue-soft);
+  border-radius: var(--sp-radius-control);
+}
+.agent-error {
+  padding: var(--sp-space-3);
+  color: var(--sp-color-danger) !important;
+  background: var(--sp-color-danger-soft);
+  border-radius: var(--sp-radius-control);
+}
+.agent-empty,
+.agent-footnote {
+  color: var(--sp-color-text-muted) !important;
+}
+.reason {
+  min-width: 360px;
+  white-space: normal;
 }
 input[type="number"] {
   width: 90px;
