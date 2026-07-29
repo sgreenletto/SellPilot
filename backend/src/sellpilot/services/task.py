@@ -71,6 +71,8 @@ class TaskService:
         created_by: UUID,
         request_id: str,
         parent_task_id: UUID | None = None,
+        user_input_summary: str | None = None,
+        creation_context: dict[str, object] | None = None,
     ) -> AgentTask:
         try:
             validated = definition.input_schema.model_validate(workflow_input)
@@ -101,11 +103,15 @@ class TaskService:
         task = await self.tasks.add(
             AgentTask(
                 task_type=definition.task_type,
-                user_input=json.dumps(
-                    trusted_input,
-                    ensure_ascii=False,
-                    sort_keys=True,
-                    separators=(",", ":"),
+                user_input=(
+                    user_input_summary
+                    if user_input_summary is not None
+                    else json.dumps(
+                        trusted_input,
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    )
                 ),
                 workflow_name=definition.name,
                 workflow_version=definition.version,
@@ -127,6 +133,10 @@ class TaskService:
                 "workflow_name": definition.name,
                 "workflow_version": definition.version,
                 "input_summary": audit_summary(trusted_input, max_bytes=min(max_bytes, 16_384)),
+                "creation_context": audit_summary(
+                    creation_context or {},
+                    max_bytes=min(max_bytes, 4096),
+                ),
             },
         )
         return task
@@ -139,6 +149,8 @@ class TaskService:
         created_by: UUID,
         request_id: str,
         parent_task_id: UUID | None = None,
+        user_input_summary: str | None = None,
+        creation_context: dict[str, object] | None = None,
     ) -> AgentTask:
         """Create an API-visible workflow task before a follow-up run request."""
         task = await self.create_workflow_task(
@@ -147,6 +159,8 @@ class TaskService:
             created_by=created_by,
             request_id=request_id,
             parent_task_id=parent_task_id,
+            user_input_summary=user_input_summary,
+            creation_context=creation_context,
         )
         await self.session.commit()
         return task

@@ -65,10 +65,8 @@ class AssistantCapabilityDefinition(BaseModel):
             raise ValueError("capability parameters must be unique")
         if len(self.tool_names) != len(set(self.tool_names)):
             raise ValueError("capability tools must be unique")
-        if self.availability is AssistantAvailability.AVAILABLE and not (
-            self.workflow_name or self.tool_names
-        ):
-            raise ValueError("available capabilities require a workflow or tool")
+        if self.availability is AssistantAvailability.AVAILABLE and not self.workflow_name:
+            raise ValueError("available capabilities require a registered workflow")
         if self.availability is not AssistantAvailability.AVAILABLE and not self.unavailable_reason:
             raise ValueError("non-available capabilities require an unavailable reason")
         return self
@@ -252,8 +250,17 @@ class AssistantPlanService:
                 ("物流", "快递", "tracking", "shipment", "logistics"),
             ),
             (
+                AssistantIntent.INVENTORY_REPLENISHMENT,
+                (
+                    "库存补货",
+                    "补货分析",
+                    "补货建议",
+                    "replenishment",
+                ),
+            ),
+            (
                 AssistantIntent.LOW_STOCK_CHECK,
-                ("低库存", "库存不足", "缺货", "补货", "low stock"),
+                ("低库存", "库存不足", "缺货", "low stock"),
             ),
             (
                 AssistantIntent.PRODUCT_IMPROVEMENT,
@@ -310,6 +317,9 @@ class AssistantPlanService:
             language = self._extract_language(message)
             if language:
                 parameters["target_language"] = language
+        elif intent is AssistantIntent.INVENTORY_REPLENISHMENT:
+            if shop_id:
+                parameters["shop_external_id"] = shop_id
         elif intent is AssistantIntent.LOW_STOCK_CHECK:
             if shop_id:
                 parameters["shop_id"] = shop_id
@@ -534,9 +544,29 @@ def build_assistant_capability_registry(
             target_path="/products/content",
         ),
         AssistantCapabilityDefinition(
+            capability_key="inventory_replenishment",
+            display_name="库存补货建议",
+            intent=AssistantIntent.INVENTORY_REPLENISHMENT,
+            workflow_name="inventory_replenishment",
+            workflow_version="1.0.0",
+            required_parameters=("shop_external_id",),
+            optional_parameters=(
+                "analysis_days",
+                "lead_time_days",
+                "safety_factor",
+                "only_replenishment",
+            ),
+            tool_names=("analyze_inventory_replenishment",),
+            availability=AssistantAvailability.AVAILABLE,
+            example_message="分析 SHOP001 的库存补货建议",
+            target_path="/products/listing-inventory",
+        ),
+        AssistantCapabilityDefinition(
             capability_key="low_stock_check",
             display_name="低库存检查",
             intent=AssistantIntent.LOW_STOCK_CHECK,
+            workflow_name="low_stock_check",
+            workflow_version="1.0.0",
             optional_parameters=("shop_id", "limit"),
             tool_names=("list_low_stock",),
             availability=AssistantAvailability.AVAILABLE,
@@ -547,6 +577,8 @@ def build_assistant_capability_registry(
             capability_key="order_query",
             display_name="订单查询",
             intent=AssistantIntent.ORDER_QUERY,
+            workflow_name="order_query",
+            workflow_version="1.0.0",
             optional_parameters=("order_id", "status", "shop_id", "limit"),
             tool_names=("list_orders", "get_order"),
             availability=AssistantAvailability.AVAILABLE,
@@ -557,6 +589,8 @@ def build_assistant_capability_registry(
             capability_key="logistics_query",
             display_name="物流查询",
             intent=AssistantIntent.LOGISTICS_QUERY,
+            workflow_name="logistics_query",
+            workflow_version="1.0.0",
             required_parameters=("order_id",),
             tool_names=("get_order_logistics",),
             availability=AssistantAvailability.AVAILABLE,
