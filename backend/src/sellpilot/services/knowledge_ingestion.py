@@ -28,7 +28,6 @@ class KnowledgeIngestionError(ValueError):
 
 
 class KnowledgeIngestionService:
-
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
@@ -40,67 +39,60 @@ class KnowledgeIngestionService:
         with p.open("r", encoding="utf-8-sig", newline="") as f:
             return list(csv.DictReader(f))
 
+    # ---- emb 文本：不含假中文翻译 ----
+
     @staticmethod
     def _prod(row: dict) -> str:
-        site = row.get("site", "")
-        price = row.get("price", "")
-        currency = row.get("currency", "")
-        sales = row.get("sales_count", "")
         return (
             f"[Product] {row.get('title', '')}\n"
             f"Category: {row.get('category_name', '')}\n"
             f"Description: {row.get('description', '')}\n"
-            f"Site: {site} | Price: {price} {currency} | Sales: {sales}"
+            f"Site: {row.get('site', '')} | "
+            f"Price: {row.get('price', '')} {row.get('currency', '')} | "
+            f"Sales: {row.get('sales_count', '')}"
         )
 
     @staticmethod
     def _rev(row: dict) -> str:
         zh = row.get("content_zh", "")
         zh_line = f"Chinese: {zh}\n" if zh else ""
-        issue = row.get("issue_type", "")
-        sentiment = row.get("sentiment_hint", "")
-        rating = row.get("rating", "")
         return (
             f"[User Review - {row.get('language', '')}]\n"
             f"Content: {row.get('content', '')}\n"
             f"{zh_line}"
-            f"Issue: {issue} | Sentiment: {sentiment} | Rating: {rating}/5"
+            f"Issue: {row.get('issue_type', '')} | "
+            f"Sentiment: {row.get('sentiment_hint', '')} | "
+            f"Rating: {row.get('rating', '')}/5"
         )
 
     @staticmethod
     def _faq(q: str, a: str, lang: str, intent: str, risk: str) -> str:
-        return (
-            f"[CS Q&A - {lang}]\n"
-            f"Buyer: {q}\n"
-            f"Assistant: {a}\n"
-            f"Intent: {intent} | Risk: {risk}"
-        )
+        return f"[CS Q&A - {lang}]\nBuyer: {q}\nAssistant: {a}\nIntent: {intent} | Risk: {risk}"
 
-    async def _make(
-        self, title: str, content: str, cat: str, src: str,
-    ) -> KnowledgeDocument:
+    async def _make(self, title: str, content: str, cat: str, src: str) -> KnowledgeDocument:
         doc = KnowledgeDocument(
-            title=title, file_type="csv",
+            title=title,
+            file_type="csv",
             file_size_bytes=len(content.encode()),
-            category=cat, status="indexed", source=src,
-            chunk_count=1, created_by=_ADMIN,
+            category=cat,
+            status="indexed",
+            source=src,
+            chunk_count=1,
+            created_by=_ADMIN,
         )
         self.session.add(doc)
         await self.session.flush()
-        self.session.add(KnowledgeChunk(
-            document_id=doc.id, chunk_index=0,
-            content=content, chunk_size=len(content),
-        ))
+        self.session.add(
+            KnowledgeChunk(
+                document_id=doc.id, chunk_index=0, content=content, chunk_size=len(content)
+            )
+        )
         return doc
 
     async def _clear(self) -> int:
-        c = (await self.session.execute(
-            select(KnowledgeChunk.id),
-        )).scalars().all()
+        c = (await self.session.execute(select(KnowledgeChunk.id))).scalars().all()
         await self.session.execute(delete(KnowledgeChunk))
-        d = (await self.session.execute(
-            select(KnowledgeDocument.id),
-        )).scalars().all()
+        d = (await self.session.execute(select(KnowledgeDocument.id))).scalars().all()
         await self.session.execute(delete(KnowledgeDocument))
         await self.session.flush()
         return len(c) + len(d)
@@ -120,20 +112,24 @@ class KnowledgeIngestionService:
         a_msgs: dict[str, list[str]] = {}
         for m in msgs:
             sid = m.get("session_id", "")
-            target = b_msgs if m.get("sender_type") == "buyer" else a_msgs
-            target.setdefault(sid, []).append(m.get("content", ""))
+            (b_msgs if m.get("sender_type") == "buyer" else a_msgs).setdefault(sid, []).append(
+                m.get("content", "")
+            )
 
         pc = rc = fc = 0
         for row in prods:
             await self._make(
-                row.get("title", ""), self._prod(row), "product",
+                row.get("title", ""),
+                self._prod(row),
+                "product",
                 f"products.csv#{row.get('product_id', '')}",
             )
             pc += 1
         for row in revs:
             await self._make(
                 f"Review {row.get('review_id', '')}",
-                self._rev(row), "review",
+                self._rev(row),
+                "review",
                 f"reviews.csv#{row.get('review_id', '')}",
             )
             rc += 1
@@ -146,8 +142,7 @@ class KnowledgeIngestionService:
             await self._make(
                 f"FAQ #{sid}",
                 self._faq(
-                    q, a, s.get("language", ""),
-                    s.get("intent", ""), s.get("risk_level", ""),
+                    q, a, s.get("language", ""), s.get("intent", ""), s.get("risk_level", "")
                 ),
                 "faq",
                 f"customer_messages.csv#{sid}",
@@ -161,32 +156,35 @@ class KnowledgeIngestionService:
         es = EmbeddingService()
         off = 0
         while True:
-            batch = list((
-                await self.session.execute(
-                    select(KnowledgeChunk)
-                    .order_by(KnowledgeChunk.created_at)
-                    .offset(off).limit(100)
-                )
-            ).scalars())
+            batch = list(
+                (
+                    await self.session.execute(
+                        select(KnowledgeChunk)
+                        .order_by(KnowledgeChunk.created_at)
+                        .offset(off)
+                        .limit(100)
+                    )
+                ).scalars()
+            )
             if not batch:
                 break
             embs = es.encode([c.content for c in batch])
-            for chunk, emb in zip(batch, embs, strict=False):
-                doc = await self.session.get(
-                    KnowledgeDocument, chunk.document_id,
-                )
+            for chunk, emb in zip(batch, embs, strict=True):
+                doc = await self.session.get(KnowledgeDocument, chunk.document_id)
                 cat = doc.category if doc else "unknown"
                 vs.upsert_chunks(
                     chunk.document_id,
                     [chunk.chunk_index],
                     [chunk.content],
                     [emb],
-                    [{
-                        "document_id": str(chunk.document_id),
-                        "chunk_index": chunk.chunk_index,
-                        "category": cat,
-                        "source": doc.source if doc else "",
-                    }],
+                    [
+                        {
+                            "document_id": str(chunk.document_id),
+                            "chunk_index": chunk.chunk_index,
+                            "category": cat,
+                            "source": doc.source if doc else "",
+                        }
+                    ],
                 )
                 chunk.embedding_status = "embedded"
                 chunk.chroma_id = f"{chunk.document_id}_{chunk.chunk_index}"

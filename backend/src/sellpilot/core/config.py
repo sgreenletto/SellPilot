@@ -18,10 +18,10 @@ EXAMPLE_JWT_SECRETS = {
 
 
 class Settings(BaseSettings):
-    """Application settings loaded from environment variables and backend/.env."""
+    """Application settings loaded from environment variables and the repository .env."""
 
     model_config = SettingsConfigDict(
-        env_file=(REPOSITORY_ROOT / ".env", BACKEND_ROOT / ".env"),
+        env_file=REPOSITORY_ROOT / ".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     debug: bool = Field(default=False, validation_alias="DEBUG")
     api_v1_prefix: str = Field(default="/api/v1", validation_alias="API_V1_PREFIX")
     database_url: str = Field(
-        default="sqlite+aiosqlite:///./sellpilot.db",
+        default="postgresql+asyncpg://sellpilot:replace_me@localhost:5432/sellpilot",
         validation_alias="DATABASE_URL",
     )
     jwt_secret_key: SecretStr = Field(
@@ -175,6 +175,13 @@ class Settings(BaseSettings):
         if not value.startswith("/"):
             raise ValueError("API_V1_PREFIX must start with '/'")
         return value.rstrip("/")
+
+    @field_validator("database_url")
+    @classmethod
+    def validate_database_url(cls, value: str) -> str:
+        if not value.startswith("postgresql+asyncpg://"):
+            raise ValueError("DATABASE_URL must use PostgreSQL with the asyncpg driver")
+        return value
 
     @model_validator(mode="after")
     def validate_security_and_platform(self) -> "Settings":

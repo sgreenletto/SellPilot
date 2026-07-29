@@ -12,4 +12,4 @@ uv run ruff check .
 uv run pytest -q
 ```
 
-测试只使用隔离 SQLite 和合成/Mock 数据，不访问真实平台、模型、翻译服务或生产数据库。
+测试只使用隔离 PostgreSQL 和合成/Mock 数据，不访问真实平台、模型、翻译服务、开发数据库或生产数据库。

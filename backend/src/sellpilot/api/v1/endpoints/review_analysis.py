@@ -33,6 +33,7 @@ async def list_reviews(
     session: SessionDependency,
     settings: SettingsDependency,
     product_id: str,
+    keyword: str | None = Query(default=None, min_length=1, max_length=100),
     site: SiteCode | None = None,
     language: str | None = None,
     min_rating: Annotated[int | None, Query(ge=1, le=5)] = None,
@@ -45,6 +46,7 @@ async def list_reviews(
     data = await ReviewAnalysisService(session, settings).list_reviews(
         ReviewQuery(
             product_id=product_id,
+            keyword=keyword,
             site=site,
             language=language,
             min_rating=min_rating,
@@ -133,6 +135,7 @@ async def list_evidence(
     page_size: int = Query(default=20, ge=1, le=100),
     evidence_type: str | None = None,
     label: str | None = None,
+    sentiment: str | None = Query(default=None, pattern="^(positive|neutral|negative)$"),
 ) -> ApiResponse[ReviewEvidencePage]:
     data = await ReviewAnalysisService(session, settings).list_evidence(
         analysis_id,
@@ -141,5 +144,6 @@ async def list_evidence(
         page_size=page_size,
         evidence_type=evidence_type,
         label=label,
+        sentiment=sentiment,
     )
     return success_response(data, get_request_id(request))

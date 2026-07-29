@@ -1,12 +1,24 @@
 import pytest
 from pydantic import ValidationError
 
-from sellpilot.core.config import Settings, clear_settings_cache, get_settings
+from sellpilot.core.config import REPOSITORY_ROOT, Settings, clear_settings_cache, get_settings
 
 
-def test_settings_environment_override(monkeypatch, tmp_path):
+def test_settings_use_only_repository_root_env_file() -> None:
+    assert Settings.model_config["env_file"] == REPOSITORY_ROOT / ".env"
+
+
+def test_settings_reject_non_postgresql_database() -> None:
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, DATABASE_URL="sqlite+aiosqlite:///sellpilot.db")
+
+
+def test_settings_environment_override(monkeypatch):
     monkeypatch.setenv("APP_NAME", "TestPilot")
-    monkeypatch.setenv("DATABASE_URL", f"sqlite+aiosqlite:///{tmp_path / 'settings.db'}")
+    monkeypatch.setenv(
+        "DATABASE_URL",
+        "postgresql+asyncpg://sellpilot:test@localhost:5432/settings_test",
+    )
     monkeypatch.setenv("JWT_SECRET_KEY", "safe-test-secret-with-more-than-32-characters")
     monkeypatch.setenv("CORS_ORIGINS", '["http://localhost:5173"]')
     settings = Settings(_env_file=None)

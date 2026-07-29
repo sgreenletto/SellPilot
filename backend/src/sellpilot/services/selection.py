@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import json
 from datetime import UTC, datetime
@@ -138,7 +139,11 @@ class SelectionService:
                     agent_task.id, "SELECTION_NO_CANDIDATES", selection_task.error_message
                 )
             raise ResourceNotFoundError("No selection candidates matched the criteria")
-        candidates = [self._domain_candidate(product, trend, request) for product, trend in rows]
+        signals = await self.market.operational_signals([product.id for product, _ in rows])
+        candidates = [
+            self._domain_candidate(product, trend, request, signals.get(product.id))
+            for product, trend in rows
+        ]
         batch = score_candidates(
             candidates,
             SelectionCriteria(
@@ -151,12 +156,19 @@ class SelectionService:
         persisted: list[ProductSelectionResult] = []
         responses: list[SelectionResultResponse] = []
         generation_modes: set[str] = set()
-        for scored in batch.ranked:
+
+        explanation_limit = asyncio.Semaphore(4)
+
+        async def explain(scored):
             payload = scored.model_dump(mode="json")
-            workflow_result = await self.explanation_workflow.ainvoke(
-                {"score": payload, "explanation": None}
-            )
-            explanation = SelectionExplanation.model_validate(workflow_result["explanation"])
+            async with explanation_limit:
+                workflow_result = await self.explanation_workflow.ainvoke(
+                    {"score": payload, "explanation": None}
+                )
+            return payload, SelectionExplanation.model_validate(workflow_result["explanation"])
+
+        explained = await asyncio.gather(*(explain(scored) for scored in batch.ranked))
+        for scored, (payload, explanation) in zip(batch.ranked, explained, strict=True):
             generation_modes.add(explanation.generation_mode)
             model = ProductSelectionResult(
                 task_id=selection_task.id,
@@ -276,7 +288,7 @@ class SelectionService:
         )
 
     @staticmethod
-    def _domain_candidate(product, trend, request) -> SelectionCandidate:
+    def _domain_candidate(product, trend, request, signals=None) -> SelectionCandidate:
         return SelectionCandidate(
             product_id=product.external_id,
             site=SITE_CODES[product.site],
@@ -302,6 +314,9 @@ class SelectionService:
             competition_index=trend.competition_index if trend else None,
             rating=product.rating,
             review_count=product.review_count,
+            logistics_risk_rate=signals.logistics_risk_rate if signals else None,
+            after_sales_rate=signals.after_sales_rate if signals else None,
+            factory_fit_score=signals.factory_fit_score if signals else None,
         )
 
     @staticmethod

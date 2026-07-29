@@ -67,6 +67,7 @@ export const listReviewEvidence = (
       page_size: 20,
       evidence_type: evidenceType,
       label,
+      sentiment: "negative",
     })}`,
     authInit(),
   );

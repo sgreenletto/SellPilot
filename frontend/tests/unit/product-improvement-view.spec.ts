@@ -1,6 +1,7 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { FrontendApiError } from "@/api/http";
 import ProductImprovementView from "@/views/reviews/ProductImprovementView.vue";
 
 const api = vi.hoisted(() => ({
@@ -86,8 +87,12 @@ describe("ProductImprovementView", () => {
     await flushPromises();
 
     expect(api.generateImprovementReport).toHaveBeenCalledWith("A1");
-    expect(wrapper.text()).toContain("2 条评论提及");
-    expect(wrapper.text()).not.toContain("REV1、REV2");
+    expect(wrapper.text()).toContain("问题频率20%");
+    expect(wrapper.text()).toContain("严重程度80%");
+    expect(wrapper.text()).toContain("结论置信度90%");
+    expect(wrapper.text()).toContain("证据评论2 条");
+    expect(wrapper.text()).toContain("查看 2 条证据评论编号");
+    expect(wrapper.text()).toContain("导出工厂改良报告");
     const draftButton = wrapper
       .findAll("button")
       .find((button) => button.text().includes("提交草稿确认"));
@@ -124,8 +129,10 @@ describe("ProductImprovementView", () => {
     expect(wrapper.text()).toContain("尚未生成任何商品内容草稿");
     const confirmButton = wrapper
       .findAll("button")
-      .find((button) => button.text().includes("明确确认并创建草稿"));
+      .find((button) => button.text().includes("确认创建草稿"));
     expect(confirmButton).toBeDefined();
+    expect(wrapper.get(".confirmation").text()).toContain("等待确认");
+    expect(wrapper.get(".confirmation").text()).not.toContain("pending");
 
     await confirmButton?.trigger("click");
     await flushPromises();
@@ -143,6 +150,21 @@ describe("ProductImprovementView", () => {
       ?.trigger("click");
     await flushPromises();
     expect(wrapper.get('[role="alert"]').text()).toContain("建议状态更新失败");
+  });
+
+  it("shows a compact retry state when AI generation times out", async () => {
+    api.generateImprovementReport.mockRejectedValue(
+      new FrontendApiError({
+        code: "NETWORK_ERROR",
+        message: "请求超时",
+        status: 0,
+      }),
+    );
+    const wrapper = await mountView();
+    await flushPromises();
+    expect(wrapper.get(".generator").text()).toContain("AI 生成等待时间过长，请稍后重试");
+    expect(wrapper.get(".generator").text()).toContain("重新生成");
+    expect(wrapper.text()).not.toContain("尚未生成改良报告");
   });
 
   it("explains why a report with no negative evidence has no suggestions", async () => {

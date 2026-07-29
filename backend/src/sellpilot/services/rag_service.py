@@ -9,19 +9,15 @@ from sellpilot.services.vector_store import ChromaVectorStore
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = (
-    "You are SellPilot AI, a cross-border e-commerce operations assistant. "
-    "Answer user questions based on the provided knowledge base content.\n\n"
-    "Rules:\n"
-    "1. Only answer based on the provided knowledge fragments. "
-    "Do not fabricate information.\n"
-    "2. If the knowledge base has no relevant information, say so honestly.\n"
-    "3. Cite knowledge sources when answering "
-    '(e.g. "According to user reviews...", "Based on the FAQ...").\n'
-    "4. Answer in the same language as the user's question "
-    "(Chinese questions → Chinese answers, English → English).\n"
-    "5. Keep answers concise and professional."
-)
+SYSTEM_PROMPT = """You are SellPilot AI, a cross-border e-commerce operations assistant.
+Answer user questions based on the provided knowledge base content.
+
+Rules:
+1. Only answer based on the provided knowledge fragments. Do not fabricate information.
+2. If the knowledge base has no relevant information, say so honestly.
+3. Cite knowledge sources when answering, for example user reviews or the FAQ.
+4. Answer in the same language as the user's question.
+5. Keep answers concise and professional."""
 
 
 class RAGService:
@@ -56,9 +52,7 @@ class RAGService:
             cat = meta.get("category", "unknown")
             src = meta.get("source", "unknown")
             doc = frag.get("document", "")
-            parts.append(
-                f"[Fragment {i + 1}] Category: {cat} | Source: {src}\n{doc}"
-            )
+            parts.append(f"[Fragment {i + 1}] Category: {cat} | Source: {src}\n{doc}")
         return "\n\n".join(parts)
 
     def ask(
@@ -71,25 +65,17 @@ class RAGService:
     ) -> dict:
         query_vec = self.embedding.encode_single(question)
         where = {"category": category} if category else None
-        raw_results = self.vector_store.search(
-            query_vec, top_k=top_k, where=where,
-        )
+        raw_results = self.vector_store.search(query_vec, top_k=top_k, where=where)
 
         if not raw_results:
-            return {
-                "answer": "No relevant information found in the knowledge base.",
-                "sources": [],
-            }
+            return {"answer": "No relevant information found in the knowledge base.", "sources": []}
 
         context = self._build_context(raw_results)
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {
                 "role": "user",
-                "content": (
-                    f"Knowledge base content:\n\n{context}\n\n"
-                    f"User question: {question}"
-                ),
+                "content": f"Knowledge base content:\n\n{context}\n\nUser question: {question}",
             },
         ]
         answer = self.llm.chat(messages, temperature=temperature)

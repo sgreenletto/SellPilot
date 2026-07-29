@@ -89,7 +89,7 @@ async def test_content_generation_confirmation_version_and_restore_flow(client_b
     assert generated.status_code == 200
     generation = generated.json()["data"]
     assert generation["provider"] == "offline_template"
-    assert generation["result"]["quality"]["passed"] is True
+    assert generation["result"]["quality"]["passed"] is True, generation["result"]["quality"]
     assert generation["result"]["content"]["generation_mode"] == "offline_template"
 
     payload = {
@@ -133,6 +133,19 @@ async def test_content_generation_confirmation_version_and_restore_flow(client_b
     first_version = version_data["items"][0]
     assert first_version["fact_check_result"]["passed"] is True
     assert first_version["compliance_result"]["passed"] is True
+
+    exported = await client.get(
+        (f"/api/v1/content-generation/contents/{content_id}/versions/{first_version['id']}/export"),
+        headers=headers,
+    )
+    assert exported.status_code == 200
+    export_data = exported.json()["data"]
+    assert export_data["filename"] == "sellpilot-content-v1.md"
+    assert export_data["media_type"] == "text/markdown"
+    assert export_data["content"].startswith(f"# {first_version['title']}")
+    assert "## 核心卖点" in export_data["content"]
+    assert "## SKU 文案" in export_data["content"]
+    assert "站内关键词" not in export_data["content"]
 
     restore = await client.post(
         f"/api/v1/content-generation/contents/{content_id}/restore-confirmations",

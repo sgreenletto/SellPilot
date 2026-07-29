@@ -15,6 +15,7 @@ _model_name: str = DEFAULT_MODEL_NAME
 
 def _load_model() -> Any:
     from sentence_transformers import SentenceTransformer
+
     # 禁用 HF Hub 网络请求，只用本地缓存
     os.environ.setdefault("HF_HUB_OFFLINE", "1")
     logger.info("Loading embedding model '%s' ...", _model_name)

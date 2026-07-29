@@ -260,7 +260,7 @@ class ProductImprovementService:
     async def export(self, report_id: UUID, user_id: UUID) -> dict[str, Any]:
         report = await self.get_report(report_id, user_id)
         lines = [
-            f"# {report.source_product_id} 产品改良报告",
+            f"# {report.source_product_id} 工厂产品改良报告",
             "",
             f"- 报告版本：v{report.version}",
             f"- 分析方式：{report.algorithm_version}",
@@ -279,7 +279,14 @@ class ProductImprovementService:
                     f"### {index}. {suggestion.title}",
                     "",
                     f"- 优先级：P{suggestion.priority}",
-                    f"- 依据：{suggestion.evidence_count} 条相关评论",
+                    f"- 问题频率：{suggestion.frequency_rate:.0%}",
+                    f"- 严重程度：{suggestion.severity:.0%}",
+                    f"- 结论置信度：{suggestion.confidence:.0%}",
+                    f"- 证据评论：{suggestion.evidence_count} 条",
+                    "- 证据编号："
+                    + "、".join(
+                        str(item) for item in suggestion.evidence_review_ids.get("items", [])
+                    ),
                     "",
                     suggestion.description,
                     "",
@@ -287,7 +294,7 @@ class ProductImprovementService:
             )
         return {
             "format": "markdown",
-            "filename": f"product-improvement-{report.source_product_id}-v{report.version}.md",
+            "filename": f"factory-improvement-{report.source_product_id}-v{report.version}.md",
             "content": "\n".join(lines),
         }
 
