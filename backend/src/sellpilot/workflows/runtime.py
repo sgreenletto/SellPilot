@@ -963,6 +963,8 @@ def build_logistics_query_definition(settings: Settings) -> WorkflowDefinition:
 
 
 def build_replenishment_definition(settings: Settings) -> WorkflowDefinition:
+    # 当前是单工具节点工作流。PPT中的读取、聚合、计算、分级和生成依据，
+    # 是该节点内部的业务阶段，不代表已实现七个独立工作流节点。
     return WorkflowDefinition(
         name="inventory_replenishment",
         version="1.0.0",

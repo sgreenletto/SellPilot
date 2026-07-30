@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 SEED = 20260727
+# 使用独立且固定种子的随机数生成器：数据有分布差异，但同版本可重复生成。
 RNG = random.Random(SEED)
 OUT_DIR = Path(__file__).resolve().parent
 TZ = timezone(timedelta(hours=8))
@@ -447,6 +448,7 @@ def random_price(currency: str) -> float:
 
 
 def generate_products_and_skus() -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    """先生成稳定商品 ID，再派生 SKU 与库存，保证三张表引用一致。"""
     products: list[dict[str, Any]] = []
     skus: list[dict[str, Any]] = []
     inventory: list[dict[str, Any]] = []
@@ -454,6 +456,7 @@ def generate_products_and_skus() -> tuple[list[dict[str, Any]], list[dict[str, A
     for index, site in enumerate(SITES, 1):
         shop_by_site[site] = (f"SHOP{index:03d}", f"Demo {site} Smart Store")
 
+    # 基础实验集固定生成 100 个商品；额外手工草稿不属于本生成器输出。
     for idx in range(1, 101):
         category_id, category = CATEGORIES[(idx - 1) % len(CATEGORIES)]
         site = list(SITES)[(idx - 1) % len(SITES)]
@@ -559,6 +562,7 @@ def generate_products_and_skus() -> tuple[list[dict[str, Any]], list[dict[str, A
 def generate_orders(
     products: list[dict[str, Any]], skus: list[dict[str, Any]]
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """基于已生成的商品和 SKU 创建订单及明细，避免产生孤立业务 ID。"""
     product_map = {row["product_id"]: row for row in products}
     skus_by_site: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for sku in skus:
@@ -661,6 +665,7 @@ def generate_reviews(
     orders: list[dict[str, Any]],
     order_items: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
+    """从有效订单明细派生评论，使评论同时关联商品、SKU、订单和买家。"""
     product_map = {row["product_id"]: row for row in products}
     sku_map = {row["sku_id"]: row for row in skus}
     order_map = {row["order_id"]: row for row in orders}
@@ -775,6 +780,7 @@ def generate_reviews(
 
 
 def generate_logistics(orders: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """为已进入履约阶段的订单生成物流主记录和按时间递增的轨迹。"""
     logistics: list[dict[str, Any]] = []
     tracks: list[dict[str, Any]] = []
     eligible_statuses = {"paid", "ready_to_ship", "shipped", "delivered", "completed", "refund_requested", "refunded"}
@@ -853,6 +859,7 @@ def generate_logistics(orders: list[dict[str, Any]]) -> tuple[list[dict[str, Any
 def generate_returns(
     orders: list[dict[str, Any]], order_items: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
+    """从真实存在的订单明细派生售后记录，保持订单、明细和买家一致。"""
     order_map = {row["order_id"]: row for row in orders}
     by_order: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for item in order_items:
@@ -931,6 +938,7 @@ def localized_customer_line(language: str, intent: str) -> tuple[str, str]:
 def generate_customer_data(
     products: list[dict[str, Any]], orders: list[dict[str, Any]], order_items: list[dict[str, Any]]
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """以订单中的首个商品建立客服会话，再用 session_id 串联多轮消息。"""
     order_map = {row["order_id"]: row for row in orders}
     first_product = {item["order_id"]: item["product_id"] for item in order_items}
     sessions: list[dict[str, Any]] = []
@@ -1069,6 +1077,7 @@ def generate_trends() -> list[dict[str, Any]]:
 def update_product_metrics(
     products: list[dict[str, Any]], order_items: list[dict[str, Any]], reviews: list[dict[str, Any]]
 ) -> None:
+    """从订单明细和评论反算商品销量、评论数与评分，避免指标独立造数。"""
     quantities: Counter[str] = Counter()
     for item in order_items:
         quantities[item["product_id"]] += int(item["quantity"])
@@ -1102,7 +1111,9 @@ FIELDS = {
 
 def main() -> int:
     try:
+        # 每次入口执行前复位种子，避免同一进程重复调用时结果漂移。
         RNG.seed(SEED)
+        # 后续数据始终引用前序已生成实体，而不是让各 CSV 独立随机生成。
         products, skus, inventory = generate_products_and_skus()
         orders, order_items = generate_orders(products, skus)
         reviews = generate_reviews(products, skus, orders, order_items)

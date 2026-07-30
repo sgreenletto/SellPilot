@@ -38,6 +38,8 @@ FILES = {
 
 
 class Validator:
+    """验证整套模拟数据的结构、关联关系和跨表业务规则。"""
+
     def __init__(self) -> None:
         self.passed: list[str] = []
         self.warnings: list[str] = []
@@ -76,6 +78,7 @@ class Validator:
             self.pass_(f"{filename} loaded: {len(rows)} data rows")
 
     def primary_keys_and_required(self) -> None:
+        # 同时验证主键、必填字段和 Mock 标识，避免模拟数据来源丢失。
         for filename, (pk, required) in FILES.items():
             rows = self.data.get(filename, [])
             values = [row.get(pk, "") for row in rows]
@@ -86,6 +89,7 @@ class Validator:
             self.check(not mock_bad, f"{filename} mock-data flag is complete", f"{filename} has {len(mock_bad)} rows without is_mock_data=true")
 
     def foreign_keys(self) -> None:
+        # 验证 CSV 间的业务 ID 引用；103 项是检查结果数，不是商品数量。
         ids = {name: {r[pk] for r in rows} for name, rows in self.data.items() for pk, _ in [FILES[name]]}
         checks = [
             ("skus.csv", "product_id", "products.csv"),
@@ -115,6 +119,7 @@ class Validator:
         self.check(not mismatch, "Order item SKU-to-product relationships are consistent", f"{len(mismatch)} order items have inconsistent SKU/product")
 
     def business_rules(self) -> None:
+        # 外键有效仍不代表业务合理，因此继续检查金额、状态、时间和内容完整性。
         products = self.data.get("products.csv", [])
         skus = self.data.get("skus.csv", [])
         inventory = self.data.get("inventory.csv", [])
@@ -171,6 +176,7 @@ class Validator:
         self.check(not inv_bad, "Inventory quantities are non-negative", f"{len(inv_bad)} inventory rows contain negative quantities")
         self.check(not inv_state_bad, "Inventory status matches available and safety stock", f"{len(inv_state_bad)} inventory status values are inconsistent")
 
+        # 先核对每条订单明细的数量×单价，再按订单汇总并与订单总额交叉验证。
         lines: dict[str, Decimal] = defaultdict(lambda: Decimal("0"))
         line_math_bad: list[str] = []
         for item in items:
@@ -197,12 +203,14 @@ class Validator:
         self.check(not amount_bad, "Order amounts reconcile to detail lines, fees, and discounts", f"{len(amount_bad)} order amount relationships are invalid")
         self.check(not state_bad, "Order timestamps and status transitions are coherent", f"{len(state_bad)} orders have status/timestamp conflicts")
 
+        # 订单状态必须与付款、发货、完成时间及是否已有物流记录保持一致。
         logistics_orders = {r["order_id"] for r in logistics}
         expected_logistics = {r["order_id"] for r in orders if r["order_status"] in {"paid", "ready_to_ship", "shipped", "delivered", "completed", "refund_requested", "refunded"}}
         self.check(expected_logistics <= logistics_orders, "Paid and post-payment orders have logistics records", f"{len(expected_logistics - logistics_orders)} eligible orders lack logistics records")
         pending_conflicts = [r["order_id"] for r in orders if r["order_status"] == "pending_payment" and r["order_id"] in logistics_orders]
         self.check(not pending_conflicts, "Pending-payment orders have not entered logistics", f"{len(pending_conflicts)} pending-payment orders have logistics")
 
+        # 评论同时检查评分、情感、文本多样性和关联订单明细的一致性。
         review_conflicts = []
         for r in reviews:
             rating = int(r["rating"])
@@ -279,6 +287,7 @@ class Validator:
                 metric_bad.append(product["product_id"])
         self.check(not metric_bad, "Product review counts and average ratings reconcile to reviews", f"{len(metric_bad)} product review metrics do not reconcile")
 
+        # 同一运单的轨迹必须按时间递增，并保持合理的轨迹事件数量。
         grouped: dict[str, list[datetime]] = defaultdict(list)
         for r in tracks:
             grouped[r["tracking_number"]].append(datetime.fromisoformat(r["event_time"]))
@@ -287,6 +296,7 @@ class Validator:
         self.check(not time_bad, "Logistics track timestamps increase within each tracking number", f"{len(time_bad)} tracking histories are out of order")
         self.check(not count_bad, "Each logistics record has 2–6 track events", f"{len(count_bad)} tracking histories are outside 2–6 events")
 
+        # 售后记录必须引用同一订单中的明细和买家，退款订单也必须有售后记录。
         item_map = {r["order_item_id"]: r for r in items}
         return_link_bad = [
             r["return_id"] for r in returns
@@ -298,6 +308,7 @@ class Validator:
         return_orders = {r["order_id"] for r in returns}
         self.check(refund_orders <= return_orders, "Refund-status orders have after-sales records", f"{len(refund_orders - return_orders)} refund-status orders lack after-sales records")
 
+        # 客服消息按 session_id 关联会话，并检查每个会话具备多轮上下文。
         session_ids = {r["session_id"] for r in self.data.get("customer_sessions.csv", [])}
         msg_counts: dict[str, int] = defaultdict(int)
         for r in self.data.get("customer_messages.csv", []):
