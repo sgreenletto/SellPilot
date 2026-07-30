@@ -9,6 +9,8 @@ from sellpilot.db.models.commerce import InventoryRecord, Order, OrderItem, Prod
 
 @dataclass(frozen=True)
 class ReplenishmentSourceRow:
+    """补货公式所需的最小 SKU 数据快照。"""
+
     product_id: str
     product_title: str
     sku_id: str
@@ -21,6 +23,8 @@ class ReplenishmentSourceRow:
 
 
 class ReplenishmentRepository:
+    """只负责从 PostgreSQL 聚合库存和销量，不在查询层计算补货建议。"""
+
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
@@ -30,6 +34,7 @@ class ReplenishmentRepository:
         shop_external_id: str,
         sales_since: datetime,
     ) -> list[ReplenishmentSourceRow]:
+        # 一个 SKU 可能有多条仓库记录，先按 SKU 汇总可用库存和安全库存。
         inventory = (
             select(
                 InventoryRecord.sku_id.label("sku_id"),
@@ -42,6 +47,7 @@ class ReplenishmentRepository:
             .group_by(InventoryRecord.sku_id)
             .subquery()
         )
+        # 只统计指定店铺、分析窗口内且未取消订单的有效销量。
         sales = (
             select(
                 OrderItem.sku_id.label("sku_id"),
@@ -76,6 +82,7 @@ class ReplenishmentRepository:
             )
             .join(Sku, Sku.product_id == Product.id)
             .join(inventory, inventory.c.sku_id == Sku.id)
+            # 使用外连接保留近期零销量 SKU；其销量随后通过 coalesce 归零。
             .outerjoin(sales, sales.c.sku_id == Sku.id)
             .where(Product.source_shop_external_id == shop_external_id)
             .order_by(Sku.seller_sku)

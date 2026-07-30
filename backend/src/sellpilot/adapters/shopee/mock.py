@@ -22,6 +22,13 @@ from sellpilot.schemas.platform import PlatformPingResult
 
 
 class MockShopeeAdapter(PlatformAdapter):
+    """数据库驱动的 Shopee 模拟适配器。
+
+    它不访问 Shopee 网络，也不是前端硬编码数据；所有结果来自 PostgreSQL
+    中明确标记为 Mock 的业务记录。写方法只负责执行，公开业务入口仍必须先
+    经过 CommerceOperationService 的待确认流程。
+    """
+
     def __init__(self, session: AsyncSession | None = None) -> None:
         self.session = session
 
@@ -57,6 +64,7 @@ class MockShopeeAdapter(PlatformAdapter):
         )
 
     async def list_products(self, **filters: Any) -> list[dict[str, Any]]:
+        # 在适配器内吸收平台查询差异，对上层返回统一商品结构。
         statement = select(Product).order_by(Product.updated_at.desc())
         if status := filters.get("status"):
             statement = statement.where(Product.status == status)
@@ -125,6 +133,7 @@ class MockShopeeAdapter(PlatformAdapter):
             return {}
         now = datetime.now(UTC)
         record = Product(
+            # 未提供稳定业务 ID 时生成本地草稿 ID，不伪装成真实平台商品 ID。
             external_id=payload.get("product_id") or f"DRAFT-{uuid4().hex[:16].upper()}",
             shop_id=shop.id,
             source_shop_external_id=shop.external_id,
@@ -159,6 +168,7 @@ class MockShopeeAdapter(PlatformAdapter):
         )
         if record is None:
             return {}
+        # 只更新白名单字段，避免任意 payload 覆盖内部标识或审计字段。
         mapping = {
             "title": "title",
             "category_id": "category_external_id",
@@ -230,6 +240,7 @@ class MockShopeeAdapter(PlatformAdapter):
         if record is None:
             return {}
         record.available_stock = payload["available_stock"]
+        # 库存数量变化后同步派生状态，保证展示状态与数值一致。
         if record.available_stock == 0:
             record.stock_status = "out_of_stock"
         elif record.available_stock <= record.safety_stock:
@@ -269,6 +280,7 @@ class MockShopeeAdapter(PlatformAdapter):
         )
         if record is None:
             return {}
+        # 轨迹按事件时间排序，与物流主记录一起组装为统一履约详情。
         tracks = (
             (
                 await self._session().execute(
@@ -375,6 +387,7 @@ class MockShopeeAdapter(PlatformAdapter):
         ]
 
     async def send_message(self, payload: dict[str, Any]) -> dict[str, Any]:
+        # 这里只向本地 Mock 会话写入模拟发送记录，不会联系真实 Shopee 买家。
         from sellpilot.db.models.commerce import CustomerSession
 
         session = await self._session().scalar(

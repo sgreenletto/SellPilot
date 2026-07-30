@@ -16,6 +16,12 @@ from sellpilot.services.commerce_normalization import normalize_product_external
 
 
 class CommerceQueryService:
+    """平台查询应用服务。
+
+    核心平台查询通过 PlatformAdapter 转发；Service 负责应用层参数处理，
+    不直接依赖 MockShopeeAdapter 的具体类型。
+    """
+
     def __init__(self, session: AsyncSession, settings: Settings) -> None:
         self.session = session
         self.adapter = create_platform_adapter(settings, session)
@@ -71,6 +77,7 @@ class CommerceQueryService:
         return await self.adapter.get_order(order_id)
 
     async def get_logistics(self, order_id: str) -> dict[str, Any]:
+        # 物流通过稳定 order_id 获取，确保订单详情与履约上下文指向同一对象。
         return await self.adapter.get_logistics(order_id)
 
     async def list_reviews(self, **filters: Any) -> list[dict[str, Any]]:
@@ -79,6 +86,7 @@ class CommerceQueryService:
         return await self.adapter.list_reviews(**filters)
 
     async def list_messages(self, **filters: Any) -> list[dict[str, Any]]:
+        # 客服上层读取统一消息结构，不依赖 Mock 会话表的具体字段。
         return await self.adapter.list_messages(**filters)
 
     async def list_inventory(
