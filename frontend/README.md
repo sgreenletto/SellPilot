@@ -8,7 +8,7 @@ SellPilot 前端采用 Vue 3、TypeScript 与 Vite，当前发布候选版本为
 
 ## 当前边界
 
-当前已实现公共布局、设计系统、可复用组件、统一 API 客户端、经营看板、Mock 商品/订单/库存页面、
+当前已实现公共布局、可复用组件、统一 API 客户端、经营看板、Mock 商品/订单/库存页面、
 中文聊天式 AI 运营助手、任务中心，以及智能选品、评论分析、产品改良、内容生成、知识检索和客服工作台。
 
 v0.5.0 发布说明见 [`docs/releases/v0.5.0.md`](../docs/releases/v0.5.0.md)；当前不连接真实 Shopee。
@@ -98,7 +98,6 @@ VITE_PROXY_TARGET=http://127.0.0.1:8000
 - `/customer-service/knowledge`
 - `/orders`
 - `/tasks`
-- `/dev/design-system`：仅开发环境注册，不在生产导航中显示。
 
 未列为已实现的业务路由仍复用统一占位页，不表示对应业务已完成。
 

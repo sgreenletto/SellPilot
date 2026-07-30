@@ -4,12 +4,14 @@ import DefaultLayout from "@/layouts/DefaultLayout.vue";
 import { rememberReviewModuleRoute, resolveReviewModuleEntry } from "@/router/review-route-memory";
 import { useAuthStore } from "@/stores/auth";
 
+export const APP_TITLE = "SellPilot";
+document.title = APP_TITLE;
+
 const LoginView = () => import("@/views/login/LoginView.vue");
 const DashboardView = () => import("@/views/dashboard/DashboardView.vue");
 const AssistantView = () => import("@/views/assistant/AssistantView.vue");
 const ConversationView = () => import("@/views/customer-service/ConversationView.vue");
 const KnowledgeBaseView = () => import("@/views/knowledge-base/KnowledgeBaseView.vue");
-const DesignSystemView = () => import("@/views/dev/DesignSystemView.vue");
 const ProductsView = () => import("@/views/commerce/ProductsView.vue");
 const InventoryView = () => import("@/views/commerce/InventoryView.vue");
 const OrdersView = () => import("@/views/commerce/OrdersView.vue");
@@ -28,7 +30,6 @@ const placeholderRoutes: RouteRecordRaw[] = [
     meta: {
       title: "AI 运营助手",
       module: "AI 运营",
-      description: "通过对话完成店铺查询与运营分析。",
     },
   },
   {
@@ -38,7 +39,6 @@ const placeholderRoutes: RouteRecordRaw[] = [
     meta: {
       title: "市场数据",
       module: "市场与选品",
-      description: "查看模拟市场趋势与品类数据。",
     },
   },
   {
@@ -48,7 +48,6 @@ const placeholderRoutes: RouteRecordRaw[] = [
     meta: {
       title: "智能选品",
       module: "市场与选品",
-      description: "建立可解释的候选商品评估流程。",
       keepAlive: true,
     },
   },
@@ -59,7 +58,6 @@ const placeholderRoutes: RouteRecordRaw[] = [
     meta: {
       title: "评论与产品改良",
       module: "市场与选品",
-      description: "从评论信号提炼产品改良方向。",
       keepAlive: true,
     },
   },
@@ -70,7 +68,6 @@ const placeholderRoutes: RouteRecordRaw[] = [
     meta: {
       title: "产品改良报告",
       module: "市场与选品",
-      description: "审查评论证据并通过确认流程创建商品内容草稿。",
       keepAlive: true,
     },
   },
@@ -81,7 +78,6 @@ const placeholderRoutes: RouteRecordRaw[] = [
     meta: {
       title: "商品管理",
       module: "商品运营",
-      description: "管理模拟店铺的商品资料与草稿状态。",
     },
   },
   {
@@ -91,7 +87,6 @@ const placeholderRoutes: RouteRecordRaw[] = [
     meta: {
       title: "内容工坊",
       module: "商品运营",
-      description: "生成并校验多语言商品内容。",
       keepAlive: true,
     },
   },
@@ -102,7 +97,6 @@ const placeholderRoutes: RouteRecordRaw[] = [
     meta: {
       title: "上架与库存",
       module: "商品运营",
-      description: "处理模拟上下架和库存待确认任务。",
     },
   },
   {
@@ -112,7 +106,6 @@ const placeholderRoutes: RouteRecordRaw[] = [
     meta: {
       title: "会话工作台",
       module: "智能客服",
-      description: "集中处理模拟买家消息与人工接管。",
     },
   },
   {
@@ -122,7 +115,6 @@ const placeholderRoutes: RouteRecordRaw[] = [
     meta: {
       title: "知识库",
       module: "智能客服",
-      description: "维护客服知识内容与检索边界。",
     },
   },
   {
@@ -132,7 +124,6 @@ const placeholderRoutes: RouteRecordRaw[] = [
     meta: {
       title: "订单与履约",
       module: "履约",
-      description: "查看模拟订单、物流和履约状态。",
     },
   },
   {
@@ -142,7 +133,6 @@ const placeholderRoutes: RouteRecordRaw[] = [
     meta: {
       title: "任务中心",
       module: "公共任务",
-      description: "追踪 Agent 任务、工具调用和待确认操作。",
     },
   },
 ];
@@ -155,24 +145,10 @@ const childRoutes: RouteRecordRaw[] = [
     meta: {
       title: "经营看板",
       module: "经营概览",
-      description: "跨境店铺运营概览",
     },
   },
   ...placeholderRoutes,
 ];
-
-if (import.meta.env.DEV) {
-  childRoutes.push({
-    path: "dev/design-system",
-    name: "design-system",
-    component: DesignSystemView,
-    meta: {
-      title: "设计系统",
-      module: "开发工具",
-      description: "公共设计变量与组件用法展示。",
-    },
-  });
-}
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -184,7 +160,6 @@ export const router = createRouter({
       meta: {
         title: "登录",
         module: "认证",
-        description: "登录 SellPilot 单用户模拟店铺。",
         requiresAuth: false,
       },
     },
@@ -195,7 +170,6 @@ export const router = createRouter({
       meta: {
         title: "SellPilot",
         module: "应用",
-        description: "SellPilot 已认证应用布局。",
         requiresAuth: true,
       },
     },
@@ -230,5 +204,6 @@ router.beforeEach(async (to, _from, next) => {
 });
 
 router.afterEach((to) => {
+  document.title = APP_TITLE;
   rememberReviewModuleRoute(to.fullPath);
 });

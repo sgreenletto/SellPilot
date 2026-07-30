@@ -52,7 +52,6 @@ CI、Smoke 和发布证据；它仍是课程实验版本，不代表系统已用
 - SellPilot 语义设计变量、`Sp*` 可复用组件库和 Element Plus 基础能力。
 - 大圆角应用 Shell、侧边栏、顶部栏和响应式独立滚动布局。
 - 使用 ECharts 的经营看板和原创本地 SVG/CSS AI Orb。
-- 开发环境设计系统展示页。
 - 智能选品、评论分析、产品改良和内容工坊页面。
 - 平台状态 API 客户端；后端不可达时明确显示“后端未连接”。
 - Vitest、Vue Test Utils、ESLint、Prettier 和严格 TypeScript 检查。
@@ -199,7 +198,6 @@ JWT、日志、平台适配器和模型配置。复制为仓库根目录的本�
 - `/customer-service/conversations`、`/customer-service/knowledge`：Mock 客服会话与知识库管理。
 - `/orders`：订单与履约占位页。
 - `/tasks`：真实任务中心；支持筛选、分页、按需详情、确认处理、任务操作和安全审计时间线。
-- `/dev/design-system`：仅开发环境注册的设计系统展示页。
 
 ## 当前基础 API
 
