@@ -133,10 +133,10 @@ class KnowledgeIngestionService:
     # ---- 翻译 ----
 
     @staticmethod
-    def _translate_one(llm: LLMService, text: str) -> str:
+    async def _translate_one(self, llm: LLMService, text: str) -> str:
         """逐条翻译为简体中文。"""
         try:
-            resp = llm.chat(
+            resp = await llm.chat(
                 [
                     {
                         "role": "system",
@@ -154,10 +154,9 @@ class KnowledgeIngestionService:
                 max_tokens=2048,
             )
             result = resp.strip().strip('"').strip("'").strip()
-            # 如果返回的是英文（不含任何中文字符），说明翻译失败，返回空
             if result and not any("一" <= c <= "鿿" for c in result):
                 logger.warning("Translation returned no Chinese chars, retrying")
-                resp2 = llm.chat(
+                resp2 = await llm.chat(
                     [
                         {
                             "role": "user",
@@ -173,16 +172,15 @@ class KnowledgeIngestionService:
             logger.warning("Translation failed: %s", e)
             return ""
 
-    @staticmethod
-    def _translate_batch(llm: LLMService, texts: list[str], label: str) -> list[str]:
+    async def _translate_batch(self, llm: LLMService, texts: list[str], label: str) -> list[str]:
         """逐条翻译，带进度和限速。"""
         results: list[str] = []
         for i, t in enumerate(texts):
-            zh = KnowledgeIngestionService._translate_one(llm, t)
+            zh = await self._translate_one(llm, t)
             results.append(zh if zh else t)
             if (i + 1) % 10 == 0:
                 logger.info("Translated %d/%d %s", i + 1, len(texts), label)
-                time.sleep(0.5)
+                await asyncio.sleep(0.5)
         return results
 
     # ---- 文本格式化 ----
@@ -296,7 +294,7 @@ class KnowledgeIngestionService:
 
         # 产品翻译
         prod_texts = [self._prod(row) for row in prods]
-        prod_zh = self._translate_batch(llm, prod_texts, "products")
+        prod_zh = await self._translate_batch(llm, prod_texts, "products")
 
         # FAQ 翻译（先清洗语言标签再翻译）
         import re
@@ -321,8 +319,8 @@ class KnowledgeIngestionService:
                     s.get("risk_level", ""),
                 )
             )
-        faq_qs_zh = self._translate_batch(llm, [_clean(r[1]) for r in faq_rows], "FAQ questions")
-        faq_as_zh = self._translate_batch(llm, [_clean(r[2]) for r in faq_rows], "FAQ answers")
+        faq_qs_zh = await self._translate_batch(llm, [_clean(r[1]) for r in faq_rows], "FAQ questions")
+        faq_as_zh = await self._translate_batch(llm, [_clean(r[2]) for r in faq_rows], "FAQ answers")
 
         # ---- 创建文档 ----
         pc = rc = fc = 0
