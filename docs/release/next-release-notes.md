@@ -16,8 +16,8 @@
 
 ## 未完成验收
 
-- 知识库已建立 1204 个文档索引，但 readiness 仍将来源分类为 Mock；本轮真实查询受
-  外部模型 `MODEL_CALL_FAILED` 阻塞。
+- 知识库已建立 1204 个文档索引，ChromaDB 冷启动真实查询已通过；readiness 仍将
+  全部来源分类为 Mock，若发布要求非 Mock 来源需另行验收。
 - 本机没有 Docker CLI，实际 build/up/health/down 为 `BLOCKED_LOCAL_DOCKER`。
 - 当前分支没有 GitHub Actions 运行记录，需在 PR 上获得首次远程通过证据。
 

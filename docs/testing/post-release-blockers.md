@@ -15,20 +15,22 @@
 - GitHub Actions 配置需在本分支 PR 上获得第一次远程运行证据。
 - Vite build 成功，但构建时开发代理对 `127.0.0.1:3000` 的连接探测产生非阻塞
   `ECONNREFUSED` 输出；未影响产物生成。
+- Chroma embedding 模型冷启动实测耗时 26.08 秒；当前 90 秒有界 Tool/Workflow 超时
+  可覆盖首次加载，后续请求复用进程内模型。
 
 ## BLOCKED_RAG_DATA
 
 - PostgreSQL 当前有 1204 个索引文档和 1204 个 chunk，其中 1203 个 chunk 有
   embedding；readiness 仍将全部来源分类为 Mock，真实来源计数为 0。
-- 本轮真实 `knowledge_query` 因外部模型返回 `MODEL_CALL_FAILED`，尚未取得新的命中
-  证据。该问题不属于 Selection 修复范围。
+- Mock 演示边界内的真实 Chroma 检索已通过；若发布门槛要求非 Mock 知识来源，
+  readiness 的来源分类仍需另行验收。
 
 ## BLOCKED_EXTERNAL_MODEL
 
 - 外部内容模型与 LLM 的鉴权、限流和可用性由供应商决定。缺配置或供应商错误保持真实
   失败语义；演示可使用明确标记的 `offline_template`，不能冒充外部模型。
-- 本轮知识库查询 Task `0aeb489f-f78e-48ec-8176-dfdbac2d0d90` 真实失败于
-  `MODEL_CALL_FAILED`，安全摘要为模型请求或响应无效。
+- 本轮冷启动知识库查询 Task `d5a6e4c4-bc25-4368-8952-70174c1afff0` 已成功，
+  返回 5 个真实索引来源。
 
 ## BLOCKED_LOCAL_DOCKER
 

@@ -18,10 +18,10 @@
 
 | 命令                                         | 结果                                                           |
 | -------------------------------------------- | -------------------------------------------------------------- |
-| `uv run ruff format --check .`               | 通过：226 files already formatted                              |
+| `uv run ruff format --check .`               | 通过：227 files already formatted                              |
 | `uv run ruff check .`                        | 通过：All checks passed                                        |
 | `uv run alembic heads/upgrade/current/check` | 通过：单一 `20260728_0007`，无新操作、无待生成迁移             |
-| `uv run pytest -q`                           | 通过：374 passed                                               |
+| `uv run pytest -q`                           | 通过：375 passed                                               |
 | `npm run format:check`                       | 通过：全部匹配 Prettier                                        |
 | `npm run lint`                               | 通过：0 warning / 0 error                                      |
 | `npm run typecheck`                          | 通过：无 TypeScript 错误                                       |
@@ -32,5 +32,6 @@
 ## 发布结论
 
 智能选品已通过 PostgreSQL 真实 API 验收，详见
-`selection-release-validation.md`。完整代码门禁已通过；当前仍缺 Docker build 或远程
-CI 运行证据，且本轮 RAG 查询受外部模型错误阻塞，因此结论为 `NOT_READY`。
+`selection-release-validation.md`。合并最新 develop 后，ChromaDB 冷启动查询在
+26.08 秒内成功并返回 5 个来源。完整代码门禁已通过；当前仍缺 Docker build 或远程
+CI 运行证据，因此结论为 `NOT_READY`。

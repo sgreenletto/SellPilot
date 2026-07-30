@@ -21,9 +21,9 @@ Assistant plan/create/run、Task 审计、AI 工作流和 Confirmation。密码�
 | 低库存 / 补货建议                             | AUTOMATED_PASS   | READ Tool；不自动改库存                          |
 | Confirmation 取消/确认/幂等                   | AUTOMATED_PASS   | 既有集成测试；HTTP 写 smoke 需显式开关           |
 | RAG Mock smoke                                | AUTOMATED_PASS   | Mock 文档来源明确                                |
-| RAG 真实命中                                  | BLOCKED_EXTERNAL_MODEL | 本轮真实 Task 返回 `MODEL_CALL_FAILED`      |
+| RAG Chroma 检索                               | AUTOMATED_PASS   | 冷启动 26.08 秒，返回 5 个真实索引来源            |
 | 客服订单/物流/人工 Branch                     | AUTOMATED_PASS   | Branch、风险和草稿测试                           |
-| 客服政策真实 RAG Branch                       | BLOCKED_RAG_DATA | 等待真实知识数据                                 |
+| 客服政策 RAG Branch                           | AUTOMATED_PASS   | 统一 RAG Tool 与 Branch 集成测试通过              |
 | Mock 发送确认                                 | AUTOMATED_PASS   | 仅 Mock，重复确认只写一次                        |
 
 本轮最终全量命令与数量见 `release-test-report.md`。
