@@ -14,19 +14,22 @@ Assistant plan/create/run、Task 审计、AI 工作流和 Confirmation。密码�
 | Assistant plan / create_only / create_and_run | AUTOMATED_PASS   | 后端集成测试                                     |
 | Step / ToolCall / OperationLog                | AUTOMATED_PASS   | 后端集成测试                                     |
 | 缺参数 / unknown / Tool 注入                  | AUTOMATED_PASS   | 后端集成测试                                     |
-| 智能选品                                      | AUTOMATED_PASS   | 3 个 SG 母婴候选，Top N 有来源                   |
+| 智能选品                                      | AUTOMATED_PASS   | 全站 20 条、SG 母婴 3 条，Top N 有来源           |
 | 评论分析                                      | AUTOMATED_PASS   | PROD-001 可解析并读取关联评论                    |
 | 产品改良                                      | AUTOMATED_PASS   | 从商品评论 Branch 生成结构化建议                 |
 | Content                                       | AUTOMATED_PASS   | 统一工作流和最大三轮质量 Loop                    |
 | 低库存 / 补货建议                             | AUTOMATED_PASS   | READ Tool；不自动改库存                          |
 | Confirmation 取消/确认/幂等                   | AUTOMATED_PASS   | 既有集成测试；HTTP 写 smoke 需显式开关           |
 | RAG Mock smoke                                | AUTOMATED_PASS   | Mock 文档来源明确                                |
-| RAG 真实命中                                  | BLOCKED_RAG_DATA | 等待真实知识数据导入                             |
+| RAG 真实命中                                  | BLOCKED_EXTERNAL_MODEL | 本轮真实 Task 返回 `MODEL_CALL_FAILED`      |
 | 客服订单/物流/人工 Branch                     | AUTOMATED_PASS   | Branch、风险和草稿测试                           |
 | 客服政策真实 RAG Branch                       | BLOCKED_RAG_DATA | 等待真实知识数据                                 |
 | Mock 发送确认                                 | AUTOMATED_PASS   | 仅 Mock，重复确认只写一次                        |
 
 本轮最终全量命令与数量见 `release-test-report.md`。
+
+智能选品补充真实 API 场景包括站点范围、明确类目、未知类目 no-data 和显式候选 ID，
+对应 Task/Step/ToolCall/OperationLog 证据见 `selection-release-validation.md`。
 
 本轮应用内浏览器访问 `127.0.0.1` 被浏览器 URL 安全策略拒绝，未采用 CDP 或其他绕过。
 匿名 live/ready 和启动器复用由真实进程验证；需要登录的 HTTP 脚本保留为交付命令，
