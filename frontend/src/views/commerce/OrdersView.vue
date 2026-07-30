@@ -14,10 +14,10 @@ import productsCsv from "../../../../data/demo/shopee_mock/products.csv?raw";
 import returnsCsv from "../../../../data/demo/shopee_mock/returns_refunds.csv?raw";
 import skusCsv from "../../../../data/demo/shopee_mock/skus.csv?raw";
 import { loadCommerceDashboardSnapshot } from "@/api/dashboard";
+import SpBadge from "@/components/base/SpBadge.vue";
 import SpCard from "@/components/base/SpCard.vue";
 import SpInput from "@/components/base/SpInput.vue";
 import CommercePagination from "@/components/commerce/CommercePagination.vue";
-import StatusBadge from "@/components/data-display/StatusBadge.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
 import { useAppStore } from "@/stores/app";
 import { csvRows, sheetRows } from "@/utils/spreadsheet";
@@ -144,6 +144,18 @@ function mask(value: unknown): string {
   const text = String(value);
   return text.length <= 4 ? "****" : `${text.slice(0, 2)}****${text.slice(-2)}`;
 }
+function orderStatusTone(
+  value: unknown,
+): "neutral" | "primary" | "success" | "warning" | "danger" | "info" | "purple" {
+  const currentStatus = String(value).toLowerCase();
+  if (currentStatus === "completed") return "purple";
+  if (currentStatus === "delivered") return "success";
+  if (currentStatus === "shipped") return "info";
+  if (["processing", "ready_to_ship"].includes(currentStatus)) return "primary";
+  if (["pending", "unpaid"].includes(currentStatus)) return "warning";
+  if (["cancelled", "refunded", "failed"].includes(currentStatus)) return "danger";
+  return "neutral";
+}
 async function importOrders(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
@@ -218,7 +230,11 @@ onMounted(() => void loadCurrentShop());
                 </td>
                 <td>{{ mask(order.buyer_id) }}</td>
                 <td>{{ order.currency }} {{ order.total_amount }}</td>
-                <td><StatusBadge status="active" :label="String(order.order_status)" /></td>
+                <td>
+                  <SpBadge :tone="orderStatusTone(order.order_status)" dot>
+                    {{ order.order_status }}
+                  </SpBadge>
+                </td>
               </tr>
             </tbody>
           </table>
