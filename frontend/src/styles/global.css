@@ -15,6 +15,33 @@ body {
   height: 100%;
 }
 
+* {
+  scrollbar-color: var(--sp-scrollbar-thumb) transparent;
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--sp-scrollbar-thumb);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: var(--sp-radius-pill);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--sp-scrollbar-thumb-hover);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
 :focus-visible {
   outline: 3px solid color-mix(in srgb, var(--sp-color-accent-blue) 50%, transparent);
   outline-offset: 3px;

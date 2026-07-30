@@ -1,6 +1,6 @@
 [project]
 name = "sellpilot"
-version = "0.1.0"
+version = "0.5.0"
 description = "SellPilot public backend foundation"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -9,6 +9,7 @@ dependencies = [
     "alembic>=1.18.5",
     "asyncpg>=0.31.0",
     "fastapi>=0.140.0",
+    "httpx>=0.28.1",
     "langgraph>=1.2.9",
     "mcp>=1.28.1",
     "pwdlib[argon2]>=0.3.0",
@@ -21,6 +22,8 @@ dependencies = [
 [project.scripts]
 sellpilot-create-admin = "sellpilot.cli.create_admin:main"
 sellpilot-import-mock-data = "sellpilot.cli.import_mock_data:main"
+sellpilot-import-knowledge = "sellpilot.cli.import_knowledge_data:main"
+sellpilot-start-api = "sellpilot.cli.start_api:main"
 sellpilot-evaluate-member3 = "sellpilot.cli.evaluate_member3:main"
 sellpilot-mcp = "sellpilot.mcp_server.server:main"
 
@@ -30,7 +33,6 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
-    "httpx>=0.28.1",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",

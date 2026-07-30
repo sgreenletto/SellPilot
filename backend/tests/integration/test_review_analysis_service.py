@@ -12,10 +12,7 @@ from sellpilot.core.enums import (
     ToolCallerType,
     ToolCallStatus,
 )
-from sellpilot.core.exceptions import (
-    IdempotencyConflictError,
-    ResourceNotFoundError,
-)
+from sellpilot.core.exceptions import IdempotencyConflictError
 from sellpilot.db.models.agent_task import AgentTask
 from sellpilot.db.models.commerce import Product, Review, Shop
 from sellpilot.domain.review_analysis import analyze_reviews
@@ -254,7 +251,7 @@ async def test_review_service_retries_analyzer_and_records_retry_count(
     assert task.retry_count == 1
 
 
-async def test_review_service_persists_failure_and_does_not_return_empty_success(
+async def test_review_service_returns_audited_no_data_result_without_server_error(
     session,
     admin_user,
     test_settings,
@@ -269,15 +266,43 @@ async def test_review_service_persists_failure_and_does_not_return_empty_success
         admin_user.id,
     )
 
-    with pytest.raises(ResourceNotFoundError, match="No reviews"):
-        await service.run(created.analysis_id, admin_user.id)
+    result = await service.run(created.analysis_id, admin_user.id)
 
-    failed = await service.get(created.analysis_id, admin_user.id)
-    assert failed.status is AnalysisStatus.FAILED
-    assert failed.error_message == "No reviews matched the analysis criteria"
+    assert result.status is AnalysisStatus.SUCCEEDED
+    assert result.no_data is True
+    assert result.quality.received_count == 0
+    assert result.sentiment.positive == 0
+    assert result.topics == ()
+    assert result.pain_points == ()
+    assert result.data_source == "simulated_experiment"
     task = await service.tasks.get(created.agent_task_id)
-    assert TaskStatus(task.status) is TaskStatus.FAILED
-    assert task.error_message == "No reviews matched the analysis criteria"
+    assert TaskStatus(task.status) is TaskStatus.SUCCEEDED
+    assert task.result["no_data"] is True
+    assert all(step.status is TaskStepStatus.SUCCEEDED for step in result.steps)
+
+
+async def test_review_service_resolves_display_product_alias_to_stable_external_id(
+    session,
+    admin_user,
+    test_settings,
+):
+    product = await seed_reviews(session, review_count=2)
+    product.external_id = "PROD0001"
+    await session.flush()
+    service = ReviewAnalysisService(session, test_settings)
+
+    created = await service.create(
+        ReviewAnalysisCreateRequest(
+            idempotency_key="review-product-alias-001",
+            product_id="PROD-001",
+        ),
+        admin_user.id,
+    )
+    result = await service.run(created.analysis_id, admin_user.id)
+
+    assert result.status is AnalysisStatus.SUCCEEDED
+    assert result.product_id == "PROD0001"
+    assert result.quality.received_count == 2
 
 
 async def test_review_tools_use_unified_executor_and_persist_traceable_analysis(
@@ -398,8 +423,13 @@ async def test_product_improvement_report_uses_task_workflow_runtime(
     ).run(task.id, user_id=admin_user.id)
 
     assert result.status is TaskStatus.SUCCEEDED
-    assert result.result["report"]["algorithm_version"] == "product-improvement-rule-v1.2.0"
+    assert result.result["report"]["algorithm_version"] == "product-improvement-rule-v1.3.0"
     steps = await TaskRepository(session).list_steps(task.id)
-    assert [step.step_name for step in steps] == ["generate_product_improvement_plan"]
-    assert TaskStepStatus(steps[0].status) is TaskStepStatus.SUCCEEDED
-    assert steps[0].tool_call_id is not None
+    assert [step.step_name for step in steps] == [
+        "select_improvement_source",
+        "generate_product_improvement_plan",
+    ]
+    assert steps[0].output_summary["selected_branch"] == "generate_product_improvement_plan"
+    assert all(TaskStepStatus(step.status) is TaskStepStatus.SUCCEEDED for step in steps)
+    assert steps[0].tool_call_id is None
+    assert steps[1].tool_call_id is not None

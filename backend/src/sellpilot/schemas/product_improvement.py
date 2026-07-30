@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -9,6 +10,7 @@ from sellpilot.schemas.confirmation import ConfirmationTaskResponse
 
 class ImprovementGenerateRequest(BaseModel):
     analysis_id: UUID
+    force_regenerate: bool = False
 
 
 class ImprovementSuggestionResponse(BaseModel):
@@ -54,9 +56,44 @@ class SuggestionUpdateRequest(BaseModel):
 class ImprovementDraftRequest(BaseModel):
     idempotency_key: str = Field(min_length=8, max_length=128)
     site: str = Field(default="sg", min_length=2, max_length=16)
-    target_language: str = Field(default="en", min_length=2, max_length=16)
+    target_language: Literal["und"] = "und"
     suggestion_ids: list[UUID] = Field(min_length=1, max_length=50)
 
 
 class ImprovementDraftResponse(ConfirmationTaskResponse):
     pass
+
+
+class ImprovementDraftItem(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    description: str = Field(min_length=1, max_length=4000)
+
+
+class ImprovementDraftVersionResponse(BaseModel):
+    id: UUID
+    content_id: UUID
+    source_product_id: str
+    site: str
+    version: int
+    sequence: int
+    status: str
+    report_id: UUID | None
+    items: list[ImprovementDraftItem]
+    change_summary: str
+    created_at: datetime
+
+
+class ImprovementDraftListResponse(BaseModel):
+    items: list[ImprovementDraftVersionResponse]
+    total: int
+
+
+class ImprovementDraftRevisionRequest(BaseModel):
+    idempotency_key: str = Field(min_length=8, max_length=128)
+    expected_version: int = Field(ge=1)
+    items: list[ImprovementDraftItem] = Field(min_length=1, max_length=50)
+
+
+class ImprovementDraftHistoryClearRequest(BaseModel):
+    idempotency_key: str = Field(min_length=8, max_length=128)
+    source_product_id: str = Field(min_length=1, max_length=100)

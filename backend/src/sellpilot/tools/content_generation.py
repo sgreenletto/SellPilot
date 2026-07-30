@@ -2,8 +2,12 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
-from sellpilot.core.enums import ToolRiskLevel
-from sellpilot.core.exceptions import ParameterError, UnauthenticatedError
+from sellpilot.core.enums import ToolCallerType, ToolRiskLevel
+from sellpilot.core.exceptions import (
+    ExternalServiceUnavailableError,
+    ParameterError,
+    UnauthenticatedError,
+)
 from sellpilot.domain.content_generation.models import (
     ListingFacts,
     LocalizedListing,
@@ -11,6 +15,7 @@ from sellpilot.domain.content_generation.models import (
 from sellpilot.domain.content_generation.workflow import check_listing
 from sellpilot.schemas.content_generation import ContentGenerateRequest
 from sellpilot.services.content_generation import ContentGenerationService
+from sellpilot.services.model_gateway import ModelGatewayError
 from sellpilot.tools.contracts import RetryPolicy, ToolDefinition, ToolExecutionContext
 from sellpilot.tools.registry import ToolRegistry
 
@@ -25,6 +30,7 @@ class GenerateLocalizedListingInput(ContentGenerateRequest):
 
 class GenerateLocalizedListingOutput(ToolModel):
     generation: dict[str, object]
+    facts: ListingFacts
 
 
 class CheckListingComplianceInput(ToolModel):
@@ -49,10 +55,23 @@ def _user(context: ToolExecutionContext) -> UUID:
 
 
 async def _generate(payload: GenerateLocalizedListingInput, context: ToolExecutionContext):
-    result = await _service(context).generate(
-        ContentGenerateRequest.model_validate(payload.model_dump()), _user(context)
+    service = _service(context)
+    request = ContentGenerateRequest.model_validate(payload.model_dump())
+    workflow_owned = context.caller_type is ToolCallerType.WORKFLOW and context.task_id is not None
+    facts = await service.get_listing_facts(request)
+    try:
+        result = await service.generate(
+            request,
+            _user(context),
+            agent_task_id=context.task_id if workflow_owned else None,
+            manage_agent_task=not workflow_owned,
+        )
+    except ModelGatewayError as exc:
+        raise ExternalServiceUnavailableError("Content generation provider is unavailable") from exc
+    return GenerateLocalizedListingOutput(
+        generation=result.model_dump(mode="json"),
+        facts=facts,
     )
-    return GenerateLocalizedListingOutput(generation=result.model_dump(mode="json"))
 
 
 async def _check(payload: CheckListingComplianceInput, _context: ToolExecutionContext):

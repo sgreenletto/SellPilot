@@ -118,6 +118,10 @@ class KnowledgeRetrievalItem(ContractModel):
     source_doc: str
     document_id: UUID
     chunk_index: int
+    category: str = ""
+    language: str = "unknown"
+    updated_at: datetime | None = None
+    is_mock_data: bool = False
 
 
 # ---- RAG Q&A ----
@@ -134,8 +138,14 @@ class RAGSourceItem(ContractModel):
     source_doc: str = ""
     category: str = ""
     fragment: str = ""
+    document_id: UUID | None = None
+    chunk_index: int = 0
+    language: str = "unknown"
+    updated_at: datetime | None = None
+    is_mock_data: bool = False
 
 
 class RAGAnswerResponse(ContractModel):
     answer: str
     sources: list[RAGSourceItem] = Field(default_factory=list)
+    answer_mode: str = "grounded"

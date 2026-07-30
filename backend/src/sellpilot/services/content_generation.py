@@ -16,6 +16,7 @@ from sellpilot.core.enums import (
     OperationStatus,
     ProductContentStatus,
     PromptStatus,
+    TaskStatus,
     TaskType,
     ToolRiskLevel,
 )
@@ -57,6 +58,7 @@ from sellpilot.schemas.content_generation import (
     ContentVersionResponse,
     ContentVersionsResponse,
 )
+from sellpilot.services.commerce_query import CommerceQueryService
 from sellpilot.services.confirmation import ConfirmationService
 from sellpilot.services.model_gateway import build_model_gateway
 from sellpilot.services.task import TaskService
@@ -71,6 +73,7 @@ class ContentGenerationService:
         self.session = session
         self.settings = settings
         self.adapter = create_platform_adapter(settings, session)
+        self.commerce = CommerceQueryService(session, settings)
         self.contents = ProductContentRepository(session)
         self.prompts = PromptRepository(session)
         self.invocations = ModelInvocationRepository(session)
@@ -78,16 +81,26 @@ class ContentGenerationService:
         self.logs = OperationLogRepository(session)
 
     async def generate(
-        self, payload: ContentGenerateRequest, user_id: UUID
+        self,
+        payload: ContentGenerateRequest,
+        user_id: UUID,
+        *,
+        agent_task_id: UUID | None = None,
+        manage_agent_task: bool = True,
     ) -> ContentGenerateResponse:
         facts = await self._listing_facts(payload)
         gateway = build_model_gateway(self.settings)
-        task = await self.tasks.create_internal_task(
-            task_type=TaskType.CONTENT_GENERATION,
-            user_input=f"Generate {payload.target_language} content for {payload.product_id}",
-            created_by=user_id,
-        )
-        await self.tasks.start(task.id)
+        if agent_task_id is None:
+            task = await self.tasks.create_internal_task(
+                task_type=TaskType.CONTENT_GENERATION,
+                user_input=f"Generate {payload.target_language} content for {facts.product_id}",
+                created_by=user_id,
+            )
+            await self.tasks.start(task.id)
+        else:
+            task = await self.tasks.get(agent_task_id, user_id=user_id)
+            if TaskStatus(task.status) is not TaskStatus.RUNNING:
+                raise ParameterError("Workflow-owned content task must be running")
         prompt = await self._prompt(user_id, gateway)
         started = time.perf_counter()
         input_payload = facts.model_dump(mode="json")
@@ -136,14 +149,14 @@ class ContentGenerationService:
                 "attempts": generated.quality.attempts,
                 "generation_mode": generated.content.generation_mode,
             }
-            if not generated.quality.passed:
+            if not generated.quality.passed and manage_agent_task:
                 await self.tasks.fail(task.id, "CONTENT_QUALITY_FAILED", "Quality loop exhausted")
-            else:
+            elif manage_agent_task:
                 await self.tasks.complete(task.id, invocation.output_summary)
             await self.session.commit()
             return ContentGenerateResponse(
                 task_id=task.id,
-                product_id=payload.product_id,
+                product_id=facts.product_id,
                 site=payload.site,
                 target_language=payload.target_language,
                 audience=payload.audience,
@@ -162,7 +175,8 @@ class ContentGenerationService:
             invocation.duration_ms = int((time.perf_counter() - started) * 1000)
             invocation.error_code = type(exc).__name__
             invocation.error_message = "Structured generation failed"
-            await self.tasks.fail(task.id, "CONTENT_GENERATION_FAILED", type(exc).__name__)
+            if manage_agent_task:
+                await self.tasks.fail(task.id, "CONTENT_GENERATION_FAILED", type(exc).__name__)
             await self.session.commit()
             raise
 
@@ -211,11 +225,11 @@ class ContentGenerationService:
         )
 
     async def _listing_facts(self, payload: ContentGenerateRequest) -> ListingFacts:
-        raw = await self.adapter.get_product(payload.product_id)
+        raw = await self.commerce.get_product(payload.product_id)
         if not raw:
             raise ResourceNotFoundError("Product not found")
         facts = ListingFacts(
-            product_id=payload.product_id,
+            product_id=str(raw["product_id"]),
             title=str(raw.get("title") or ""),
             description=str(raw.get("description") or ""),
             category_name=str(raw.get("category_name") or "Product"),
@@ -234,6 +248,9 @@ class ContentGenerationService:
         if not facts.title or not facts.description:
             raise ParameterError("Product title and description facts are required")
         return facts
+
+    async def get_listing_facts(self, payload: ContentGenerateRequest) -> ListingFacts:
+        return await self._listing_facts(payload)
 
     async def request_restore(
         self,

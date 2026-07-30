@@ -58,7 +58,13 @@ async def test_commerce_read_api_is_authenticated_and_structured(client_bundle):
         "/api/v1/commerce/products?limit=100&shop_id=SHOP001", headers=headers
     )
     assert shop_products.status_code == 200
-    assert len(shop_products.json()["data"]) == 17
+    shop_rows = shop_products.json()["data"]
+    assert len(shop_rows) == 20
+    assert {item["product_id"] for item in shop_rows if item["category_id"] == "CAT008"} == {
+        "PROD0101",
+        "PROD0102",
+        "PROD0103",
+    }
     assert all(product["site"] == "Singapore" for product in shop_products.json()["data"])
 
     inventory = await client.get("/api/v1/commerce/inventory?limit=2", headers=headers)
@@ -205,19 +211,26 @@ async def test_platform_status_reports_mock_boundary(client_bundle):
     }
 
 
-async def test_unhandled_exception_does_not_leak_stack(client_bundle):
+async def test_unhandled_exception_is_traced_without_leaking_to_response(
+    client_bundle,
+    caplog,
+):
     client, application, _, _ = client_bundle
 
     @application.get("/test-unhandled", response_model=ApiResponse[dict])
     async def unhandled(request: Request):
         raise RuntimeError("sensitive internal details")
 
-    response = await client.get("/test-unhandled")
+    with caplog.at_level("ERROR", logger="sellpilot.main"):
+        response = await client.get("/test-unhandled")
     body = response.json()
     assert response.status_code == 500
     assert body["code"] == "INTERNAL_ERROR"
     assert "sensitive internal details" not in response.text
     assert "traceback" not in response.text.lower()
+    record = next(record for record in caplog.records if record.name == "sellpilot.main")
+    assert record.exc_info is not None
+    assert record.getMessage().startswith("Unhandled error request_id=")
 
 
 async def test_tasks_endpoint_requires_bearer_token(client_bundle):

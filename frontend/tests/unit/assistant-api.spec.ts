@@ -34,10 +34,15 @@ describe("assistant API", () => {
   });
 
   it("uses a separate Assistant task endpoint for create and run modes", async () => {
-    await createAssistantTask("检查 SHOP001 的低库存", "create_and_run");
+    await createAssistantTask(
+      "检查 SHOP001 的低库存",
+      "create_and_run",
+      "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    );
 
     expect(vi.mocked(request)).toHaveBeenCalledWith("/v1/assistant/tasks", {
       method: "POST",
+      headers: { "X-Request-ID": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" },
       body: JSON.stringify({
         message: "检查 SHOP001 的低库存",
         execution_mode: "create_and_run",
