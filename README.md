@@ -4,9 +4,12 @@ SellPilot 是面向跨境电商卖家的 AI 运营辅助平台，首版以 Shope
 
 ## 当前版本
 
-**develop — v0.5.0 AI 运营助手集成候选版本**
+**v0.5.0 — AI 运营助手集成里程碑**
 
-当前 `develop` 已在公共底座上集成 Mock 商业数据、智能选品、评论分析、产品改良、多语言内容生成、知识库检索、客服回复建议，以及统一的 Assistant Task、Workflow、ToolExecutor 和 Confirmation 执行链。它仍是课程实验候选版本，不代表系统已用于生产环境。
+`v0.5.0` 已在 `main` 发布，集成 Mock 商业数据、智能选品、评论分析、产品改良、
+多语言内容生成、知识库检索、客服回复建议，以及统一的 Assistant Task、Workflow、
+ToolExecutor 和 Confirmation 执行链。当前 E2E Demo Freeze 继续补齐初始化、容器、
+CI、Smoke 和发布证据；它仍是课程实验版本，不代表系统已用于生产环境。
 
 该里程碑采用普通 Git Tag 标记，不创建 GitHub Release。本仓库当前仍保持单用户、单模拟店铺和 Mock Shopee 模式，不连接真实 Shopee 账号。
 
@@ -56,14 +59,15 @@ SellPilot 是面向跨境电商卖家的 AI 运营辅助平台，首版以 Shope
 
 Dashboard 和所有业务页面均使用带稳定 ID 的合成 Mock 数据，不是实际店铺、商品、订单或用户数据。
 
-## 当前未实现
+## 当前边界与待验收
 
 - 真实 Shopee 联网适配器。
 - 多用户、多角色和多店铺。
 - 生产级模型费用结算和云端监控。
 - 自动发布或自动修改真实平台商品。
-- RAG 知识库和正式业务 Agent。
-- Docker Compose、CI/CD 和生产部署。
+- 真实知识数据尚待导入和命中验收；Mock 政策数据不能替代该验收。
+- Docker Compose 与 PR CI 已提供，容器实跑和首次远程 CI 仍需在相应环境验证。
+- 生产级部署、监控、备份、扩缩容和灾难恢复。
 
 ## 系统分层
 
@@ -84,14 +88,14 @@ Vue Views
 
 ## 仓库目录
 
-| 路径 | 用途 |
-| --- | --- |
-| `.github/` | Issue 与 Pull Request 模板 |
-| `backend/` | FastAPI 公共底座、迁移、CLI 和测试 |
-| `frontend/` | Vue 前端、组件库、Dashboard 和测试 |
-| `data/` | 原始、处理、演示数据及模板目录约定 |
-| `docs/` | 需求、架构、API、测试、部署和 Git 工作流 |
-| `scripts/` | 后续检查和运维脚本目录 |
+| 路径        | 用途                                       |
+| ----------- | ------------------------------------------ |
+| `.github/`  | Issue、Pull Request 模板与质量门禁 CI      |
+| `backend/`  | FastAPI 公共底座、迁移、CLI 和测试         |
+| `frontend/` | Vue 前端、组件库、Dashboard 和测试         |
+| `data/`     | 原始、处理、演示数据及模板目录约定         |
+| `docs/`     | 需求、架构、API、测试、部署和 Git 工作流   |
+| `scripts/`  | Demo 初始化、就绪检查和真实 HTTP E2E smoke |
 
 ## 后端开发
 
@@ -151,6 +155,23 @@ npm run build
 ```powershell
 .\start-sellpilot.bat --check
 ```
+
+首次 Demo 初始化与发布前就绪检查：
+
+```powershell
+.\scripts\init-demo.ps1 -AdminUsername admin
+.\scripts\check-demo-readiness.ps1
+```
+
+初始化脚本只使用 PostgreSQL、幂等导入 Mock 数据且不会清空现有数据。真实知识数据的
+独立步骤见
+[`docs/deployment/knowledge-base-initialization.md`](docs/deployment/knowledge-base-initialization.md)。
+
+## Docker Compose
+
+仓库提供 PostgreSQL 17、backend 和 frontend 三个服务，不引入代码未依赖的 Redis 或
+pgvector。启动方式和必要的本地安全变量见
+[`docs/deployment/docker-compose.md`](docs/deployment/docker-compose.md)。
 
 ## 环境变量
 
@@ -251,4 +272,8 @@ ToolCall 和 OperationLog 查询均限制为当前用户，跨用户资源统一
 - `docs/frontend/design-system.md`：设计变量和公共组件规范。
 - `docs/testing/backend-foundation.md`：后端测试策略。
 - `docs/testing/frontend-foundation.md`：前端测试与浏览器验收。
+- `docs/testing/post-assistant-release-audit.md`：发布后真实完成度矩阵。
+- `docs/testing/release-test-report.md`：E2E Demo Freeze 最终门禁。
+- `docs/deployment/local-setup.md`：新环境本地初始化。
+- `docs/demo/demo-script.md`：人工与自动 Demo 验收顺序。
 - `docs/git-workflow.md`：分支、提交和发布流程。

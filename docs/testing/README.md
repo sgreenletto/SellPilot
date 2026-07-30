@@ -2,6 +2,11 @@
 
 - `assistant-workflow-integration-audit.md`: develop baseline audit, Capability
   matrix, blockers, and integration decision.
+- `post-assistant-release-audit.md`：v0.5.0 发布后源码、数据和真实运行完成度矩阵。
+- `post-release-blockers.md`：P0、P1 和外部阻塞分类。
+- `security-release-audit.md`：tracked 文件、配置、所有权、脱敏和 Mock 边界审计。
+- `e2e-test-report.md`：真实 HTTP smoke 场景状态。
+- `release-test-report.md`：Demo Freeze 最终完整门禁。
 - `member3-ai-evaluation.md`：成员三固定合成数据、指标与失败案例评估方法。
 - `member3-ai-evaluation-report.md`：由评估命令实际生成的最新报告。
 - `member3-integration-verification.md`：成员三两条核心业务闭环的联调验收。
