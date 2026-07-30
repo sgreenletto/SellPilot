@@ -21,7 +21,6 @@ from sellpilot.services.vector_store import ChromaVectorStore
 
 logger = logging.getLogger(__name__)
 
-_ADMIN = UUID("d5f72327-fc9b-4da5-b51a-7a7a6329e5f7")
 PRODUCTS_CSV = "products.csv"
 REVIEWS_CSV = "reviews.csv"
 MESSAGES_CSV = "customer_messages.csv"
@@ -42,9 +41,11 @@ class KnowledgeIngestionService:
         self,
         source_path: Path,
         *,
-        created_by: UUID = _ADMIN,
+        created_by: UUID | None = None,
     ) -> dict[str, object]:
         """Idempotently import the small, explicitly Mock Assistant policy document."""
+        if created_by is None:
+            created_by = await self._get_admin_id()
 
         if not await asyncio.to_thread(source_path.is_file):
             raise KnowledgeIngestionError(f"missing: {source_path}")
@@ -132,11 +133,10 @@ class KnowledgeIngestionService:
 
     # ---- 翻译 ----
 
-    @staticmethod
-    def _translate_one(llm: LLMService, text: str) -> str:
+    async def _translate_one(self, llm: LLMService, text: str) -> str:
         """逐条翻译为简体中文。"""
         try:
-            resp = llm.chat(
+            resp = await llm.chat(
                 [
                     {
                         "role": "system",
@@ -154,10 +154,9 @@ class KnowledgeIngestionService:
                 max_tokens=2048,
             )
             result = resp.strip().strip('"').strip("'").strip()
-            # 如果返回的是英文（不含任何中文字符），说明翻译失败，返回空
             if result and not any("一" <= c <= "鿿" for c in result):
                 logger.warning("Translation returned no Chinese chars, retrying")
-                resp2 = llm.chat(
+                resp2 = await llm.chat(
                     [
                         {
                             "role": "user",
@@ -173,16 +172,15 @@ class KnowledgeIngestionService:
             logger.warning("Translation failed: %s", e)
             return ""
 
-    @staticmethod
-    def _translate_batch(llm: LLMService, texts: list[str], label: str) -> list[str]:
+    async def _translate_batch(self, llm: LLMService, texts: list[str], label: str) -> list[str]:
         """逐条翻译，带进度和限速。"""
         results: list[str] = []
         for i, t in enumerate(texts):
-            zh = KnowledgeIngestionService._translate_one(llm, t)
+            zh = await self._translate_one(llm, t)
             results.append(zh if zh else t)
             if (i + 1) % 10 == 0:
                 logger.info("Translated %d/%d %s", i + 1, len(texts), label)
-                time.sleep(0.5)
+                await asyncio.sleep(0.5)
         return results
 
     # ---- 文本格式化 ----
@@ -238,7 +236,16 @@ class KnowledgeIngestionService:
 
     # ---- DB ----
 
-    async def _make(self, title: str, content: str, cat: str, src: str) -> KnowledgeDocument:
+    async def _get_admin_id(self) -> UUID:
+        from sellpilot.db.models.user import User
+        user = await self.session.scalar(
+            select(User).where(User.username == "admin")
+        )
+        if user is None:
+            raise KnowledgeIngestionError("admin user not found — run create-admin first")
+        return user.id
+
+    async def _make(self, title: str, content: str, cat: str, src: str, admin_id: UUID) -> KnowledgeDocument:
         doc = KnowledgeDocument(
             title=title,
             file_type="csv",
@@ -247,7 +254,7 @@ class KnowledgeIngestionService:
             status="indexed",
             source=src,
             chunk_count=1,
-            created_by=_ADMIN,
+            created_by=admin_id,
         )
         self.session.add(doc)
         await self.session.flush()
@@ -296,7 +303,7 @@ class KnowledgeIngestionService:
 
         # 产品翻译
         prod_texts = [self._prod(row) for row in prods]
-        prod_zh = self._translate_batch(llm, prod_texts, "products")
+        prod_zh = await self._translate_batch(llm, prod_texts, "products")
 
         # FAQ 翻译（先清洗语言标签再翻译）
         import re
@@ -321,10 +328,11 @@ class KnowledgeIngestionService:
                     s.get("risk_level", ""),
                 )
             )
-        faq_qs_zh = self._translate_batch(llm, [_clean(r[1]) for r in faq_rows], "FAQ questions")
-        faq_as_zh = self._translate_batch(llm, [_clean(r[2]) for r in faq_rows], "FAQ answers")
+        faq_qs_zh = await self._translate_batch(llm, [_clean(r[1]) for r in faq_rows], "FAQ questions")
+        faq_as_zh = await self._translate_batch(llm, [_clean(r[2]) for r in faq_rows], "FAQ answers")
 
         # ---- 创建文档 ----
+        admin_id = await self._get_admin_id()
         pc = rc = fc = 0
         for i, row in enumerate(prods):
             await self._make(
@@ -332,6 +340,7 @@ class KnowledgeIngestionService:
                 self._prod(row, prod_zh[i]),
                 "product",
                 f"products.csv#{row.get('product_id', '')}",
+                admin_id,
             )
             pc += 1
         for row in revs:
@@ -340,6 +349,7 @@ class KnowledgeIngestionService:
                 self._rev(row),
                 "review",
                 f"reviews.csv#{row.get('review_id', '')}",
+                admin_id,
             )
             rc += 1
         for i, (sid, q, a, lang, intent, risk) in enumerate(faq_rows):
@@ -348,6 +358,7 @@ class KnowledgeIngestionService:
                 self._faq(q, a, lang, intent, risk, faq_qs_zh[i], faq_as_zh[i]),
                 "faq",
                 f"customer_messages.csv#{sid}",
+                admin_id,
             )
             fc += 1
 
