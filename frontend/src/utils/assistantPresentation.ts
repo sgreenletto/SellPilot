@@ -1,8 +1,10 @@
 import type { AssistantAvailability, AssistantIntent, AssistantPlan } from "@/api/assistant";
 import type { TaskStatus, ToolRiskLevel } from "@/types/contracts";
 import {
+  formatCategoryName,
   formatCapabilityName,
   formatRiskLevel,
+  formatSiteName,
   formatTaskNode,
   formatTaskStatus,
   formatWorkflowName,
@@ -70,6 +72,7 @@ const parameterLabels: Record<string, string> = {
   site: "站点",
   category: "商品类目",
   category_id: "商品类目",
+  category_query: "商品类目",
   language: "目标语言",
   target_language: "目标语言",
   query: "检索问题",
@@ -261,6 +264,20 @@ export function localizedErrorMessage(message: string | null | undefined): strin
   return "执行过程中发生错误，请稍后重试。";
 }
 
+export function localizedTaskFailure(
+  errorCode: string | null | undefined,
+  message: string | null | undefined,
+  requestId: string | null | undefined,
+): string {
+  const safeMessage =
+    errorCode === "TASK_STATE_TOO_LARGE"
+      ? "任务结果超过安全大小限制，请缩小查询范围后重试。"
+      : errorCode === "SELECTION_NO_CANDIDATES"
+        ? "当前数据中没有匹配的候选商品，请调整站点或商品类目。"
+        : localizedErrorMessage(message);
+  return requestId ? `${safeMessage} 错误编号：${requestId}` : safeMessage;
+}
+
 export interface AssistantResultMetric {
   label: string;
   value: string;
@@ -414,11 +431,25 @@ export function presentTaskResult(
   }
 
   if (workflowName === "selection") {
+    const candidateSearch = asRecord(source.candidate_search) ?? {};
+    const filters = asRecord(candidateSearch.normalized_filters) ?? {};
+    const site = formatSiteName(asString(filters.site));
+    const categoryId = asString(filters.category_id);
+    const categoryQuery = asString(filters.category_query);
+    const category = categoryId
+      ? formatCategoryName(categoryId)
+      : categoryQuery
+        ? categoryQuery
+        : "全站类目";
     const noData = source.no_data === true;
     if (noData) {
       return {
-        summary: asString(source.message, "当前数据集中没有匹配候选，请调整站点或类目。"),
-        metrics: [{ label: "候选商品", value: "0" }],
+        summary: asString(source.message, "当前数据中没有匹配的候选商品，请调整站点或商品类目。"),
+        metrics: [
+          { label: "匹配候选", value: "0" },
+          { label: "查询站点", value: site },
+          { label: "查询类目", value: category },
+        ],
         items: [],
       };
     }
@@ -429,20 +460,29 @@ export function presentTaskResult(
     return {
       summary: `智能选品分析已完成，共评估 ${total} 个候选商品，其中 ${ranked} 个进入排序结果。`,
       metrics: [
-        { label: "候选商品", value: String(total) },
-        { label: "入选商品", value: String(ranked) },
+        { label: "匹配候选", value: String(asCount(candidateSearch.matched_count, total)) },
+        { label: "参与评分", value: String(total) },
+        { label: "排序结果", value: String(ranked) },
+        { label: "查询站点", value: site },
+        { label: "查询类目", value: category },
+        {
+          label: "数据来源",
+          value: candidateSearch.is_mock_data === true ? "模拟市场数据" : "市场数据",
+        },
       ],
       items: results.slice(0, 8).map((item, index) => ({
         id: asString(item.id, `selection-${index}`),
         title: asString(item.title, asString(item.product_id, "候选商品")),
-        subtitle: asString(
-          asRecord(item.explanation)?.summary,
-          `排名 ${asString(item.rank, String(index + 1))}`,
-        ),
+        subtitle: `排名 ${asString(item.rank, String(index + 1))}，机会总分 ${asString(item.total_score, "—")}`,
         meta: [
-          `综合得分：${asString(item.total_score, "—")}`,
+          `商品编号：${asString(item.product_id, "—")}`,
+          `预估利润率：${asString(asRecord(item.profit)?.margin, "—")}`,
           `数据完整度：${asString(item.data_completeness, "—")}`,
-          `站点：${labelValue(item.site)}`,
+          `站点：${formatSiteName(asString(item.site))}`,
+          `数据来源：${item.is_mock_data === true ? "模拟市场数据" : "市场数据"}`,
+          Array.isArray(item.risk_warnings) && item.risk_warnings.length > 0
+            ? "风险：部分评分数据不完整或未达到筛选条件"
+            : "风险：未发现额外数据风险",
         ],
       })),
     };

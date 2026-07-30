@@ -215,6 +215,17 @@ const siteLabels: Record<string, string> = {
   Brazil: "巴西站",
 };
 
+const categoryLabels: Record<string, string> = {
+  CAT001: "手机配件",
+  CAT002: "家居用品",
+  CAT003: "美妆护理",
+  CAT004: "女装",
+  CAT005: "男装",
+  CAT006: "电脑办公",
+  CAT007: "运动户外",
+  CAT008: "母婴用品",
+};
+
 const dataSourceLabels: Record<string, string> = {
   mock: "模拟数据",
   imported: "导入数据",
@@ -429,6 +440,10 @@ export function formatPlatformMode(value: string | null | undefined): string {
 
 export function formatSiteName(value: string | null | undefined): string {
   return labelFrom(siteLabels, value, "未知站点");
+}
+
+export function formatCategoryName(value: string | null | undefined): string {
+  return labelFrom(categoryLabels, value, "未知类目");
 }
 
 export function formatDataSource(value: string | null | undefined): string {
