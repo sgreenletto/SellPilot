@@ -1,6 +1,6 @@
 <script setup lang="ts">
 interface Props {
-  tone?: "neutral" | "primary" | "success" | "warning" | "danger" | "info";
+  tone?: "neutral" | "primary" | "success" | "warning" | "danger" | "info" | "purple";
   dot?: boolean;
 }
 
@@ -64,5 +64,10 @@ const props = withDefaults(defineProps<Props>(), {
 .sp-badge--info {
   color: var(--sp-color-info);
   background: var(--sp-color-accent-blue-soft);
+}
+
+.sp-badge--purple {
+  color: var(--sp-color-accent-purple);
+  background: color-mix(in srgb, var(--sp-color-accent-purple) 14%, var(--sp-color-surface-strong));
 }
 </style>

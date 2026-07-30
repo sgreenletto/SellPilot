@@ -485,6 +485,24 @@ describe("成员二业务工作台", () => {
     expect(wrapper.text()).toContain("取消、退款、退货和包裹异常");
     expect(wrapper.text()).toContain("关联客服与 AI 建议");
     expect(wrapper.text()).not.toContain("BUYER0001");
+    const statusBadges = wrapper.findAll("tbody .sp-badge");
+    expect(statusBadges.map((badge) => badge.text())).toEqual(["已送达", "处理中", "已发货"]);
+    expect(statusBadges[0]?.classes()).toContain("sp-badge--success");
+    expect(statusBadges[1]?.classes()).toContain("sp-badge--primary");
+    expect(statusBadges[2]?.classes()).toContain("sp-badge--info");
+
+    loadCommerceDashboardSnapshot.mockResolvedValueOnce({
+      products: [],
+      inventory: [],
+      orders: [{ ...dashboardOrders[0], order_status: "completed" }],
+    });
+    const completedWrapper = mount(OrdersView, {
+      global: { plugins: [createPinia()] },
+    });
+    await vi.waitFor(() => {
+      expect(completedWrapper.get("tbody .sp-badge").text()).toBe("已完成");
+    });
+    expect(completedWrapper.get("tbody .sp-badge").classes()).toContain("sp-badge--purple");
   });
 
   it("订单页可以关联真实 Mock 客服会话", async () => {
