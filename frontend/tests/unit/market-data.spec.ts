@@ -69,14 +69,16 @@ describe("市场数据页面", () => {
     await new Promise((resolve) => window.setTimeout(resolve, 0));
 
     expect(wrapper.text()).toContain("USB-C Hub");
-    expect(wrapper.text()).toContain("simulated_experiment");
+    expect(wrapper.text()).toContain("模拟实验数据");
+    expect(wrapper.text()).not.toContain("simulated_experiment");
     expect(wrapper.text()).toContain("products.csv（1 条）");
     expect(wrapper.text()).toContain("确认过的商品批次已写入后端");
 
     await wrapper.get(".actions .sp-button--ghost").trigger("click");
     await wrapper.vm.$nextTick();
     expect(wrapper.get(".detail-drawer").text()).toContain("USB-C Hub");
-    expect(wrapper.get(".detail-drawer").text()).toContain("商品名称（title）");
+    expect(wrapper.get(".detail-drawer").text()).toContain("商品名称");
+    expect(wrapper.get(".detail-drawer").text()).not.toContain("title");
 
     await wrapper.get(".actions .sp-button--secondary").trigger("click");
     await vi.waitFor(() => expect(wrapper.text()).toContain("移出候选"));
@@ -115,7 +117,8 @@ describe("市场数据页面", () => {
     await wrapper.vm.$nextTick();
 
     expect(wrapper.get(".detail-drawer").text()).toContain("关联评论（1）");
-    expect(wrapper.get(".detail-drawer").text()).toContain("商品 ID（product_id）");
+    expect(wrapper.get(".detail-drawer").text()).toContain("商品编号");
+    expect(wrapper.get(".detail-drawer").text()).not.toContain("product_id");
     expect(wrapper.get(".detail-drawer").text()).toContain("Very useful");
     expect(wrapper.get(".detail-drawer").text()).toContain("中文：非常实用");
     wrapper.unmount();

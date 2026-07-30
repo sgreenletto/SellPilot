@@ -123,7 +123,8 @@ describe("ReviewAnalysisView", () => {
     await flushPromises();
 
     expect(wrapper.text()).toContain("已从智能选品带入商品");
-    expect(wrapper.text()).toContain("P009 · ID");
+    expect(wrapper.text()).toContain("P009 · 印度尼西亚站");
+    expect(wrapper.text()).not.toContain("P009 · ID");
     expect(wrapper.get('input[placeholder="例如 PROD0001"]').element).toMatchObject({
       value: "P009",
     });

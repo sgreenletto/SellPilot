@@ -16,7 +16,10 @@ from sellpilot.schemas.assistant import (
     AssistantPlanStep,
     AssistantWorkflowReference,
 )
-from sellpilot.services.commerce_normalization import extract_category_external_id
+from sellpilot.services.commerce_normalization import (
+    extract_category_external_id,
+    extract_requested_category_text,
+)
 from sellpilot.tools.registry import ToolRegistry
 from sellpilot.workflows.registry import WorkflowRegistry
 
@@ -317,6 +320,10 @@ class AssistantPlanService:
             category_id = extract_category_external_id(message)
             if category_id:
                 parameters["category_id"] = category_id
+            else:
+                category_query = extract_requested_category_text(message)
+                if category_query:
+                    parameters["category_query"] = category_query
         elif intent is AssistantIntent.REVIEW_ANALYSIS and product_id:
             parameters["product_id"] = product_id
         elif intent is AssistantIntent.PRODUCT_IMPROVEMENT:
@@ -518,7 +525,13 @@ def build_assistant_capability_registry(
             workflow_name="selection",
             workflow_version="1.0.0",
             required_parameters=("site",),
-            optional_parameters=("category_id", "min_price", "max_price", "risk_preference"),
+            optional_parameters=(
+                "category_id",
+                "category_query",
+                "min_price",
+                "max_price",
+                "risk_preference",
+            ),
             tool_names=("search_market_products", "score_product_opportunity"),
             availability=AssistantAvailability.AVAILABLE,
             example_message="分析新加坡站的选品机会",

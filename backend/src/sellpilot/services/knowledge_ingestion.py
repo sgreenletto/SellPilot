@@ -4,8 +4,6 @@ import asyncio
 import csv
 import hashlib
 import logging
-import shutil
-import time
 from pathlib import Path
 from uuid import UUID
 
@@ -16,7 +14,6 @@ from sellpilot.core.config import get_settings
 from sellpilot.db.models.knowledge_base import KnowledgeChunk, KnowledgeDocument
 from sellpilot.services.embedding import EmbeddingService
 from sellpilot.services.llm_service import LLMService
-from sellpilot.services.vector_store import DEFAULT_PERSIST_DIR as CHROMA_DIR
 from sellpilot.services.vector_store import ChromaVectorStore
 
 logger = logging.getLogger(__name__)
@@ -27,6 +24,11 @@ MESSAGES_CSV = "customer_messages.csv"
 SESSIONS_CSV = "customer_sessions.csv"
 
 TRANSLATE_BATCH = 20  # 每批翻译条数
+REBUILD_SOURCE_PREFIXES = (
+    "products.csv#",
+    "reviews.csv#",
+    "customer_messages.csv#",
+)
 
 
 class KnowledgeIngestionError(ValueError):
@@ -36,6 +38,9 @@ class KnowledgeIngestionError(ValueError):
 class KnowledgeIngestionService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
+        self._vector_store: ChromaVectorStore | None = None
+        self._replaced_document_ids: list[UUID] = []
+        self._new_document_ids: list[UUID] = []
 
     async def ensure_assistant_demo_policy(
         self,
@@ -238,14 +243,20 @@ class KnowledgeIngestionService:
 
     async def _get_admin_id(self) -> UUID:
         from sellpilot.db.models.user import User
-        user = await self.session.scalar(
-            select(User).where(User.username == "admin")
-        )
+
+        user = await self.session.scalar(select(User).where(User.username == "admin"))
         if user is None:
             raise KnowledgeIngestionError("admin user not found — run create-admin first")
         return user.id
 
-    async def _make(self, title: str, content: str, cat: str, src: str, admin_id: UUID) -> KnowledgeDocument:
+    async def _make(
+        self,
+        title: str,
+        content: str,
+        cat: str,
+        src: str,
+        admin_id: UUID,
+    ) -> KnowledgeDocument:
         doc = KnowledgeDocument(
             title=title,
             file_type="csv",
@@ -254,35 +265,87 @@ class KnowledgeIngestionService:
             status="indexed",
             source=src,
             chunk_count=1,
+            metadata_json={
+                "dataset": "shopee_mock_legacy_rebuild",
+                "language": "multilingual",
+            },
+            is_mock_data=True,
             created_by=admin_id,
         )
         self.session.add(doc)
         await self.session.flush()
-        self.session.add(
-            KnowledgeChunk(
-                document_id=doc.id,
-                chunk_index=0,
-                content=content,
-                chunk_size=len(content),
-            )
+        chunk = KnowledgeChunk(
+            document_id=doc.id,
+            chunk_index=0,
+            content=content,
+            chunk_size=len(content),
+            is_mock_data=True,
         )
+        self.session.add(chunk)
+        await self.session.flush()
         return doc
 
-    async def _clear(self) -> int:
-        c = (await self.session.execute(select(KnowledgeChunk.id))).scalars().all()
-        await self.session.execute(delete(KnowledgeChunk))
-        d = (await self.session.execute(select(KnowledgeDocument.id))).scalars().all()
-        await self.session.execute(delete(KnowledgeDocument))
+    @staticmethod
+    def is_rebuild_source(source: str | None) -> bool:
+        return bool(source) and source.startswith(REBUILD_SOURCE_PREFIXES)
+
+    async def _clear_rebuild_documents(self) -> tuple[int, list[UUID]]:
+        documents = list(
+            (
+                await self.session.execute(
+                    select(KnowledgeDocument).where(
+                        KnowledgeDocument.source.startswith(REBUILD_SOURCE_PREFIXES[0])
+                        | KnowledgeDocument.source.startswith(REBUILD_SOURCE_PREFIXES[1])
+                        | KnowledgeDocument.source.startswith(REBUILD_SOURCE_PREFIXES[2])
+                    )
+                )
+            ).scalars()
+        )
+        document_ids = [document.id for document in documents]
+        if not document_ids:
+            return 0, []
+        chunk_ids = list(
+            (
+                await self.session.execute(
+                    select(KnowledgeChunk.id).where(KnowledgeChunk.document_id.in_(document_ids))
+                )
+            ).scalars()
+        )
+        await self.session.execute(
+            delete(KnowledgeChunk).where(KnowledgeChunk.document_id.in_(document_ids))
+        )
+        await self.session.execute(
+            delete(KnowledgeDocument).where(KnowledgeDocument.id.in_(document_ids))
+        )
         await self.session.flush()
-        return len(c) + len(d)
+        return len(chunk_ids) + len(document_ids), document_ids
+
+    def rollback_rebuild_vectors(self) -> int:
+        """Remove only vectors created by the failed rebuild."""
+        if self._vector_store is None:
+            return 0
+        removed = sum(
+            self._vector_store.delete_by_document(document_id)
+            for document_id in self._new_document_ids
+        )
+        self._new_document_ids.clear()
+        return removed
+
+    def finalize_rebuild_vectors(self) -> int:
+        """Remove replaced vectors only after the PostgreSQL commit succeeds."""
+        if self._vector_store is None:
+            return 0
+        removed = sum(
+            self._vector_store.delete_by_document(document_id)
+            for document_id in self._replaced_document_ids
+        )
+        self._replaced_document_ids.clear()
+        self._new_document_ids.clear()
+        return removed
 
     # ---- 主流程 ----
 
     async def import_package(self, data_dir: Path) -> dict:
-        cleared = await self._clear()
-        if CHROMA_DIR.exists():
-            shutil.rmtree(str(CHROMA_DIR), ignore_errors=True)
-
         prods = self._csv(data_dir, PRODUCTS_CSV)
         revs = self._csv(data_dir, REVIEWS_CSV)
         msgs = self._csv(data_dir, MESSAGES_CSV)
@@ -328,93 +391,109 @@ class KnowledgeIngestionService:
                     s.get("risk_level", ""),
                 )
             )
-        faq_qs_zh = await self._translate_batch(llm, [_clean(r[1]) for r in faq_rows], "FAQ questions")
-        faq_as_zh = await self._translate_batch(llm, [_clean(r[2]) for r in faq_rows], "FAQ answers")
+        faq_qs_zh = await self._translate_batch(
+            llm, [_clean(r[1]) for r in faq_rows], "FAQ questions"
+        )
+        faq_as_zh = await self._translate_batch(
+            llm, [_clean(r[2]) for r in faq_rows], "FAQ answers"
+        )
 
-        # ---- 创建文档 ----
-        admin_id = await self._get_admin_id()
-        pc = rc = fc = 0
-        for i, row in enumerate(prods):
-            await self._make(
+        records: list[tuple[str, str, str, str]] = []
+        records.extend(
+            (
                 row.get("title", ""),
-                self._prod(row, prod_zh[i]),
+                self._prod(row, prod_zh[index]),
                 "product",
                 f"products.csv#{row.get('product_id', '')}",
-                admin_id,
             )
-            pc += 1
-        for row in revs:
-            await self._make(
+            for index, row in enumerate(prods)
+        )
+        records.extend(
+            (
                 f"Review {row.get('review_id', '')}",
                 self._rev(row),
                 "review",
                 f"reviews.csv#{row.get('review_id', '')}",
-                admin_id,
             )
-            rc += 1
-        for i, (sid, q, a, lang, intent, risk) in enumerate(faq_rows):
-            await self._make(
+            for row in revs
+        )
+        records.extend(
+            (
                 f"FAQ #{sid}",
-                self._faq(q, a, lang, intent, risk, faq_qs_zh[i], faq_as_zh[i]),
+                self._faq(q, a, lang, intent, risk, faq_qs_zh[index], faq_as_zh[index]),
                 "faq",
                 f"customer_messages.csv#{sid}",
-                admin_id,
             )
-            fc += 1
+            for index, (sid, q, a, lang, intent, risk) in enumerate(faq_rows)
+        )
 
-        await self.session.flush()
-        total = pc + rc + fc
+        # Validate all external dependencies and compute embeddings before changing
+        # PostgreSQL or the existing vector index.
+        embedding_service = EmbeddingService()
+        embeddings = embedding_service.encode([record[1] for record in records])
+        vector_store = ChromaVectorStore()
 
-        # ---- Embedding + ChromaDB ----
-        vs = ChromaVectorStore()
-        es = EmbeddingService()
-        off = 0
-        while True:
-            batch = list(
-                (
-                    await self.session.execute(
-                        select(KnowledgeChunk)
-                        .order_by(KnowledgeChunk.created_at)
-                        .offset(off)
-                        .limit(100)
-                    )
-                ).scalars()
-            )
-            if not batch:
-                break
-            embs = es.encode([c.content for c in batch])
-            for chunk, emb in zip(batch, embs, strict=False):
-                doc = await self.session.get(KnowledgeDocument, chunk.document_id)
-                cat = doc.category if doc else "unknown"
-                vs.upsert_chunks(
-                    chunk.document_id,
+        # ---- 创建文档 ----
+        admin_id = await self._get_admin_id()
+        cleared, replaced_document_ids = await self._clear_rebuild_documents()
+        self._vector_store = vector_store
+        self._replaced_document_ids = replaced_document_ids
+        self._new_document_ids = []
+        try:
+            for index, (title, content, category, source) in enumerate(records):
+                document = await self._make(
+                    title,
+                    content,
+                    category,
+                    source,
+                    admin_id,
+                )
+                self._new_document_ids.append(document.id)
+                chunk = await self.session.scalar(
+                    select(KnowledgeChunk).where(KnowledgeChunk.document_id == document.id)
+                )
+                if chunk is None:
+                    raise KnowledgeIngestionError("knowledge chunk was not persisted")
+                vector_store.upsert_chunks(
+                    document.id,
                     [chunk.chunk_index],
                     [chunk.content],
-                    [emb],
+                    [embeddings[index]],
                     [
                         {
-                            "document_id": str(chunk.document_id),
+                            "document_id": str(document.id),
                             "chunk_index": chunk.chunk_index,
-                            "category": cat,
-                            "source": doc.source if doc else "",
+                            "category": category,
+                            "source": source,
                         }
                     ],
                 )
                 chunk.embedding_status = "embedded"
-                chunk.chroma_id = f"{chunk.document_id}_{chunk.chunk_index}"
+                chunk.chroma_id = f"{document.id}_{chunk.chunk_index}"
+                if (index + 1) % 100 == 0:
+                    await self.session.flush()
+                    logger.info("Embedded %d/%d", index + 1, len(records))
             await self.session.flush()
-            off += 100
-            logger.info("Embedded %d/%d", min(off, total), total)
+        except Exception:
+            self.rollback_rebuild_vectors()
+            raise
+
+        pc = len(prods)
+        rc = len(revs)
+        fc = len(faq_rows)
+        total = len(records)
 
         return {
             "cleared": cleared,
+            "replaced_documents": len(replaced_document_ids),
+            "preserved_non_rebuild_documents": True,
             "products": pc,
             "reviews": rc,
             "faq": fc,
             "total_documents": total,
             "total_chunks": total,
-            "embedding_model": es._model_name,
-            "embedding_dim": es.dim,
-            "chroma_collection": vs._collection_name,
-            "chroma_count": vs.count,
+            "embedding_model": embedding_service._model_name,
+            "embedding_dim": embedding_service.dim,
+            "chroma_collection": vector_store._collection_name,
+            "chroma_count": vector_store.count,
         }

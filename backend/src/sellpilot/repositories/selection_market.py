@@ -48,6 +48,8 @@ class SelectionMarketRepository:
         site_name = SITE_NAMES.get(query.site.value)
         if site_name is None:
             return []
+        if query.category_query and not query.category_id:
+            return []
         predicates = [Product.site == site_name]
         if query.category_id:
             predicates.append(Product.category_external_id == query.category_id)

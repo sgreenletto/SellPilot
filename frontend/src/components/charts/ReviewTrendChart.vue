@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import * as echarts from "echarts";
 import type { TrendPoint } from "@/types/review-analysis";
+import { formatSiteName } from "@/utils/displayLabels";
 
 const props = defineProps<{ points: TrendPoint[] }>();
 const singlePoint = computed(() => (props.points.length === 1 ? props.points[0] : null));
@@ -31,7 +32,7 @@ function render(): void {
     grid: { left: 36, right: 16, top: 42, bottom: 28, containLabel: true },
     xAxis: {
       type: "category",
-      data: props.points.map((item) => `${item.month} · ${item.site.toUpperCase()}`),
+      data: props.points.map((item) => `${item.month} · ${formatSiteName(item.site)}`),
       axisLine: { lineStyle: { color: border } },
       axisTick: { show: false },
       axisLabel: { color: muted },
@@ -83,7 +84,7 @@ onBeforeUnmount(() => {
     <div class="single-period__label">
       <small>统计周期</small>
       <strong>{{ singlePoint.month }}</strong>
-      <span>{{ singlePoint.site.toUpperCase() }} 站点</span>
+      <span>{{ formatSiteName(singlePoint.site) }}</span>
     </div>
     <div>
       <small>评论总数</small><strong>{{ singlePoint.review_count }}</strong>

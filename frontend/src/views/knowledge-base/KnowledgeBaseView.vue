@@ -13,13 +13,14 @@ import SpBadge from "@/components/base/SpBadge.vue";
 import SpButton from "@/components/base/SpButton.vue";
 import SpInput from "@/components/base/SpInput.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
+import { formatBusinessStatus } from "@/utils/displayLabels";
 
 // ==================== 文档列表 ====================
 
 const categoryTabs = [
   { key: "", label: "全部" },
   { key: "product", label: "商品知识" },
-  { key: "faq", label: "客服FAQ" },
+  { key: "faq", label: "客服常见问题" },
   { key: "review", label: "用户评论" },
 ];
 
@@ -28,12 +29,27 @@ const searchQuery = ref("");
 const documents = ref<KnowledgeDocumentItem[]>([]);
 const docTotal = ref(0);
 const docLoading = ref(false);
+const categoryCounts = ref<Record<string, number>>({});
 
 const categoryLabels: Record<string, string> = {
   product: "商品知识",
-  faq: "客服FAQ",
+  faq: "客服常见问题",
   review: "用户评论",
 };
+const knowledgeStatusLabels: Record<string, string> = {
+  pending: "待处理",
+  processing: "处理中",
+  indexed: "已建立索引",
+  failed: "处理失败",
+};
+
+function categoryLabel(value: string): string {
+  return categoryLabels[value] ?? "其他分类";
+}
+
+function knowledgeStatusLabel(value: string): string {
+  return knowledgeStatusLabels[value] ?? formatBusinessStatus(value);
+}
 
 const statusTone = (s: string) =>
   s === "indexed" ? "success" : s === "failed" ? "danger" : "warning";
@@ -55,20 +71,30 @@ async function loadDocuments() {
   }
 }
 
+async function loadCategoryCounts() {
+  try {
+    const totals = await Promise.all(
+      categoryTabs.map(async (tab) => {
+        const response = await fetchDocuments({
+          page_size: 1,
+          category: tab.key || undefined,
+        });
+        return [tab.key, response.total] as const;
+      }),
+    );
+    categoryCounts.value = Object.fromEntries(totals);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "未知错误";
+    ElMessage.error(`加载分类统计失败：${msg}`);
+  }
+}
+
 const filteredDocs = computed(() => {
   if (!searchQuery.value.trim()) return documents.value;
   const q = searchQuery.value.trim().toLowerCase();
   return documents.value.filter(
     (d) => d.title.toLowerCase().includes(q) || (d.source ?? "").toLowerCase().includes(q),
   );
-});
-
-const categoryCounts = computed(() => {
-  const m: Record<string, number> = { "": docTotal.value };
-  documents.value.forEach((d) => {
-    m[d.category] = (m[d.category] ?? 0) + 1;
-  });
-  return m;
 });
 
 async function handleDelete(doc: KnowledgeDocumentItem) {
@@ -81,13 +107,16 @@ async function handleDelete(doc: KnowledgeDocumentItem) {
     await deleteDocument(doc.id);
     documents.value = documents.value.filter((d) => d.id !== doc.id);
     docTotal.value = Math.max(0, docTotal.value - 1);
+    await loadCategoryCounts();
     ElMessage.success("已删除");
   } catch {
     // 用户取消
   }
 }
 
-onMounted(loadDocuments);
+onMounted(() => {
+  void Promise.all([loadDocuments(), loadCategoryCounts()]);
+});
 watch(activeCategory, () => loadDocuments());
 
 // ==================== 检索测试 ====================
@@ -180,11 +209,13 @@ function scoreClass(s: number) {
                   </div>
                 </td>
                 <td>
-                  <SpBadge tone="info">{{ categoryLabels[doc.category] ?? doc.category }}</SpBadge>
+                  <SpBadge tone="info">{{ categoryLabel(doc.category) }}</SpBadge>
                 </td>
                 <td class="kb-cell-source">{{ doc.source || "-" }}</td>
                 <td>
-                  <SpBadge :tone="statusTone(doc.status)" dot>{{ doc.status }}</SpBadge>
+                  <SpBadge :tone="statusTone(doc.status)" dot>{{
+                    knowledgeStatusLabel(doc.status)
+                  }}</SpBadge>
                 </td>
                 <td>{{ doc.chunk_count }}</td>
                 <td>

@@ -16,35 +16,41 @@ import SpCard from "@/components/base/SpCard.vue";
 import SpEmptyState from "@/components/base/SpEmptyState.vue";
 import SpInput from "@/components/base/SpInput.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
+import {
+  formatBusinessStatus,
+  formatDataSource,
+  formatLanguageName,
+  formatSiteName,
+} from "@/utils/displayLabels";
 import { sheetRows } from "@/utils/spreadsheet";
 import type { ProductDraftPayload } from "@/types/commerce";
 
 type MarketRow = Record<string, string | number | boolean>;
 
 const marketFieldLabels: Record<string, string> = {
-  product_id: "商品 ID（product_id）",
-  shop_id: "店铺 ID（shop_id）",
-  shop_name: "店铺名称（shop_name）",
-  title: "商品名称（title）",
-  category_id: "类目 ID（category_id）",
-  category_name: "类目名称（category_name）",
-  description: "商品描述（description）",
-  platform: "平台（platform）",
-  site: "站点（site）",
-  source_type: "数据来源（source_type）",
-  currency: "币种（currency）",
-  price: "售价（price）",
-  cost: "商品成本（cost）",
-  shipping_cost: "物流成本（shipping_cost）",
-  sales_count: "销量（sales_count）",
-  rating: "评分（rating）",
-  review_count: "评论数（review_count）",
-  favorite_count: "收藏数（favorite_count）",
-  status: "商品状态（status）",
-  created_at: "创建时间（created_at）",
-  updated_at: "更新时间（updated_at）",
-  collected_at: "采集时间（collected_at）",
-  is_mock_data: "是否为模拟数据（is_mock_data）",
+  product_id: "商品编号",
+  shop_id: "店铺编号",
+  shop_name: "店铺名称",
+  title: "商品名称",
+  category_id: "类目编号",
+  category_name: "类目名称",
+  description: "商品描述",
+  platform: "平台",
+  site: "站点",
+  source_type: "数据来源",
+  currency: "币种",
+  price: "售价",
+  cost: "商品成本",
+  shipping_cost: "物流成本",
+  sales_count: "销量",
+  rating: "评分",
+  review_count: "评论数",
+  favorite_count: "收藏数",
+  status: "商品状态",
+  created_at: "创建时间",
+  updated_at: "更新时间",
+  collected_at: "采集时间",
+  is_mock_data: "是否为模拟数据",
 };
 
 const rows = ref<MarketRow[]>([]);
@@ -200,7 +206,7 @@ async function importFile(event: Event): Promise<void> {
 function loadProjectDemo(): void {
   loadWorkbook(XLSX.read(defaultProductsCsv, { type: "string" }), "项目演示数据 · products.csv");
   loadWorkbook(XLSX.read(defaultReviewsCsv, { type: "string" }), "项目演示数据 · reviews.csv");
-  importMessage.value = `已加载项目内置的 ${rows.value.length} 条 Mock 商品和 ${reviews.value.length} 条关联评论。`;
+  importMessage.value = `已加载项目内置的 ${rows.value.length} 条模拟商品和 ${reviews.value.length} 条关联评论。`;
 }
 
 function rowKey(row: MarketRow): string {
@@ -252,7 +258,17 @@ function value(row: MarketRow, ...keys: string[]): string {
 }
 
 function marketFieldLabel(key: string): string {
-  return marketFieldLabels[key] ?? key;
+  return marketFieldLabels[key] ?? "其他字段";
+}
+
+function marketFieldValue(key: string, fieldValue: unknown): string {
+  const text = String(fieldValue);
+  if (key === "site") return formatSiteName(text);
+  if (key === "source_type") return formatDataSource(text);
+  if (key === "status") return formatBusinessStatus(text);
+  if (key === "language") return formatLanguageName(text);
+  if (key === "is_mock_data") return text === "true" ? "是" : "否";
+  return text;
 }
 
 onMounted(() => {
@@ -318,10 +334,7 @@ watch(totalPages, (pages) => {
     <SpCard v-if="showCandidateList" padding="lg" class="candidate-list">
       <template #header>
         <div class="candidate-list-header">
-          <div>
-            <strong>选品候选列表</strong>
-            <span>候选清单保存在后端，可跨会话和模块继续使用。</span>
-          </div>
+          <strong>选品候选列表</strong>
           <div class="candidate-list-actions">
             <a class="handoff-link" :href="selectionWorkbenchHref">打开智能选品</a>
             <SpButton size="sm" variant="ghost" @click="showCandidateList = false">收起</SpButton>
@@ -337,7 +350,10 @@ watch(totalPages, (pages) => {
         <li v-for="row in candidateRows" :key="rowKey(row)">
           <button type="button" @click="selected = row">
             <strong>{{ value(row, "title", "category_name") }}</strong>
-            <span>{{ rowKey(row) }} · {{ value(row, "site") }} · {{ value(row, "price") }}</span>
+            <span
+              >{{ rowKey(row) }} · {{ formatSiteName(value(row, "site")) }} ·
+              {{ value(row, "price") }}</span
+            >
           </button>
           <SpButton size="sm" variant="ghost" @click="toggleCandidate(row)">移出</SpButton>
         </li>
@@ -350,16 +366,19 @@ watch(totalPages, (pages) => {
           <SpInput v-model="query" type="search" clearable placeholder="搜索商品、类目或评论">
             <template #prefix><Search :size="16" /></template>
           </SpInput>
-          <span>价格、评分、评论数、热度和更新时间均取自导入文件</span>
         </div>
         <div class="filters" aria-label="市场商品筛选">
           <select v-model="sourceFilter" aria-label="来源筛选">
             <option value="">全部来源</option>
-            <option v-for="item in sourceOptions" :key="item" :value="item">{{ item }}</option>
+            <option v-for="item in sourceOptions" :key="item" :value="item">
+              {{ formatDataSource(item) }}
+            </option>
           </select>
           <select v-model="siteFilter" aria-label="站点筛选">
             <option value="">全部站点</option>
-            <option v-for="item in siteOptions" :key="item" :value="item">{{ item }}</option>
+            <option v-for="item in siteOptions" :key="item" :value="item">
+              {{ formatSiteName(item) }}
+            </option>
           </select>
           <select v-model="categoryFilter" aria-label="类目筛选">
             <option value="">全部类目</option>
@@ -367,7 +386,9 @@ watch(totalPages, (pages) => {
           </select>
           <select v-model="statusFilter" aria-label="状态筛选">
             <option value="">全部状态</option>
-            <option v-for="item in statusOptions" :key="item" :value="item">{{ item }}</option>
+            <option v-for="item in statusOptions" :key="item" :value="item">
+              {{ formatBusinessStatus(item) }}
+            </option>
           </select>
           <label class="candidate-filter">
             <input v-model="onlyCandidates" type="checkbox" />
@@ -400,7 +421,7 @@ watch(totalPages, (pages) => {
           <tbody>
             <tr v-for="row in paginatedRows" :key="rowKey(row)">
               <td>{{ value(row, "title", "category_name", "content") }}</td>
-              <td>{{ value(row, "source_type") }}</td>
+              <td>{{ formatDataSource(value(row, "source_type")) }}</td>
               <td>{{ value(row, "price", "average_price") }}</td>
               <td>{{ value(row, "rating") }}</td>
               <td>{{ value(row, "review_count") }}</td>
@@ -459,37 +480,34 @@ watch(totalPages, (pages) => {
       >
         <aside class="detail-drawer" role="dialog" aria-modal="true" aria-label="市场商品详情">
           <header class="drawer-header">
-            <div><span>市场记录 / MARKET RECORD</span><strong>市场商品详情</strong></div>
+            <strong>市场商品详情</strong>
             <SpButton variant="ghost" @click="selected = null">关闭</SpButton>
           </header>
           <dl>
             <template v-for="(fieldValue, key) in selected" :key="key">
               <dt>{{ marketFieldLabel(String(key)) }}</dt>
-              <dd>{{ fieldValue }}</dd>
+              <dd>{{ marketFieldValue(String(key), fieldValue) }}</dd>
             </template>
           </dl>
           <section class="review-section" aria-label="商品评论">
             <header>
-              <div>
-                <span>PRODUCT REVIEWS</span>
-                <strong>关联评论（{{ selectedReviews.length }}）</strong>
-              </div>
+              <strong>关联评论（{{ selectedReviews.length }}）</strong>
             </header>
             <p v-if="selectedReviews.length === 0" class="review-empty">
-              当前评论文件中没有与该商品 ID（product_id）匹配的记录。
+              当前评论文件中没有与该商品编号匹配的记录。
             </p>
             <template v-else>
               <article v-for="review in selectedReviews" :key="rowKey(review)" class="review-card">
                 <div class="review-meta">
                   <strong>{{ value(review, "rating") }} / 5</strong>
-                  <span>{{ value(review, "language") }}</span>
+                  <span>{{ formatLanguageName(value(review, "language")) }}</span>
                   <time>{{ value(review, "created_at") }}</time>
                 </div>
                 <p>{{ value(review, "content") }}</p>
                 <p v-if="review.content_zh" class="review-translation">
                   中文：{{ review.content_zh }}
                 </p>
-                <small>评论 ID：{{ value(review, "review_id") }}</small>
+                <small>评论编号：{{ value(review, "review_id") }}</small>
               </article>
             </template>
           </section>

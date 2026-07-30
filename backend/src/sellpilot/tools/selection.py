@@ -25,6 +25,8 @@ class ToolModel(BaseModel):
 class SearchMarketProductsInput(ToolModel):
     site: SiteCode
     category_id: str | None = None
+    category_query: str | None = Field(default=None, min_length=1, max_length=100)
+    product_ids: list[str] | None = Field(default=None, min_length=1, max_length=100)
     min_price: Decimal | None = Field(default=None, ge=0)
     max_price: Decimal | None = Field(default=None, gt=0)
     offset: int = Field(default=0, ge=0)
@@ -52,6 +54,9 @@ class ScoreProductOpportunityInput(SelectionAnalysisRequest):
 
 class ScoreProductOpportunityOutput(ToolModel):
     analysis: dict[str, object]
+    candidate_search: dict[str, object]
+    no_data: bool = False
+    message: str | None = None
 
 
 class CompareProductsInput(ToolModel):
@@ -122,7 +127,23 @@ async def _score(payload: ScoreProductOpportunityInput, context: ToolExecutionCo
         agent_task_id=(context.task_id if context.caller_type is ToolCallerType.WORKFLOW else None),
         manage_agent_task=context.caller_type is not ToolCallerType.WORKFLOW,
     )
-    return ScoreProductOpportunityOutput(analysis=result.model_dump(mode="json"))
+    normalized_filters = {
+        "site": payload.site.value,
+        "category_id": payload.category_id,
+        "category_query": payload.category_query,
+        "min_price": payload.min_price,
+        "max_price": payload.max_price,
+        "limit": payload.limit,
+    }
+    return ScoreProductOpportunityOutput(
+        analysis=result.model_dump(mode="json"),
+        candidate_search={
+            "count": result.total_candidates,
+            "matched_count": result.total_candidates,
+            "is_mock_data": result.is_mock_data,
+            "normalized_filters": normalized_filters,
+        },
+    )
 
 
 async def _compare(payload: CompareProductsInput, context: ToolExecutionContext):

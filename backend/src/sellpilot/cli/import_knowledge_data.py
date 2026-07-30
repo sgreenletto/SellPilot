@@ -46,8 +46,8 @@ def parse_args() -> argparse.Namespace:
 
 async def import_knowledge(data_dir: Path, *, full_rebuild: bool = False) -> dict:
     async with get_session_factory()() as session:
+        service = KnowledgeIngestionService(session)
         try:
-            service = KnowledgeIngestionService(session)
             if full_rebuild:
                 result = await service.import_package(data_dir)
             else:
@@ -65,7 +65,11 @@ async def import_knowledge(data_dir: Path, *, full_rebuild: bool = False) -> dic
             await session.commit()
         except Exception:
             await session.rollback()
+            if full_rebuild:
+                service.rollback_rebuild_vectors()
             raise
+        if full_rebuild:
+            result["removed_replaced_vectors"] = service.finalize_rebuild_vectors()
     return result
 
 

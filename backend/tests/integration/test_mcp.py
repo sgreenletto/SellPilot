@@ -14,7 +14,7 @@ async def test_mcp_server_exposes_only_system_health_and_uses_runtime(
     assert [tool.name for tool in tools] == ["system_health"]
     try:
         result = await server.system_health()
-        assert result["app_version"] == "0.5.0"
+        assert result["app_version"] == "1.0.0"
         assert result["status"] == "ok"
     finally:
         server.mcp_bridge.session_factory_provider = original_provider

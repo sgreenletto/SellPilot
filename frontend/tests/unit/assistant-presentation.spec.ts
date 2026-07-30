@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { localizedErrorMessage, presentTaskResult } from "@/utils/assistantPresentation";
+import {
+  localizedErrorMessage,
+  localizedTaskFailure,
+  presentTaskResult,
+} from "@/utils/assistantPresentation";
 
 describe("Assistant real task result presentation", () => {
   it("renders review counts, sentiment, pain points, and bounded evidence", () => {
@@ -36,6 +40,12 @@ describe("Assistant real task result presentation", () => {
   it("renders selection Top N and distinguishes a true no-data result", () => {
     const ranked = presentTaskResult("selection", {
       no_data: false,
+      candidate_search: {
+        count: 3,
+        matched_count: 3,
+        is_mock_data: true,
+        normalized_filters: { site: "sg", category_id: "CAT008" },
+      },
       analysis: {
         total_candidates: 3,
         ranked_count: 3,
@@ -47,22 +57,38 @@ describe("Assistant real task result presentation", () => {
             total_score: "71.2261",
             data_completeness: "0.5714",
             site: "sg",
+            profit: { margin: "0.1880" },
+            risk_warnings: ["missing growth metric"],
+            is_mock_data: true,
           },
         ],
       },
     });
     const noData = presentTaskResult("selection", {
       no_data: true,
-      message: "当前数据集中没有匹配候选，请调整站点或类目。",
-      candidate_search: { count: 0 },
+      message: "当前数据中没有匹配的候选商品，请调整站点或商品类目。",
+      candidate_search: {
+        count: 0,
+        matched_count: 0,
+        normalized_filters: { site: "sg", category_query: "航空发动机产品" },
+      },
       analysis: null,
     });
 
     expect(ranked.summary).toContain("共评估 3 个候选商品");
     expect(ranked.items[0]?.title).toBe("Baby Safety Corner Guards");
-    expect(ranked.items[0]?.meta).toContain("综合得分：71.2261");
-    expect(noData.summary).toContain("没有匹配候选");
+    expect(ranked.items[0]?.subtitle).toContain("机会总分 71.2261");
+    expect(ranked.items[0]?.meta).toContain("商品编号：PROD0102");
+    expect(ranked.items[0]?.meta).toContain("预估利润率：0.1880");
+    expect(ranked.metrics).toContainEqual({ label: "查询站点", value: "新加坡站" });
+    expect(ranked.metrics).toContainEqual({ label: "查询类目", value: "母婴用品" });
+    expect(ranked.metrics).toContainEqual({ label: "数据来源", value: "模拟市场数据" });
+    expect(noData.summary).toContain("没有匹配的候选商品");
     expect(noData.metrics[0]?.value).toBe("0");
+    expect(noData.metrics).toContainEqual({
+      label: "查询类目",
+      value: "航空发动机产品",
+    });
   });
 
   it("renders generated content and the bounded compliance loop", () => {
@@ -145,5 +171,15 @@ describe("Assistant real task result presentation", () => {
     expect(localizedErrorMessage("External service is unavailable")).toBe(
       "内容生成服务暂时不可用，请稍后重试。",
     );
+  });
+
+  it("shows a safe task failure reason and request id without exposing internals", () => {
+    expect(
+      localizedTaskFailure(
+        "TASK_STATE_TOO_LARGE",
+        "Workflow state exceeds the configured size limit",
+        "request-123",
+      ),
+    ).toBe("任务结果超过安全大小限制，请缩小查询范围后重试。 错误编号：request-123");
   });
 });

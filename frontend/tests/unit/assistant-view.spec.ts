@@ -399,6 +399,27 @@ describe("AssistantView chat workspace", () => {
     expect(router.currentRoute.value.query.task_id).toBe(taskResult.task_id);
   });
 
+  it("shows the server safe failure reason, request id, and retry action", async () => {
+    vi.mocked(taskApi.getTask).mockResolvedValueOnce({
+      ...completedTask,
+      status: "failed",
+      result: null,
+      error_code: "TASK_STATE_TOO_LARGE",
+      error_message: "Workflow state exceeds the configured size limit",
+      safe_error_summary: "Workflow state exceeds the configured size limit",
+      available_actions: ["retry"],
+    });
+    const { wrapper } = await mountView();
+    await sendMessage(wrapper, "分析新加坡站的选品机会");
+
+    expect(wrapper.get('[role="alert"]').text()).toContain(
+      "任务结果超过安全大小限制，请缩小查询范围后重试",
+    );
+    expect(wrapper.get('[role="alert"]').text()).toContain(completedTask.request_id);
+    expect(wrapper.text()).not.toContain("Workflow state exceeds");
+    expect(wrapper.get('[data-testid="assistant-retry"]').text()).toContain("重试");
+  });
+
   it("sends on Enter, keeps Shift+Enter for a new line, and blocks duplicate submissions", async () => {
     let resolvePlan: ((value: AssistantPlan) => void) | undefined;
     vi.mocked(assistantApi.planAssistantMessage).mockImplementationOnce(

@@ -24,6 +24,7 @@ import type {
   ReviewEvidencePage,
 } from "@/types/review-analysis";
 import type { SiteCode } from "@/types/selection";
+import { formatSiteName } from "@/utils/displayLabels";
 
 const route = useRoute();
 const router = useRouter();
@@ -62,7 +63,7 @@ const selectionHandoff = computed(
 );
 
 const siteOptions = ["sg", "my", "ph", "th", "vn", "id"].map((value) => ({
-  label: value.toUpperCase(),
+  label: formatSiteName(value),
   value,
 }));
 const ratingOptions = ["1", "2", "3", "4", "5"].map((value) => ({ label: `${value} 星`, value }));
@@ -138,9 +139,9 @@ const issueTypeLabels: Record<string, string> = {
   description_mismatch: "文案",
   service: "服务",
 };
-const localizedLanguage = (value: string) => languageLabels[value] ?? value;
-const localizedSentiment = (value: string) => sentimentLabels[value] ?? value;
-const localizedIssueType = (value: string) => issueTypeLabels[value] ?? value;
+const localizedLanguage = (value: string) => languageLabels[value] ?? "未知语言";
+const localizedSentiment = (value: string) => sentimentLabels[value] ?? "未知情感";
+const localizedIssueType = (value: string) => issueTypeLabels[value] ?? "其他问题";
 function canonicalTopic(value: string): string {
   if (
     ["material", "size", "size_specification", "wrong_item", "wrong_or_missing_item"].includes(
@@ -154,9 +155,9 @@ function canonicalTopic(value: string): string {
 }
 function evidenceTopicText(label: string, sentiment: string | null | undefined): string {
   if (sentiment === "negative") {
-    return `改进 · ${topicLabels[label] ?? label}`;
+    return `改进 · ${topicLabels[label] ?? "其他主题"}`;
   }
-  return `提及 · ${topicLabels[label] ?? label}`;
+  return `提及 · ${topicLabels[label] ?? "其他主题"}`;
 }
 function reviewMatchesTopic(review: ProductReview): boolean {
   if (!form.topic) return true;
@@ -306,7 +307,7 @@ function query() {
 }
 async function loadReviews(resetPage = true): Promise<void> {
   if (!form.productId.trim()) {
-    error.value = "请输入商品 ID";
+    error.value = "请输入商品编号";
     return;
   }
   loading.value = true;
@@ -426,15 +427,11 @@ watch(
 </script>
 
 <template>
-  <PageContainer
-    eyebrow="市场与选品 / 评论分析"
-    title="评论与产品改良"
-    description="筛选评论，查看情感、涉及方面、改进信号和对应原文。"
-  >
+  <PageContainer>
     <SpCard v-if="selectionHandoff" class="selection-handoff" variant="solid">
       <div>
         <strong>已从智能选品带入商品</strong>
-        <p>{{ form.productId }} · {{ form.site.toUpperCase() }}，请确认评论范围后开始分析。</p>
+        <p>{{ form.productId }} · {{ formatSiteName(form.site) }}，请确认评论范围后开始分析。</p>
       </div>
       <SpButton size="sm" variant="secondary" @click="router.back()">返回智能选品</SpButton>
     </SpCard>
@@ -461,7 +458,7 @@ watch(
         </div>
       </div>
       <div class="filter-grid">
-        <SpInput v-model="form.productId" label="商品 ID" placeholder="例如 PROD0001" />
+        <SpInput v-model="form.productId" label="商品编号" placeholder="例如 PROD0001" />
         <SpInput v-model="form.keyword" label="评论关键词" placeholder="搜索原文或中文译文" />
         <SpSelect v-model="form.site" label="站点" :options="siteOptions" />
         <SpSelect
@@ -537,7 +534,7 @@ watch(
             :key="item.pain_point"
             @click="filterEvidenceLabel(item.pain_point)"
           >
-            <span>{{ topicLabels[item.pain_point] ?? item.pain_point }}</span
+            <span>{{ topicLabels[item.pain_point] ?? "其他主题" }}</span
             ><strong>{{ item.negative_count }} 条</strong>
           </button>
         </div>
@@ -573,7 +570,7 @@ watch(
             <h4>评论主题</h4>
             <div v-if="displayedTopics.length" class="summary-tags">
               <span v-for="item in displayedTopics" :key="item.topic">
-                {{ topicLabels[item.topic] ?? item.topic }} · {{ item.count }}
+                {{ topicLabels[item.topic] ?? "其他主题" }} · {{ item.count }}
               </span>
             </div>
             <small v-else>未识别到明确主题</small>
@@ -582,7 +579,7 @@ watch(
             <h4>高频痛点</h4>
             <div v-if="highFrequencyPainPoints.length" class="summary-tags">
               <span v-for="item in highFrequencyPainPoints" :key="item.pain_point">
-                {{ topicLabels[item.pain_point] ?? item.pain_point }} · {{ item.negative_count }} 条
+                {{ topicLabels[item.pain_point] ?? "其他主题" }} · {{ item.negative_count }} 条
               </span>
             </div>
             <small v-else>
@@ -607,7 +604,7 @@ watch(
             <p>仅展示含明确缺点的评论；同一评论的多个改进方向合并展示。</p>
           </div>
           <button v-if="evidenceLabel" class="clear-filter" @click="changeEvidenceTopic('')">
-            清除“{{ topicLabels[evidenceLabel] ?? evidenceLabel }}”筛选
+            清除“{{ topicLabels[evidenceLabel] ?? "其他主题" }}”筛选
           </button>
         </div>
         <div v-if="groupedEvidence.length" class="evidence-table">

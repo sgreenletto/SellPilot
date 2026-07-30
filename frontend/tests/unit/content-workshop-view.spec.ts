@@ -81,7 +81,7 @@ describe("ContentWorkshopView", () => {
     await flushPromises();
 
     expect(wrapper.findAll("textarea")[1]?.element.value).toContain("商品：USB-C Hub");
-    expect((wrapper.get('input[aria-label="FAQ 问题"]').element as HTMLInputElement).value).toBe(
+    expect((wrapper.get('input[aria-label="常见问题"]').element as HTMLInputElement).value).toBe(
       "有哪些规格？",
     );
     expect(

@@ -1,12 +1,15 @@
 # SellPilot Backend
 
-SellPilot 后端当前发布候选版本为 **0.5.0**，对应 AI 运营助手与跨模块工作流集成里程碑。
+SellPilot 后端当前正式版本为 **1.0.0**。`v0.5.0` 保留为 AI 运营助手与跨模块工作流
+集成的历史里程碑。
 
 当前 `develop` 已包含 PostgreSQL 业务数据、Assistant Task Runtime、统一 Tool/Workflow 注册表、
 智能选品、评论分析、产品改良、内容生成、知识库检索和客服回复建议。所有平台动作继续通过
 适配器和确认边界执行；项目仍为单用户、单模拟店铺和 Mock Shopee 验证环境。
 
-v0.5.0 发布说明见 [`docs/releases/v0.5.0.md`](../docs/releases/v0.5.0.md)；当前不连接真实 Shopee。
+v1.0.0 发布说明见
+[`docs/release/v1.0.0-release-notes.md`](../docs/release/v1.0.0-release-notes.md)；当前不连接
+真实 Shopee。
 
 ## 技术栈
 

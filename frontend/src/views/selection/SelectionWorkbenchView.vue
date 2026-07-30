@@ -36,6 +36,7 @@ import SpInput from "@/components/base/SpInput.vue";
 import SpSelect from "@/components/base/SpSelect.vue";
 import SpSkeleton from "@/components/base/SpSkeleton.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
+import { formatSiteName } from "@/utils/displayLabels";
 import type {
   MetricEvidence,
   SelectionAnalysis,
@@ -51,12 +52,12 @@ const route = useRoute();
 const router = useRouter();
 
 const siteOptions = [
-  { label: "Singapore", value: "sg" },
-  { label: "Malaysia", value: "my" },
-  { label: "Philippines", value: "ph" },
-  { label: "Thailand", value: "th" },
-  { label: "Vietnam", value: "vn" },
-  { label: "Indonesia", value: "id" },
+  { label: "新加坡站", value: "sg" },
+  { label: "马来西亚站", value: "my" },
+  { label: "菲律宾站", value: "ph" },
+  { label: "泰国站", value: "th" },
+  { label: "越南站", value: "vn" },
+  { label: "印度尼西亚站", value: "id" },
 ];
 const supportedSites = siteOptions.map((option) => option.value) as SiteCode[];
 const riskOptions = [
@@ -185,7 +186,7 @@ const categoryOptions = computed(() => [
   { label: "全部类目", value: "__all__" },
   ...Object.entries(categoryCatalog.value)
     .sort(([, left], [, right]) => left.localeCompare(right))
-    .map(([value, name]) => ({ label: `${name}（${value}）`, value })),
+    .map(([value, name]) => ({ label: name, value })),
 ]);
 
 function queryText(key: string, fallback: string): string {
@@ -374,7 +375,7 @@ async function initializeCandidates(preserveAnalysis = false): Promise<void> {
       )[0];
       if (preferredSite && preferredSite[0] !== form.site) {
         form.site = preferredSite[0];
-        selectedSiteNotice = `已按候选清单自动切换到 ${preferredSite[0].toUpperCase()} 站点。`;
+        selectedSiteNotice = `已按候选清单自动切换到${formatSiteName(preferredSite[0])}。`;
       }
     }
     // The market-data handoff historically carried the first saved product's
@@ -465,7 +466,7 @@ function metricLabel(key: string): string {
       profit: "预计利润",
       margin: "利润率",
       data_completeness: "数据完整度",
-    }[key] ?? key
+    }[key] ?? "其他指标"
   );
 }
 

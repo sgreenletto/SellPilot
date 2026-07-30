@@ -19,6 +19,7 @@ import CommercePagination from "@/components/commerce/CommercePagination.vue";
 import StatusBadge from "@/components/data-display/StatusBadge.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
 import { useAppStore } from "@/stores/app";
+import { formatBusinessStatus, formatRiskLevel } from "@/utils/displayLabels";
 import { csvRows } from "@/utils/spreadsheet";
 
 type Row = Record<string, string | number | boolean | null>;
@@ -138,15 +139,6 @@ const healthyListedCount = computed(
 function skuOf(row: Row): Row | undefined {
   return skus.find((sku) => sku.sku_id === row.sku_id);
 }
-function backendStatusLabel(status: unknown): string {
-  const labels: Record<string, string> = {
-    active: "Mock 已上架",
-    draft: "草稿",
-    inactive: "Mock 已下架",
-    archived: "已归档",
-  };
-  return labels[String(status)] ?? `未知状态（${String(status)}）`;
-}
 function backendStatusTone(status: unknown): "active" | "pending" | "failed" {
   if (status === "active") return "active";
   if (status === "draft") return "pending";
@@ -170,15 +162,13 @@ async function loadCurrentShop(): Promise<void> {
     selected.value = new Set();
     draftPage.value = 1;
     inventoryPage.value = 1;
-    const scope =
-      selectedShopId.value === "all" ? "全部模拟店铺" : `来源店铺 ${selectedShopId.value}`;
     dataStatus.value = "backend";
-    dataMessage.value = `已连接后端：当前展示${scope}的 ${listingDrafts.value.length} 个商品和 ${rows.value.length} 条库存记录。`;
+    dataMessage.value = "";
   } catch {
     rows.value = [];
     listingDrafts.value = [];
     dataStatus.value = "error";
-    dataMessage.value = "后端数据读取失败，未使用本地全量 CSV 冒充当前店铺数据。";
+    dataMessage.value = "后端库存读取失败，请检查连接后重试。";
   }
 }
 async function analyzeReplenishment(): Promise<void> {
@@ -237,7 +227,7 @@ async function requestAdjust(targets: Row[]): Promise<void> {
       });
       pendingInventoryTasks.value = new Map(next);
     }
-    notice.value = `已创建 ${next.size} 个库存待确认任务；确认执行后才会修改 Mock 平台库存。`;
+    notice.value = `已创建 ${next.size} 个库存待确认任务；确认执行后才会修改模拟平台库存。`;
   } catch (caught) {
     notice.value = caught instanceof Error ? caught.message : "创建库存待确认任务失败";
   } finally {
@@ -259,7 +249,7 @@ async function confirmInventoryAdjustments(): Promise<void> {
       succeeded += 1;
     }
     pendingInventoryTasks.value = remaining;
-    notice.value = `已确认并执行 ${succeeded} 项库存调整，Mock 平台库存已更新。`;
+    notice.value = `已确认并执行 ${succeeded} 项库存调整，模拟平台库存已更新。`;
     await loadCurrentShop();
   } catch (caught) {
     pendingInventoryTasks.value = remaining;
@@ -279,7 +269,7 @@ async function cancelInventoryAdjustments(): Promise<void> {
       await cancelCommerceOperation(task.confirmationId);
     }
     pendingInventoryTasks.value = new Map();
-    notice.value = "已取消库存待确认任务，未修改 Mock 平台库存。";
+    notice.value = "已取消库存待确认任务，未修改模拟平台库存。";
   } catch (caught) {
     notice.value = caught instanceof Error ? caught.message : "取消库存任务失败";
   } finally {
@@ -318,7 +308,7 @@ async function requestListing(row: Row, publish: boolean): Promise<void> {
     next.set(productId, { confirmationId: confirmation.id, publish });
     pendingStatusTasks.value = next;
     row.listing_result = publish ? "等待确认上架" : "等待确认下架";
-    notice.value = `${productId}：已创建待确认任务 ${confirmation.id.slice(0, 8)}。再次确认后才会修改 Mock 平台数据。`;
+    notice.value = `${productId}：已创建待确认任务 ${confirmation.id.slice(0, 8)}。再次确认后才会修改模拟平台数据。`;
   } catch (caught) {
     notice.value = caught instanceof Error ? caught.message : "创建待确认任务失败";
   } finally {
@@ -335,7 +325,7 @@ async function confirmListing(row: Row): Promise<void> {
     const next = new Map(pendingStatusTasks.value);
     next.delete(productId);
     pendingStatusTasks.value = next;
-    notice.value = `${productId}：已确认执行，Mock 平台商品状态已修改。`;
+    notice.value = `${productId}：已确认执行，模拟平台商品状态已修改。`;
     await loadCurrentShop();
   } catch (caught) {
     notice.value = caught instanceof Error ? caught.message : "确认执行失败";
@@ -354,7 +344,7 @@ async function cancelListing(row: Row): Promise<void> {
     next.delete(productId);
     pendingStatusTasks.value = next;
     row.listing_result = "已取消";
-    notice.value = `${productId}：已取消待确认任务，未修改 Mock 平台数据。`;
+    notice.value = `${productId}：已取消待确认任务，未修改模拟平台数据。`;
   } catch (caught) {
     notice.value = caught instanceof Error ? caught.message : "取消任务失败";
   } finally {
@@ -379,7 +369,7 @@ onMounted(() => void loadCurrentShop());
         ><template #icon><RefreshCw :size="16" /></template>重新加载当前店铺</SpButton
       >
     </header>
-    <p :class="['data-status', `data-status--${dataStatus}`]" role="status">
+    <p v-if="dataMessage" :class="['data-status', `data-status--${dataStatus}`]" role="status">
       {{ dataMessage }}
     </p>
     <section class="metrics">
@@ -391,7 +381,7 @@ onMounted(() => void loadCurrentShop());
         ><span>低库存预警</span></SpCard
       ><SpCard padding="md"
         ><strong>{{ listedCount }}</strong
-        ><span>Mock 已上架</span></SpCard
+        ><span>已上架</span></SpCard
       ><SpCard padding="md"
         ><strong>{{ healthyListedCount }}</strong
         ><span>健康且已上架</span></SpCard
@@ -404,10 +394,7 @@ onMounted(() => void loadCurrentShop());
     <SpCard class="replenishment-agent" padding="lg">
       <template #header>
         <div class="toolbar">
-          <div>
-            <strong>库存健康与补货决策</strong>
-            <p>根据当前店铺近期订单销量、可用库存和安全库存生成可解释建议。</p>
-          </div>
+          <strong>库存健康与补货决策</strong>
           <SpButton
             :loading="replenishmentLoading"
             :disabled="dataStatus !== 'backend' || selectedShopId === 'all'"
@@ -484,7 +471,7 @@ onMounted(() => void loadCurrentShop());
                 <td>
                   <StatusBadge
                     :status="item.risk_level === 'critical' ? 'failed' : 'pending'"
-                    :label="item.risk_level === 'critical' ? '严重' : '预警'"
+                    :label="formatRiskLevel(item.risk_level)"
                   />
                 </td>
                 <td class="reason">{{ item.reason }}</td>
@@ -495,11 +482,7 @@ onMounted(() => void loadCurrentShop());
             </tbody>
           </table>
         </div>
-        <p class="agent-footnote">
-          {{ replenishmentResult.formula_version }} ·
-          {{ replenishmentResult.is_mock_data ? "Mock 数据分析" : "混合来源数据" }} ·
-          本结果只提供决策建议，不会直接修改库存。
-        </p>
+        <p class="agent-footnote">本结果只提供决策建议，不会直接修改库存。</p>
       </template>
       <p v-else-if="!replenishmentLoading" class="agent-empty">
         选择参数并生成建议后，可在这里查看逐 SKU 的销量证据和补货数量。
@@ -516,7 +499,7 @@ onMounted(() => void loadCurrentShop());
               <th>SKU</th>
               <th>价格</th>
               <th>库存检查</th>
-              <th>后端 Mock 状态</th>
+              <th>商品状态</th>
               <th>本次预演</th>
               <th>操作</th>
             </tr>
@@ -539,7 +522,7 @@ onMounted(() => void loadCurrentShop());
               <td>
                 <StatusBadge
                   :status="backendStatusTone(draft.status)"
-                  :label="backendStatusLabel(draft.status)"
+                  :label="formatBusinessStatus(String(draft.status))"
                 />
               </td>
               <td>{{ draft.listing_result || "尚未预演" }}</td>
@@ -566,7 +549,7 @@ onMounted(() => void loadCurrentShop());
                     variant="secondary"
                     :loading="statusOperationLoading.has(String(draft.product_id))"
                     @click="requestListing(draft, true)"
-                    >申请 Mock 上架</SpButton
+                    >申请模拟上架</SpButton
                   >
                   <SpButton
                     v-else
@@ -574,7 +557,7 @@ onMounted(() => void loadCurrentShop());
                     variant="ghost"
                     :loading="statusOperationLoading.has(String(draft.product_id))"
                     @click="requestListing(draft, false)"
-                    >申请 Mock 下架</SpButton
+                    >申请模拟下架</SpButton
                   >
                 </div>
               </td>
@@ -657,7 +640,7 @@ onMounted(() => void loadCurrentShop());
                   :status="
                     Number(row.available_stock) <= Number(row.safety_stock) ? 'failed' : 'active'
                   "
-                  :label="String(row.stock_status)"
+                  :label="formatBusinessStatus(String(row.stock_status))"
                 />
               </td>
               <td>{{ replenish(row) ? `建议补 ${replenish(row)}` : "库存充足" }}</td>

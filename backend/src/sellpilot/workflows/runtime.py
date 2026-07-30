@@ -127,6 +127,8 @@ async def _selection_search_input(
     payload = SearchMarketProductsInput(
         site=context.workflow_input["site"],
         category_id=context.workflow_input.get("category_id"),
+        category_query=context.workflow_input.get("category_query"),
+        product_ids=context.workflow_input.get("product_ids"),
         min_price=context.workflow_input.get("min_price"),
         max_price=context.workflow_input.get("max_price"),
         offset=int(context.workflow_input.get("offset", 0)),
@@ -139,19 +141,6 @@ async def _select_selection_candidate_branch(
     context: TaskExecutionContext,
 ) -> NodeExecutionResult:
     search = dict(context.state.get("last_output") or {})
-    has_candidates = bool(search.get("count"))
-    selected = "score_product_opportunity" if has_candidates else "finish_selection_no_data"
-    return NodeExecutionResult(
-        output={"selected_branch": selected, "candidate_count": search.get("count", 0)},
-        state_updates={"candidate_search": search},
-        next_node=selected,
-    )
-
-
-async def _selection_score_input(
-    context: TaskExecutionContext,
-) -> NodeExecutionResult:
-    search = dict(context.state.get("candidate_search") or {})
     products = search.get("products")
     product_rows = products if isinstance(products, list) else []
     product_ids = [
@@ -159,6 +148,39 @@ async def _selection_score_input(
         for item in product_rows
         if isinstance(item, dict) and item.get("product_id")
     ]
+    candidate_search = {
+        "count": len(product_ids),
+        "matched_count": len(product_ids),
+        "is_mock_data": bool(search.get("is_mock_data", True)),
+        "normalized_filters": {
+            key: context.workflow_input.get(key)
+            for key in (
+                "site",
+                "category_id",
+                "category_query",
+                "min_price",
+                "max_price",
+                "limit",
+            )
+        },
+    }
+    has_candidates = bool(product_ids)
+    selected = "score_product_opportunity" if has_candidates else "finish_selection_no_data"
+    return NodeExecutionResult(
+        output={"selected_branch": selected, "candidate_count": len(product_ids)},
+        state_updates={
+            "candidate_search": candidate_search,
+            "selection_candidate_ids": product_ids,
+        },
+        next_node=selected,
+    )
+
+
+async def _selection_score_input(
+    context: TaskExecutionContext,
+) -> NodeExecutionResult:
+    candidate_ids = context.state.get("selection_candidate_ids")
+    product_ids = [str(item) for item in candidate_ids] if isinstance(candidate_ids, list) else []
     payload = dict(context.workflow_input)
     payload["product_ids"] = product_ids
     payload["offset"] = 0
@@ -166,29 +188,22 @@ async def _selection_score_input(
     return NodeExecutionResult(tool_input=payload)
 
 
-async def _finish_selection_success(
-    context: TaskExecutionContext,
-) -> NodeExecutionResult:
-    output = dict(context.state.get("last_output") or {})
-    return NodeExecutionResult(
-        output={
-            "analysis": output.get("analysis"),
-            "candidate_search": dict(context.state.get("candidate_search") or {}),
-            "no_data": False,
-            "message": None,
-        }
-    )
-
-
 async def _finish_selection_no_data(
     context: TaskExecutionContext,
 ) -> NodeExecutionResult:
+    candidate_search = dict(context.state.get("candidate_search") or {})
+    candidate_search.update(
+        {
+            "reason": "no_matching_candidates",
+            "suggestion": "请调整站点或商品类目后重试。",
+        }
+    )
     return NodeExecutionResult(
         output={
             "analysis": None,
-            "candidate_search": dict(context.state.get("candidate_search") or {}),
+            "candidate_search": candidate_search,
             "no_data": True,
-            "message": "当前数据集中没有匹配候选，请调整站点或类目。",
+            "message": "当前数据中没有匹配的候选商品，请调整站点或商品类目。",
         }
     )
 
@@ -596,17 +611,10 @@ def build_selection_definition(settings: Settings) -> WorkflowDefinition:
                 node_type=WorkflowNodeType.TOOL,
                 tool_name="score_product_opportunity",
                 handler=_selection_score_input,
-                next_node="finish_selection_success",
                 timeout_seconds=min(
                     60,
                     settings.task_max_node_timeout_seconds,
                 ),
-            ),
-            NodeDefinition(
-                name="finish_selection_success",
-                node_type=WorkflowNodeType.FINISH,
-                handler=_finish_selection_success,
-                timeout_seconds=min(5, settings.task_default_node_timeout_seconds),
             ),
             NodeDefinition(
                 name="finish_selection_no_data",
@@ -708,7 +716,7 @@ def build_knowledge_query_definition(settings: Settings) -> WorkflowDefinition:
                 name="search_knowledge",
                 node_type=WorkflowNodeType.TOOL,
                 tool_name="search_knowledge",
-                timeout_seconds=min(30, settings.task_max_node_timeout_seconds),
+                timeout_seconds=min(90, settings.task_max_node_timeout_seconds),
             ),
         ),
         entry_node="search_knowledge",
