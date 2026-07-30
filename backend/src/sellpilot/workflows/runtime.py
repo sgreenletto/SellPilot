@@ -716,7 +716,7 @@ def build_knowledge_query_definition(settings: Settings) -> WorkflowDefinition:
                 name="search_knowledge",
                 node_type=WorkflowNodeType.TOOL,
                 tool_name="search_knowledge",
-                timeout_seconds=min(30, settings.task_max_node_timeout_seconds),
+                timeout_seconds=min(90, settings.task_max_node_timeout_seconds),
             ),
         ),
         entry_node="search_knowledge",

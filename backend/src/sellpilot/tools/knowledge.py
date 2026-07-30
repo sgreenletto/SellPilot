@@ -58,7 +58,7 @@ def build_knowledge_tools() -> tuple[ToolDefinition, ...]:
             input_schema=SearchKnowledgeInput,
             output_schema=SearchKnowledgeOutput,
             risk_level=ToolRiskLevel.READ,
-            timeout_seconds=30,
+            timeout_seconds=90,
             retry_policy=RetryPolicy(
                 max_attempts=1,
                 initial_delay_ms=0,
