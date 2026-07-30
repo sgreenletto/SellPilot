@@ -9,7 +9,7 @@ Assistant plan/create/run、Task 审计、AI 工作流和 Confirmation。密码�
 | 范围                                          | 状态             | 证据/说明                                        |
 | --------------------------------------------- | ---------------- | ------------------------------------------------ |
 | live / ready                                  | AUTOMATED_PASS   | 本机 `127.0.0.1:8000` 健康，PostgreSQL reachable |
-| 登录 / 当前用户 / 平台                        | MANUAL_PASS      | v0.5.0 已真实验收；本轮脚本待交互凭据复跑        |
+| 登录 / 当前用户 / 平台                        | MANUAL_PASS      | v1.0.0 基线已验收；HTTP 脚本仍需交互凭据          |
 | Dashboard / 商品 / 库存 / 订单 / 物流         | AUTOMATED_PASS   | 集成测试与 PostgreSQL 数据摘要                   |
 | Assistant plan / create_only / create_and_run | AUTOMATED_PASS   | 后端集成测试                                     |
 | Step / ToolCall / OperationLog                | AUTOMATED_PASS   | 后端集成测试                                     |
@@ -21,7 +21,7 @@ Assistant plan/create/run、Task 审计、AI 工作流和 Confirmation。密码�
 | 低库存 / 补货建议                             | AUTOMATED_PASS   | READ Tool；不自动改库存                          |
 | Confirmation 取消/确认/幂等                   | AUTOMATED_PASS   | 既有集成测试；HTTP 写 smoke 需显式开关           |
 | RAG Mock smoke                                | AUTOMATED_PASS   | Mock 文档来源明确                                |
-| RAG Chroma 检索                               | AUTOMATED_PASS   | 冷启动 26.08 秒，返回 5 个真实索引来源            |
+| RAG Chroma 检索                               | AUTOMATED_PASS   | 冷启动 26.08 秒，返回 5 个已索引 Mock 来源        |
 | 客服订单/物流/人工 Branch                     | AUTOMATED_PASS   | Branch、风险和草稿测试                           |
 | 客服政策 RAG Branch                           | AUTOMATED_PASS   | 统一 RAG Tool 与 Branch 集成测试通过              |
 | Mock 发送确认                                 | AUTOMATED_PASS   | 仅 Mock，重复确认只写一次                        |

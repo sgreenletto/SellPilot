@@ -113,7 +113,7 @@ flowchart LR
 | 集成 | 平台适配器、只读 MCP 健康工具、统一 Tool 与 Workflow Registry |
 | 工程化 | uv、pytest、Ruff、npm、Docker Compose、GitHub Actions |
 
-前端和后端应用元数据当前均为 `0.5.0`。具体依赖版本以
+前端和后端应用元数据当前均为 `1.0.0`。具体依赖版本以
 [`backend/pyproject.toml`](backend/pyproject.toml)、
 [`backend/uv.lock`](backend/uv.lock) 和
 [`frontend/package-lock.json`](frontend/package-lock.json) 为准。
@@ -442,19 +442,20 @@ GitHub Actions 在面向 `develop` 或 `main` 的 Pull Request 以及这两个�
 - [发布测试报告](docs/testing/release-test-report.md)
 - [安全发布审计](docs/testing/security-release-audit.md)
 - [v0.5.0 发布说明](docs/releases/v0.5.0.md)
+- [v1.0.0 发布说明](docs/release/v1.0.0-release-notes.md)
 - [下一候选版本说明](docs/release/next-release-notes.md)
 - [Git 工作流](docs/git-workflow.md)
 
 ## 当前版本与状态
 
-- 前端与后端权威版本字段：`0.5.0`；
-- 已发布历史里程碑：`v0.5.0`；
-- 当前 `feature/e2e-demo-freeze` 用于 v0.5.0 后的 E2E Demo Freeze 和最终交付收尾；
-- 当前分支不是 v1.0.0，最终发布完成后再按正式流程统一版本；
+- 当前正式版本：`v1.0.0`；
+- `v0.5.0` 保留为 Assistant Workflow Integration 历史里程碑；
+- `release/v1.0.0` 只包含版本元数据和最终发布文档，最终 PR 与 Tag 由发布负责人执行；
 - 发布阻塞、外部模型、知识来源和 Docker 验证状态以
   [发布阻塞清单](docs/testing/post-release-blockers.md)为准。
 
-已发布 Tag 只指向 `main` 的稳定提交，不移动、不覆盖。
+历史 Tag 只指向 `main` 的稳定提交，不移动、不覆盖；`v1.0.0` Tag 仅在发布 PR 合入
+`main` 并完成最终门禁后由发布负责人创建。
 
 ## 团队协作
 

@@ -33,6 +33,9 @@
 
 ## 剩余风险
 
-- 功能分支首次远程 CI 尚未运行。
-- 本机无 Docker，容器运行时安全设置需在有 Docker 的环境复核。
-- 真实知识数据导入时仍需确认来源授权、个人信息脱敏和最小必要范围。
+- `origin/develop@a6fac102` 的
+  [GitHub Actions quality-gates](https://github.com/sgreenletto/SellPilot/actions/runs/30555903586)
+  已通过 backend 与 frontend Job。
+- 本机无 Docker，且当前 CI 未包含 Docker build；容器运行时安全设置仍需在有 Docker
+  的环境复核。
+- 导入非 Mock 知识数据时仍需确认来源授权、个人信息脱敏和最小必要范围。

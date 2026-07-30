@@ -1,25 +1,40 @@
-# 下一候选版本说明
+# v1.0.0 候选版本状态
 
-状态：`NOT_READY`
+状态：`READY_FOR_RELEASE`
 
-本分支用于 v0.5.0 后的 E2E Demo Freeze，不创建或移动任何 Tag。候选范围包括：
+目标版本：`1.0.0`
 
-- 修正知识库空库与真实数据未初始化状态，不再因空数据返回 500；
-- 增加 PostgreSQL Demo 初始化、就绪检查和真实 HTTP E2E smoke；
-- 增加 PostgreSQL + backend + frontend Docker Compose 配置；
-- 增加后端 PostgreSQL 与前端全门禁 GitHub Actions；
-- 完成发布后能力、安全、部署、演示和测试文档；
-- 移除未被页面使用的 Dashboard 硬编码毛利率 API。
-- 修复 Selection 大型中间态超过 Task 状态上限的问题，支持站点范围、类目范围、
-  no-data 与显式候选的统一执行链。
-- Assistant 展示真实 Top N、查询范围、数据来源和安全错误编号。
+基线：`origin/develop@a6fac10210a85f20904f6f32b0b5361c6e005501`
 
-## 未完成验收
+## 已完成
 
-- 知识库已建立 1204 个文档索引，ChromaDB 冷启动真实查询已通过；readiness 仍将
-  全部来源分类为 Mock，若发布要求非 Mock 来源需另行验收。
-- 本机没有 Docker CLI，实际 build/up/health/down 为 `BLOCKED_LOCAL_DOCKER`。
-- 当前分支没有 GitHub Actions 运行记录，需在 PR 上获得首次远程通过证据。
+- Assistant、TaskRunner、WorkflowRegistry、ToolRegistry、ToolExecutor、Confirmation 和
+  Task Center 已完成统一接入；
+- 智能选品、评论分析、产品改良、内容生成、知识库检索、库存、订单、物流和客服编排已
+  完成最终业务验收；
+- RAG Demo 数据完成导入、重建、来源统计、向量检索和无答案拒答，不再保留数据初始化
+  阻塞；
+- PostgreSQL Demo 初始化、就绪检查和真实 HTTP E2E Smoke 已交付；
+- Docker Compose、前后端 Dockerfile 和 GitHub Actions 已交付；
+- 前端正式页面、中文展示、标题、错误状态和 Mock 边界已冻结；
+- 根目录 README、发布说明、安全审计和测试报告已完成最终更新。
 
-如果后续仅修复已发布 v0.5.0 的缺陷，建议使用补丁版本；完成真实 RAG、Docker、CI
-和 Demo Freeze 后再评估下一候选里程碑。只有全部交付验收后才建议 v1.0.0。
+## 发布证据
+
+- 本地完整门禁：后端 375 项测试通过；前端 32 个测试文件、158 项测试通过；
+- Alembic：单一 head `20260728_0007`，无待生成迁移；
+- `origin/develop@a6fac102` 的
+  [quality-gates](https://github.com/sgreenletto/SellPilot/actions/runs/30555903586)
+  已通过 backend 与 frontend 两个 Job；
+- 智能选品真实 PostgreSQL API、RAG Chroma 检索与三条业务闭环已有测试和运行记录。
+
+## 非阻塞限制
+
+- 外部模型的鉴权、限流和服务可用性不由项目保证；
+- 本机没有 Docker CLI，且当前 CI 不包含 Docker build Job，容器运行仍需在有 Docker 的
+  环境复核；
+- Vite 大 chunk 和本地开发代理连接探测为已记录的非阻塞警告；
+- Shopee 平台读取与写入继续使用 Mock Adapter。
+
+详细范围见 [`v1.0.0-release-notes.md`](v1.0.0-release-notes.md)。最终 PR、合并和 Tag 由
+发布负责人执行。

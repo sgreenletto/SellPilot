@@ -2,7 +2,7 @@
 
 更新日期：2026-07-30
 
-分支：`feature/e2e-demo-freeze`
+发布基线：`origin/develop@a6fac10210a85f20904f6f32b0b5361c6e005501`
 
 ## 数据与迁移
 
@@ -28,10 +28,16 @@
 | `npm run test:run`                           | 通过：32 files、158 tests                                      |
 | `npm run build`                              | 通过：4096 modules；大 chunk 与代理探测为非阻塞警告             |
 | `docker compose config`                      | BLOCKED_LOCAL_DOCKER：本机无 Docker CLI；YAML 静态格式检查通过 |
+| GitHub Actions `quality-gates`               | 通过：develop 的 backend / frontend Job 均为 success           |
 
 ## 发布结论
 
 智能选品已通过 PostgreSQL 真实 API 验收，详见
-`selection-release-validation.md`。合并最新 develop 后，ChromaDB 冷启动查询在
-26.08 秒内成功并返回 5 个来源。完整代码门禁已通过；当前仍缺 Docker build 或远程
-CI 运行证据，因此结论为 `NOT_READY`。
+`selection-release-validation.md`。ChromaDB 冷启动查询在 26.08 秒内成功并返回 5 个
+已索引 Mock 来源；无答案场景保持拒答。完整本地代码门禁已通过，且
+`origin/develop@a6fac102` 的
+[GitHub Actions quality-gates](https://github.com/sgreenletto/SellPilot/actions/runs/30555903586)
+已成功。
+
+结论：`READY_FOR_RELEASE`。本机无 Docker CLI、当前 CI 未包含 Docker build，作为明确
+记录的非阻塞环境限制，不描述为容器已实跑。
