@@ -8,8 +8,12 @@ export function rememberReviewModuleRoute(fullPath: string): void {
   }
 }
 
-export function resolveReviewModuleEntry(toPath: string, fromPath: string): string | null {
-  if (toPath !== REVIEW_ROOT || fromPath.startsWith(REVIEW_ROOT)) return null;
+export function resolveReviewModuleEntry(
+  toPath: string,
+  fromPath: string,
+  explicitEntry = false,
+): string | null {
+  if (explicitEntry || toPath !== REVIEW_ROOT || fromPath.startsWith(REVIEW_ROOT)) return null;
   const lastRoute = window.sessionStorage.getItem(REVIEW_MODULE_LAST_ROUTE_KEY);
   return lastRoute?.startsWith(IMPROVEMENT_PREFIX) ? lastRoute : null;
 }

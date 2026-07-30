@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
-import { useRouter } from "vue-router";
+import { computed, onMounted, reactive, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { AlertTriangle, RefreshCw, Search, Sparkles } from "@lucide/vue";
 import { FrontendApiError } from "@/api/http";
 import {
@@ -25,6 +25,7 @@ import type {
 } from "@/types/review-analysis";
 import type { SiteCode } from "@/types/selection";
 
+const route = useRoute();
 const router = useRouter();
 const form = reactive({
   productId: "PROD0001",
@@ -52,6 +53,13 @@ const analyzing = ref(false);
 const exporting = ref(false);
 const error = ref("");
 const errorCode = ref("");
+const supportedSites: SiteCode[] = ["sg", "my", "ph", "th", "vn", "id"];
+const selectionHandoff = computed(
+  () =>
+    route.query.source === "selection" &&
+    typeof route.query.product_id === "string" &&
+    route.query.product_id.trim().length > 0,
+);
 
 const siteOptions = ["sg", "my", "ph", "th", "vn", "id"].map((value) => ({
   label: value.toUpperCase(),
@@ -250,6 +258,37 @@ function handleError(reason: unknown): void {
   error.value = apiError?.message ?? (reason instanceof Error ? reason.message : "操作失败");
   errorCode.value = apiError?.code ?? "UNKNOWN_ERROR";
 }
+
+function queryText(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function resetAnalysisResult(): void {
+  result.value = null;
+  evidence.value = null;
+  evidencePage.value = 1;
+  evidenceLabel.value = "";
+  selectedReviewId.value = "";
+}
+
+function applySelectionHandoff(): boolean {
+  if (route.query.source !== "selection") return false;
+  const productId = queryText(route.query.product_id);
+  if (!productId) return false;
+  const requestedSite = queryText(route.query.site) as SiteCode;
+  const site = supportedSites.includes(requestedSite) ? requestedSite : form.site;
+  const targetChanged = form.productId !== productId || form.site !== site;
+  form.productId = productId;
+  form.site = site;
+  if (targetChanged) resetAnalysisResult();
+  return true;
+}
+
+async function loadSelectionHandoff(): Promise<void> {
+  if (!applySelectionHandoff()) return;
+  await loadReviews();
+}
+
 function query() {
   const selectedLanguage = form.language === "all" ? "" : form.language;
   return {
@@ -371,7 +410,19 @@ function locateReview(reviewId: string): void {
     .getElementById(`review-${reviewId}`)
     ?.scrollIntoView({ behavior: "smooth", block: "center" });
 }
-onMounted(loadReviews);
+onMounted(async () => {
+  applySelectionHandoff();
+  await loadReviews();
+});
+watch(
+  () => [route.query.source, route.query.product_id, route.query.site],
+  async (current, previous) => {
+    if (current[0] !== "selection" || current.every((value, index) => value === previous[index])) {
+      return;
+    }
+    await loadSelectionHandoff();
+  },
+);
 </script>
 
 <template>
@@ -380,6 +431,14 @@ onMounted(loadReviews);
     title="评论与产品改良"
     description="筛选评论，查看情感、涉及方面、改进信号和对应原文。"
   >
+    <SpCard v-if="selectionHandoff" class="selection-handoff" variant="solid">
+      <div>
+        <strong>已从智能选品带入商品</strong>
+        <p>{{ form.productId }} · {{ form.site.toUpperCase() }}，请确认评论范围后开始分析。</p>
+      </div>
+      <SpButton size="sm" variant="secondary" @click="router.back()">返回智能选品</SpButton>
+    </SpCard>
+
     <div v-if="error" class="alert" role="alert">
       <AlertTriangle :size="18" />
       <div>
@@ -652,6 +711,20 @@ onMounted(loadReviews);
 </template>
 
 <style scoped>
+.selection-handoff {
+  margin-bottom: var(--sp-space-4);
+}
+.selection-handoff :deep(.sp-card__body) {
+  display: flex;
+  gap: var(--sp-space-4);
+  align-items: center;
+  justify-content: space-between;
+}
+.selection-handoff p {
+  margin: var(--sp-space-1) 0 0;
+  color: var(--sp-color-text-muted);
+  font-size: var(--sp-font-sm);
+}
 .filters {
   margin-bottom: var(--sp-space-5);
 }
