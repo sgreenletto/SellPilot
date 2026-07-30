@@ -29,6 +29,7 @@ const searchQuery = ref("");
 const documents = ref<KnowledgeDocumentItem[]>([]);
 const docTotal = ref(0);
 const docLoading = ref(false);
+const categoryCounts = ref<Record<string, number>>({});
 
 const categoryLabels: Record<string, string> = {
   product: "商品知识",
@@ -70,20 +71,30 @@ async function loadDocuments() {
   }
 }
 
+async function loadCategoryCounts() {
+  try {
+    const totals = await Promise.all(
+      categoryTabs.map(async (tab) => {
+        const response = await fetchDocuments({
+          page_size: 1,
+          category: tab.key || undefined,
+        });
+        return [tab.key, response.total] as const;
+      }),
+    );
+    categoryCounts.value = Object.fromEntries(totals);
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "未知错误";
+    ElMessage.error(`加载分类统计失败：${msg}`);
+  }
+}
+
 const filteredDocs = computed(() => {
   if (!searchQuery.value.trim()) return documents.value;
   const q = searchQuery.value.trim().toLowerCase();
   return documents.value.filter(
     (d) => d.title.toLowerCase().includes(q) || (d.source ?? "").toLowerCase().includes(q),
   );
-});
-
-const categoryCounts = computed(() => {
-  const m: Record<string, number> = { "": docTotal.value };
-  documents.value.forEach((d) => {
-    m[d.category] = (m[d.category] ?? 0) + 1;
-  });
-  return m;
 });
 
 async function handleDelete(doc: KnowledgeDocumentItem) {
@@ -96,13 +107,16 @@ async function handleDelete(doc: KnowledgeDocumentItem) {
     await deleteDocument(doc.id);
     documents.value = documents.value.filter((d) => d.id !== doc.id);
     docTotal.value = Math.max(0, docTotal.value - 1);
+    await loadCategoryCounts();
     ElMessage.success("已删除");
   } catch {
     // 用户取消
   }
 }
 
-onMounted(loadDocuments);
+onMounted(() => {
+  void Promise.all([loadDocuments(), loadCategoryCounts()]);
+});
 watch(activeCategory, () => loadDocuments());
 
 // ==================== 检索测试 ====================
