@@ -2,7 +2,7 @@ import { request } from "@/api/http";
 import { listInventory, listOrders, listProducts } from "@/api/commerce";
 import type { InventoryItem, Order, Product } from "@/types/commerce";
 import type { PaginatedResponse, TaskDetail } from "@/types/contracts";
-import type { DashboardMetric, TrendDataset } from "@/types/dashboard";
+import type { TrendDataset } from "@/types/dashboard";
 
 export interface CustomerServiceStats {
   pending_count: number;
@@ -76,57 +76,6 @@ export async function fetchFunnelData(): Promise<FunnelData[]> {
       percentage: total ? Math.round((inactive / total) * 100) : 0,
     },
     { label: "草稿", count: draft, percentage: total ? Math.round((draft / total) * 100) : 0 },
-  ];
-}
-
-// ---- Dashboard 指标 ----
-
-export async function fetchDashboardMetrics(): Promise<DashboardMetric[]> {
-  const [products, orders, inventory, tasks] = await Promise.all([
-    fetchProducts({ limit: 100 }),
-    fetchOrders({ limit: 100 }),
-    fetchInventory({ limit: 200 }),
-    fetchTasks({ page_size: 1 }),
-  ]);
-
-  const lowStock = inventory.filter((i) => i.stock_status === "low_stock").length;
-
-  return [
-    {
-      id: "total-products",
-      label: "商品总数",
-      value: String(products.length),
-      tone: "navy",
-      icon: "package",
-    },
-    {
-      id: "low-stock",
-      label: "低库存 SKU",
-      value: String(lowStock),
-      tone: "pink",
-      icon: "alert",
-    },
-    {
-      id: "total-orders",
-      label: "模拟订单数",
-      value: String(orders.length),
-      tone: "blue",
-      icon: "trend",
-    },
-    {
-      id: "margin",
-      label: "预计毛利率",
-      value: "34.8%",
-      tone: "pink",
-      icon: "trend",
-    },
-    {
-      id: "pending-tasks",
-      label: "任务总数",
-      value: String(tasks.total),
-      tone: "green",
-      icon: "check",
-    },
   ];
 }
 
