@@ -13,13 +13,14 @@ import SpBadge from "@/components/base/SpBadge.vue";
 import SpButton from "@/components/base/SpButton.vue";
 import SpInput from "@/components/base/SpInput.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
+import { formatBusinessStatus } from "@/utils/displayLabels";
 
 // ==================== 文档列表 ====================
 
 const categoryTabs = [
   { key: "", label: "全部" },
   { key: "product", label: "商品知识" },
-  { key: "faq", label: "客服FAQ" },
+  { key: "faq", label: "客服常见问题" },
   { key: "review", label: "用户评论" },
 ];
 
@@ -31,9 +32,23 @@ const docLoading = ref(false);
 
 const categoryLabels: Record<string, string> = {
   product: "商品知识",
-  faq: "客服FAQ",
+  faq: "客服常见问题",
   review: "用户评论",
 };
+const knowledgeStatusLabels: Record<string, string> = {
+  pending: "待处理",
+  processing: "处理中",
+  indexed: "已建立索引",
+  failed: "处理失败",
+};
+
+function categoryLabel(value: string): string {
+  return categoryLabels[value] ?? "其他分类";
+}
+
+function knowledgeStatusLabel(value: string): string {
+  return knowledgeStatusLabels[value] ?? formatBusinessStatus(value);
+}
 
 const statusTone = (s: string) =>
   s === "indexed" ? "success" : s === "failed" ? "danger" : "warning";
@@ -180,11 +195,13 @@ function scoreClass(s: number) {
                   </div>
                 </td>
                 <td>
-                  <SpBadge tone="info">{{ categoryLabels[doc.category] ?? doc.category }}</SpBadge>
+                  <SpBadge tone="info">{{ categoryLabel(doc.category) }}</SpBadge>
                 </td>
                 <td class="kb-cell-source">{{ doc.source || "-" }}</td>
                 <td>
-                  <SpBadge :tone="statusTone(doc.status)" dot>{{ doc.status }}</SpBadge>
+                  <SpBadge :tone="statusTone(doc.status)" dot>{{
+                    knowledgeStatusLabel(doc.status)
+                  }}</SpBadge>
                 </td>
                 <td>{{ doc.chunk_count }}</td>
                 <td>

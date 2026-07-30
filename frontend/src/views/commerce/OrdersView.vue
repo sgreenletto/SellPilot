@@ -20,6 +20,16 @@ import CommercePagination from "@/components/commerce/CommercePagination.vue";
 import StatusBadge from "@/components/data-display/StatusBadge.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
 import { useAppStore } from "@/stores/app";
+import {
+  formatAfterSaleReason,
+  formatAfterSaleType,
+  formatBusinessStatus,
+  formatCustomerIntent,
+  formatLanguageName,
+  formatLogisticsText,
+  formatRiskLevel,
+  formatSenderType,
+} from "@/utils/displayLabels";
 import { csvRows, sheetRows } from "@/utils/spreadsheet";
 
 type Row = Record<string, string | number | boolean | null>;
@@ -61,15 +71,13 @@ async function loadCurrentShop(): Promise<void> {
       orders.value[0] ??
       null;
     currentPage.value = 1;
-    const scope =
-      selectedShopId.value === "all" ? "全部模拟店铺" : `来源店铺 ${selectedShopId.value}`;
     dataStatus.value = "backend";
-    dataMessage.value = `已连接后端：当前展示${scope}的 ${orders.value.length} 笔订单；商品明细、物流、售后和客服关联来自同一 Mock 数据包。`;
+    dataMessage.value = "";
   } catch {
     orders.value = [];
     selected.value = null;
     dataStatus.value = "error";
-    dataMessage.value = "后端订单读取失败，未使用本地全量 CSV 冒充当前店铺数据。";
+    dataMessage.value = "后端订单读取失败，请检查连接后重试。";
   }
 }
 
@@ -137,7 +145,7 @@ function aiSuggestion(): string {
   if (logisticsException.value)
     return "建议优先核对最新物流轨迹，告知买家异常位置和下一步处理计划。";
   if (customerSession.value)
-    return `已关联 ${customerSession.value.intent} 会话，建议结合买家语言生成回复草稿。`;
+    return `已关联${formatCustomerIntent(String(customerSession.value.intent))}会话，建议结合买家语言生成回复草稿。`;
   return "当前没有关联客服会话，建议仅基于订单与物流事实生成脱敏回复草稿。";
 }
 function mask(value: unknown): string {
@@ -163,20 +171,15 @@ onMounted(() => void loadCurrentShop());
 
 <template>
   <PageContainer>
-    <header class="heading">
-      <div>
-        <p class="eyebrow">MOCK SHOPEE · 订单与履约</p>
-        <h1>订单与履约</h1>
-        <p>查看脱敏订单、状态、物流轨迹、异常及售后记录。</p>
-      </div>
+    <div class="orders-actions">
       <label class="file-button"
         ><FileSpreadsheet :size="16" />导入模拟订单<input
           type="file"
           accept=".csv,.xlsx,.xls"
           @change="importOrders"
       /></label>
-    </header>
-    <p :class="['data-status', `data-status--${dataStatus}`]" role="status">
+    </div>
+    <p v-if="dataMessage" :class="['data-status', `data-status--${dataStatus}`]" role="status">
       {{ dataMessage }}
     </p>
     <p v-if="notice" class="notice">{{ notice }}</p>
@@ -218,7 +221,12 @@ onMounted(() => void loadCurrentShop());
                 </td>
                 <td>{{ mask(order.buyer_id) }}</td>
                 <td>{{ order.currency }} {{ order.total_amount }}</td>
-                <td><StatusBadge status="active" :label="String(order.order_status)" /></td>
+                <td>
+                  <StatusBadge
+                    status="active"
+                    :label="formatBusinessStatus(String(order.order_status))"
+                  />
+                </td>
               </tr>
             </tbody>
           </table>
@@ -239,9 +247,9 @@ onMounted(() => void loadCurrentShop());
           <dt>买家信息</dt>
           <dd>{{ mask(selected.buyer_id) }}（已脱敏）</dd>
           <dt>支付状态</dt>
-          <dd>{{ selected.payment_status }}</dd>
+          <dd>{{ formatBusinessStatus(String(selected.payment_status)) }}</dd>
           <dt>订单状态</dt>
-          <dd>{{ selected.order_status }}</dd>
+          <dd>{{ formatBusinessStatus(String(selected.order_status)) }}</dd>
         </dl>
         <h3>商品明细</h3>
         <ul>
@@ -258,8 +266,8 @@ onMounted(() => void loadCurrentShop());
             ><small>{{ timestamp }}</small>
           </li>
           <li>
-            <strong>当前状态：{{ selected.order_status }}</strong>
-            <small>支付状态：{{ selected.payment_status }}</small>
+            <strong>当前状态：{{ formatBusinessStatus(String(selected.order_status)) }}</strong>
+            <small>支付状态：{{ formatBusinessStatus(String(selected.payment_status)) }}</small>
           </li>
         </ol>
         <h3><Truck :size="17" />物流运单与轨迹</h3>
@@ -269,12 +277,12 @@ onMounted(() => void loadCurrentShop());
           <dt>预计送达</dt>
           <dd>{{ shipment.estimated_delivery_at || "待更新" }}</dd>
           <dt>物流状态</dt>
-          <dd>{{ shipment.logistics_status }}</dd>
+          <dd>{{ formatBusinessStatus(String(shipment.logistics_status)) }}</dd>
           <dt>异常标记</dt>
           <dd>
             {{
               logisticsException
-                ? `异常 · ${shipmentTracks[0]?.description || "等待处理记录"}`
+                ? `异常 · ${formatLogisticsText(String(shipmentTracks[0]?.description || ""))}`
                 : "无异常"
             }}
           </dd>
@@ -282,36 +290,53 @@ onMounted(() => void loadCurrentShop());
         <p v-else>暂无物流运单</p>
         <ol class="timeline">
           <li v-for="track in shipmentTracks" :key="String(track.track_id)">
-            <strong>{{ track.status }}</strong> · {{ track.location
-            }}<small>{{ track.event_time }} · {{ track.description }}</small>
+            <strong>{{ formatBusinessStatus(String(track.status)) }}</strong> ·
+            {{ formatLogisticsText(String(track.location)) }}
+            <small
+              >{{ track.event_time }} · {{ formatLogisticsText(String(track.description)) }}</small
+            >
           </li>
         </ol>
         <h3>物流异常处理记录</h3>
         <p v-if="exceptionRecords.length === 0">当前运单没有异常处理记录。</p>
         <ol v-else class="timeline">
           <li v-for="record in exceptionRecords" :key="String(record.track_id)">
-            <strong>{{ record.status }} · {{ record.location }}</strong>
-            <small>{{ record.event_time }} · {{ record.description }}</small>
+            <strong
+              >{{ formatBusinessStatus(String(record.status)) }} ·
+              {{ formatLogisticsText(String(record.location)) }}</strong
+            >
+            <small
+              >{{ record.event_time }} ·
+              {{ formatLogisticsText(String(record.description)) }}</small
+            >
           </li>
         </ol>
         <h3>取消、退款、退货和包裹异常</h3>
         <p v-if="afterSales.length === 0">当前订单暂无售后记录。</p>
         <ul v-else>
           <li v-for="item in afterSales" :key="String(item.return_id)">
-            {{ item.request_type }} · {{ item.reason_type }} · {{ item.status }} · {{ item.amount }}
+            {{ formatAfterSaleType(String(item.request_type)) }} ·
+            {{ formatAfterSaleReason(String(item.reason_type)) }} ·
+            {{ formatBusinessStatus(String(item.status)) }} · {{ item.amount }}
           </li>
         </ul>
         <h3><Sparkles :size="17" />关联客服与 AI 建议</h3>
         <dl v-if="customerSession">
           <dt>会话</dt>
-          <dd>{{ customerSession.session_id }} · {{ customerSession.intent }}</dd>
+          <dd>
+            {{ customerSession.session_id }} ·
+            {{ formatCustomerIntent(String(customerSession.intent)) }}
+          </dd>
           <dt>语言 / 风险</dt>
-          <dd>{{ customerSession.language }} · {{ customerSession.risk_level }}</dd>
+          <dd>
+            {{ formatLanguageName(String(customerSession.language)) }} ·
+            {{ formatRiskLevel(String(customerSession.risk_level)) }}
+          </dd>
         </dl>
         <p v-else>当前订单没有关联客服会话。</p>
         <ul v-if="conversationMessages.length">
           <li v-for="message in conversationMessages.slice(-3)" :key="String(message.message_id)">
-            {{ message.sender_type }}：{{ message.content }}
+            {{ formatSenderType(String(message.sender_type)) }}：{{ message.content }}
           </li>
         </ul>
         <p><strong>AI 处理建议：</strong>{{ aiSuggestion() }}</p>
@@ -321,30 +346,20 @@ onMounted(() => void loadCurrentShop());
 </template>
 
 <style scoped>
-.heading,
+.orders-actions,
 .filters {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-space-3);
 }
-.heading {
+.orders-actions {
+  justify-content: flex-end;
   margin-bottom: var(--sp-space-6);
 }
-.heading h1 {
-  margin: 4px 0;
-  font-size: var(--sp-font-page-title);
-}
-.heading p,
 small,
 .detail p {
   color: var(--sp-color-text-secondary);
-}
-.eyebrow {
-  color: var(--sp-color-accent-blue) !important;
-  font-size: var(--sp-font-xs);
-  font-weight: 750;
-  letter-spacing: 0.1em;
 }
 .workspace {
   display: grid;

@@ -286,7 +286,7 @@ describe("成员二业务工作台", () => {
       global: { plugins: [createPinia()] },
     });
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain("已连接后端");
+      expect(wrapper.text()).toContain("USB-C Hub Essential 001");
     });
     expect(wrapper.text()).toContain("USB-C Hub Essential 001");
     expect(wrapper.text()).toContain("SKU、规格、价格和库存");
@@ -294,8 +294,8 @@ describe("成员二业务工作台", () => {
     expect(wrapper.get(".commerce-pagination").text()).toContain("共 2 条 · 第 1 / 1 页");
     expect(wrapper.findAll("tbody tr")).toHaveLength(2);
     expect(wrapper.get(".form-grid select").findAll("option")).toHaveLength(9);
-    expect(wrapper.text()).toContain("系统状态代码：active");
-    expect(wrapper.find('input[value="Active"]').exists()).toBe(true);
+    expect(wrapper.text()).not.toContain("系统状态代码：active");
+    expect(wrapper.find('input[value="在售"]').exists()).toBe(true);
     expect(
       String((wrapper.get(".form-grid textarea").element as HTMLTextAreaElement).value).length,
     ).toBeGreaterThan(180);
@@ -320,7 +320,7 @@ describe("成员二业务工作台", () => {
       "value",
       "",
     );
-    expect(wrapper.text()).toContain("系统状态代码：draft");
+    expect(wrapper.text()).not.toContain("系统状态代码：draft");
     expect(wrapper.text()).toContain("草稿");
     expect(wrapper.text()).toContain("价格（SGD）");
     await wrapper.get(".form-grid textarea").setValue("本地中文商品描述");
@@ -367,7 +367,7 @@ describe("成员二业务工作台", () => {
     const wrapper = mount(ProductsView, {
       global: { plugins: [createPinia()] },
     });
-    await vi.waitFor(() => expect(wrapper.text()).toContain("已连接后端"));
+    await vi.waitFor(() => expect(wrapper.text()).toContain("USB-C Hub Essential 001"));
 
     await wrapper.get(".form-grid select").setValue("zh-CN");
 
@@ -387,11 +387,11 @@ describe("成员二业务工作台", () => {
       global: { plugins: [createPinia()] },
     });
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain("已连接后端");
+      expect(wrapper.text()).toContain("USB-C Hub Essential 001");
     });
 
     expect(wrapper.text()).toContain("上架草稿、预览与完整性检查");
-    expect(wrapper.text()).toContain("Mock 已上架");
+    expect(wrapper.text()).toContain("已上架");
     expect(wrapper.text()).toContain("草稿");
     expect(wrapper.text()).toContain("健康且已上架");
     expect(wrapper.text()).toContain("补货建议");
@@ -404,12 +404,12 @@ describe("成员二业务工作台", () => {
       .find((row) => row.text().includes("USB-C Hub Essential 001"));
     await activeRow!
       .findAll("button")
-      .find((button) => button.text().includes("申请 Mock 下架"))!
+      .find((button) => button.text().includes("申请模拟下架"))!
       .trigger("click");
     await vi.waitFor(() => {
       expect(requestProductStatus).toHaveBeenCalledWith("PROD0001", false);
     });
-    expect(wrapper.text()).toContain("再次确认后才会修改 Mock 平台数据");
+    expect(wrapper.text()).toContain("再次确认后才会修改模拟平台数据");
 
     await activeRow!
       .findAll("button")
@@ -418,7 +418,7 @@ describe("成员二业务工作台", () => {
     await vi.waitFor(() => {
       expect(confirmCommerceOperation).toHaveBeenCalledWith("CONFIRMATION-001");
     });
-    expect(wrapper.text()).toContain("Mock 平台商品状态已修改");
+    expect(wrapper.text()).toContain("模拟平台商品状态已修改");
 
     const adjustButton = wrapper
       .findAll("button")
@@ -427,7 +427,7 @@ describe("成员二业务工作台", () => {
     await vi.waitFor(() => {
       expect(requestInventoryUpdate).toHaveBeenCalledWith("PROD0001", "SKU00001", 148);
     });
-    expect(wrapper.text()).toContain("确认执行后才会修改 Mock 平台库存");
+    expect(wrapper.text()).toContain("确认执行后才会修改模拟平台库存");
 
     await wrapper
       .findAll("button")
@@ -436,7 +436,7 @@ describe("成员二业务工作台", () => {
     await vi.waitFor(() => {
       expect(confirmCommerceOperation).toHaveBeenCalledWith("INVENTORY-CONFIRMATION-001");
     });
-    expect(wrapper.text()).toContain("Mock 平台库存已更新");
+    expect(wrapper.text()).toContain("模拟平台库存已更新");
     expect(wrapper.text()).toContain("→");
   });
 
@@ -444,7 +444,7 @@ describe("成员二业务工作台", () => {
     const wrapper = mount(InventoryView, {
       global: { plugins: [createPinia()] },
     });
-    await vi.waitFor(() => expect(wrapper.text()).toContain("已连接后端"));
+    await vi.waitFor(() => expect(wrapper.text()).toContain("USB-C Hub Essential 001"));
 
     const analyzeButton = wrapper
       .findAll("button")
@@ -471,13 +471,13 @@ describe("成员二业务工作台", () => {
       global: { plugins: [createPinia()] },
     });
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain("已连接后端");
+      expect(wrapper.text()).toContain("ORD000001");
     });
     expect(wrapper.get(".commerce-pagination").text()).toContain("共 3 条 · 第 1 / 1 页");
     expect(wrapper.text()).toContain("（已脱敏）");
     expect(wrapper.text()).toContain("商品明细");
     expect(wrapper.text()).toContain("USB-C Hub Essential 001");
-    expect(wrapper.text()).toContain("Shipment information received");
+    expect(wrapper.text()).toContain("已收到发货信息");
     expect(wrapper.text()).toContain("订单状态流转记录");
     expect(wrapper.text()).toContain("支付完成");
     expect(wrapper.text()).toContain("商品发货");
@@ -492,7 +492,7 @@ describe("成员二业务工作台", () => {
       global: { plugins: [createPinia()] },
     });
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain("已连接后端");
+      expect(wrapper.text()).toContain("ORD000001");
     });
     const linkedOrderId = String(linkedSession.order_id);
     await wrapper.get('input[placeholder="搜索订单号或买家"]').setValue(linkedOrderId);
@@ -504,9 +504,10 @@ describe("成员二业务工作台", () => {
 
     expect(dashboardOrderIds.has(linkedOrderId)).toBe(true);
     expect(wrapper.text()).toContain(String(linkedSession.session_id));
-    expect(wrapper.text()).toContain(String(linkedSession.intent));
+    expect(wrapper.text()).not.toContain(String(linkedSession.intent));
     expect(wrapper.text()).toContain(String(linkedMessage.content));
-    expect(wrapper.text()).toContain(`已关联 ${String(linkedSession.intent)} 会话`);
+    expect(wrapper.text()).toContain("已关联");
+    expect(wrapper.text()).toContain("会话，建议结合买家语言生成回复草稿");
   });
 
   it("订单页根据真实物流状态展示异常", async () => {
@@ -519,7 +520,7 @@ describe("成员二业务工作台", () => {
       global: { plugins: [createPinia()] },
     });
     await vi.waitFor(() => {
-      expect(wrapper.text()).toContain("已连接后端");
+      expect(wrapper.text()).toContain("ORD000001");
     });
     const exceptionOrderId = String(exceptionOrder.order_id);
     await wrapper.get('input[placeholder="搜索订单号或买家"]').setValue(exceptionOrderId);
@@ -531,8 +532,8 @@ describe("成员二业务工作台", () => {
 
     expect(exceptionShipment.order_id).toBe(exceptionOrder.order_id);
     expect(exceptionTrack.tracking_number).toBe(exceptionShipment.tracking_number);
-    expect(wrapper.text()).toContain("物流状态exception");
+    expect(wrapper.text()).toContain("物流状态物流异常");
     expect(wrapper.text()).toContain("异常 ·");
-    expect(wrapper.text()).toContain(String(exceptionTrack.description));
+    expect(wrapper.text()).toContain("运输路线临时异常，需要人工处理");
   });
 });

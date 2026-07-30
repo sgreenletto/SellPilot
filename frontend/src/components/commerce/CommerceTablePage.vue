@@ -16,13 +16,12 @@ import SpSkeleton from "@/components/base/SpSkeleton.vue";
 import StatusBadge from "@/components/data-display/StatusBadge.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
 import type { CommerceRow, InventoryItem, Product } from "@/types/commerce";
+import { formatBusinessStatus, formatSiteName } from "@/utils/displayLabels";
 
 type PageKind = "products" | "inventory" | "orders";
 
 interface Props {
   kind: PageKind;
-  title: string;
-  description: string;
 }
 
 const props = defineProps<Props>();
@@ -88,6 +87,10 @@ function displayValue(row: CommerceRow, key: string): string {
   const value = (row as unknown as Record<string, unknown>)[key];
   if (key === "price" && "currency" in row) return `${row.currency} ${value}`;
   if (key === "total_amount" && "currency" in row) return `${row.currency} ${value}`;
+  if (key === "site") return formatSiteName(String(value));
+  if (["status", "stock_status", "order_status", "payment_status"].includes(key)) {
+    return formatBusinessStatus(String(value));
+  }
   return String(value ?? "—");
 }
 
@@ -162,25 +165,17 @@ onMounted(() => void load());
 
 <template>
   <PageContainer>
-    <header class="page-heading">
-      <div>
-        <p class="eyebrow">MOCK SHOPEE · MEMBER 2</p>
-        <h1>{{ props.title }}</h1>
-        <p>{{ props.description }}</p>
-      </div>
+    <div class="page-actions">
       <SpButton variant="secondary" :loading="loading" @click="load">
         <template #icon><RefreshCw :size="16" /></template>
         刷新
       </SpButton>
-    </header>
+    </div>
 
     <SpCard padding="lg">
       <template #header>
         <div class="toolbar">
-          <div>
-            <strong>模拟业务数据</strong>
-            <span>全部记录均标记为 Mock</span>
-          </div>
+          <strong>业务数据</strong>
           <input
             v-model="statusFilter"
             class="status-input"
@@ -269,7 +264,7 @@ onMounted(() => void load());
 </template>
 
 <style scoped>
-.page-heading,
+.page-actions,
 .toolbar,
 .pagination {
   display: flex;
@@ -277,22 +272,9 @@ onMounted(() => void load());
   justify-content: space-between;
   gap: var(--sp-space-4);
 }
-.page-heading {
+.page-actions {
+  justify-content: flex-end;
   margin-bottom: var(--sp-space-6);
-}
-.page-heading h1 {
-  margin: 4px 0;
-  font-size: var(--sp-font-page-title);
-}
-.page-heading p,
-.toolbar span {
-  color: var(--sp-color-text-secondary);
-}
-.eyebrow {
-  color: var(--sp-color-accent-blue) !important;
-  font-size: var(--sp-font-xs);
-  font-weight: 750;
-  letter-spacing: 0.12em;
 }
 .toolbar > div {
   display: grid;

@@ -45,6 +45,7 @@ import {
   workflowLabel,
   type AssistantResultPresentation,
 } from "@/utils/assistantPresentation";
+import { formatPlatformMode } from "@/utils/displayLabels";
 
 type AssistantSubmitMode = AssistantExecutionMode | "plan_only";
 type ChatMessageState = "ready" | "loading" | "error";
@@ -120,7 +121,7 @@ const connectionView = computed(() => {
 });
 const platformModeLabel = computed(() => {
   if (!platformStatus.value) return "模式未知";
-  return platformStatus.value.adapter === "mock" ? "Mock 模式" : "Real 模式";
+  return formatPlatformMode(platformStatus.value.adapter);
 });
 
 function readPanelPreference(): boolean | null {

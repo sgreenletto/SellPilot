@@ -27,6 +27,7 @@ import type {
   ImprovementSuggestion,
 } from "@/types/product-improvement";
 import type { ReviewEvidence } from "@/types/review-analysis";
+import { formatSiteName } from "@/utils/displayLabels";
 
 const route = useRoute();
 const router = useRouter();
@@ -139,7 +140,7 @@ function handleError(reason: unknown, fallback: string): void {
 
 async function generate(forceRegenerate = false): Promise<void> {
   if (!analysisId.value.trim()) {
-    error.value = "请从评论分析结果进入，或填写分析 ID。";
+    error.value = "请从评论分析结果进入，或填写分析编号。";
     return;
   }
   loading.value = true;
@@ -381,11 +382,7 @@ onActivated(restoreFromRoute);
 </script>
 
 <template>
-  <PageContainer
-    eyebrow="市场与选品 / 产品改良"
-    title="产品改良报告"
-    description="把评论证据转为可审查、可编辑、需确认后才能生成草稿的改良方案。"
-  >
+  <PageContainer>
     <div class="page-actions">
       <SpButton variant="secondary" @click="router.push('/market/reviews')">
         返回评论分析
@@ -405,7 +402,7 @@ onActivated(restoreFromRoute);
       </div>
       <div class="generator__action">
         <label v-if="!linkedAnalysis">
-          评论分析 ID<input v-model="analysisId" placeholder="粘贴已完成的分析 ID" />
+          评论分析编号<input v-model="analysisId" placeholder="粘贴已完成的分析编号" />
         </label>
         <SpButton :loading="loading" @click="generate(true)">
           {{ error ? "重新生成" : "生成报告" }}
@@ -470,7 +467,7 @@ onActivated(restoreFromRoute);
             <SpBadge :variant="suggestion.priority <= 2 ? 'warning' : 'info'">
               优先级 P{{ suggestion.priority }}
             </SpBadge>
-            <strong>{{ categoryLabels[suggestion.category] ?? suggestion.category }}</strong>
+            <strong>{{ categoryLabels[suggestion.category] ?? "其他改良建议" }}</strong>
             <span class="suggestion__status">{{ statusLabels[suggestion.status] }}</span>
           </header>
           <div class="suggestion__metrics" aria-label="建议依据">
@@ -581,7 +578,7 @@ onActivated(restoreFromRoute);
             <div class="draft-editor__toolbar">
               <div>
                 <strong>{{ activeDraft.source_product_id }} 改良方案</strong>
-                <span>{{ activeDraft.site.toUpperCase() }} · Mock</span>
+                <span>{{ formatSiteName(activeDraft.site) }} · 模拟草稿</span>
               </div>
               <SpButton
                 v-if="activeDraft.id === drafts[0]?.id && !draftEditing"
@@ -688,7 +685,7 @@ onActivated(restoreFromRoute);
               <small>已保存草稿</small>
               <h4>{{ report.source_product_id }} 产品改良方案</h4>
             </div>
-            <SpBadge variant="info">{{ reportSite.toUpperCase() }} · Mock</SpBadge>
+            <SpBadge variant="info">{{ formatSiteName(reportSite) }} · 模拟草稿</SpBadge>
           </header>
           <ol>
             <li v-for="suggestion in savedDraftSuggestions" :key="suggestion.id">

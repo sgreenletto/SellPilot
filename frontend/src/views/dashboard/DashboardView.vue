@@ -23,7 +23,6 @@ import {
   fetchCustomerServiceStats,
   loadCommerceDashboardSnapshot,
 } from "@/api/dashboard";
-import SpBadge from "@/components/base/SpBadge.vue";
 import SpButton from "@/components/base/SpButton.vue";
 import SpEmptyState from "@/components/base/SpEmptyState.vue";
 import DashboardTrendChart from "@/components/charts/DashboardTrendChart.vue";
@@ -38,6 +37,7 @@ import type {
   TrendType,
 } from "@/types/dashboard";
 import { useAppStore } from "@/stores/app";
+import { formatOperationType } from "@/utils/displayLabels";
 
 const router = useRouter();
 const appStore = useAppStore();
@@ -74,19 +74,6 @@ const trendTabs: { key: TrendType; label: string }[] = [
 const currentDataset = computed(
   () => datasets.value[trendType.value] ?? { categories: [], series: [] },
 );
-const currentTrendSource = computed(() => {
-  if (dataStatus.value !== "backend") {
-    return { label: "合成 Mock 演示数据", tone: "info" as const };
-  }
-  if (trendType.value === "sentiment") {
-    return { label: "后端商品评分代理数据", tone: "warning" as const };
-  }
-  if (trendType.value === "service") {
-    return { label: "后端订单状态代理数据", tone: "warning" as const };
-  }
-  return { label: "当前店铺后端数据", tone: "success" as const };
-});
-
 function orderTrend(orders: Awaited<ReturnType<typeof loadCommerceDashboardSnapshot>>["orders"]) {
   const counts = new Map<string, number>();
   for (const order of orders) {
@@ -229,8 +216,8 @@ async function loadBackendDashboard(): Promise<void> {
       alerts.push({
         id: `confirmation-${firstConfirmation.id}`,
         type: "info",
-        title: "待确认 Mock 操作",
-        description: `当前店铺共有 ${pendingConfirmations.length} 个待确认任务，目标 ${firstConfirmation.target_id}，操作 ${firstConfirmation.operation_type}。`,
+        title: "待确认模拟操作",
+        description: `当前店铺共有 ${pendingConfirmations.length} 个待确认任务，目标 ${firstConfirmation.target_id}，操作 ${formatOperationType(firstConfirmation.operation_type)}。`,
         linkTo: "/tasks",
         linkLabel: "查看任务",
         timestamp: backendTimestamp(firstConfirmation.created_at),
@@ -241,8 +228,8 @@ async function loadBackendDashboard(): Promise<void> {
       ...shopConfirmations.slice(0, 4).map((confirmation): RecentActivity => ({
         id: `confirmation-activity-${confirmation.id}`,
         type: "task",
-        action: "Mock 操作确认",
-        target: `${confirmation.target_id} · ${confirmation.operation_type}`,
+        action: "模拟操作确认",
+        target: `${confirmation.target_id} · ${formatOperationType(confirmation.operation_type)}`,
         status:
           confirmation.status === "succeeded"
             ? "completed"
@@ -325,14 +312,12 @@ async function loadBackendDashboard(): Promise<void> {
     datasets.value.sentiment = buildReviewSentimentTrend(snapshot);
     datasets.value.service = buildServiceIssueTrend(snapshot);
     dataStatus.value = "backend";
-    const scopeLabel =
-      selectedShopId.value === "all" ? "全部模拟店铺" : `来源店铺 ${selectedShopId.value}`;
-    dataMessage.value = `已连接后端：当前展示${scopeLabel}的商品、库存、订单及明确标识的派生指标。`;
+    dataMessage.value = "";
   } catch {
     dashboardAlerts.value = [];
     dashboardActivities.value = [];
     dataStatus.value = "fallback";
-    dataMessage.value = "后端未连接，当前展示明确标识的合成 Mock 演示数据。";
+    dataMessage.value = "后端未连接";
   }
 }
 
@@ -379,7 +364,7 @@ watch(selectedShopId, () => {
 <template>
   <PageContainer>
     <div class="dashboard">
-      <p :class="['data-status', `data-status--${dataStatus}`]" role="status">
+      <p v-if="dataMessage" :class="['data-status', `data-status--${dataStatus}`]" role="status">
         {{ dataMessage }}
       </p>
       <!-- ==================== 1. 顶部指标卡 ==================== -->
@@ -437,7 +422,6 @@ watch(selectedShopId, () => {
                 {{ tab.label }}
               </button>
             </div>
-            <SpBadge :tone="currentTrendSource.tone" dot>{{ currentTrendSource.label }}</SpBadge>
           </header>
           <DashboardTrendChart :dataset="currentDataset" :trend-type="trendType" />
 
@@ -459,7 +443,7 @@ watch(selectedShopId, () => {
         <!-- 异常提醒 & 今日待办 -->
         <aside class="dash-card alerts-card" aria-label="异常提醒与今日待办">
           <header class="dash-card__header">
-            <h3 class="dash-card__title">异常提醒 &amp; 今日待办</h3>
+            <h3 class="dash-card__title">异常提醒与今日待办</h3>
           </header>
           <SpEmptyState
             v-if="dashboardAlerts.length === 0"

@@ -230,7 +230,8 @@ describe("SelectionWorkbenchView", () => {
     expect(wrapper.get('.candidate-card input[type="checkbox"]').element).toMatchObject({
       checked: true,
     });
-    expect(wrapper.text()).toContain("已按候选清单自动切换到 ID 站点");
+    expect(wrapper.text()).toContain("已按候选清单自动切换到印度尼西亚站");
+    expect(wrapper.text()).not.toContain("已按候选清单自动切换到 ID 站点");
   });
 
   it("reloads candidates immediately when the operator changes site", async () => {

@@ -10,6 +10,7 @@ import SpButton from "@/components/base/SpButton.vue";
 import SpInput from "@/components/base/SpInput.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
 import type { Logistics, Order, Product } from "@/types/commerce";
+import { formatBusinessStatus, formatSiteName } from "@/utils/displayLabels";
 
 // ==================== 会话消息 ====================
 
@@ -70,7 +71,7 @@ function scrollBottom() {
 const catOptions = [
   { label: "全部知识", value: "" },
   { label: "商品知识", value: "product" },
-  { label: "客服FAQ", value: "faq" },
+  { label: "客服常见问题", value: "faq" },
   { label: "用户评论", value: "review" },
 ];
 
@@ -111,16 +112,12 @@ const orderStatusTone = (s: string) =>
     <div class="cs-workspace">
       <!-- ===== 左：聊天区 ===== -->
       <main class="cs-chat">
-        <header class="cs-chat-hd">
-          <Bot :size="20" /><strong>模拟买家咨询</strong>
-          <span class="cs-hint">输入买家问题，AI 自动检索知识库回复</span>
-        </header>
+        <header class="cs-chat-hd"><Bot :size="20" /><strong>模拟买家咨询</strong></header>
 
         <div id="chat-msgs" class="cs-msgs">
           <div v-if="messages.length === 0" class="cs-empty">
             <Bot :size="42" />
             <p>输入买家问题开始模拟</p>
-            <span>AI 将从商品知识、用户评论、客服FAQ 中检索回答</span>
           </div>
           <div
             v-for="m in messages"
@@ -173,9 +170,9 @@ const orderStatusTone = (s: string) =>
       <aside class="cs-ctx">
         <div class="cs-ctx-card">
           <h4><Package :size="15" /> 关联商品</h4>
-          <SpInput v-model="productId" placeholder="商品 ID，如 PROD0001" clearable />
+          <SpInput v-model="productId" placeholder="商品编号，如 PROD0001" clearable />
           <h4 style="margin-top: 12px"><Truck :size="15" /> 关联订单</h4>
-          <SpInput v-model="orderId" placeholder="订单 ID，如 ORD000252" clearable />
+          <SpInput v-model="orderId" placeholder="订单编号，如 ORD000252" clearable />
           <SpButton size="sm" :loading="ctxLoading" @click="loadContext" style="margin-top: 8px"
             >查询上下文</SpButton
           >
@@ -183,7 +180,7 @@ const orderStatusTone = (s: string) =>
 
         <div v-if="ctxProduct" class="cs-ctx-card">
           <h4><Package :size="15" /> {{ ctxProduct.title }}</h4>
-          <p>{{ ctxProduct.category_name }} · {{ ctxProduct.site }}</p>
+          <p>{{ ctxProduct.category_name }} · {{ formatSiteName(ctxProduct.site) }}</p>
           <p>
             <strong>¥{{ Number(ctxProduct.price).toFixed(2) }}</strong> {{ ctxProduct.currency }} ·
             销量 {{ ctxProduct.sales_count }} · 评分 {{ ctxProduct.rating }}
@@ -193,7 +190,7 @@ const orderStatusTone = (s: string) =>
         <div v-if="ctxOrder" class="cs-ctx-card">
           <h4><Truck :size="15" /> {{ ctxOrder.order_id }}</h4>
           <SpBadge :tone="orderStatusTone(ctxOrder.order_status)">{{
-            ctxOrder.order_status
+            formatBusinessStatus(ctxOrder.order_status)
           }}</SpBadge>
           <p>
             ¥{{ Number(ctxOrder.total_amount).toFixed(2) }} {{ ctxOrder.currency }} ·
@@ -235,11 +232,6 @@ const orderStatusTone = (s: string) =>
   border-bottom: 1px solid #eee;
   font-size: 15px;
 }
-.cs-hint {
-  margin-left: auto;
-  font-size: 12px;
-  color: #999;
-}
 .cs-msgs {
   flex: 1;
   overflow-y: auto;
@@ -260,9 +252,6 @@ const orderStatusTone = (s: string) =>
   margin: 0;
   font-weight: 600;
   color: #999;
-}
-.cs-empty span {
-  font-size: 12px;
 }
 .cs-bubble {
   max-width: 80%;

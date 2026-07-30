@@ -171,8 +171,13 @@ describe("TaskCenterView", () => {
 
   it("loads the real task list and supports an empty state", async () => {
     const wrapper = await mountView();
-    expect(wrapper.text()).toContain("diagnostic");
-    expect(wrapper.text()).toContain("waiting_confirmation");
+    expect(wrapper.text()).toContain("运行诊断");
+    expect(wrapper.text()).toContain("等待确认");
+    expect(wrapper.text()).not.toContain("TaskWorkflowRuntime");
+    expect(wrapper.text()).not.toContain(
+      "查看任务进度、确认风险操作，并按服务端允许的操作继续执行。",
+    );
+    expect(wrapper.findAll("h1")).toHaveLength(0);
 
     vi.mocked(taskApi.listTasks).mockResolvedValueOnce(page([]));
     const refresh = wrapper.findAll("button").find((button) => button.text() === "刷新");
@@ -189,12 +194,27 @@ describe("TaskCenterView", () => {
     expect(taskApi.listTaskToolCalls).toHaveBeenCalledWith("task-1");
     expect(taskApi.listTaskConfirmations).toHaveBeenCalledWith("task-1");
     expect(taskApi.listTaskOperationLogs).toHaveBeenCalledWith("task-1");
-    expect(wrapper.text()).toContain("mock_publish");
+    expect(wrapper.text()).toContain("模拟发布商品");
     expect(wrapper.text()).toContain("等待安全确认");
     expect(wrapper.text()).toContain("synthetic-product");
     expect(wrapper.text()).not.toContain("serialized_state");
-    expect(wrapper.findAll("button").some((button) => button.text() === "resume")).toBe(false);
-    expect(wrapper.findAll("button").some((button) => button.text() === "cancel")).toBe(true);
+    expect(wrapper.findAll("button").some((button) => button.text() === "继续")).toBe(false);
+    expect(wrapper.findAll("button").some((button) => button.text() === "取消")).toBe(true);
+  });
+
+  it("submits localized filters with their original API values", async () => {
+    const wrapper = await mountView();
+    const [statusSelect] = wrapper.findAll("select");
+    await statusSelect?.setValue("succeeded");
+    const applyButton = wrapper.findAll("button").find((button) => button.text() === "应用筛选");
+    await applyButton?.trigger("click");
+    await flushPromises();
+
+    expect(taskApi.listTasks).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: "succeeded" }),
+    );
+    expect(wrapper.text()).toContain("已完成");
+    expect(wrapper.text()).not.toContain("succeeded");
   });
 
   it("requires explicit confirmation and refreshes after confirming", async () => {
@@ -217,7 +237,7 @@ describe("TaskCenterView", () => {
         }),
     );
     const wrapper = await mountView("?task_id=task-1");
-    const cancelButton = wrapper.findAll("button").find((button) => button.text() === "cancel");
+    const cancelButton = wrapper.findAll("button").find((button) => button.text() === "取消");
     await cancelButton?.trigger("click");
 
     expect(cancelButton?.attributes("disabled")).toBeDefined();
