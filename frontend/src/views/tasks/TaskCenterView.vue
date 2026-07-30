@@ -35,6 +35,18 @@ import {
   type TaskStatus,
   type TaskStepDetail,
 } from "@/types/contracts";
+import {
+  formatConfirmationStatus,
+  formatOperationType,
+  formatRiskLevel,
+  formatTaskAction,
+  formatTaskNode,
+  formatTaskNodeType,
+  formatTaskStatus,
+  formatTaskType,
+  formatToolName,
+  formatWorkflowName,
+} from "@/utils/displayLabels";
 
 const route = useRoute();
 const router = useRouter();
@@ -62,19 +74,19 @@ const createdTo = ref("");
 
 const statusOptions: SelectOption[] = [
   { label: "全部状态", value: "__all__" },
-  ...TASK_STATUSES.map((status) => ({ label: status, value: status })),
+  ...TASK_STATUSES.map((status) => ({ label: formatTaskStatus(status), value: status })),
 ];
 const workflowOptions = computed<SelectOption[]>(() => [
-  { label: "全部 Workflow", value: "__all__" },
+  { label: "全部工作流", value: "__all__" },
   ...Array.from(new Set(tasks.value.map((task) => task.workflow_name)))
     .sort()
-    .map((value) => ({ label: value, value })),
+    .map((value) => ({ label: formatWorkflowName(value), value })),
 ]);
 const taskTypeOptions = computed<SelectOption[]>(() => [
   { label: "全部类型", value: "__all__" },
   ...Array.from(new Set(tasks.value.map((task) => task.task_type)))
     .sort()
-    .map((value) => ({ label: value, value })),
+    .map((value) => ({ label: formatTaskType(value), value })),
 ]);
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)));
 
@@ -244,23 +256,16 @@ onMounted(async () => {
 <template>
   <PageContainer>
     <div class="task-center">
-      <header class="task-center__header">
-        <div>
-          <p class="task-center__eyebrow">TaskWorkflowRuntime</p>
-          <h1>任务中心</h1>
-          <p>查看任务进度、确认风险操作，并按服务端允许的操作继续执行。</p>
-        </div>
-        <div class="task-center__header-actions">
-          <span>筛选结果 {{ total }} 条</span>
-          <SpButton variant="secondary" :loading="loading" @click="refreshAll">刷新</SpButton>
-        </div>
-      </header>
+      <div class="task-center__actions">
+        <span>筛选结果 {{ total }} 条</span>
+        <SpButton variant="secondary" :loading="loading" @click="refreshAll">刷新</SpButton>
+      </div>
 
       <SpCard padding="sm">
         <div class="filters">
           <SpSelect v-model="statusFilter" label="状态" :options="statusOptions" />
-          <SpSelect v-model="workflowFilter" label="Workflow" :options="workflowOptions" />
-          <SpSelect v-model="taskTypeFilter" label="Task Type" :options="taskTypeOptions" />
+          <SpSelect v-model="workflowFilter" label="工作流" :options="workflowOptions" />
+          <SpSelect v-model="taskTypeFilter" label="任务类型" :options="taskTypeOptions" />
           <label class="date-field">创建自<input v-model="createdFrom" type="date" /></label>
           <label class="date-field">创建至<input v-model="createdTo" type="date" /></label>
           <div class="filters__actions">
@@ -285,8 +290,8 @@ onMounted(async () => {
             <thead>
               <tr>
                 <th>状态</th>
-                <th>Workflow</th>
-                <th>类型</th>
+                <th>工作流</th>
+                <th>任务类型</th>
                 <th>当前节点</th>
                 <th>创建时间</th>
                 <th>更新时间</th>
@@ -300,14 +305,17 @@ onMounted(async () => {
                 :class="{ 'is-selected': task.id === selectedTaskId }"
               >
                 <td>
-                  <SpBadge :tone="statusTone(task.status)" dot>{{ task.status }}</SpBadge>
+                  <SpBadge :tone="statusTone(task.status)" dot>{{
+                    formatTaskStatus(task.status)
+                  }}</SpBadge>
                   <small v-if="task.waiting_confirmation">等待确认</small>
                 </td>
                 <td>
-                  {{ task.workflow_name }} <small>v{{ task.workflow_version }}</small>
+                  {{ formatWorkflowName(task.workflow_name) }}
+                  <small>v{{ task.workflow_version }}</small>
                 </td>
-                <td>{{ task.task_type }}</td>
-                <td>{{ task.current_node || "—" }}</td>
+                <td>{{ formatTaskType(task.task_type) }}</td>
+                <td>{{ task.current_node ? formatTaskNode(task.current_node) : "—" }}</td>
                 <td>{{ formatTime(task.created_at) }}</td>
                 <td>{{ formatTime(task.updated_at) }}</td>
                 <td>
@@ -349,7 +357,9 @@ onMounted(async () => {
               <h2>任务详情</h2>
               <code>{{ selectedTask.id }}</code>
             </div>
-            <SpBadge :tone="statusTone(selectedTask.status)" dot>{{ selectedTask.status }}</SpBadge>
+            <SpBadge :tone="statusTone(selectedTask.status)" dot>{{
+              formatTaskStatus(selectedTask.status)
+            }}</SpBadge>
           </div>
         </template>
 
@@ -357,16 +367,22 @@ onMounted(async () => {
           <h3>基本信息</h3>
           <dl class="detail-grid">
             <div>
-              <dt>Workflow</dt>
-              <dd>{{ selectedTask.workflow_name }} v{{ selectedTask.workflow_version }}</dd>
+              <dt>工作流</dt>
+              <dd>
+                {{ formatWorkflowName(selectedTask.workflow_name) }} v{{
+                  selectedTask.workflow_version
+                }}
+              </dd>
             </div>
             <div>
-              <dt>Task Type</dt>
-              <dd>{{ selectedTask.task_type }}</dd>
+              <dt>任务类型</dt>
+              <dd>{{ formatTaskType(selectedTask.task_type) }}</dd>
             </div>
             <div>
               <dt>当前节点</dt>
-              <dd>{{ selectedTask.current_node || "—" }}</dd>
+              <dd>
+                {{ selectedTask.current_node ? formatTaskNode(selectedTask.current_node) : "—" }}
+              </dd>
             </div>
             <div>
               <dt>父任务</dt>
@@ -377,7 +393,7 @@ onMounted(async () => {
               <dd>{{ selectedTask.waiting_reason || "—" }}</dd>
             </div>
             <div>
-              <dt>Request ID</dt>
+              <dt>请求编号</dt>
               <dd>
                 <code>{{ selectedTask.request_id }}</code>
               </dd>
@@ -392,45 +408,47 @@ onMounted(async () => {
               :disabled="Boolean(activeOperation)"
               @click="performTaskAction(action)"
             >
-              {{ action }}
+              {{ formatTaskAction(action) }}
             </SpButton>
           </div>
         </section>
 
         <section class="detail-section">
-          <h3>Step 时间线</h3>
+          <h3>执行步骤</h3>
           <div v-if="steps.length" class="timeline">
             <article v-for="step in steps" :key="step.id" class="timeline__item">
               <header>
-                <strong>#{{ step.sequence }} {{ step.node_name }}</strong
-                ><SpBadge :tone="statusTone(step.status)">{{ step.status }}</SpBadge>
+                <strong>#{{ step.sequence }} {{ formatTaskNode(step.node_name) }}</strong
+                ><SpBadge :tone="statusTone(step.status)">{{
+                  formatTaskStatus(step.status)
+                }}</SpBadge>
               </header>
               <p>
-                {{ step.node_type }} · 尝试 {{ step.attempt_count }} 次 ·
+                {{ formatTaskNodeType(step.node_type) }} · 尝试 {{ step.attempt_count }} 次 ·
                 {{ formatTime(step.started_at) }} → {{ formatTime(step.completed_at) }}
               </p>
               <pre>输入：{{ summary(step.input_summary) }}</pre>
               <pre>输出：{{ summary(step.output_summary) }}</pre>
               <small
-                >ToolCall {{ step.tool_call_id || "—" }} · Confirmation
+                >工具调用 {{ step.tool_call_id || "—" }} · 确认任务
                 {{ step.confirmation_id || "—" }}</small
               >
             </article>
           </div>
-          <p v-else class="muted">暂无 Step。</p>
+          <p v-else class="muted">暂无执行步骤。</p>
         </section>
 
         <section class="detail-section">
-          <h3>Confirmation</h3>
+          <h3>确认记录</h3>
           <div class="card-list">
             <article v-for="confirmation in confirmations" :key="confirmation.id" class="sub-card">
               <header>
-                <strong>{{ confirmation.operation_type }}</strong
+                <strong>{{ formatOperationType(confirmation.operation_type) }}</strong
                 ><SpBadge :tone="statusTone(confirmation.status)">{{
-                  confirmation.status
+                  formatConfirmationStatus(confirmation.status)
                 }}</SpBadge>
               </header>
-              <p>风险等级：{{ confirmation.risk_level }}</p>
+              <p>风险等级：{{ formatRiskLevel(confirmation.risk_level) }}</p>
               <p v-if="confirmation.risk_warning">{{ confirmation.risk_warning }}</p>
               <pre>变更前：{{ summary(confirmation.before_snapshot) }}</pre>
               <pre>变更后：{{ summary(confirmation.after_snapshot) }}</pre>
@@ -459,44 +477,50 @@ onMounted(async () => {
                 </SpButton>
               </div>
             </article>
-            <p v-if="!confirmations.length" class="muted">暂无 Confirmation。</p>
+            <p v-if="!confirmations.length" class="muted">暂无确认记录。</p>
           </div>
         </section>
 
         <section class="detail-section">
-          <h3>ToolCall</h3>
+          <h3>工具调用</h3>
           <div class="card-list">
             <article v-for="call in toolCalls" :key="call.id" class="sub-card">
               <header>
-                <strong>{{ call.tool_name }} v{{ call.tool_version }}</strong
-                ><SpBadge :tone="statusTone(call.status)">{{ call.status }}</SpBadge>
+                <strong>{{ formatToolName(call.tool_name) }} v{{ call.tool_version }}</strong
+                ><SpBadge :tone="statusTone(call.status)">{{
+                  formatTaskStatus(call.status)
+                }}</SpBadge>
               </header>
               <p>尝试 {{ call.attempt_count }} 次 · 耗时 {{ call.duration_ms ?? "—" }} ms</p>
               <pre>输入：{{ summary(call.input_summary) }}</pre>
               <pre>输出：{{ summary(call.output_summary) }}</pre>
               <p v-if="call.error_message" class="message--error">{{ call.error_message }}</p>
-              <small>Request ID：{{ call.request_id }}</small>
+              <small>请求编号：{{ call.request_id }}</small>
             </article>
-            <p v-if="!toolCalls.length" class="muted">暂无 ToolCall。</p>
+            <p v-if="!toolCalls.length" class="muted">暂无工具调用。</p>
           </div>
         </section>
 
         <section class="detail-section">
-          <h3>OperationLog</h3>
+          <h3>操作日志</h3>
           <div class="timeline">
             <article v-for="log in operationLogs" :key="log.id" class="timeline__item">
               <header>
-                <strong>{{ formatTime(log.created_at) }} · {{ log.event_type }}</strong
-                ><SpBadge :tone="statusTone(log.status)">{{ log.status }}</SpBadge>
+                <strong
+                  >{{ formatTime(log.created_at) }} ·
+                  {{ formatOperationType(log.event_type) }}</strong
+                ><SpBadge :tone="statusTone(log.status)">{{
+                  formatTaskStatus(log.status)
+                }}</SpBadge>
               </header>
               <p>{{ log.description }}</p>
               <small
-                >Step {{ log.task_step_id || "—" }} · ToolCall {{ log.tool_call_id || "—" }} ·
-                Confirmation {{ log.confirmation_id || "—" }}</small
+                >执行步骤 {{ log.task_step_id || "—" }} · 工具调用 {{ log.tool_call_id || "—" }} ·
+                确认任务 {{ log.confirmation_id || "—" }}</small
               >
-              <small>Request ID：{{ log.request_id }}</small>
+              <small>请求编号：{{ log.request_id }}</small>
             </article>
-            <p v-if="!operationLogs.length" class="muted">暂无 OperationLog。</p>
+            <p v-if="!operationLogs.length" class="muted">暂无操作日志。</p>
           </div>
         </section>
 
@@ -514,8 +538,7 @@ onMounted(async () => {
   display: grid;
   gap: var(--sp-space-6);
 }
-.task-center__header,
-.task-center__header-actions,
+.task-center__actions,
 .detail-title,
 .action-row,
 .pagination,
@@ -525,22 +548,13 @@ article header {
   align-items: center;
   justify-content: space-between;
 }
-.task-center__header {
-  padding-top: var(--sp-space-7);
+.task-center__actions {
+  justify-content: flex-end;
 }
-.task-center__header h1 {
-  margin: var(--sp-space-1) 0;
-}
-.task-center__header p,
+.task-center__actions,
 .muted,
 small {
   color: var(--sp-color-text-muted);
-}
-.task-center__eyebrow {
-  color: var(--sp-color-accent-blue) !important;
-  font-size: var(--sp-font-xs);
-  font-weight: 750;
-  text-transform: uppercase;
 }
 .filters {
   display: grid;

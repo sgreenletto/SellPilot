@@ -35,7 +35,7 @@ function showReportNotice() {
     <template #header>
       <div class="ai-copilot-card__title">
         <span>SellPilot</span>
-        <strong>AI Co-Pilot</strong>
+        <strong>AI 运营助手</strong>
       </div>
     </template>
 

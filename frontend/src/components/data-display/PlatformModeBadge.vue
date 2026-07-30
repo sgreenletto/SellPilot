@@ -3,6 +3,7 @@ import { computed } from "vue";
 
 import SpBadge from "@/components/base/SpBadge.vue";
 import type { PlatformPingData } from "@/api/types";
+import { formatPlatformMode } from "@/utils/displayLabels";
 
 interface Props {
   status: PlatformPingData | null;
@@ -24,15 +25,17 @@ const view = computed(() => {
   }
   if (props.status.adapter === "mock") {
     return {
-      label: props.status.reachable ? "后端已连接" : "Mock 不可用",
+      label: props.status.reachable
+        ? `后端已连接 · ${formatPlatformMode("mock")}`
+        : "模拟平台不可用",
       tone: props.status.reachable ? ("success" as const) : ("danger" as const),
     };
   }
   return {
     label:
       props.status.configured && props.status.reachable
-        ? "Real 模式 · 后端已连接"
-        : "Real Stub 未配置 · 后端未连接",
+        ? `后端已连接 · ${formatPlatformMode("real")}`
+        : "真实平台接口未配置 · 后端未连接",
     tone:
       props.status.configured && props.status.reachable
         ? ("success" as const)

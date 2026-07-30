@@ -49,10 +49,7 @@ watch(
           <Menu :size="20" />
         </SpIconButton>
       </span>
-      <div>
-        <h1>{{ route.meta.title }}</h1>
-        <p>{{ route.meta.description }}</p>
-      </div>
+      <h1>{{ route.meta.title }}</h1>
     </div>
 
     <div class="app-topbar__tools">
@@ -61,7 +58,7 @@ watch(
         v-model="searchQuery"
         class="app-topbar__search"
         type="search"
-        placeholder="搜索（仅本地输入）"
+        placeholder="搜索"
         clearable
       >
         <template #prefix><Search :size="17" /></template>
@@ -101,11 +98,6 @@ watch(
   font-size: var(--sp-font-page-title);
   line-height: 1.14;
   letter-spacing: -0.045em;
-}
-
-.app-topbar__heading p {
-  margin-top: var(--sp-space-1);
-  color: var(--sp-color-text-muted);
 }
 
 .app-topbar__menu {

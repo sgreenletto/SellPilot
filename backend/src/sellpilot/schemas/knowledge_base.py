@@ -149,3 +149,4 @@ class RAGAnswerResponse(ContractModel):
     answer: str
     sources: list[RAGSourceItem] = Field(default_factory=list)
     answer_mode: str = "grounded"
+    knowledge_initialized: bool = True

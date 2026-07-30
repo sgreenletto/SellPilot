@@ -14,6 +14,7 @@ SelectionRiskPreference = Literal["conservative", "balanced", "growth"]
 class SelectionCandidateQuery(ContractModel):
     site: SiteCode
     category_id: str | None = Field(default=None, min_length=1, max_length=100)
+    category_query: str | None = Field(default=None, min_length=1, max_length=100)
     product_ids: list[str] | None = Field(default=None, min_length=1, max_length=100)
     min_price: Decimal | None = Field(default=None, ge=0)
     max_price: Decimal | None = Field(default=None, gt=0)

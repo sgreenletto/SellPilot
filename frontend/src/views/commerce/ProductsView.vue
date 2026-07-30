@@ -25,6 +25,7 @@ import CommercePagination from "@/components/commerce/CommercePagination.vue";
 import StatusBadge from "@/components/data-display/StatusBadge.vue";
 import PageContainer from "@/components/layout/PageContainer.vue";
 import { useAppStore } from "@/stores/app";
+import { formatBusinessStatus, formatSiteName } from "@/utils/displayLabels";
 import { csvRows, sheetRows } from "@/utils/spreadsheet";
 import type { ProductDraftPayload } from "@/types/commerce";
 import type {
@@ -52,15 +53,15 @@ const selected = ref<Row | null>(null);
 const editing = ref(false);
 const activeLanguage = ref("en");
 const languageOptions = [
-  { code: "en", label: "English" },
+  { code: "en", label: "英文" },
   { code: "zh-CN", label: "简体中文" },
-  { code: "zh-TW", label: "繁體中文" },
-  { code: "ms", label: "Bahasa Melayu" },
-  { code: "id", label: "Bahasa Indonesia" },
-  { code: "th", label: "ไทย" },
-  { code: "vi", label: "Tiếng Việt" },
-  { code: "tl", label: "Filipino" },
-  { code: "pt-BR", label: "Português (Brasil)" },
+  { code: "zh-TW", label: "繁体中文" },
+  { code: "ms", label: "马来语" },
+  { code: "id", label: "印度尼西亚语" },
+  { code: "th", label: "泰语" },
+  { code: "vi", label: "越南语" },
+  { code: "tl", label: "菲律宾语" },
+  { code: "pt-BR", label: "巴西葡萄牙语" },
 ] as const;
 interface LocalizedVersion {
   title?: string;
@@ -123,17 +124,15 @@ async function loadCurrentShop(): Promise<void> {
       products.value[0] ??
       null;
     currentPage.value = 1;
-    const scope =
-      selectedShopId.value === "all" ? "全部模拟店铺" : `来源店铺 ${selectedShopId.value}`;
     dataStatus.value = "backend";
-    dataMessage.value = `已连接后端：当前展示${scope}的 ${products.value.length} 个商品。`;
-    history.value.unshift(`从后端加载${scope}商品`);
+    dataMessage.value = "";
+    history.value.unshift("从后端加载商品");
   } catch {
     products.value = [];
     inventory.value = [];
     selected.value = null;
     dataStatus.value = "error";
-    dataMessage.value = "后端商品读取失败，未使用本地全量 CSV 冒充当前店铺数据。";
+    dataMessage.value = "后端商品读取失败，请检查连接后重试。";
   }
 }
 
@@ -258,74 +257,9 @@ const hasLocalizedContent = computed(
     Boolean(localizedDescription.value.trim()) &&
     Boolean(localizedCategory.value.trim()),
 );
-const statusLabels: Record<string, Record<string, string>> = {
-  en: {
-    active: "Active",
-    draft: "Draft",
-    inactive: "Inactive",
-    pending: "Pending",
-    failed: "Failed",
-  },
-  "zh-CN": {
-    active: "在售",
-    draft: "草稿",
-    inactive: "已下架",
-    pending: "待处理",
-    failed: "失败",
-  },
-  "zh-TW": {
-    active: "上架中",
-    draft: "草稿",
-    inactive: "已下架",
-    pending: "待處理",
-    failed: "失敗",
-  },
-  ms: {
-    active: "Aktif",
-    draft: "Draf",
-    inactive: "Tidak aktif",
-    pending: "Menunggu",
-    failed: "Gagal",
-  },
-  id: {
-    active: "Aktif",
-    draft: "Draf",
-    inactive: "Tidak aktif",
-    pending: "Menunggu",
-    failed: "Gagal",
-  },
-  th: {
-    active: "เปิดใช้งาน",
-    draft: "ฉบับร่าง",
-    inactive: "ปิดใช้งาน",
-    pending: "รอดำเนินการ",
-    failed: "ล้มเหลว",
-  },
-  vi: {
-    active: "Đang hoạt động",
-    draft: "Bản nháp",
-    inactive: "Ngừng hoạt động",
-    pending: "Đang chờ",
-    failed: "Thất bại",
-  },
-  tl: {
-    active: "Aktibo",
-    draft: "Draft",
-    inactive: "Hindi aktibo",
-    pending: "Nakabinbin",
-    failed: "Nabigo",
-  },
-  "pt-BR": {
-    active: "Ativo",
-    draft: "Rascunho",
-    inactive: "Inativo",
-    pending: "Pendente",
-    failed: "Falhou",
-  },
-};
 const localizedStatus = computed(() => {
   const statusCode = String(selected.value?.status ?? "");
-  return (statusLabels[activeLanguage.value]?.[statusCode] ?? statusCode) || "—";
+  return statusCode ? formatBusinessStatus(statusCode) : "—";
 });
 
 function draftPayload(row: Row): ProductDraftPayload {
@@ -458,7 +392,7 @@ onMounted(() => {
       </div>
     </header>
 
-    <p :class="['data-status', `data-status--${dataStatus}`]" role="status">
+    <p v-if="dataMessage" :class="['data-status', `data-status--${dataStatus}`]" role="status">
       {{ dataMessage }}
     </p>
     <p v-if="notice" class="notice" role="status">{{ notice }}</p>
@@ -467,7 +401,7 @@ onMounted(() => {
       <SpCard padding="lg">
         <template #header>
           <div class="filters">
-            <SpInput v-model="query" type="search" clearable placeholder="搜索名称、商品 ID 或类目"
+            <SpInput v-model="query" type="search" clearable placeholder="搜索名称、商品编号或类目"
               ><template #prefix><Search :size="16" /></template
             ></SpInput>
             <select v-model="status" aria-label="商品状态筛选">
@@ -500,7 +434,7 @@ onMounted(() => {
                   <strong>{{ product.title }}</strong
                   ><small>{{ product.product_id }} · {{ product.category_name }}</small>
                 </td>
-                <td>{{ product.site }}</td>
+                <td>{{ formatSiteName(String(product.site)) }}</td>
                 <td>{{ product.currency }} {{ product.price }}</td>
                 <td>
                   {{
@@ -512,7 +446,10 @@ onMounted(() => {
                   }}
                 </td>
                 <td>
-                  <StatusBadge :status="badge(product.status)" :label="String(product.status)" />
+                  <StatusBadge
+                    :status="badge(product.status)"
+                    :label="formatBusinessStatus(String(product.status))"
+                  />
                 </td>
               </tr>
             </tbody>
@@ -587,11 +524,7 @@ onMounted(() => {
               :disabled="!editing"
               type="number"
           /></label>
-          <label
-            >状态<input :value="localizedStatus" disabled /><small
-              >系统状态代码：{{ selected.status }}</small
-            ></label
-          >
+          <label>状态<input :value="localizedStatus" disabled /></label>
           <label class="wide"
             >商品描述<textarea
               v-model="localizedDescription"
@@ -606,7 +539,7 @@ onMounted(() => {
 
         <h3>SKU、规格、价格和库存</h3>
         <dl>
-          <dt>Seller SKU</dt>
+          <dt>卖家 SKU</dt>
           <dd>{{ selectedSku?.seller_sku ?? "待创建" }}</dd>
           <dt>规格</dt>
           <dd>
@@ -624,14 +557,14 @@ onMounted(() => {
             {{ selectedInventory?.safety_stock ?? 0 }}
           </dd>
           <dt>图片</dt>
-          <dd>以下为合成 Mock 占位图，不代表真实商品素材</dd>
+          <dd>以下为合成模拟占位图，不代表真实商品素材</dd>
         </dl>
 
-        <div class="mock-gallery" aria-label="Mock 商品图片预览">
+        <div class="mock-gallery" aria-label="模拟商品图片预览">
           <div v-for="index in 3" :key="index" class="mock-image">
             <ImageIcon :size="28" />
             <strong>{{ localizedCategory || "待翻译类目" }}</strong>
-            <span>Mock 视图 {{ index }}</span>
+            <span>模拟视图 {{ index }}</span>
           </div>
         </div>
 

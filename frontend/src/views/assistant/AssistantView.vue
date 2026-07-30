@@ -38,13 +38,14 @@ import { useBreakpoint } from "@/composables/useBreakpoint";
 import { useAppStore } from "@/stores/app";
 import type { TaskDetail, TaskStatus, TaskStepDetail } from "@/types/contracts";
 import {
-  localizedErrorMessage,
+  localizedTaskFailure,
   missingParameterPrompt,
   presentTaskResult,
   taskStatusLabels,
   workflowLabel,
   type AssistantResultPresentation,
 } from "@/utils/assistantPresentation";
+import { formatPlatformMode } from "@/utils/displayLabels";
 
 type AssistantSubmitMode = AssistantExecutionMode | "plan_only";
 type ChatMessageState = "ready" | "loading" | "error";
@@ -120,7 +121,7 @@ const connectionView = computed(() => {
 });
 const platformModeLabel = computed(() => {
   if (!platformStatus.value) return "模式未知";
-  return platformStatus.value.adapter === "mock" ? "Mock 模式" : "Real 模式";
+  return formatPlatformMode(platformStatus.value.adapter);
 });
 
 function readPanelPreference(): boolean | null {
@@ -355,7 +356,11 @@ async function submitMessage(
     }
     if (task.status === "failed") {
       updateChatMessage(assistantMessageId, {
-        content: `任务执行失败：${localizedErrorMessage(task.safe_error_summary ?? task.error_message)}`,
+        content: `任务执行失败：${localizedTaskFailure(
+          task.error_code,
+          task.safe_error_summary ?? task.error_message,
+          task.request_id,
+        )}`,
         state: "error",
         task,
         ...trace,
@@ -501,6 +506,7 @@ onBeforeUnmount(() => {
               <SpButton
                 v-if="chatMessage.state === 'error' && chatMessage.retryMessage"
                 class="chat-message__retry"
+                data-testid="assistant-retry"
                 size="sm"
                 variant="ghost"
                 :disabled="processing"

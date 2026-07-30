@@ -32,6 +32,7 @@ import type {
   ContentGeneration,
   ContentVersion,
 } from "@/types/content-generation";
+import { formatLanguageName, formatSiteName } from "@/utils/displayLabels";
 
 const productId = ref("PROD0001");
 const site = ref("sg");
@@ -50,18 +51,12 @@ const error = ref("");
 const notice = ref("");
 const actionLoading = ref(false);
 const regeneratingSection = ref<ContentSection | null>(null);
-const siteOptions = [
-  { label: "SG", value: "sg" },
-  { label: "MY", value: "my" },
-  { label: "PH", value: "ph" },
-  { label: "TH", value: "th" },
-  { label: "VN", value: "vn" },
-  { label: "ID", value: "id" },
-  { label: "TW", value: "tw" },
-  { label: "BR", value: "br" },
-];
+const siteOptions = ["sg", "my", "ph", "th", "vn", "id", "tw", "br"].map((value) => ({
+  label: formatSiteName(value),
+  value,
+}));
 const languageOptions = ["en", "zh-CN", "zh-TW", "ms", "id", "th", "vi", "tl", "pt-BR"].map(
-  (value) => ({ label: value, value }),
+  (value) => ({ label: formatLanguageName(value), value }),
 );
 const audienceOptions = [
   { label: "大众消费者", value: "大众消费者" },
@@ -231,7 +226,7 @@ function confirmationStatusLabel(status: string): string {
       succeeded: "已保存",
       cancelled: "已取消",
       failed: "保存失败",
-    }[status] ?? status
+    }[status] ?? "未知确认状态"
   );
 }
 
@@ -297,18 +292,14 @@ function qualitySuggestion(issue: string): string {
     return "删除该表述，或先补充能够证明它的商品事实。";
   }
   if (issue.startsWith("missing protected fact:")) {
-    return "把这项已核验规格补充到卖点、详情、FAQ 或 SKU 文案中。";
+    return "把这项已核验规格补充到卖点、详情、常见问题或 SKU 文案中。";
   }
   return "修改对应内容后，再创建草稿；服务端会重新检查。";
 }
 </script>
 
 <template>
-  <PageContainer
-    eyebrow="商品内容"
-    title="多语言内容工坊"
-    description="基于商品事实生成、检查、编辑、比较并经人工确认保存内容版本。"
-  >
+  <PageContainer>
     <div v-if="error" class="error" role="alert">
       <ShieldAlert :size="19" />
       <div>
@@ -331,7 +322,7 @@ function qualitySuggestion(issue: string): string {
           </div>
         </div>
         <div class="configuration-grid">
-          <SpInput v-model="productId" label="商品 ID" placeholder="例如 PROD0001" />
+          <SpInput v-model="productId" label="商品编号" placeholder="例如 PROD0001" />
           <SpSelect v-model="site" label="目标站点" :options="siteOptions" />
           <SpSelect v-model="language" label="目标语言" :options="languageOptions" />
           <SpSelect v-model="audience" label="目标受众" :options="audienceOptions" />
@@ -380,7 +371,7 @@ function qualitySuggestion(issue: string): string {
             <div>
               <h3>商品内容编辑器</h3>
             </div>
-            <span class="language-chip">{{ content.target_language }}</span>
+            <span class="language-chip">{{ formatLanguageName(content.target_language) }}</span>
           </div>
 
           <label class="editor-field">
@@ -503,21 +494,21 @@ function qualitySuggestion(issue: string): string {
                   <div>
                     <label>
                       <span>问题</span>
-                      <input v-model="item.question" aria-label="FAQ 问题" @input="dirty = true" />
+                      <input v-model="item.question" aria-label="常见问题" @input="dirty = true" />
                     </label>
                     <label>
                       <span>回答</span>
                       <textarea
                         v-model="item.answer"
                         rows="3"
-                        aria-label="FAQ 答案"
+                        aria-label="常见问题答案"
                         @input="dirty = true"
                       ></textarea>
                     </label>
                   </div>
                 </article>
               </div>
-              <p v-else class="muted-empty">当前没有生成 FAQ</p>
+              <p v-else class="muted-empty">当前没有生成常见问题</p>
             </section>
             <section class="structured-block">
               <div class="structured-heading">
@@ -634,7 +625,7 @@ function qualitySuggestion(issue: string): string {
               </div>
             </section>
             <section v-if="content.keywords.length">
-              <strong>目标市场关键词 · {{ content.target_language }}</strong>
+              <strong>目标市场关键词 · {{ formatLanguageName(content.target_language) }}</strong>
               <div class="keyword-chips">
                 <span v-for="item in content.keywords" :key="`market-${item}`">{{ item }}</span>
               </div>
@@ -731,7 +722,7 @@ function qualitySuggestion(issue: string): string {
                 <dd>{{ version.marketing_copy }}</dd>
               </div>
               <div>
-                <dt>FAQ</dt>
+                <dt>常见问题</dt>
                 <dd>
                   {{
                     version.faq?.items

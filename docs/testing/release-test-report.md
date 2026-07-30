@@ -1,0 +1,37 @@
+# E2E Demo Freeze 发布测试报告
+
+更新日期：2026-07-30
+
+分支：`feature/e2e-demo-freeze`
+
+## 数据与迁移
+
+- PostgreSQL：可连接。
+- Alembic head/current：`20260728_0007`。
+- 数据摘要：1 管理员、103 商品、103 个可供选品的市场快照、1000 评论、263 SKU、
+  263 库存、500 订单、451 物流、100 客服会话。
+- 知识库：1204 个索引文档、1204 个 chunk、1203 个 embedding；readiness 当前将
+  全部来源分类为 Mock，真实文档/真实 chunk 为 0。
+- 本阶段无数据库结构变化，无新增迁移。
+
+## 质量门禁
+
+| 命令                                         | 结果                                                           |
+| -------------------------------------------- | -------------------------------------------------------------- |
+| `uv run ruff format --check .`               | 通过：227 files already formatted                              |
+| `uv run ruff check .`                        | 通过：All checks passed                                        |
+| `uv run alembic heads/upgrade/current/check` | 通过：单一 `20260728_0007`，无新操作、无待生成迁移             |
+| `uv run pytest -q`                           | 通过：375 passed                                               |
+| `npm run format:check`                       | 通过：全部匹配 Prettier                                        |
+| `npm run lint`                               | 通过：0 warning / 0 error                                      |
+| `npm run typecheck`                          | 通过：无 TypeScript 错误                                       |
+| `npm run test:run`                           | 通过：32 files、158 tests                                      |
+| `npm run build`                              | 通过：4096 modules；大 chunk 与代理探测为非阻塞警告             |
+| `docker compose config`                      | BLOCKED_LOCAL_DOCKER：本机无 Docker CLI；YAML 静态格式检查通过 |
+
+## 发布结论
+
+智能选品已通过 PostgreSQL 真实 API 验收，详见
+`selection-release-validation.md`。合并最新 develop 后，ChromaDB 冷启动查询在
+26.08 秒内成功并返回 5 个来源。完整代码门禁已通过；当前仍缺 Docker build 或远程
+CI 运行证据，因此结论为 `NOT_READY`。

@@ -19,7 +19,7 @@ def _load_model() -> Any:
     logger.info("Loading embedding model '%s' ...", _model_name)
     os.environ.setdefault("HF_HUB_OFFLINE", "1")
     m = SentenceTransformer(_model_name, local_files_only=True)
-    logger.info("Embedding model ready. dim=%d", m.get_sentence_embedding_dimension())
+    logger.info("Embedding model ready. dim=%d", m.get_embedding_dimension())
     return m
 
 
@@ -42,7 +42,7 @@ def encode_single(text: str) -> list[float]:
 
 
 def get_dim() -> int:
-    return get_model().get_sentence_embedding_dimension()
+    return get_model().get_embedding_dimension()
 
 
 class EmbeddingService:

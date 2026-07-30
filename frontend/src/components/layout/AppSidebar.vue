@@ -6,14 +6,12 @@ import SpAvatar from "@/components/base/SpAvatar.vue";
 import SpIconButton from "@/components/base/SpIconButton.vue";
 import SidebarNavGroup from "@/components/layout/SidebarNavGroup.vue";
 import SidebarNavItem from "@/components/layout/SidebarNavItem.vue";
-import { developmentNavigationEntry, navigationEntries } from "@/config/navigation";
+import { navigationEntries } from "@/config/navigation";
 import { useSidebar } from "@/composables/useSidebar";
 import { isNavigationGroup } from "@/types/navigation";
 
 const { sidebarCollapsed, closeMobileSidebar, toggleSidebar } = useSidebar();
-const entries = computed(() =>
-  import.meta.env.DEV ? [...navigationEntries, developmentNavigationEntry] : navigationEntries,
-);
+const entries = computed(() => navigationEntries);
 </script>
 
 <template>
@@ -51,8 +49,8 @@ const entries = computed(() =>
     <div class="app-sidebar__operator">
       <SpAvatar initials="AD" gradient="purple" />
       <div v-if="!sidebarCollapsed">
-        <strong>Admin</strong>
-        <span>SellPilot Operator</span>
+        <strong>管理员</strong>
+        <span>SellPilot 运营人员</span>
       </div>
     </div>
   </aside>

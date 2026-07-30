@@ -1,5 +1,14 @@
 import type { AssistantAvailability, AssistantIntent, AssistantPlan } from "@/api/assistant";
 import type { TaskStatus, ToolRiskLevel } from "@/types/contracts";
+import {
+  formatCategoryName,
+  formatCapabilityName,
+  formatRiskLevel,
+  formatSiteName,
+  formatTaskNode,
+  formatTaskStatus,
+  formatWorkflowName,
+} from "@/utils/displayLabels";
 
 const intentLabels: Record<AssistantIntent, string> = {
   selection_analysis: "智能选品分析",
@@ -13,55 +22,6 @@ const intentLabels: Record<AssistantIntent, string> = {
   knowledge_query: "知识库检索",
   customer_service_reply: "客服回复建议",
   unknown: "未识别请求",
-};
-
-const workflowLabels: Record<string, string> = {
-  selection: "智能选品分析",
-  review_analysis: "商品评论分析",
-  product_improvement: "产品改良建议",
-  content_generation: "多语言内容生成",
-  knowledge_query: "知识库检索",
-  customer_service_reply: "客服回复建议",
-  inventory_replenishment: "库存补货建议",
-  low_stock_check: "低库存检查",
-  order_query: "订单查询",
-  logistics_query: "物流查询",
-};
-
-const stepLabels: Record<string, string> = {
-  search_market_products: "查询市场候选商品",
-  select_selection_candidates: "检查候选商品",
-  score_product_opportunity: "评估商品机会",
-  finish_selection_success: "完成选品分析",
-  finish_selection_no_data: "返回无候选结果",
-  analyze_product_reviews: "分析商品评论",
-  select_improvement_source: "选择改良建议数据来源",
-  analyze_reviews_for_improvement: "分析商品评论证据",
-  generate_product_improvement_plan: "生成产品改良建议",
-  analyze_inventory_replenishment: "分析库存补货需求",
-  list_low_stock: "检查低库存商品",
-  select_order_query: "选择订单查询方式",
-  get_order: "查询单个订单",
-  list_orders: "查询订单列表",
-  finish_order_query: "完成订单查询",
-  get_order_logistics: "查询订单物流",
-  generate_localized_listing: "生成多语言商品内容",
-  check_listing_compliance: "检查商品内容合规性",
-  validate_content_quality: "核验内容质量",
-  finish_content_generation: "完成内容生成",
-  search_knowledge: "检索知识库",
-  get_customer_conversation: "读取客服会话",
-  classify_customer_request: "识别问题与风险",
-  select_customer_branch: "选择客服处理分支",
-  record_customer_handoff: "记录人工转交",
-  search_customer_knowledge: "查询政策知识",
-  get_customer_order: "查询关联订单",
-  get_customer_logistics: "查询关联物流",
-  get_customer_product: "查询关联商品",
-  draft_customer_reply: "生成客服回复建议",
-  select_customer_send: "判断是否模拟发送",
-  mock_send_customer_reply: "确认后模拟发送",
-  finish_customer_reply: "完成客服回复建议",
 };
 
 const stepSummaries: Record<string, string> = {
@@ -112,6 +72,7 @@ const parameterLabels: Record<string, string> = {
   site: "站点",
   category: "商品类目",
   category_id: "商品类目",
+  category_query: "商品类目",
   language: "目标语言",
   target_language: "目标语言",
   query: "检索问题",
@@ -205,18 +166,18 @@ export const availabilityLabels: Record<AssistantAvailability, string> = {
 };
 
 export const taskStatusLabels: Record<TaskStatus, string> = {
-  pending: "待执行",
-  running: "执行中",
-  waiting_confirmation: "等待确认",
-  succeeded: "已完成",
-  failed: "执行失败",
-  cancelled: "已取消",
+  pending: formatTaskStatus("pending"),
+  running: formatTaskStatus("running"),
+  waiting_confirmation: formatTaskStatus("waiting_confirmation"),
+  succeeded: formatTaskStatus("succeeded"),
+  failed: formatTaskStatus("failed"),
+  cancelled: formatTaskStatus("cancelled"),
 };
 
 export const riskLabels: Record<ToolRiskLevel, string> = {
-  read: "只读",
-  write: "写入",
-  high_risk: "高风险",
+  read: formatRiskLevel("read"),
+  write: formatRiskLevel("write"),
+  high_risk: formatRiskLevel("high_risk"),
 };
 
 export function intentLabel(intent: AssistantIntent): string {
@@ -225,16 +186,16 @@ export function intentLabel(intent: AssistantIntent): string {
 
 export function capabilityLabel(capability: string | null): string {
   if (!capability) return "未匹配";
-  return intentLabels[capability as AssistantIntent] ?? capability;
+  return intentLabels[capability as AssistantIntent] ?? formatCapabilityName(capability);
 }
 
 export function workflowLabel(workflow: string | null | undefined): string {
   if (!workflow) return "未选择";
-  return workflowLabels[workflow] ?? workflow;
+  return formatWorkflowName(workflow);
 }
 
 export function stepLabel(step: string): string {
-  return stepLabels[step] ?? step;
+  return formatTaskNode(step);
 }
 
 export function stepSummary(step: string, fallback: string): string {
@@ -245,13 +206,13 @@ export function stepSummary(step: string, fallback: string): string {
 }
 
 export function parameterLabel(parameter: string): string {
-  return parameterLabels[parameter] ?? parameter;
+  return parameterLabels[parameter] ?? "其他参数";
 }
 
 export function displayParameterValue(parameter: string, value: unknown): string {
   if (typeof value === "string") {
     const translated = valueLabels[value];
-    return translated ? `${translated}（${value}）` : value;
+    return translated ?? value;
   }
   if (typeof value === "boolean") {
     return value ? "是" : "否";
@@ -269,7 +230,7 @@ export function displayParameterValue(parameter: string, value: unknown): string
 }
 
 export function statusLabel(status: string): string {
-  return valueLabels[status] ?? status;
+  return valueLabels[status] ?? formatTaskStatus(status);
 }
 
 export function missingParameterPrompt(parameters: string[]): string {
@@ -301,6 +262,20 @@ export function localizedErrorMessage(message: string | null | undefined): strin
     return "当前账号无权访问该任务。";
   if (/[\u3400-\u9fff]/u.test(message)) return message;
   return "执行过程中发生错误，请稍后重试。";
+}
+
+export function localizedTaskFailure(
+  errorCode: string | null | undefined,
+  message: string | null | undefined,
+  requestId: string | null | undefined,
+): string {
+  const safeMessage =
+    errorCode === "TASK_STATE_TOO_LARGE"
+      ? "任务结果超过安全大小限制，请缩小查询范围后重试。"
+      : errorCode === "SELECTION_NO_CANDIDATES"
+        ? "当前数据中没有匹配的候选商品，请调整站点或商品类目。"
+        : localizedErrorMessage(message);
+  return requestId ? `${safeMessage} 错误编号：${requestId}` : safeMessage;
 }
 
 export interface AssistantResultMetric {
@@ -344,7 +319,7 @@ function asCount(value: unknown, fallback: number): number {
 function labelValue(value: unknown): string {
   const raw = asString(value, "—");
   const translated = valueLabels[raw];
-  return translated ? `${translated}（${raw}）` : raw;
+  return translated ?? raw;
 }
 
 function localizedBusinessText(value: unknown, fallback = ""): string {
@@ -456,11 +431,25 @@ export function presentTaskResult(
   }
 
   if (workflowName === "selection") {
+    const candidateSearch = asRecord(source.candidate_search) ?? {};
+    const filters = asRecord(candidateSearch.normalized_filters) ?? {};
+    const site = formatSiteName(asString(filters.site));
+    const categoryId = asString(filters.category_id);
+    const categoryQuery = asString(filters.category_query);
+    const category = categoryId
+      ? formatCategoryName(categoryId)
+      : categoryQuery
+        ? categoryQuery
+        : "全站类目";
     const noData = source.no_data === true;
     if (noData) {
       return {
-        summary: asString(source.message, "当前数据集中没有匹配候选，请调整站点或类目。"),
-        metrics: [{ label: "候选商品", value: "0" }],
+        summary: asString(source.message, "当前数据中没有匹配的候选商品，请调整站点或商品类目。"),
+        metrics: [
+          { label: "匹配候选", value: "0" },
+          { label: "查询站点", value: site },
+          { label: "查询类目", value: category },
+        ],
         items: [],
       };
     }
@@ -471,20 +460,29 @@ export function presentTaskResult(
     return {
       summary: `智能选品分析已完成，共评估 ${total} 个候选商品，其中 ${ranked} 个进入排序结果。`,
       metrics: [
-        { label: "候选商品", value: String(total) },
-        { label: "入选商品", value: String(ranked) },
+        { label: "匹配候选", value: String(asCount(candidateSearch.matched_count, total)) },
+        { label: "参与评分", value: String(total) },
+        { label: "排序结果", value: String(ranked) },
+        { label: "查询站点", value: site },
+        { label: "查询类目", value: category },
+        {
+          label: "数据来源",
+          value: candidateSearch.is_mock_data === true ? "模拟市场数据" : "市场数据",
+        },
       ],
       items: results.slice(0, 8).map((item, index) => ({
         id: asString(item.id, `selection-${index}`),
         title: asString(item.title, asString(item.product_id, "候选商品")),
-        subtitle: asString(
-          asRecord(item.explanation)?.summary,
-          `排名 ${asString(item.rank, String(index + 1))}`,
-        ),
+        subtitle: `排名 ${asString(item.rank, String(index + 1))}，机会总分 ${asString(item.total_score, "—")}`,
         meta: [
-          `综合得分：${asString(item.total_score, "—")}`,
+          `商品编号：${asString(item.product_id, "—")}`,
+          `预估利润率：${asString(asRecord(item.profit)?.margin, "—")}`,
           `数据完整度：${asString(item.data_completeness, "—")}`,
-          `站点：${labelValue(item.site)}`,
+          `站点：${formatSiteName(asString(item.site))}`,
+          `数据来源：${item.is_mock_data === true ? "模拟市场数据" : "市场数据"}`,
+          Array.isArray(item.risk_warnings) && item.risk_warnings.length > 0
+            ? "风险：部分评分数据不完整或未达到筛选条件"
+            : "风险：未发现额外数据风险",
         ],
       })),
     };

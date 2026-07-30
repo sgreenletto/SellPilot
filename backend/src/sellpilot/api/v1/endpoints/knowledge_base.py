@@ -40,7 +40,7 @@ async def retrieve_knowledge(
     session: SessionDependency,
     settings: SettingsDependency,
 ) -> ApiResponse[list[KnowledgeRetrievalItem]]:
-    """知识检索：输入 query → embedding → ChromaDB 相似度搜索 → Top-K 片段。"""
+    """从现有 PostgreSQL 知识记录执行有界检索并返回来源片段。"""
     raw_results = await RAGService(settings, session).retrieve(
         payload.query,
         top_k=payload.top_k,
@@ -106,7 +106,7 @@ async def delete_document(
     session: SessionDependency,
     settings: SettingsDependency,
 ) -> ApiResponse[dict]:
-    """删除知识文档，同时清除关联的 PostgreSQL chunk 记录和 ChromaDB 向量。"""
+    """删除知识文档及其关联的 PostgreSQL chunk 记录。"""
     service = KnowledgeBaseService(session, settings)
     ok = await service.delete_document(document_id)
     if not ok:

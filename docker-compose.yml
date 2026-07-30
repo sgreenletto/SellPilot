@@ -1,0 +1,85 @@
+name: sellpilot-demo
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${COMPOSE_DB_NAME:-sellpilot}
+      POSTGRES_USER: ${COMPOSE_DB_USER:-sellpilot}
+      POSTGRES_PASSWORD: ${COMPOSE_DB_PASSWORD:-sellpilot_demo_change_before_shared_use}
+    ports:
+      - "${COMPOSE_DB_PORT:-5432}:5432"
+    volumes:
+      - sellpilot_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${COMPOSE_DB_USER:-sellpilot} -d ${COMPOSE_DB_NAME:-sellpilot}",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      APP_NAME: SellPilot
+      APP_VERSION: 0.5.0
+      APP_ENV: development
+      DEBUG: "false"
+      API_HOST: 0.0.0.0
+      API_PORT: 8000
+      DATABASE_URL: postgresql+asyncpg://${COMPOSE_DB_USER:-sellpilot}:${COMPOSE_DB_PASSWORD:-sellpilot_demo_change_before_shared_use}@postgres:5432/${COMPOSE_DB_NAME:-sellpilot}
+      JWT_SECRET_KEY: ${COMPOSE_JWT_SECRET_KEY:-docker-demo-only-replace-before-shared-use}
+      PLATFORM_ADAPTER: mock
+      CONTENT_MODEL_PROVIDER: offline_template
+      LLM_API_KEY: ""
+      LOG_LEVEL: INFO
+      CORS_ORIGINS: '["http://127.0.0.1:${COMPOSE_FRONTEND_PORT:-5173}","http://localhost:${COMPOSE_FRONTEND_PORT:-5173}"]'
+    command:
+      [
+        "sh",
+        "-c",
+        "uv run --no-sync alembic upgrade head && exec uv run --no-sync sellpilot-start-api",
+      ]
+    ports:
+      - "${COMPOSE_API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=2)",
+        ]
+      interval: 5s
+      timeout: 3s
+      start_period: 15s
+      retries: 12
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    ports:
+      - "${COMPOSE_FRONTEND_PORT:-5173}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
+      interval: 10s
+      timeout: 3s
+      start_period: 10s
+      retries: 6
+
+volumes:
+  sellpilot_postgres_data:

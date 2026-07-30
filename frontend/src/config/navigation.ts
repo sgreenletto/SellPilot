@@ -3,7 +3,6 @@ import {
   Bot,
   Boxes,
   ClipboardList,
-  Database,
   Headphones,
   LayoutDashboard,
   Library,
@@ -69,10 +68,3 @@ export const navigationEntries: NavigationEntry[] = [
   { id: "orders", label: "订单与履约", path: "/orders", icon: Truck },
   { id: "tasks", label: "任务中心", path: "/tasks", icon: ClipboardList },
 ];
-
-export const developmentNavigationEntry: NavigationEntry = {
-  id: "design-system",
-  label: "设计系统",
-  path: "/dev/design-system",
-  icon: Database,
-};

@@ -75,8 +75,93 @@ async def test_selection_assistant_searches_real_candidates_before_scoring(
         "search_market_products",
         "select_selection_candidates",
         "score_product_opportunity",
-        "finish_selection_success",
     ]
+
+
+async def test_selection_assistant_scores_a_bounded_site_wide_candidate_set(
+    client_bundle,
+    admin_user,
+) -> None:
+    client, _, session_factory, settings = client_bundle
+    await import_demo_data(session_factory, admin_user)
+    headers = auth_headers(admin_user, settings)
+
+    plan = await client.post(
+        "/api/v1/assistant/plan",
+        headers=headers,
+        json={"message": "分析新加坡站的选品机会"},
+    )
+    assert plan.status_code == 200
+    assert plan.json()["data"]["extracted_parameters"] == {"site": "sg"}
+    assert plan.json()["data"]["missing_parameters"] == []
+    assert plan.json()["data"]["can_execute"] is True
+
+    created = await client.post(
+        "/api/v1/assistant/tasks",
+        headers=headers,
+        json={
+            "message": "分析新加坡站的选品机会",
+            "execution_mode": "create_and_run",
+        },
+    )
+
+    assert created.status_code == 201
+    task_id = created.json()["data"]["task_id"]
+    task = await client.get(f"/api/v1/tasks/{task_id}", headers=headers)
+    task_data = task.json()["data"]
+    assert task_data["status"] == "succeeded"
+    assert task_data["error_code"] is None
+    assert task_data["result"]["no_data"] is False
+    assert task_data["result"]["candidate_search"]["count"] == 20
+    assert task_data["result"]["analysis"]["total_candidates"] == 20
+    assert task_data["result"]["analysis"]["ranked_count"] == 20
+
+    steps = await client.get(f"/api/v1/tasks/{task_id}/steps", headers=headers)
+    assert [item["node_name"] for item in steps.json()["data"]] == [
+        "search_market_products",
+        "select_selection_candidates",
+        "score_product_opportunity",
+    ]
+
+
+async def test_selection_assistant_returns_no_data_for_an_unknown_requested_category(
+    client_bundle,
+    admin_user,
+) -> None:
+    client, _, session_factory, settings = client_bundle
+    await import_demo_data(session_factory, admin_user)
+    headers = auth_headers(admin_user, settings)
+
+    plan = await client.post(
+        "/api/v1/assistant/plan",
+        headers=headers,
+        json={"message": "分析新加坡站航空发动机产品的选品机会"},
+    )
+    assert plan.status_code == 200
+    assert plan.json()["data"]["extracted_parameters"] == {
+        "site": "sg",
+        "category_query": "航空发动机产品",
+    }
+
+    created = await client.post(
+        "/api/v1/assistant/tasks",
+        headers=headers,
+        json={
+            "message": "分析新加坡站航空发动机产品的选品机会",
+            "execution_mode": "create_and_run",
+        },
+    )
+
+    assert created.status_code == 201
+    task_id = created.json()["data"]["task_id"]
+    task = await client.get(f"/api/v1/tasks/{task_id}", headers=headers)
+    result = task.json()["data"]["result"]
+    assert task.json()["data"]["status"] == "succeeded"
+    assert result["no_data"] is True
+    assert result["candidate_search"]["count"] == 0
+    assert result["candidate_search"]["matched_count"] == 0
+    assert result["candidate_search"]["reason"] == "no_matching_candidates"
+    assert result["message"] == "当前数据中没有匹配的候选商品，请调整站点或商品类目。"
 
 
 async def test_knowledge_assistant_returns_sources_and_refuses_unknown_basis(
@@ -122,6 +207,39 @@ async def test_knowledge_assistant_returns_sources_and_refuses_unknown_basis(
         "sources": [],
         "answer_mode": "no_reliable_source",
         "no_reliable_source": True,
+        "knowledge_initialized": True,
+    }
+
+
+async def test_knowledge_assistant_reports_uninitialized_store_without_500(
+    client_bundle,
+    admin_user,
+) -> None:
+    client, _, _, settings = client_bundle
+    headers = auth_headers(admin_user, settings)
+
+    created = await client.post(
+        "/api/v1/assistant/tasks",
+        headers=headers,
+        json={
+            "message": "在知识库中检索退货政策",
+            "execution_mode": "create_and_run",
+        },
+    )
+
+    assert created.status_code == 201
+    task = await client.get(
+        f"/api/v1/tasks/{created.json()['data']['task_id']}",
+        headers=headers,
+    )
+    assert task.status_code == 200
+    assert task.json()["data"]["status"] == "succeeded"
+    assert task.json()["data"]["result"] == {
+        "answer": "当前知识库尚未完成初始化，请先导入知识数据。",
+        "sources": [],
+        "answer_mode": "knowledge_not_initialized",
+        "no_reliable_source": True,
+        "knowledge_initialized": False,
     }
 
 
