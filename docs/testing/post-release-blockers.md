@@ -1,43 +1,40 @@
-# Assistant 发布后阻塞清单
+# v1.0.0 发布阻塞清单
 
 更新日期：2026-07-30
 
+结论：`READY_FOR_RELEASE`
+
 ## P0_BLOCKER
 
-- 智能选品代码故障已修复，当前未发现其他可复现的非 RAG 业务代码 P0。
-- 本机没有 Docker CLI，且 `feature/e2e-demo-freeze` 当前没有 GitHub Actions 运行记录；
-  尚不满足“Docker build 或 CI 至少一项具有真实远程证据”的最终发布门槛。
+当前没有已知、可复现的业务、RAG、CI、数据库或安全 P0。
+
+## 已关闭问题
+
+- 智能选品已修复候选检索、大型中间态、站点/类目范围、no-data 和显式候选链路；
+- 评论分析可解析稳定商品 ID 并读取关联评论，空数据不会返回 500；
+- Content、RAG 和 Customer Service 已进入统一 Tool 与 Workflow 执行链；
+- RAG Demo 数据已完成安全重建、来源统计、Chroma 检索命中和无答案拒答；
+- README、前端正式展示和发布文档已冻结；
+- E2E Demo Freeze 已合入 develop，远程分支不再存在未推送发布内容；
+- `origin/develop@a6fac102` 的
+  [GitHub Actions quality-gates](https://github.com/sgreenletto/SellPilot/actions/runs/30555903586)
+  已通过 backend 与 frontend Job。
 
 ## P1_NON_BLOCKING
 
-- Vite 生产构建可能提示大 chunk；当前不影响构建产物正确性。
-- 选品 → 评论 → 改良按受控任务逐步演示，没有跨域自动 composite workflow。
-- GitHub Actions 配置需在本分支 PR 上获得第一次远程运行证据。
-- Vite build 成功，但构建时开发代理对 `127.0.0.1:3000` 的连接探测产生非阻塞
-  `ECONNREFUSED` 输出；未影响产物生成。
-- Chroma embedding 模型冷启动实测耗时 26.08 秒；当前 90 秒有界 Tool/Workflow 超时
-  可覆盖首次加载，后续请求复用进程内模型。
-
-## BLOCKED_RAG_DATA
-
-- PostgreSQL 当前有 1204 个索引文档和 1204 个 chunk，其中 1203 个 chunk 有
-  embedding；readiness 仍将全部来源分类为 Mock，真实来源计数为 0。
-- Mock 演示边界内的真实 Chroma 检索已通过；若发布门槛要求非 Mock 知识来源，
-  readiness 的来源分类仍需另行验收。
-
-## BLOCKED_EXTERNAL_MODEL
-
-- 外部内容模型与 LLM 的鉴权、限流和可用性由供应商决定。缺配置或供应商错误保持真实
-  失败语义；演示可使用明确标记的 `offline_template`，不能冒充外部模型。
-- 本轮冷启动知识库查询 Task `d5a6e4c4-bc25-4368-8952-70174c1afff0` 已成功，
-  返回 5 个真实索引来源。
-
-## BLOCKED_LOCAL_DOCKER
-
-- 本机未安装 Docker CLI，无法执行 build/up/health/down。Compose、Dockerfile 和
-  Nginx 配置已完成静态格式检查，仍需在有 Docker 的环境实际运行。
+- Vite 生产构建可能提示大 chunk；最近一次构建成功；
+- 选品、评论和改良按受控任务逐步演示，没有跨域自动 composite workflow；
+- Chroma embedding 模型首次冷启动实测约 26 秒，后续请求复用进程内模型；
+- 外部内容模型和 RAG LLM 的鉴权、限流与可用性由供应商决定；
+- 本机未安装 Docker CLI，当前 GitHub Actions 也未执行 Docker build；Compose 和
+  Dockerfile 已交付，但容器运行仍需在有 Docker 的环境复核。
 
 ## OUT_OF_SCOPE
 
-- 真实 Shopee、多人多店铺、自动发布真实商品、生产监控和云端费用结算。
-- 已发布 `v0.5.0` Tag 的任何移动、覆盖或重新创建。
+- 真实 Shopee OAuth、商品发布、客服发送或订单修改；
+- 多用户、多店铺生产部署；
+- 财务、ERP、生产监控、备份与灾难恢复；
+- 对历史 `v0.5.0` Tag 的任何移动、覆盖或重新创建。
+
+最终 release PR 仍需通过分支保护和 PR CI；`v1.0.0` Tag 只在稳定代码合入 `main` 后由
+发布负责人创建。
