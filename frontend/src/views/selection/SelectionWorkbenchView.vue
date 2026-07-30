@@ -403,6 +403,17 @@ function toggleCompare(productId: string): void {
   compareCandidateIds.value = [...selected];
 }
 
+function openReviewAnalysis(result: SelectionResult): void {
+  void router.push({
+    name: "market-reviews",
+    query: {
+      source: "selection",
+      product_id: result.product_id,
+      site: result.site,
+    },
+  });
+}
+
 async function compareProducts(): Promise<void> {
   if (!analysis.value || compareIds.value.length < 2) return;
   clearFeedback();
@@ -838,6 +849,9 @@ onBeforeUnmount(() => document.removeEventListener("keydown", handleGlobalKeydow
                   <SpButton size="sm" variant="ghost" @click="selectedResult = result"
                     >查看详情</SpButton
                   >
+                  <SpButton size="sm" variant="secondary" @click="openReviewAnalysis(result)">
+                    分析评论
+                  </SpButton>
                 </div>
               </div>
             </article>

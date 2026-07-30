@@ -60,6 +60,12 @@ class CommerceImportError(ValueError):
 
 
 class CommerceImportService:
+    """经过 Schema 校验的初始化数据包导入服务。
+
+    初始化导入按稳定 external_id 只插入缺失记录，已有记录跳过；它不同于
+    商品页面中经过人工确认、可按 product_id 更新已有商品的手工导入。
+    """
+
     def __init__(self, session: AsyncSession) -> None:
         self.repository = CommerceImportRepository(session)
 
@@ -89,6 +95,7 @@ class CommerceImportService:
         records: list[Any],
         key: str,
     ) -> tuple[int, int]:
+        # 幂等初始化：重复运行不会复制记录，也不会覆盖用户数据库中的已有值。
         existing = await self.repository.id_map(model)
         missing = [record for record in records if getattr(record, key) not in existing]
         self.repository.add_all(missing)

@@ -13,12 +13,14 @@ async def _analyze(
     payload: ReplenishmentAnalysisRequest,
     context: ToolExecutionContext,
 ) -> ReplenishmentAnalysisOutput:
+    # Tool 只做运行时与 Service 的桥接，业务公式仍集中在 ReplenishmentService。
     if context.session is None:
         raise ParameterError("replenishment analysis requires a database session")
     return await ReplenishmentService(context.session).analyze(payload)
 
 
 def build_replenishment_tool() -> ToolDefinition:
+    """注册只读、幂等的补货分析工具；执行不会产生库存写操作。"""
     return ToolDefinition(
         name="analyze_inventory_replenishment",
         version="1.0.0",

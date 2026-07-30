@@ -155,6 +155,7 @@ class CommerceOperationService:
         idempotency_key: str,
         created_by: UUID,
     ) -> ConfirmationTask:
+        # 手工导入属于业务写操作：此处只保存待确认快照，不立即写入商品表。
         return await self._create_confirmation(
             operation=IMPORT_PRODUCTS,
             target_type="product_import",
@@ -176,6 +177,7 @@ class CommerceOperationService:
         idempotency_key: str,
         created_by: UUID,
     ) -> ConfirmationTask:
+        # 候选清单只保存稳定商品业务 ID 和必要快照，不复制整份商品实体。
         existing = await self.session.scalar(
             select(SelectionCandidate).where(
                 SelectionCandidate.created_by == created_by,
@@ -296,6 +298,7 @@ class CommerceOperationService:
         confirmations.register_executor(REMOVE_CANDIDATE, self._execute)
 
     async def _execute(self, confirmation: ConfirmationTask) -> dict[str, Any]:
+        """仅在确认成功后执行平台写操作，并保存任务结果与操作日志。"""
         payload = confirmation.after_snapshot or {}
         product_id = payload.get("product_id") or confirmation.target_id
         await self.tasks.start(confirmation.agent_task_id)
@@ -317,6 +320,8 @@ class CommerceOperationService:
             elif confirmation.operation_type == IMPORT_PRODUCTS:
                 imported = []
                 for product in payload.get("products", []):
+                    # 手工确认导入按稳定 product_id 更新；不存在时才创建。
+                    # 这不同于初始化数据包导入的“已有记录直接跳过”策略。
                     existing = (
                         await self.adapter.get_product(str(product["product_id"]))
                         if product.get("product_id")
