@@ -21,7 +21,6 @@ from sellpilot.services.vector_store import ChromaVectorStore
 
 logger = logging.getLogger(__name__)
 
-_ADMIN = UUID("d5f72327-fc9b-4da5-b51a-7a7a6329e5f7")
 PRODUCTS_CSV = "products.csv"
 REVIEWS_CSV = "reviews.csv"
 MESSAGES_CSV = "customer_messages.csv"
@@ -42,9 +41,11 @@ class KnowledgeIngestionService:
         self,
         source_path: Path,
         *,
-        created_by: UUID = _ADMIN,
+        created_by: UUID | None = None,
     ) -> dict[str, object]:
         """Idempotently import the small, explicitly Mock Assistant policy document."""
+        if created_by is None:
+            created_by = await self._get_admin_id()
 
         if not await asyncio.to_thread(source_path.is_file):
             raise KnowledgeIngestionError(f"missing: {source_path}")
@@ -132,7 +133,6 @@ class KnowledgeIngestionService:
 
     # ---- 翻译 ----
 
-    @staticmethod
     async def _translate_one(self, llm: LLMService, text: str) -> str:
         """逐条翻译为简体中文。"""
         try:
@@ -236,7 +236,16 @@ class KnowledgeIngestionService:
 
     # ---- DB ----
 
-    async def _make(self, title: str, content: str, cat: str, src: str) -> KnowledgeDocument:
+    async def _get_admin_id(self) -> UUID:
+        from sellpilot.db.models.user import User
+        user = await self.session.scalar(
+            select(User).where(User.username == "admin")
+        )
+        if user is None:
+            raise KnowledgeIngestionError("admin user not found — run create-admin first")
+        return user.id
+
+    async def _make(self, title: str, content: str, cat: str, src: str, admin_id: UUID) -> KnowledgeDocument:
         doc = KnowledgeDocument(
             title=title,
             file_type="csv",
@@ -245,7 +254,7 @@ class KnowledgeIngestionService:
             status="indexed",
             source=src,
             chunk_count=1,
-            created_by=_ADMIN,
+            created_by=admin_id,
         )
         self.session.add(doc)
         await self.session.flush()
@@ -323,6 +332,7 @@ class KnowledgeIngestionService:
         faq_as_zh = await self._translate_batch(llm, [_clean(r[2]) for r in faq_rows], "FAQ answers")
 
         # ---- 创建文档 ----
+        admin_id = await self._get_admin_id()
         pc = rc = fc = 0
         for i, row in enumerate(prods):
             await self._make(
@@ -330,6 +340,7 @@ class KnowledgeIngestionService:
                 self._prod(row, prod_zh[i]),
                 "product",
                 f"products.csv#{row.get('product_id', '')}",
+                admin_id,
             )
             pc += 1
         for row in revs:
@@ -338,6 +349,7 @@ class KnowledgeIngestionService:
                 self._rev(row),
                 "review",
                 f"reviews.csv#{row.get('review_id', '')}",
+                admin_id,
             )
             rc += 1
         for i, (sid, q, a, lang, intent, risk) in enumerate(faq_rows):
@@ -346,6 +358,7 @@ class KnowledgeIngestionService:
                 self._faq(q, a, lang, intent, risk, faq_qs_zh[i], faq_as_zh[i]),
                 "faq",
                 f"customer_messages.csv#{sid}",
+                admin_id,
             )
             fc += 1
 
