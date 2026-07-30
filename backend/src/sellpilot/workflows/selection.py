@@ -1,8 +1,11 @@
+import logging
 from collections.abc import Awaitable, Callable
 from typing import Literal, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+
+logger = logging.getLogger(__name__)
 
 
 class ExplanationEvidence(BaseModel):
@@ -84,6 +87,7 @@ async def generate_validated_explanation(
         "margin": str(score["profit"]["margin"]),
         "data_completeness": str(score["data_completeness"]),
     }
+    generator_unavailable = False
     for _ in range(max_attempts):
         try:
             explanation = SelectionExplanation.model_validate(await generator(score))
@@ -93,7 +97,24 @@ async def generate_validated_explanation(
             return explanation.model_copy(update={"generation_mode": "validated_generator"})
         except (ValidationError, TypeError, ValueError):
             continue
-    return rule_template_explanation(score)
+        except Exception as exc:
+            generator_unavailable = True
+            logger.warning(
+                "Selection explanation generator unavailable; using deterministic fallback",
+                extra={"error_type": type(exc).__name__},
+            )
+            continue
+    fallback = rule_template_explanation(score)
+    if generator_unavailable:
+        fallback = fallback.model_copy(
+            update={
+                "risks": [
+                    *fallback.risks,
+                    "解释生成暂不可用，已使用确定性评分说明。",
+                ]
+            }
+        )
+    return fallback
 
 
 def build_selection_explanation_workflow(

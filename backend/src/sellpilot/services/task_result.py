@@ -114,7 +114,16 @@ def _selection_result(result: Mapping[str, object]) -> dict[str, object]:
         "message": result.get("message"),
         "no_data": result.get("no_data", False),
         "candidate_search": {
-            key: search.get(key) for key in ("count", "is_mock_data") if key in search
+            key: search.get(key)
+            for key in (
+                "count",
+                "matched_count",
+                "is_mock_data",
+                "normalized_filters",
+                "reason",
+                "suggestion",
+            )
+            if key in search
         },
         "analysis": {
             key: analysis.get(key)

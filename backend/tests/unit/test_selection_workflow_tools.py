@@ -82,6 +82,27 @@ async def test_explanation_rejects_mismatched_generated_metrics_and_falls_back()
 
 
 @pytest.mark.asyncio
+async def test_explanation_provider_failure_keeps_deterministic_score() -> None:
+    attempts = 0
+
+    async def unavailable_generator(_payload):
+        nonlocal attempts
+        attempts += 1
+        raise RuntimeError("synthetic provider outage")
+
+    result = await generate_validated_explanation(
+        _score_payload(),
+        unavailable_generator,
+        max_attempts=2,
+    )
+
+    assert attempts == 2
+    assert result.generation_mode == "rule_template"
+    assert result.evidence[0].value == "82.1000"
+    assert "解释生成暂不可用，已使用确定性评分说明。" in result.risks
+
+
+@pytest.mark.asyncio
 async def test_profit_tool_is_schema_validated_and_read_only(session, test_settings) -> None:
     registry = build_tool_registry(test_settings)
     definition = registry.get("calculate_product_profit")
