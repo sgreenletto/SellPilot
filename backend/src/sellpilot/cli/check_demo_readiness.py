@@ -98,6 +98,54 @@ async def readiness_snapshot(settings: Settings) -> dict[str, object]:
             )
             or 0
         )
+        legacy_demo_documents = int(
+            await session.scalar(
+                text(
+                    "SELECT COUNT(*) FROM knowledge_documents "
+                    "WHERE source LIKE 'products.csv#%' "
+                    "OR source LIKE 'reviews.csv#%' "
+                    "OR source LIKE 'customer_messages.csv#%'"
+                )
+            )
+            or 0
+        )
+        legacy_demo_chunks = int(
+            await session.scalar(
+                text(
+                    "SELECT COUNT(*) FROM knowledge_chunks AS chunk "
+                    "JOIN knowledge_documents AS document ON document.id = chunk.document_id "
+                    "WHERE document.source LIKE 'products.csv#%' "
+                    "OR document.source LIKE 'reviews.csv#%' "
+                    "OR document.source LIKE 'customer_messages.csv#%'"
+                )
+            )
+            or 0
+        )
+        user_uploaded_documents = int(
+            await session.scalar(
+                text(
+                    "SELECT COUNT(*) FROM knowledge_documents "
+                    "WHERE COALESCE(source, '') NOT LIKE 'products.csv#%' "
+                    "AND COALESCE(source, '') NOT LIKE 'reviews.csv#%' "
+                    "AND COALESCE(source, '') NOT LIKE 'customer_messages.csv#%' "
+                    "AND COALESCE(source, '') <> 'knowledge_mock/return-policy.md'"
+                )
+            )
+            or 0
+        )
+        user_uploaded_chunks = int(
+            await session.scalar(
+                text(
+                    "SELECT COUNT(*) FROM knowledge_chunks AS chunk "
+                    "JOIN knowledge_documents AS document ON document.id = chunk.document_id "
+                    "WHERE COALESCE(document.source, '') NOT LIKE 'products.csv#%' "
+                    "AND COALESCE(document.source, '') NOT LIKE 'reviews.csv#%' "
+                    "AND COALESCE(document.source, '') NOT LIKE 'customer_messages.csv#%' "
+                    "AND COALESCE(document.source, '') <> 'knowledge_mock/return-policy.md'"
+                )
+            )
+            or 0
+        )
         alembic_version = await session.scalar(text("SELECT version_num FROM alembic_version"))
 
     llm_key = settings.llm_api_key.get_secret_value().strip()
@@ -128,6 +176,10 @@ async def readiness_snapshot(settings: Settings) -> dict[str, object]:
             "real_chunks": real_chunks,
             "mock_documents": indexed_documents - real_documents,
             "mock_chunks": indexed_chunks - real_chunks,
+            "legacy_demo_documents": legacy_demo_documents,
+            "legacy_demo_chunks": legacy_demo_chunks,
+            "user_uploaded_documents": user_uploaded_documents,
+            "user_uploaded_chunks": user_uploaded_chunks,
         },
         "configuration": {
             "app_env": settings.app_env,

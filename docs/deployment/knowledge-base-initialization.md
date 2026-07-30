@@ -31,9 +31,35 @@ uv run python -m sellpilot.cli.import_knowledge_data
 uv run sellpilot-import-knowledge
 ```
 
-重复导入通过校验和与来源信息跳过已有文档，不清空或覆盖其他知识数据。不要使用
-`--full-rebuild` 处理用户现有库；该参数是旧 CSV 重建路径，具有破坏性且依赖额外模型
-环境，不属于 Demo Freeze 的标准步骤。
+重复导入通过校验和与来源信息跳过已有文档，不清空或覆盖其他知识数据。
+
+## 旧 CSV 全量重建
+
+`--full-rebuild` 只替换来源以 `products.csv#`、`reviews.csv#` 或
+`customer_messages.csv#` 开头的可重建 Mock 文档。用户上传文档、Mock 政策文档和其他
+来源不会删除；商品、订单、评论、库存等业务表不在删除范围内。重建前会先完成翻译、
+embedding 模型加载和向量计算，PostgreSQL 提交成功后才清理被替换文档的旧向量；失败
+时清理本轮新向量并回滚数据库事务。
+
+先确认锁文件和固定 embedding 模型已就绪：
+
+```powershell
+uv lock --check
+uv sync --frozen
+uv run hf download BAAI/bge-small-zh-v1.5
+uv run sellpilot-check-demo-readiness
+```
+
+模型下载只需在本机缓存缺失时执行。完成删除范围和现有文档所有权审计后运行：
+
+```powershell
+$env:PYTHONPATH = (Resolve-Path .\src).Path
+uv run --frozen python -m sellpilot.cli.import_knowledge_data --full-rebuild
+```
+
+该路径读取仓库 `data/demo/shopee_mock` 下的 `products.csv`、`reviews.csv`、
+`customer_messages.csv` 和 `customer_sessions.csv`。这些结果始终标记为 Mock，不能
+计入真实 RAG 数据验收。
 
 ## 安全状态检查
 
@@ -47,6 +73,8 @@ uv run sellpilot-check-demo-readiness
 - `knowledge.real_chunks` 大于 0；
 - `knowledge.status` 为 `READY`；
 - Mock 与真实计数分开，不把 Mock 文档当作真实验收。
+- `knowledge.legacy_demo_documents` / `legacy_demo_chunks` 为旧 CSV 重建计数；
+- `knowledge.user_uploaded_documents` / `user_uploaded_chunks` 在重建前后保持不变。
 
 ## Smoke 验证
 
