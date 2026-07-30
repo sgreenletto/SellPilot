@@ -205,7 +205,11 @@ export const router = createRouter({
 });
 
 router.beforeEach(async (to, _from, next) => {
-  const rememberedRoute = resolveReviewModuleEntry(to.path, _from.path);
+  const rememberedRoute = resolveReviewModuleEntry(
+    to.path,
+    _from.path,
+    to.query.source === "selection",
+  );
   if (rememberedRoute) return next(rememberedRoute);
   const authStore = useAuthStore();
   await authStore.restoreSession();

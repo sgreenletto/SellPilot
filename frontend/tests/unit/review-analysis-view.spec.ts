@@ -69,12 +69,15 @@ const result = {
   finished_at: null,
 };
 
-async function mountView() {
+async function mountView(path = "/market/reviews") {
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: "/market/reviews", component: ReviewAnalysisView }],
+    routes: [
+      { path: "/market/reviews", component: ReviewAnalysisView },
+      { path: "/market/selection", component: { template: "<div>智能选品</div>" } },
+    ],
   });
-  await router.push("/market/reviews");
+  await router.push(path);
   await router.isReady();
   return mount(ReviewAnalysisView, { global: { plugins: [router] } });
 }
@@ -113,6 +116,22 @@ describe("ReviewAnalysisView", () => {
     expect(wrapper.text()).toContain("包装");
     expect(wrapper.text()).not.toContain("negative");
     expect(api.listProductReviews).toHaveBeenCalledOnce();
+  });
+
+  it("loads the product and site passed from selection without starting analysis", async () => {
+    const wrapper = await mountView("/market/reviews?source=selection&product_id=P009&site=id");
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("已从智能选品带入商品");
+    expect(wrapper.text()).toContain("P009 · ID");
+    expect(wrapper.get('input[placeholder="例如 PROD0001"]').element).toMatchObject({
+      value: "P009",
+    });
+    expect(wrapper.get('select[aria-label="站点"]').element).toMatchObject({ value: "id" });
+    expect(api.listProductReviews).toHaveBeenCalledWith(
+      expect.objectContaining({ product_id: "P009", site: "id" }),
+    );
+    expect(api.createReviewAnalysis).not.toHaveBeenCalled();
   });
 
   it("searches original text or Chinese translation and keeps it in analysis scope", async () => {

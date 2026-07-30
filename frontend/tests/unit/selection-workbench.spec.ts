@@ -85,7 +85,14 @@ const secondResult = {
 async function mountWorkbench(path = "/market/selection") {
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: "/market/selection", component: SelectionWorkbenchView }],
+    routes: [
+      { path: "/market/selection", component: SelectionWorkbenchView },
+      {
+        path: "/market/reviews",
+        name: "market-reviews",
+        component: defineComponent({ template: "<div>评论分析</div>" }),
+      },
+    ],
   });
   await router.push(path);
   await router.isReady();
@@ -561,6 +568,29 @@ describe("SelectionWorkbenchView", () => {
     await flushPromises();
     expect(selectionApi.downloadSelectionExport).toHaveBeenCalledOnce();
     expect(wrapper.text()).toContain("selection-task-1.md");
+  });
+
+  it("opens review analysis with the selected product and site", async () => {
+    const wrapper = await mountWorkbench();
+    await flushPromises();
+    const analyze = wrapper
+      .findAll("button")
+      .find((button) => button.text().includes("分析全部候选"));
+    await analyze?.trigger("click");
+    await flushPromises();
+
+    const reviewButton = wrapper.findAll("button").find((button) => button.text() === "分析评论");
+    await reviewButton?.trigger("click");
+    await flushPromises();
+
+    expect(wrapper.vm.$router.currentRoute.value).toMatchObject({
+      name: "market-reviews",
+      query: {
+        source: "selection",
+        product_id: "P001",
+        site: "sg",
+      },
+    });
   });
 
   it("explains an analysis with no ranked products", async () => {

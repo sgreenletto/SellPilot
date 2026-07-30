@@ -15,6 +15,11 @@ describe("review module route memory", () => {
     expect(resolveReviewModuleEntry("/market/reviews", "/market/reviews/improvement")).toBeNull();
   });
 
+  it("does not restore an old improvement report for an explicit selection handoff", () => {
+    rememberReviewModuleRoute("/market/reviews/improvement?analysis_id=A1");
+    expect(resolveReviewModuleEntry("/market/reviews", "/market/selection", true)).toBeNull();
+  });
+
   it("does not redirect when no restorable report exists", () => {
     rememberReviewModuleRoute("/market/reviews");
     expect(resolveReviewModuleEntry("/market/reviews", "/dashboard")).toBeNull();
