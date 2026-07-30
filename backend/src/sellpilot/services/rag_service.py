@@ -1,52 +1,35 @@
-"""Grounded knowledge retrieval and answer generation over the existing knowledge tables."""
+"""RAG Q&A -- ChromaDB vector retrieval + LLM generation."""
 
 from __future__ import annotations
 
-import re
-from datetime import datetime
 from typing import Any
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from sellpilot.core.config import Settings
-from sellpilot.db.models.knowledge_base import KnowledgeChunk, KnowledgeDocument
+from sellpilot.services.embedding import EmbeddingService
 from sellpilot.services.llm_service import LLMService
+from sellpilot.services.vector_store import ChromaVectorStore
 
-NO_RELIABLE_ANSWER = "当前知识库中没有找到可靠依据。"
-SYSTEM_PROMPT = """You are SellPilot AI, a cross-border e-commerce operations assistant.
-Answer only from the supplied knowledge fragments. Do not invent facts.
-If the fragments are insufficient, state that there is no reliable basis.
-Cite source labels and answer in the same language as the question."""
+SYSTEM_PROMPT = (
+    "You are SellPilot AI, a cross-border e-commerce operations assistant. "
+    "Answer user questions based on the provided knowledge base content.\n\n"
+    "Rules:\n"
+    "1. Only answer based on the provided knowledge fragments. "
+    "Do not fabricate information.\n"
+    "2. If the knowledge base has no relevant information, say so honestly.\n"
+    "3. Cite knowledge sources when answering.\n"
+    "4. Answer in the same language as the user's question.\n"
+    "5. Keep answers concise and professional."
+)
 
 
 class RAGService:
-    """Reuse PostgreSQL knowledge records with bounded, deterministic retrieval."""
+    """Vector retrieval via ChromaDB + LLM answer generation."""
 
     def __init__(self, settings: Settings, session: AsyncSession) -> None:
-        self.settings = settings
-        self.session = session
-
-    @staticmethod
-    def _terms(query: str) -> tuple[str, ...]:
-        normalized = query.casefold().strip()
-        words = re.findall(r"[a-z0-9][a-z0-9_-]*|[\u3400-\u9fff]{2,}", normalized)
-        terms: set[str] = set(words)
-        for word in words:
-            if re.fullmatch(r"[\u3400-\u9fff]{3,}", word):
-                terms.update(word[index : index + 2] for index in range(len(word) - 1))
-        return tuple(sorted(terms, key=lambda item: (-len(item), item)))
-
-    @classmethod
-    def _score(cls, query: str, content: str, title: str) -> float:
-        terms = cls._terms(query)
-        if not terms:
-            return 0.0
-        haystack = f"{title}\n{content}".casefold()
-        matched_weight = sum(len(term) for term in terms if term in haystack)
-        total_weight = sum(len(term) for term in terms)
-        phrase_bonus = 0.25 if query.casefold().strip() in haystack else 0.0
-        return round(min(1.0, matched_weight / max(total_weight, 1) + phrase_bonus), 4)
+        self._settings = settings
+        self._session = session
 
     async def retrieve(
         self,
@@ -55,37 +38,22 @@ class RAGService:
         top_k: int = 5,
         category: str | None = None,
     ) -> list[dict[str, Any]]:
-        statement = (
-            select(KnowledgeChunk, KnowledgeDocument)
-            .join(KnowledgeDocument, KnowledgeChunk.document_id == KnowledgeDocument.id)
-            .where(KnowledgeDocument.status == "indexed")
-            .order_by(KnowledgeDocument.updated_at.desc(), KnowledgeChunk.chunk_index.asc())
-            .limit(2000)
-        )
-        if category:
-            statement = statement.where(KnowledgeDocument.category == category)
-        rows = (await self.session.execute(statement)).all()
-        ranked: list[dict[str, Any]] = []
-        for chunk, document in rows:
-            score = self._score(query, chunk.content, document.title)
-            if score <= 0:
-                continue
-            metadata = document.metadata_json or {}
-            ranked.append(
-                {
-                    "fragment": chunk.content[:1200],
-                    "score": score,
-                    "source_doc": document.source or document.title,
-                    "document_id": str(document.id),
-                    "chunk_index": chunk.chunk_index,
-                    "category": document.category,
-                    "language": str(metadata.get("language") or "zh-CN"),
-                    "updated_at": document.updated_at,
-                    "is_mock_data": document.is_mock_data,
-                }
-            )
-        ranked.sort(key=lambda item: (-float(item["score"]), str(item["document_id"])))
-        return ranked[: min(max(top_k, 1), 20)]
+        es = EmbeddingService()
+        vs = ChromaVectorStore()
+        query_vec = es.encode_single(query)
+        where = {"category": category} if category else None
+        results = vs.search(query_vec, top_k=top_k, where=where)
+        return [
+            {
+                "fragment": r["document"],
+                "score": r["score"],
+                "source_doc": r.get("metadata", {}).get("source", ""),
+                "document_id": r.get("metadata", {}).get("document_id", ""),
+                "chunk_index": r.get("metadata", {}).get("chunk_index", 0),
+                "category": r.get("metadata", {}).get("category", ""),
+            }
+            for r in results
+        ]
 
     async def ask(
         self,
@@ -96,38 +64,30 @@ class RAGService:
         temperature: float = 0.3,
     ) -> dict[str, Any]:
         sources = await self.retrieve(question, top_k=top_k, category=category)
-        if not sources or float(sources[0]["score"]) < 0.2:
+
+        if not sources:
             return {
-                "answer": NO_RELIABLE_ANSWER,
+                "answer": "当前知识库中没有找到可靠依据。",
                 "sources": [],
-                "answer_mode": "no_reliable_source",
             }
 
-        api_key = self.settings.llm_api_key.get_secret_value()
+        api_key = self._settings.llm_api_key.get_secret_value()
         if not api_key:
-            source = sources[0]
             return {
-                "answer": f"根据知识库“{source['source_doc']}”：{source['fragment']}",
+                "answer": f"根据知识库「{sources[0]['source_doc']}」：{sources[0]['fragment']}",
                 "sources": sources,
-                "answer_mode": "grounded_extract",
             }
 
         context = "\n\n".join(
-            f"[{index + 1}] {item['source_doc']}\n{item['fragment']}"
-            for index, item in enumerate(sources)
+            f"[{i + 1}] {s['source_doc']}\n{s['fragment']}"
+            for i, s in enumerate(sources)
         )
-        answer = await LLMService(self.settings).chat(
+        llm = LLMService(self._settings)
+        answer = await llm.chat(
             [
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": f"Knowledge fragments:\n{context}\n\nQuestion: {question}",
-                },
+                {"role": "user", "content": f"Knowledge fragments:\n{context}\n\nQuestion: {question}"},
             ],
             temperature=temperature,
         )
-        return {"answer": answer, "sources": sources, "answer_mode": "grounded_llm"}
-
-
-def serialize_source_timestamp(value: datetime | None) -> str | None:
-    return value.isoformat() if value is not None else None
+        return {"answer": answer, "sources": sources}
